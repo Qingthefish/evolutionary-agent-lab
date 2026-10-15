@@ -21,3 +21,4 @@ jobs:
       - run: python -m agent_lab files-demo
       - run: python -m agent_lab memory-demo
       - run: python -m agent_lab protocol-demo
+      - run: python -m agent_lab runner-demo

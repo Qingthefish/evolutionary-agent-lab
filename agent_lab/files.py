@@ -247,8 +247,12 @@ class FileTools:
             result = self._receipt(task, actor, "artifact_received", path, data)
             return {**result, "artifact_id": artifact_id}
 
-    def complete_from_text(self, task, actor, expected):
-        """Trusted runner-only verifier; expected contents must not come from a model."""
+    def text_verifier(self, task, actor, expected):
+        """Return a trusted verifier for use inside Workflow.finish_task's transaction.
+
+        Expected contents must not come from the model being evaluated. Do not
+        invoke the returned callback outside the workflow completion transaction.
+        """
         if not isinstance(expected, dict) or not expected:
             raise FileToolError("Provide trusted expected text for at least one artifact")
         expected_digests = {path: _sha(self._encode(text)) for path, text in expected.items()}
@@ -271,7 +275,10 @@ class FileTools:
                 self.workflow._event(task, actor, "artifacts_verified", {"artifacts": receipts})
             return checks
 
-        self.workflow.finish_task(task, actor, verifier=verify)
+        return verify
+
+    def complete_from_text(self, task, actor, expected):
+        self.workflow.finish_task(task, actor, verifier=self.text_verifier(task, actor, expected))
 
     def execute_code(self, task, actor, command):
         with self._access(task, actor):

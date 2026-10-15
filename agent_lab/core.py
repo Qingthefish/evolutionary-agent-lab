@@ -290,14 +290,16 @@ class Workflow:
             raise WorkflowError("A failure requires an explanation")
         with self._transaction():
             row = self._task(identifier, actor, assigned=True)
-            if row["state"] != "running":
-                raise WorkflowError("Only a running task can finish")
+            if row["state"] != "running" and (success or row["state"] not in {"waiting_input", "waiting_approval"}):
+                raise WorkflowError("Success requires a running task; failure requires an active task")
             if verifier is not None:
                 checks = verifier()
                 if (not isinstance(checks, dict) or not checks
                         or any(not isinstance(k, str) or not k.strip() or v is not True
                                for k, v in checks.items())):
-                    raise WorkflowError("Artifact verification failed; task remains running")
+                    failed = [str(key) for key, value in checks.items() if value is not True] if isinstance(checks, dict) else []
+                    raise WorkflowError("Artifact verification failed" +
+                                        (": " + ", ".join(failed)[:1024] if failed else "") + "; task remains running")
             children = self.db.execute("SELECT state FROM tasks WHERE parent=?", (identifier,)).fetchall()
             if success and any(c["state"] != "succeeded" for c in children):
                 raise WorkflowError("A parent cannot succeed while delegated work is incomplete or failed")

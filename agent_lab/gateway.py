@@ -12,6 +12,10 @@ class ToolRequestError(WorkflowError):
     """Rejected proposal, exhausted budget, or replay needing reconciliation."""
 
 
+class ToolBudgetError(ToolRequestError):
+    """No effects may be released after the persisted tool-call limit."""
+
+
 def _text(description, *, maximum=4096, empty=False):
     return {"type": "string", "description": description, "minLength": 0 if empty else 1,
             "maxLength": maximum}
@@ -145,6 +149,30 @@ class ToolGateway:
             raise ToolRequestError("Assignee is not an eligible delegate")
         return name, arguments
 
+    def validate_batch(self, calls):
+        """Preflight every proposal without effects; dispatch still rechecks state.
+
+        This is neither an atomic batch nor a reservation. Execution is serial,
+        and must stop after a pause, cancellation, or controller stop.
+        """
+        if not isinstance(calls, list) or not 1 <= len(calls) <= 16:
+            raise ToolRequestError("Supply between one and sixteen tool proposals")
+        for call in calls:
+            self._validate(call)
+        ids = [call["id"] for call in calls]
+        if len(set(ids)) != len(ids):
+            raise ToolRequestError("Duplicate tool call identifiers")
+        with self.workflow._transaction():
+            row = self.workflow._task(self.task, self.actor, assigned=True)
+            if row["state"] != "running":
+                raise ToolRequestError("Only an assigned running task may propose tools")
+            records = self.workflow.db.execute("SELECT call_id FROM tool_calls WHERE task=?", (self.task,)).fetchall()
+            if set(ids) & {record["call_id"] for record in records}:
+                raise ToolRequestError("Batch contains an already reserved call; reconcile before retry")
+            maximum = self.workflow.db.execute("SELECT maximum FROM tool_budgets WHERE task=?", (self.task,)).fetchone()[0]
+            if len(records) + len(calls) > maximum:
+                raise ToolBudgetError("Task tool-call budget cannot accommodate this batch")
+
     def dispatch(self, call):
         name, arguments = self._validate(call)
         encoded = json.dumps(arguments, sort_keys=True, allow_nan=False)
@@ -160,7 +188,7 @@ class ToolGateway:
             used = self.workflow.db.execute("SELECT count(*) FROM tool_calls WHERE task=?", (self.task,)).fetchone()[0]
             maximum = self.workflow.db.execute("SELECT maximum FROM tool_budgets WHERE task=?", (self.task,)).fetchone()[0]
             if used >= maximum:
-                raise ToolRequestError("Task tool-call budget exhausted; preserve artifacts and stop")
+                raise ToolBudgetError("Task tool-call budget exhausted; preserve artifacts and stop")
             self.workflow.db.execute("INSERT INTO tool_calls VALUES(?,?,?,?,?,'reserved',NULL)", (
                 self.task, call["id"], self.actor, name, encoded,
             ))

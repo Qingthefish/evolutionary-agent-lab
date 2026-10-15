@@ -8,6 +8,7 @@ from .files import FileTools, FileToolError
 from .memory import ExperienceMemory
 from .deepseek import DeepSeekClient
 from .gateway import ToolGateway
+from .runner import Limits, TaskRunner
 
 
 def new_run_directory(directory, prefix):
@@ -216,6 +217,73 @@ def protocol_demo(directory):
         store.close()
 
 
+def runner_demo(directory):
+    """Scripted clarification/restart/tool/final loop; zero model inference."""
+    root = new_run_directory(directory, "runner-")
+    store = Workflow(root / "workflow.sqlite3")
+    files = None
+    try:
+        store.register_actor("user", "human")
+        store.register_actor("writer", "agent")
+        chat = store.create_chat("private", ["user", "writer"])
+        task = store.create_task(chat, "user", "writer", "Write note.txt with the requested greeting")
+        store.start_task(task, "writer")
+
+        def proposal(name, arguments, identifier):
+            return {"role": "assistant", "content": None, "tool_calls": [{
+                "id": identifier, "type": "function", "function": {"name": name, "arguments": json.dumps(arguments)},
+            }]}
+
+        replies = [proposal("ask_human", {"prompt": "Which language and greeting should note.txt use?"}, "clarify"),
+                   proposal("create_text", {"path": "note.txt", "content": "Hello\n"}, "write"),
+                   {"role": "assistant", "content": "The fixture file is ready for independent checking."}]
+        request_count = 0
+
+        def fixture_transport(payload):
+            nonlocal request_count
+            request_count += 1
+            if not replies:
+                raise RuntimeError("Unexpected extra fixture request")
+            message = replies.pop(0)
+            return json.dumps({"id": "fixture-" + str(request_count), "model": "offline-protocol-fixture",
+                               "choices": [{"message": message, "finish_reason": "tool_calls" if "tool_calls" in message else "stop"}],
+                               "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}}).encode()
+
+        client = DeepSeekClient("offline-protocol-fixture", fixture_transport, max_tokens=128)
+
+        def create_runner():
+            gateway = ToolGateway(store, files, task, "writer", human="user",
+                                  allowed=["create_text", "ask_human"], max_calls=4)
+            return TaskRunner(gateway, client, mode="offline_fixture", constraints=["Preserve the user's requested language"],
+                              limits=Limits(model_attempts=4), verifier_id="fixture-hello-text-v1",
+                              verifier=files.text_verifier(task, "writer", {"note.txt": "Hello\n"}))
+
+        files = FileTools(store, root / "files")
+        before_restart = create_runner().run()
+        if before_restart["task_state"] != "waiting_input":
+            raise RuntimeError("The fixture did not pause for clarification")
+        request = store.db.execute("SELECT id FROM requests WHERE task=?", (task,)).fetchone()[0]
+        files.close()
+        store.close()
+        store = Workflow(root / "workflow.sqlite3")
+        files = FileTools(store, root / "files")
+        store.respond(request, "user", answer="English: Hello followed by a newline")
+        resumed = create_runner()
+        after_restart = resumed.run()
+        if after_restart["task_state"] != "succeeded":
+            raise RuntimeError("The fixture did not complete its actual text check")
+        report = {"mode": "offline_fixture", "model_calls": 0, "api_network_calls": 0,
+                  "benchmark_valid": False, "process_sandbox": False, "state_directory": str(root),
+                  "synthetic_protocol_responses": request_count, "before_restart": before_restart,
+                  "after_restart": after_restart, "metrics": store.metrics(chat, "user")}
+        (root / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        return report
+    finally:
+        if files is not None:
+            files.close()
+        store.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Offline engineering fixtures; no live model calls")
     subcommands = parser.add_subparsers(dest="command", required=True)
@@ -227,10 +295,12 @@ def main():
     memory_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     protocol_command = subcommands.add_parser("protocol-demo", help="Exercise synthetic provider responses and controlled tool dispatch")
     protocol_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
+    runner_command = subcommands.add_parser("runner-demo", help="Exercise a bounded synthetic tool loop and restart after human clarification")
+    runner_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     args = parser.parse_args()
     try:
         report = {"demo": demo, "files-demo": file_demo, "memory-demo": memory_demo,
-                  "protocol-demo": protocol_demo}[args.command](args.state_dir)
+                  "protocol-demo": protocol_demo, "runner-demo": runner_demo}[args.command](args.state_dir)
     except FileExistsError:
         parser.error("State directory already exists; choose a new path to preserve previous evidence")
     print(json.dumps(report, indent=2))
