@@ -1,0 +1,36 @@
+# Local OS and editor state
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Runtime data: keep credentials and agent-private content out of source control
+/workspaces/
+/sandboxes/
+/memory/
+/runs/
+/logs/
+/models/
+
+# Build output
+/build/
+/dist/
+*.egg-info/
