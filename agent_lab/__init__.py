@@ -1,4 +1,4 @@
-"""Workflow, controlled tools, and provider protocol. No process sandbox yet."""
+"""Workflow, controlled tools, provider protocol, and opt-in Docker execution."""
 
 from .core import Workflow, WorkflowError
 

@@ -47,6 +47,12 @@ _SPECS = {
         "expected_sha256": _HASH}),
     "accept_artifact": ("Accept an offered snapshot into a new task-local file", {
         "artifact_id": _text("Offered artifact identifier", maximum=128), "path": _PATH}),
+    "run_python": ("Execute exact input snapshots in the configured isolated container; exit zero is not task verification", {
+        "entrypoint": _PATH,
+        "input_files": {"type": "object", "minProperties": 1, "maxProperties": 20,
+                        "propertyNames": _PATH, "additionalProperties": _HASH},
+        "arguments": {"type": "array", "maxItems": 16, "items": _text("Script argument", maximum=1024, empty=True)},
+        "outputs": {"type": "array", "maxItems": 8, "uniqueItems": True, "items": _PATH}}),
 }
 
 
@@ -59,9 +65,10 @@ class ToolGateway:
     """
 
     def __init__(self, workflow, files, task, actor, *, human, allowed,
-                 memory=None, delegates=(), max_calls=32):
+                 memory=None, delegates=(), max_calls=32, executor=None):
         self.workflow, self.files, self.memory = workflow, files, memory
         self.task, self.actor, self.human = task, actor, human
+        self.executor = executor
         self.allowed, self.delegates = frozenset(allowed), frozenset(delegates)
         if (not self.allowed or not self.allowed <= _SPECS.keys()
                 or type(max_calls) is not int or not 1 <= max_calls <= 1000):
@@ -70,6 +77,8 @@ class ToolGateway:
             raise ToolRequestError("Tool backends must use the same workflow")
         if self.allowed & {"search_memory", "select_memory"} and memory is None:
             raise ToolRequestError("Memory capabilities require a memory backend")
+        if "run_python" in self.allowed and (executor is None or executor.workflow is not workflow or executor.files is not files):
+            raise ToolRequestError("Python execution requires an explicit isolated backend for these files")
         row = workflow._task(task, actor, assigned=True)
         workflow._member(row["chat"], human)
         if workflow._row("actors", human)["kind"] != "human":
@@ -133,21 +142,49 @@ class ToolGateway:
         if not isinstance(arguments, dict) or arguments.keys() != properties.keys():
             raise ToolRequestError("Missing or unknown tool arguments")
         for key, spec in properties.items():
-            value = arguments[key]
-            if spec["type"] == "string":
-                if (not isinstance(value, str) or not spec.get("minLength", 1) <= len(value) <= spec.get("maxLength", 65536)
-                        or (spec.get("minLength", 1) and not value.strip())
-                        or ("pattern" in spec and re.fullmatch(spec["pattern"], value) is None)):
-                    raise ToolRequestError("Invalid string argument: " + key)
-                try:
-                    value.encode("utf-8")
-                except UnicodeError:
-                    raise ToolRequestError("Argument is not valid UTF-8") from None
-            elif type(value) is not int or not spec["minimum"] <= value <= spec["maximum"]:
-                raise ToolRequestError("Invalid integer argument: " + key)
+            self._validate_value(arguments[key], spec)
         if name == "delegate_task" and arguments["assignee"] not in self.delegates:
             raise ToolRequestError("Assignee is not an eligible delegate")
+        if name == "run_python":
+            try:
+                self.executor.validate_job(**arguments)
+            except WorkflowError as error:
+                raise ToolRequestError(str(error)) from None
         return name, arguments
+
+    @classmethod
+    def _validate_value(cls, value, spec):
+        kind = spec["type"]
+        if kind == "string":
+            if (not isinstance(value, str) or not spec.get("minLength", 1) <= len(value) <= spec.get("maxLength", 65536)
+                    or (spec.get("minLength", 1) and not value.strip())
+                    or ("pattern" in spec and re.fullmatch(spec["pattern"], value) is None)):
+                raise ToolRequestError("Invalid string tool argument")
+            try:
+                value.encode("utf-8")
+            except UnicodeError:
+                raise ToolRequestError("Argument is not valid UTF-8") from None
+        elif kind == "integer":
+            if type(value) is not int or not spec["minimum"] <= value <= spec["maximum"]:
+                raise ToolRequestError("Invalid integer tool argument")
+        elif kind == "array":
+            if not isinstance(value, list) or len(value) > spec["maxItems"]:
+                raise ToolRequestError("Invalid bounded list tool argument")
+            for item in value:
+                cls._validate_value(item, spec["items"])
+            if spec.get("uniqueItems") and len({json.dumps(item, sort_keys=True) for item in value}) != len(value):
+                raise ToolRequestError("List tool arguments must be distinct")
+        elif kind == "object":
+            if not isinstance(value, dict) or not spec["minProperties"] <= len(value) <= spec["maxProperties"]:
+                raise ToolRequestError("Invalid bounded object tool argument")
+            for key, item in value.items():
+                cls._validate_value(key, spec["propertyNames"])
+                cls._validate_value(item, spec["additionalProperties"])
+        else:
+            raise ToolRequestError("Unsupported tool argument schema")
+
+    def execution_configuration(self):
+        return self.executor.configuration() if self.executor is not None else None
 
     def validate_batch(self, calls):
         """Preflight every proposal without effects; dispatch still rechecks state.
@@ -216,6 +253,8 @@ class ToolGateway:
         return {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(output, allow_nan=False)}
 
     def _execute(self, name, args):
+        if name == "run_python":
+            return self.executor.run_python(self.task, self.actor, **args)
         if name == "delete_text":
             current = self.files.read_text(self.task, self.actor, args["path"])
             if current["sha256"] != args["expected_sha256"]:
