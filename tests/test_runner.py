@@ -256,8 +256,8 @@ class RunnerTests(unittest.TestCase):
 
     def test_deadline_includes_human_wait_and_cancels_descendants(self):
         child = self.workflow.create_task(self.chat, "writer", "reviewer", "Child work", parent=self.task)
-        runner = self.runner([response([tool("ask_human", {"prompt": "Which language?"})])],
-                             limits=Limits(duration_seconds=10))
+        runner = self.runner([], limits=Limits(duration_seconds=10))
+        self.workflow.ask_human(self.task, "writer", "user", "Which language?")
         runner.run()
         self.now[0] += 12
         state = runner.run()
@@ -267,7 +267,7 @@ class RunnerTests(unittest.TestCase):
         main = next(item for item in records if item["task_id"] == self.task)
         self.assertEqual(main["human_wait_seconds"], 12)
         self.assertEqual(state["elapsed_seconds"], 12)
-        self.assertEqual(state["protocol_attempts"], 1)
+        self.assertEqual(state["protocol_attempts"], 0)
 
     def test_provider_late_response_cannot_dispatch_tools(self):
         def late():

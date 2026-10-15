@@ -50,6 +50,10 @@ The complete acceptance target still includes private/group human interaction, i
 
 2026-10-16: implement an opt-in Docker Python backend as the first real process-execution path. It uses a trusted local Linux engine, digest-pinned official image, per-invocation private scratch space, non-root payload, resource/network restrictions, declared text exports, and explicit cleanup/recovery. The macOS development environment uses a separate Colima VM without host-directory or SSH-agent sharing. This is an implementation choice supporting R05/R08, not a new instructor requirement or confirmation of the minimum accepted sandbox boundary. It does not replace autonomous delegation or any other capability. See README.md for current evidence and [sandbox.md](sandbox.md) for operation details.
 
+## Current coordination decision
+
+2026-10-16: add a cooperative, durable task-tree scheduler around the existing runner/gateway. Trusted setup defines eligible role instructions/tools and independent acceptance policies; model tool proposals choose delegations at runtime. Wait for checked child results, share only explicitly offered artifacts, retain original constraints, and enforce root-wide limits at reservation boundaries. This first version fails the root on terminal child failure; negotiation quality, general plan revision/dependency handling, and live-model behavior remain unvalidated. A fixed three-role development fixture exercises restart and handoff without claiming autonomous model ability. This is a staged implementation choice supporting the announcement, not an added grading requirement or a settled final architecture.
+
 ## Delivery gates
 
 1. One real-model task runs end to end with delegated work, real tools, verified outputs, and measured time. This vertical slice alone is not full course compliance.

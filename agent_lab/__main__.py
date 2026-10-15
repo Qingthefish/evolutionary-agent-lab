@@ -353,6 +353,8 @@ def main():
     protocol_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     runner_command = subcommands.add_parser("runner-demo", help="Exercise a bounded synthetic tool loop and restart after human clarification")
     runner_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
+    scheduler_command = subcommands.add_parser("scheduler-demo", help="Exercise synthetic agent-to-agent delegation, handoff, and restart")
+    scheduler_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     sandbox_command = subcommands.add_parser("sandbox-demo", help="Run fixed sources in a real, explicitly configured Docker sandbox")
     sandbox_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     sandbox_command.add_argument("--docker-host", required=True, help="Explicit local Unix socket; no implicit Docker context")
@@ -361,6 +363,9 @@ def main():
     try:
         if args.command == "sandbox-demo":
             report = sandbox_demo(args.state_dir, docker_host=args.docker_host, image=args.image)
+        elif args.command == "scheduler-demo":
+            from .scheduler_fixture import run_fixture
+            report = run_fixture(new_run_directory(args.state_dir, "scheduler-"))
         else:
             report = {"demo": demo, "files-demo": file_demo, "memory-demo": memory_demo,
                       "protocol-demo": protocol_demo, "runner-demo": runner_demo}[args.command](args.state_dir)
