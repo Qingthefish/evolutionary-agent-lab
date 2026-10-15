@@ -1,0 +1,179 @@
+/* Dark, high-contrast theme. Status also carries text symbols, never color alone. */
+
+Screen {
+    background: $background;
+}
+
+#status-header {
+    height: 2;
+    padding: 0 1;
+    background: $panel;
+    color: $text;
+}
+
+TabbedContent {
+    height: 1fr;
+}
+
+TabPane {
+    padding: 0 1;
+}
+
+Pane {
+    height: 1fr;
+}
+
+.split {
+    height: 1fr;
+}
+
+.sidebar {
+    width: 42;
+    min-width: 24;
+    border-right: solid $primary-darken-2;
+    padding-right: 1;
+}
+
+.sidebar.wide {
+    width: 45%;
+}
+
+.main {
+    width: 1fr;
+    padding-left: 1;
+}
+
+.side {
+    width: 40%;
+    padding-left: 1;
+}
+
+.filters, .composer, .button-row {
+    height: auto;
+    margin: 0 0 1 0;
+}
+
+.filters Select {
+    width: 1fr;
+    max-width: 36;
+    margin-right: 1;
+}
+
+.composer Input {
+    width: 1fr;
+}
+
+.button-row Button, .composer Button, .filters Button {
+    margin-right: 1;
+    min-width: 10;
+}
+
+.card {
+    padding: 0 1;
+    margin-bottom: 1;
+    border: round $primary-darken-2;
+    height: auto;
+}
+
+.section {
+    text-style: bold;
+    color: $accent;
+    margin-top: 1;
+}
+
+.banner {
+    padding: 0 1;
+    margin-bottom: 1;
+    background: $boost;
+    color: $text-muted;
+    height: auto;
+}
+
+.banner.warn {
+    color: $warning;
+}
+
+.short-table {
+    height: auto;
+    max-height: 10;
+}
+
+DataTable {
+    height: auto;
+    max-height: 18;
+}
+
+#conversation-tree, #task-tree {
+    height: 1fr;
+}
+
+#conversation-feed {
+    height: 1fr;
+    border: round $primary-darken-2;
+}
+
+#logs-events {
+    height: 1fr;
+}
+
+#memory-table {
+    max-height: 100%;
+}
+
+/* Dialogs */
+_Modal, ConfirmScreen, TextPromptScreen, NewConversationScreen, NewTaskScreen, HelpScreen {
+    align: center middle;
+    background: $background 70%;
+}
+
+.dialog {
+    width: 76;
+    max-width: 95%;
+    height: auto;
+    max-height: 90%;
+    padding: 1 2;
+    border: thick $primary;
+    background: $surface;
+}
+
+.dialog-wide {
+    width: 90;
+}
+
+.dialog-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.dialog-body, .dialog-label {
+    margin-bottom: 1;
+}
+
+.dialog-warning {
+    color: $warning;
+    margin-bottom: 1;
+}
+
+.dialog-params {
+    height: auto;
+    max-height: 16;
+    border: round $primary-darken-2;
+    margin-bottom: 1;
+}
+
+.dialog-buttons {
+    height: auto;
+    align-horizontal: right;
+}
+
+.dialog-buttons Button {
+    margin-left: 1;
+}
+
+.dialog Select, .dialog Input {
+    margin-bottom: 1;
+}
+
+#artifact-task {
+    max-width: 120;
+}
