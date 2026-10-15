@@ -6,6 +6,8 @@ import tempfile
 from .core import Workflow, WorkflowError
 from .files import FileTools, FileToolError
 from .memory import ExperienceMemory
+from .deepseek import DeepSeekClient
+from .gateway import ToolGateway
 
 
 def new_run_directory(directory, prefix):
@@ -156,8 +158,66 @@ def memory_demo(directory):
         store.close()
 
 
+def protocol_demo(directory):
+    """Synthetic HTTP-shaped responses exercise the adapter, never model inference."""
+    root = new_run_directory(directory, "protocol-")
+    store = Workflow(root / "workflow.sqlite3")
+    files = None
+    try:
+        store.register_actor("user", "human")
+        store.register_actor("writer", "agent")
+        chat = store.create_chat("private", ["user", "writer"])
+        task = store.create_task(chat, "user", "writer", "Write a short note")
+        store.start_task(task, "writer")
+        files = FileTools(store, root / "files")
+        gateway = ToolGateway(store, files, task, "writer", human="user", allowed=["create_text"], max_calls=4)
+        call = {"id": "fixture-create", "type": "function", "function": {
+            "name": "create_text", "arguments": json.dumps({"path": "note.txt", "content": "Fixture note\n"}),
+        }}
+        replies = [
+            {"role": "assistant", "content": None, "tool_calls": [call]},
+            {"role": "assistant", "content": "The fixture note is ready for independent verification."},
+        ]
+        requests = []
+
+        def fixture_transport(payload):
+            requests.append(json.loads(payload))
+            if not replies:
+                raise RuntimeError("Unexpected fixture request")
+            message = replies.pop(0)
+            return json.dumps({
+                "id": "fixture-" + str(len(requests)), "model": "offline-protocol-fixture",
+                "choices": [{"finish_reason": "tool_calls" if "tool_calls" in message else "stop", "message": message}],
+                "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+            }).encode()
+
+        client = DeepSeekClient("offline-protocol-fixture", fixture_transport, max_tokens=128)
+        messages = [{"role": "user", "content": "Write note.txt with a short note."}]
+        first = client.complete(messages, tools=gateway.tools())
+        messages.append(first.message)
+        messages.append(gateway.dispatch(first.message["tool_calls"][0]))
+        final = client.complete(messages, tools=gateway.tools())
+        messages.append(final.message)
+        before = store.task(task, "user")["state"]
+        # Expectations originate in trusted fixture code, not the assistant's proposal.
+        files.complete_from_text(task, "writer", {"note.txt": "Fixture note\n"})
+        report = {
+            "mode": "offline_fixture", "model_calls": 0, "api_network_calls": 0,
+            "synthetic_protocol_responses": len(requests), "benchmark_valid": False,
+            "process_sandbox": False, "state_before_trusted_verification": before,
+            "state_directory": str(root), "metrics": store.metrics(chat, "user"),
+        }
+        (root / "transcript.json").write_text(json.dumps(messages, indent=2) + "\n", encoding="utf-8")
+        (root / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        return report
+    finally:
+        if files is not None:
+            files.close()
+        store.close()
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Offline workflow foundation; no model runtime yet")
+    parser = argparse.ArgumentParser(description="Offline engineering fixtures; no live model calls")
     subcommands = parser.add_subparsers(dest="command", required=True)
     command = subcommands.add_parser("demo", help="Run a deterministic, non-benchmark fixture")
     command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
@@ -165,9 +225,12 @@ def main():
     files_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     memory_command = subcommands.add_parser("memory-demo", help="Exercise scoped candidate memory without claiming learning gains")
     memory_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
+    protocol_command = subcommands.add_parser("protocol-demo", help="Exercise synthetic provider responses and controlled tool dispatch")
+    protocol_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     args = parser.parse_args()
     try:
-        report = {"demo": demo, "files-demo": file_demo, "memory-demo": memory_demo}[args.command](args.state_dir)
+        report = {"demo": demo, "files-demo": file_demo, "memory-demo": memory_demo,
+                  "protocol-demo": protocol_demo}[args.command](args.state_dir)
     except FileExistsError:
         parser.error("State directory already exists; choose a new path to preserve previous evidence")
     print(json.dumps(report, indent=2))
