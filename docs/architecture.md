@@ -2,7 +2,7 @@
 
 ## Implemented boundary
 
-The standard-library Python package `agent_lab` owns local SQLite-backed workflow state and a controlled text-file broker. Its public API is called by a trusted local application. There is no server, authenticated user session, model adapter, autonomous planner, arbitrary-code executor, or process sandbox. Opening the database or raw workspace paths directly bypasses application checks; protect them using normal operating-system access controls. Tests use temporary directories and demos use fresh ignored run directories.
+The standard-library Python package `agent_lab` owns local SQLite-backed workflow state, a controlled text-file broker, and scoped candidate experience memory. Its public API is called by a trusted local application. There is no server, authenticated user session, model adapter, autonomous planner, arbitrary-code executor, or process sandbox. Opening the database or raw workspace paths directly bypasses application checks; protect them using normal operating-system access controls. Tests use temporary directories and demos use fresh ignored run directories.
 
 The next model integration must keep identity, transition authority, and completion validation outside model-controlled arguments. Never expose `register_actor`, `respond`, or arbitrary passing `checks` as tools a model can call to impersonate a user or certify its own result.
 
@@ -30,7 +30,21 @@ Only a running task's assignee can finish it. Success requires a nonempty map of
 
 Goal and subtask status fractions are reported separately. Failed, cancelled, pending, and waiting assignments are not counted as successful or silently removed from the denominator. Elapsed time runs from assignment to terminal state, including time awaiting a human. Human waiting is also recorded separately, including an open wait, and survives restart. Wall-clock durations assume a reasonably stable system clock; this is not a distributed-clock protocol.
 
-Offline reports explicitly identify themselves as fixtures, make zero model calls, and are not valid model-performance benchmarks. There is no model-call time, token usage, or learning result to report yet.
+Offline reports explicitly identify themselves as fixtures, make zero model calls, and are not valid model-performance benchmarks. There is no model-call time, token usage, or demonstrated learning improvement to report yet.
+
+## Candidate experience memory
+
+`ExperienceMemory` stores each agent's candidate suggestions in SQLite with separate source observations. Capture requires an assigned task to have ended in a success or failure with a terminal event and trusted recorded checks/error. Source snapshots include that event, outcome evidence, and any actual artifact-verification records. A trusted-caller success without artifact records is distinguishable from an artifact-verified outcome. Capturing a completed outcome does not prove that the accompanying suggestion is correct or that a suggested fix caused the result; every lesson remains explicitly `candidate`.
+
+Retrieval/selection requires the agent's assigned running task. Memory is scoped by **owner agent, conversation, and explicit namespace**. Private-chat content is therefore not automatically surfaced in group tasks; development and fresh evaluation namespaces do not share candidates. Actor IDs still require a future authenticated transport. Cross-conversation reviewed sharing is not implemented. An eventual evaluation controller must choose memory scope/reset rules from the instructor's protocol; do not move development observations into held-out inputs to improve scores.
+
+Retrieval uses deterministic Unicode word overlap with cosine normalization and condition tags, without embeddings, model calls, or semantic inference. Scores indicate lexical relevance only, not reliability or causal effectiveness. Returned candidates include their source snapshots and observed reuse counts. Source/candidate digests detect accidental corruption; they are not signatures protecting a database from a hostile host with write access. This memory helper is not an internet-search tool or an autonomous retrieval agent.
+
+A candidate must be retrieved in the current task before it can be selected once. After that task terminates, the trusted caller records its observed success, failure, or cancellation. Unassessed uses remain visible. Assessment is idempotent and never promotes a candidate to a proven fix or grants an action approval. Retrieve/select cannot resume a paused task, authorize a tool, execute advice, or certify completion. A future model may consider retrieved text only as reference data within its current task and permissions.
+
+Only exactly matching lesson text and normalized tag sets are deduplicated, preserving every distinct source task and both successful and failed outcomes. There is no automatic semantic merge. Retirement excludes a candidate from future retrieval while preserving its sources and use history; recapturing a duplicate does not silently reactivate it. Each owner/conversation/namespace has a hard cap of 1000 total candidates, including retired records. Source/use history has no separate retention quota yet; it remains private runtime data and is excluded from commits.
+
+The `memory-demo` fixture deliberately separates plumbing from efficacy: the first text check genuinely fails, but fixture code explicitly writes the second correct output. Its recorded subsequent success and duplicate merge do not establish a learning gain. Formal memory-on/off comparisons on new tasks with the allowed model remain required.
 
 ## Checks and remaining work
 
@@ -50,4 +64,6 @@ Behavior checks cover conversation access, delegation ownership, parent/child co
 
 Additional checks cover controlled file CRUD, ownership and path escape attempts, symlink/hard-link/special-file rejection, stale digests, corrupted/duplicate/concurrent handoff, restart, mismatched completion artifacts, and refusal of unconfigured execution.
 
-Remaining integrations include model-facing tool registration, allowed-provider calls, autonomous negotiation/allocation, search and retrieval, code execution, enforced process sandboxes, Git operations, per-agent experience memory, task-specific verification beyond exact text, and a minimal interactive UI. The mandatory course requirements remain the acceptance target; this foundation implements only part of their supporting infrastructure.
+Memory checks cover provenance, owner/private-chat/namespace boundaries, duplicate source preservation, failed/cancelled/unassessed reuse, retirement, corruption rejection, restart, and the separation between reference memory and execution authority.
+
+Remaining integrations include model-facing tool registration, allowed-provider calls, autonomous negotiation/allocation, internet search and retrieval, code execution, enforced process sandboxes, Git operations, model-driven memory use and learning evaluation, task-specific verification beyond exact text, and a minimal interactive UI. The mandatory course requirements remain the acceptance target; this foundation implements only part of their supporting infrastructure.

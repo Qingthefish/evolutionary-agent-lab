@@ -3,8 +3,9 @@ import json
 from pathlib import Path
 import tempfile
 
-from .core import Workflow
+from .core import Workflow, WorkflowError
 from .files import FileTools, FileToolError
+from .memory import ExperienceMemory
 
 
 def new_run_directory(directory, prefix):
@@ -106,6 +107,55 @@ def file_demo(directory):
         store.close()
 
 
+def memory_demo(directory):
+    """Scripted retrieval after a real text-check failure; not a learning experiment."""
+    root = new_run_directory(directory, "memory-")
+    store = Workflow(root / "workflow.sqlite3")
+    files = None
+    try:
+        store.register_actor("user", "human")
+        store.register_actor("writer", "agent")
+        chat = store.create_chat("group", ["user", "writer"])
+        files = FileTools(store, root / "files")
+        memory = ExperienceMemory(store, namespace="offline-development-fixture")
+        expected = "Verified report\n"
+        first = store.create_task(chat, "user", "writer", "Write a verified report")
+        store.start_task(first, "writer")
+        files.create_text(first, "writer", "report.txt", "Unverified draft\n")
+        try:
+            files.complete_from_text(first, "writer", {"report.txt": expected})
+        except WorkflowError:
+            store.finish_task(first, "writer", error="Actual report text did not match the trusted expectation")
+        else:
+            raise RuntimeError("The fixture's incorrect report unexpectedly passed verification")
+        lesson = "Check expected text before declaring the report complete"
+        tags = ["text", "verification"]
+        identifier = memory.capture(first, "writer", lesson=lesson, tags=tags)
+        second = store.create_task(chat, "user", "writer", "Write a second verified report")
+        store.start_task(second, "writer")
+        retrieved = memory.search(second, "writer", "text verification")
+        if not retrieved or retrieved[0]["memory_id"] != identifier:
+            raise RuntimeError("The scoped candidate lesson was not retrieved")
+        memory.select(second, "writer", identifier)
+        # The fixture writes the expected text explicitly. No model learned this behavior.
+        files.create_text(second, "writer", "report.txt", expected)
+        files.complete_from_text(second, "writer", {"report.txt": expected})
+        assessed = memory.assess_selected(second, "writer")
+        merged = memory.capture(second, "writer", lesson=lesson, tags=tags)
+        report = {
+            "mode": "offline_fixture", "model_calls": 0, "benchmark_valid": False,
+            "learning_improvement_established": False, "state_directory": str(root),
+            "retrieved_before_second_task": retrieved, "assessed_after_second_task": assessed,
+            "exact_duplicate_merged": merged == identifier, "metrics": store.metrics(chat, "user"),
+        }
+        (root / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        return report
+    finally:
+        if files is not None:
+            files.close()
+        store.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Offline workflow foundation; no model runtime yet")
     subcommands = parser.add_subparsers(dest="command", required=True)
@@ -113,9 +163,11 @@ def main():
     command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     files_command = subcommands.add_parser("files-demo", help="Exercise controlled text CRUD and explicit artifact handoff")
     files_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
+    memory_command = subcommands.add_parser("memory-demo", help="Exercise scoped candidate memory without claiming learning gains")
+    memory_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     args = parser.parse_args()
     try:
-        report = file_demo(args.state_dir) if args.command == "files-demo" else demo(args.state_dir)
+        report = {"demo": demo, "files-demo": file_demo, "memory-demo": memory_demo}[args.command](args.state_dir)
     except FileExistsError:
         parser.error("State directory already exists; choose a new path to preserve previous evidence")
     print(json.dumps(report, indent=2))
