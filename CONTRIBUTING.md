@@ -26,6 +26,6 @@ Use a descriptive branch for your actual task. Review the diff before committing
 
 ## Review evidence
 
-Explain the concrete requirement, resulting behavior, checks actually run, and remaining limitations. For documents, check links and consistency. For later implementation, use meaningful behavior checks and preserve failed-run evidence. No application tests exist in the bootstrap commit.
+Explain the concrete requirement, resulting behavior, checks actually run, and remaining limitations. For documents, check links and consistency. For implementation, run the relevant behavior checks documented in README.md and preserve failed-run evidence. The offline foundation checks do not establish model performance or sandbox isolation.
 
 Commit messages and author identities should reflect actual work. Do not use shared accounts or commit on behalf of another member to simulate contributions.

@@ -4,7 +4,7 @@ Evolutionary Multi-Agent Collaboration System
 
 ## Status
 
-2026-10-15: repository bootstrap and requirements preparation. There is no runnable system, measured result, or finalized team yet. The project repository is [Qingthefish/evolutionary-agent-lab](https://github.com/Qingthefish/evolutionary-agent-lab).
+2026-10-15: the first workflow foundation is implemented on a feature branch: durable task state, conversation membership checks, specialist-delegation records, human pause/resume, exact-action approval release, and task accounting. A deterministic offline CLI fixture exercises these primitives. **There is no autonomous model-driven platform, process/file sandbox, experience-learning mechanism, or model-performance result yet.** The project repository is [Qingthefish/evolutionary-agent-lab](https://github.com/Qingthefish/evolutionary-agent-lab).
 
 The instructor's announcement is the primary scope authority. Build a general multi-agent collaboration platform with autonomous delegation, human interaction, private sandboxes, per-agent memory and learning, required tools, and automatic completion/time evaluation. The proposed implementation emphasis is reliable execution with observable results and bounded recovery. A business vertical is not required to start the project.
 
@@ -14,14 +14,29 @@ The instructor's announcement is the primary scope authority. Build a general mu
 2. Read [course requirements](docs/requirements.md), then [delivery scope](docs/direction.md). The announcement's mandatory requirements come before optional research ideas.
 3. Ask Codex: `Read README.md, AGENTS.md, and docs/requirements.md. Summarize what exists, what is still planned, the mandatory course requirements, and one small next implementation step. Do not modify files yet.`
 4. Before making changes, create a focused branch, agree on observable acceptance criteria, and follow [CONTRIBUTING.md](CONTRIBUTING.md).
-5. No API key, model download, dependency installation, or experiment run is needed to review these initial documents. There is no application startup or test command yet; commands will be documented once implemented and verified.
+5. Use Python 3.12 or newer and run the offline checks below. No API key, model download, package installation, or external service is needed. The demo is a scripted plumbing check, not an autonomous-agent demonstration.
 
-For now, useful onboarding work is checking requirements, reviewing acceptance examples, and proposing small development tasks. Do not report any planned capability as implemented.
+Useful onboarding work includes checking requirements, running the fixture, reviewing the state/approval contract, and proposing small development tasks. Do not report planned capabilities as implemented.
 
 ```bash
 git clone https://github.com/Qingthefish/evolutionary-agent-lab.git
 cd evolutionary-agent-lab
 ```
+
+## Run the offline foundation
+
+From the repository root:
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 -m agent_lab demo
+```
+
+The demo creates a fresh ignored `runs/offline-*` directory containing a SQLite database, a verified fixture `note.txt`, and `report.json`. It closes/reopens the database while awaiting clarification, resumes, requests and consumes one exact approval, writes the fixed note, checks its contents, and completes a parent/child task pair. Human responses and delegation in this fixture are scripted. No model, arbitrary shell command, Git mutation, or network request is executed.
+
+Use `python3 -m agent_lab demo --state-dir runs/my-first-demo` to choose a **new** run directory. Existing paths are rejected to preserve evidence. Every report explicitly contains `mode: offline_fixture`, `model_calls: 0`, and `benchmark_valid: false`. Its success fractions describe trusted workflow state, not course benchmark performance.
+
+The offline checks have passed locally on Python 3.12 and 3.14. A [CI workflow template](docs/ci-workflow.yml) is provided for later installation as `.github/workflows/checks.yml`; it is **not enabled**, because the current Git push credential cannot add Actions workflows. No GitHub Actions result is claimed. Read [architecture and boundaries](docs/architecture.md) before connecting an executor or model.
 
 ## Initial delivery milestones
 
@@ -39,9 +54,10 @@ These unchecked milestones are planned work, not claimed results. The API key wi
 - [Direction discussion](docs/direction.md): announcement-first scope, concrete task examples, and staged delivery.
 - [Contribution guide](CONTRIBUTING.md): development and evidence practices.
 - [AGENTS.md](AGENTS.md): instructions for coding assistants working in this project.
+- [Architecture and boundaries](docs/architecture.md): the implemented state and approval contract, with missing integrations stated explicitly.
 
 ## Project boundaries
 
-This folder is separate from lecture materials and Assignment 01. The submitted runtime must use DeepSeek or HKGAI, as required by the course. API credentials have not been configured. Provider integration and live-model validation are future work.
+This folder is separate from lecture materials and Assignment 01. The submitted runtime must use DeepSeek or HKGAI, as required by the course. API credentials have not been configured. Provider integration and live-model validation are future work. The local workflow API expects a trusted caller; actor IDs alone are not authentication. Conversation membership checks do not establish execution-sandbox isolation.
 
 Other coursework is reference material. Shared themes do not establish permission to reuse code, datasets, reports, or results across course submissions. Track any approved reuse and each course's new contribution explicitly.

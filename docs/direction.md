@@ -40,7 +40,7 @@ Implementation details remain provisional. More agents, a vector database, model
 
 ## Feasibility and dependencies
 
-This is a substantial but bounded engineering project. Main uncertainties are provider tool-call behavior and quotas, local sandbox runtime, long-task reliability, and the unseen test distribution. Validate these early. Current files are documentation only; no runtime, sandbox, or model integration has been validated.
+This is a substantial but bounded engineering project. Main uncertainties are provider tool-call behavior and quotas, local sandbox runtime, long-task reliability, and the unseen test distribution. Validate these early. README.md is the current implementation-status source; the architecture document describes the workflow contract. Offline workflow checks alone do not validate an execution sandbox or model integration.
 
 Live-model validation requires an allowed provider credential. Offline fixtures can advance implementation but cannot establish completion rate or learning effectiveness. Sandbox implementation depends on available runtime support and the instructor's minimum boundary. No grade or universal task success is guaranteed by this plan.
 
