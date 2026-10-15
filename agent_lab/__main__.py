@@ -9,6 +9,7 @@ from .memory import ExperienceMemory
 from .deepseek import DeepSeekClient
 from .gateway import ToolGateway
 from .runner import Limits, TaskRunner
+from .sandbox import DockerPythonExecutor, SandboxError
 
 
 def new_run_directory(directory, prefix):
@@ -284,8 +285,63 @@ def runner_demo(directory):
         store.close()
 
 
+def sandbox_demo(directory, *, docker_host, image):
+    """Run fixed Python sources in a real container; no synthetic engine/model."""
+    root = new_run_directory(directory, "sandbox-")
+    store = Workflow(root / "workflow.sqlite3")
+    files = executor = None
+    try:
+        store.register_actor("user", "human")
+        store.register_actor("coder", "agent")
+        chat = store.create_chat("private", ["user", "coder"])
+        task = store.create_task(chat, "user", "coder", "Execute and independently check a text-processing fixture")
+        store.start_task(task, "coder")
+        files = FileTools(store, root / "files")
+        executor = DockerPythonExecutor(store, files, docker_host=docker_host, image=image)
+        sources = {
+            "solution.py": "import re\nfrom collections import Counter\n\ndef word_counts(text):\n    return dict(Counter(re.findall(r'\\w+', text.casefold())))\n",
+            "sample.txt": "Hello hello Agents!\n",
+            "check.py": "import unittest\nfrom pathlib import Path\nfrom solution import word_counts\n"
+                        "class Checks(unittest.TestCase):\n"
+                        "    def test_counts(self):\n"
+                        "        self.assertEqual(word_counts(Path('sample.txt').read_text()), {'hello': 2, 'agents': 1})\n"
+                        "        self.assertEqual(word_counts(''), {})\n"
+                        "result = unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(Checks))\n"
+                        "if not result.wasSuccessful(): raise SystemExit(1)\n"
+                        "Path('result.txt').write_text('Actual Python checks passed.\\n')\n",
+        }
+        inputs = {path: files.create_text(task, "coder", path, text)["sha256"] for path, text in sources.items()}
+        gateway = ToolGateway(store, files, task, "coder", human="user", allowed=["run_python"], executor=executor)
+        response = gateway.dispatch({"id": "fixture-python-execution", "type": "function", "function": {
+            "name": "run_python", "arguments": json.dumps({"entrypoint": "check.py", "input_files": inputs,
+                                                          "arguments": [], "outputs": ["result.txt"]}),
+        }})
+        tool_result = json.loads(response["content"])
+        runtime = tool_result.get("result", {})
+        execution = runtime.get("execution") or {}
+        passed = (tool_result.get("ok") is True and runtime.get("process_sandbox") is True
+                  and runtime.get("cleanup_confirmed") is True and not runtime.get("error")
+                  and execution.get("exit_code") == 0 and execution.get("interrupted") is None)
+        if passed:
+            files.complete_from_text(task, "coder", {"result.txt": "Actual Python checks passed.\n"})
+        else:
+            store.finish_task(task, "coder", error="Real sandbox fixture failed; inspect its preserved runtime evidence")
+        report = {"mode": "sandbox_integration_fixture", "model_calls": 0, "api_network_calls": 0,
+                  "benchmark_valid": False, "process_sandbox": runtime.get("process_sandbox", False),
+                  "demo_passed": passed, "state_directory": str(root), "tool_result": tool_result,
+                  "metrics": store.metrics(chat, "user")}
+        (root / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        return report
+    finally:
+        if executor is not None:
+            executor.close()
+        if files is not None:
+            files.close()
+        store.close()
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Offline engineering fixtures; no live model calls")
+    parser = argparse.ArgumentParser(description="Engineering fixtures; no live model calls")
     subcommands = parser.add_subparsers(dest="command", required=True)
     command = subcommands.add_parser("demo", help="Run a deterministic, non-benchmark fixture")
     command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
@@ -297,13 +353,24 @@ def main():
     protocol_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     runner_command = subcommands.add_parser("runner-demo", help="Exercise a bounded synthetic tool loop and restart after human clarification")
     runner_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
+    sandbox_command = subcommands.add_parser("sandbox-demo", help="Run fixed sources in a real, explicitly configured Docker sandbox")
+    sandbox_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
+    sandbox_command.add_argument("--docker-host", required=True, help="Explicit local Unix socket; no implicit Docker context")
+    sandbox_command.add_argument("--image", required=True, help="Already-pulled official Python image pinned by sha256 digest")
     args = parser.parse_args()
     try:
-        report = {"demo": demo, "files-demo": file_demo, "memory-demo": memory_demo,
-                  "protocol-demo": protocol_demo, "runner-demo": runner_demo}[args.command](args.state_dir)
+        if args.command == "sandbox-demo":
+            report = sandbox_demo(args.state_dir, docker_host=args.docker_host, image=args.image)
+        else:
+            report = {"demo": demo, "files-demo": file_demo, "memory-demo": memory_demo,
+                      "protocol-demo": protocol_demo, "runner-demo": runner_demo}[args.command](args.state_dir)
     except FileExistsError:
         parser.error("State directory already exists; choose a new path to preserve previous evidence")
+    except SandboxError as error:
+        parser.error(str(error))
     print(json.dumps(report, indent=2))
+    if report.get("demo_passed") is False:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

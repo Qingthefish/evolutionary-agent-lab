@@ -73,6 +73,7 @@ class TaskRunner:
         context = {"global_goal": root["title"], "current_assignment": task["title"], "constraints": constraints}
         config = _json({"mode": mode, "model": client.model, "max_output_tokens": client.max_tokens,
                         "limits": asdict(limits), "context": context, "tools": gateway.tools(),
+                        "execution": gateway.execution_configuration(),
                         "human": gateway.human, "verifier_id": verifier_id,
                         "prompt_sha256": hashlib.sha256(_PROMPT.encode()).hexdigest()})
         self.workflow.db.executescript("""

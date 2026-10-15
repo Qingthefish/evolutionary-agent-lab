@@ -46,6 +46,10 @@ The owner clarified these design priorities on 2026-10-15. They operationalize t
 
 The complete acceptance target still includes private/group human interaction, independent per-agent sandboxes and filesystems, internet search, file CRUD, real code tests/execution, Git commit/push, Markdown/TXT documents, minimal UI, the allowed model provider, official test-set results, architecture/report/presentation, and continuous genuine contribution records.
 
+## Current execution-backend decision
+
+2026-10-16: implement an opt-in Docker Python backend as the first real process-execution path. It uses a trusted local Linux engine, digest-pinned official image, per-invocation private scratch space, non-root payload, resource/network restrictions, declared text exports, and explicit cleanup/recovery. The macOS development environment uses a separate Colima VM without host-directory or SSH-agent sharing. This is an implementation choice supporting R05/R08, not a new instructor requirement or confirmation of the minimum accepted sandbox boundary. It does not replace autonomous delegation or any other capability. See README.md for current evidence and [sandbox.md](sandbox.md) for operation details.
+
 ## Delivery gates
 
 1. One real-model task runs end to end with delegated work, real tools, verified outputs, and measured time. This vertical slice alone is not full course compliance.
