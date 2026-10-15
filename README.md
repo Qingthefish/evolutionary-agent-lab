@@ -4,7 +4,7 @@ Evolutionary Multi-Agent Collaboration System
 
 ## Status
 
-2026-10-15: the current foundation implements durable workflow state, conversation membership checks, delegation records, human pause/resume, exact-action approval release, and task accounting. Controlled UTF-8 file tools enforce task ownership and descriptor-based paths, transfer artifact snapshots, and check actual text before completion. Per-agent candidate memory now captures observed outcomes with provenance, performs scoped lexical retrieval, tracks selected-use outcomes, merges exact duplicates, and retires obsolete suggestions. Deterministic CLI fixtures exercise this infrastructure. **There is no autonomous model-driven platform, process sandbox, demonstrated learning improvement, or model-performance result yet.** The project repository is [Qingthefish/evolutionary-agent-lab](https://github.com/Qingthefish/evolutionary-agent-lab).
+2026-10-15: the current foundation implements durable workflow state, conversation membership checks, delegation records, human pause/resume, exact-action approval release, and task accounting. Controlled UTF-8 file tools enforce task ownership and descriptor-based paths, transfer artifact snapshots, and check actual text before completion. Per-agent candidate memory captures observed outcomes with provenance, scoped lexical retrieval, selected-use outcomes, exact duplicate merging, and retirement. A DeepSeek HTTP/protocol adapter and allowlisted tool gateway now connect structured requests to these tools, with persisted call reservations and a per-task tool-call cap. Deterministic CLI fixtures exercise this infrastructure. **There is no live-provider validation, autonomous model-driven platform, process sandbox, demonstrated learning improvement, or model-performance result yet.** The project repository is [Qingthefish/evolutionary-agent-lab](https://github.com/Qingthefish/evolutionary-agent-lab).
 
 The instructor's announcement is the primary scope authority. Build a general multi-agent collaboration platform with autonomous delegation, human interaction, private sandboxes, per-agent memory and learning, required tools, and automatic completion/time evaluation. The proposed implementation emphasis is reliable execution with observable results and bounded recovery. A business vertical is not required to start the project.
 
@@ -32,6 +32,7 @@ python3 -m unittest discover -s tests -v
 python3 -m agent_lab demo
 python3 -m agent_lab files-demo
 python3 -m agent_lab memory-demo
+python3 -m agent_lab protocol-demo
 ```
 
 The demo creates a fresh ignored `runs/offline-*` directory containing a SQLite database, a verified fixture `note.txt`, and `report.json`. It closes/reopens the database while awaiting clarification, resumes, requests and consumes one exact approval, writes the fixed note, checks its contents, and completes a parent/child task pair. Human responses and delegation in this fixture are scripted. No model, arbitrary shell command, Git mutation, or network request is executed.
@@ -41,6 +42,10 @@ Use `python3 -m agent_lab demo --state-dir runs/my-first-demo` to choose a **new
 `files-demo` creates a separate `runs/files-*` directory. It creates/reads/updates/deletes controlled text, hands a snapshot from a writer task to a reviewer task, and checks both copies against trusted expected contents before completion. Source and received SHA-256 receipts must agree. It also demonstrates that code execution is refused when no process sandbox is configured. Its report explicitly says `process_sandbox: false`; script-driven file operations are not a sandbox or a model benchmark. The file broker currently requires POSIX descriptor-relative operations and a private root directory; unsupported systems fail closed.
 
 `memory-demo` creates a separate `runs/memory-*` directory. An actual text check rejects the first scripted output. A candidate suggestion is attached to that failure, retrieved and selected by a later task owned by the same agent, and assessed after the later task passes its text check. The duplicate suggestion retains both source outcomes. The second output is explicitly written by fixture code, not learned by a model; the report states `learning_improvement_established: false`. This checks memory plumbing, not whether memory improves the course metrics.
+
+`protocol-demo` creates a separate `runs/protocol-*` directory. Two explicitly synthetic provider responses pass through the DeepSeek response parser: a structured request creates a real controlled file, its tool result is returned in the next protocol request, and a final assistant message leaves the task running until a trusted text check succeeds. This fixture makes zero network/model calls, needs no key, and saves its transcript with `benchmark_valid: false`. It does not measure DeepSeek capability or autonomous collaboration.
+
+The provider code uses the official DeepSeek endpoint directly, requires an explicit model ID, and disables network use by default. No alternate provider, local model, or synthetic fallback is selected automatically. Live use still needs the issued credential/model details, an authorized call/token budget, and a controller enforcing that budget. HKGAI integration awaits its official interface details. See [provider and gateway boundaries](docs/architecture.md#provider-protocol-and-tool-gateway).
 
 The offline checks have passed locally on Python 3.12 and 3.14. A [CI workflow template](docs/ci-workflow.yml) is provided for later installation as `.github/workflows/checks.yml`; it is **not enabled**, because the current Git push credential cannot add Actions workflows. No GitHub Actions result is claimed. Read [architecture and boundaries](docs/architecture.md) before connecting an executor or model.
 
@@ -64,6 +69,6 @@ These unchecked milestones are planned work, not claimed results. The API key wi
 
 ## Project boundaries
 
-This folder is separate from lecture materials and Assignment 01. The submitted runtime must use DeepSeek or HKGAI, as required by the course. API credentials have not been configured. Provider integration and live-model validation are future work. The local workflow API expects a trusted caller; actor IDs alone are not authentication. Conversation membership checks do not establish execution-sandbox isolation.
+This folder is separate from lecture materials and Assignment 01. The submitted runtime must use DeepSeek or HKGAI, as required by the course. API credentials have not been configured. Provider protocol plumbing is implemented; live-model validation and autonomous scheduling remain future work. The local workflow API expects a trusted caller; actor IDs alone are not authentication. Conversation membership checks do not establish execution-sandbox isolation.
 
 Other coursework is reference material. Shared themes do not establish permission to reuse code, datasets, reports, or results across course submissions. Track any approved reuse and each course's new contribution explicitly.

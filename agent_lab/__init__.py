@@ -1,4 +1,4 @@
-"""Durable workflow primitives. No model or sandbox runtime is implemented yet."""
+"""Workflow, controlled tools, and provider protocol. No process sandbox yet."""
 
 from .core import Workflow, WorkflowError
 

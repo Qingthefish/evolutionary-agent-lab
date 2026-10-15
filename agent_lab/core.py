@@ -146,11 +146,15 @@ class Workflow:
             self.db.executemany("INSERT INTO members VALUES(?,?)", [(identifier, p) for p in people])
         return identifier
 
-    def post_message(self, chat, actor, body):
+    def post_message(self, chat, actor, body, *, task=None):
         if not isinstance(body, str) or not body.strip():
             raise WorkflowError("A message cannot be empty")
         with self._transaction():
             self._member(chat, actor)
+            if task is not None:
+                assigned = self._task(task, actor, assigned=True)
+                if assigned["chat"] != chat or assigned["state"] != "running":
+                    raise WorkflowError("Task messages require a running assignment in this conversation")
             self.db.execute(
                 "INSERT INTO messages(chat,sender,body,timestamp) VALUES(?,?,?,?)",
                 (chat, actor, body, self.clock()),
