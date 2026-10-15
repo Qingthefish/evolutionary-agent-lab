@@ -18,6 +18,7 @@ import time
 from ..core import Workflow, WorkflowError
 from ..deepseek import DeepSeekClient, DeepSeekHTTP
 from ..files import FileTools
+from ..git_tools import GitTools
 from ..inspection import ArtifactInspector
 from ..memory import ExperienceMemory
 from ..queries import TERMINAL, WorkflowQueries, redact, require_human
@@ -78,10 +79,10 @@ def live_roles(members):
 class _Backend:
     """Owned by the backend thread only."""
 
-    def __init__(self, state_dir, human, live, clock):
+    def __init__(self, state_dir, human, live, clock, repositories):
         self.state_dir, self.human, self.live = state_dir, human, live
         self.workflow = Workflow(state_dir / "workflow.sqlite3", **({"clock": clock} if clock else {}))
-        self.files = None
+        self.files = self.git = None
         try:
             self.workflow.register_actor(human, "human")
             for agent in offline_scenarios.AGENTS:
@@ -90,6 +91,7 @@ class _Backend:
             self.memory = ExperienceMemory(self.workflow, namespace=MEMORY_NAMESPACE)
             self.queries = WorkflowQueries(self.workflow)
             self.inspector = ArtifactInspector(self.workflow, self.files)
+            self.git = GitTools(self.workflow, [offline_scenarios.demo_repository_config(state_dir), *repositories])
             self.workflow.db.executescript("""
                 CREATE TABLE IF NOT EXISTS tui_runs (
                     root TEXT PRIMARY KEY REFERENCES tasks(id), scenario TEXT NOT NULL, created REAL NOT NULL
@@ -100,6 +102,9 @@ class _Backend:
             raise
 
     def close(self):
+        if self.git is not None:
+            self.git.close()
+            self.git = None
         if self.files is not None:
             self.files.close()
             self.files = None
@@ -126,7 +131,8 @@ class _Backend:
                 mode="live", constraints=[], acceptance_id="tui-live-human-review-v1",
                 # No automatic acceptance rule: proposals await the human reviewer.
                 verifier_factory=lambda task: None, memory=None)
-        return offline_scenarios.scheduler_for(self.workflow, self.files, root, kind, human=self.human, memory=self.memory)
+        return offline_scenarios.scheduler_for(self.workflow, self.files, root, kind, human=self.human,
+                                               memory=self.memory, git=self.git)
 
     def root_of(self, task):
         row = self.workflow.task(task, self.human)
@@ -136,7 +142,7 @@ class _Backend:
 
 
 class ControlCenter:
-    def __init__(self, state_dir, *, human="operator", live=None, clock=None):
+    def __init__(self, state_dir, *, human="operator", live=None, clock=None, repositories=()):
         if live is not None and not isinstance(live, LiveConfig):
             raise ControllerError("Live mode requires an explicit LiveConfig")
         self.state_dir = Path(state_dir)
@@ -146,6 +152,7 @@ class ControlCenter:
         self.activity, self._activity_seq = [], 0
         self._queue = queue.Queue()
         self._clock = clock
+        self._repositories = tuple(repositories)
         self._factory_error = None
         self._thread = threading.Thread(target=self._loop, name="agent-lab-backend", daemon=True)
         self._thread.start()
@@ -164,7 +171,7 @@ class ControlCenter:
                 continue
             try:
                 if backend is None:
-                    backend = _Backend(self.state_dir, self.human, self.live, self._clock)
+                    backend = _Backend(self.state_dir, self.human, self.live, self._clock, self._repositories)
                 future.set_result(function(backend))
             except BaseException as error:  # Delivered to the caller's thread.
                 future.set_exception(error)
@@ -219,7 +226,8 @@ class ControlCenter:
 
     def runtimes(self):
         return {"model": "live (DeepSeek)" if self.live else "offline fixtures only",
-                "sandbox": "not configured", "search": "disabled", "git": "not configured"}
+                "sandbox": "not configured", "search": "disabled",
+                "git": f"{1 + len(self._repositories)} trusted repo(s), local remotes only"}
 
     def actors(self):
         return self.call(lambda b: b.queries.actors())
@@ -296,6 +304,32 @@ class ControlCenter:
 
     def namespaces(self):
         return self.call(lambda b: b.queries.namespaces(b.human))
+
+    def git_repositories(self):
+        return self.call(lambda b: [{"name": r.name, "path": r.path, "writable_branches": list(r.writable_branches),
+                                     "writable_paths": list(r.writable_paths),
+                                     "remotes": [n for n, _ in r.remotes]} for r in b.git.repositories.values()])
+
+    def git_overview(self, repository, *, staged=False):
+        """Status, diff, and log for the Git dashboard; each part reports its own error."""
+        def collect(b):
+            result = {"repository": repository}
+            for key, function in (("status", lambda: b.git.status(repository)),
+                                  ("diff", lambda: b.git.diff(repository, staged=staged)),
+                                  ("log", lambda: b.git.log(repository, limit=30))):
+                try:
+                    result[key] = function()
+                except WorkflowError as error:
+                    result[key] = {"error": str(error)}
+            return result
+        return self.call(collect)
+
+    def git_operations(self):
+        return self.call(lambda b: b.git.operations())
+
+    def git_reconcile(self, operation):
+        return self._action(f"Reconciled push {operation[:8]} (observation only)",
+                            lambda b: b.git.reconcile(operation, actor=b.human))
 
     def scenarios(self):
         return [{"name": s.name, "title": s.title, "description": s.description,
@@ -389,7 +423,7 @@ class ControlCenter:
             raise ControllerError("Unknown scenario")
 
         def run(b):
-            root, summary = offline_scenarios.start(name, b.workflow, b.files, b.memory, human=b.human)
+            root, summary = offline_scenarios.start(name, b.workflow, b.files, b.memory, human=b.human, git=b.git)
             result = {"scenario": name, "summary": summary, "mode": "offline_fixture",
                       "model_calls": 0, "benchmark_valid": False}
             if root is not None:

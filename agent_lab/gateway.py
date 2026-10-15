@@ -54,7 +54,26 @@ _SPECS = {
                         "propertyNames": _PATH, "additionalProperties": _HASH},
         "arguments": {"type": "array", "maxItems": 16, "items": _text("Script argument", maximum=1024, empty=True)},
         "outputs": {"type": "array", "maxItems": 8, "uniqueItems": True, "items": _PATH}}),
+    "git_status": ("Show branch and working-tree status of a trusted repository", {
+        "repository": _text("Trusted repository name", maximum=64)}),
+    "git_diff": ("Show staged or unstaged changes in a trusted repository", {
+        "repository": _text("Trusted repository name", maximum=64),
+        "scope": {"type": "string", "pattern": "^(staged|unstaged)$", "enum": ["staged", "unstaged"]}}),
+    "git_log": ("List recent commits of a trusted repository", {
+        "repository": _text("Trusted repository name", maximum=64),
+        "limit": {"type": "integer", "minimum": 1, "maximum": 50}}),
+    "git_commit": ("Copy task-local files into authorized repository paths and commit exactly those paths", {
+        "repository": _text("Trusted repository name", maximum=64),
+        "files": {"type": "object", "minProperties": 1, "maxProperties": 20,
+                  "propertyNames": _text("Repository-relative destination path", maximum=512),
+                  "additionalProperties": _PATH},
+        "message": _text("Commit message", maximum=2000)}),
+    "git_push": ("Request human approval for a fast-forward push of a writable branch; pauses task", {
+        "repository": _text("Trusted repository name", maximum=64),
+        "remote": _text("Configured remote name", maximum=64),
+        "branch": _text("Writable branch name", maximum=100)}),
 }
+_GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
 
 
 class ToolGateway:
@@ -66,10 +85,10 @@ class ToolGateway:
     """
 
     def __init__(self, workflow, files, task, actor, *, human, allowed,
-                 memory=None, delegates=(), max_calls=32, executor=None):
+                 memory=None, delegates=(), max_calls=32, executor=None, git=None):
         self.workflow, self.files, self.memory = workflow, files, memory
         self.task, self.actor, self.human = task, actor, human
-        self.executor = executor
+        self.executor, self.git = executor, git
         self.allowed, self.delegates = frozenset(allowed), frozenset(delegates)
         if (not self.allowed or not self.allowed <= _SPECS.keys()
                 or type(max_calls) is not int or not 1 <= max_calls <= 1000):
@@ -80,6 +99,8 @@ class ToolGateway:
             raise ToolRequestError("Memory capabilities require a memory backend")
         if "run_python" in self.allowed and (executor is None or executor.workflow is not workflow or executor.files is not files):
             raise ToolRequestError("Python execution requires an explicit isolated backend for these files")
+        if self.allowed & _GIT_TOOLS and (git is None or git.workflow is not workflow):
+            raise ToolRequestError("Git tools require an explicit trusted-repository backend for this workflow")
         row = workflow._task(task, actor, assigned=True)
         workflow._member(row["chat"], human)
         if workflow._row("actors", human)["kind"] != "human":
@@ -115,6 +136,8 @@ class ToolGateway:
             properties = json.loads(json.dumps(properties))
             if name == "delegate_task":
                 properties["assignee"]["enum"] = sorted(self.delegates)
+            if name in _GIT_TOOLS:
+                properties["repository"]["enum"] = sorted(self.git.repositories)
             result.append({"type": "function", "function": {"name": name, "description": description,
                 "parameters": {"type": "object", "properties": properties,
                                "required": list(properties), "additionalProperties": False}}})
@@ -146,6 +169,8 @@ class ToolGateway:
             self._validate_value(arguments[key], spec)
         if name == "delegate_task" and arguments["assignee"] not in self.delegates:
             raise ToolRequestError("Assignee is not an eligible delegate")
+        if name in _GIT_TOOLS and arguments["repository"] not in self.git.repositories:
+            raise ToolRequestError("Repository is not in the trusted allowlist")
         if name == "run_python":
             try:
                 self.executor.validate_job(**arguments)
@@ -282,6 +307,8 @@ class ToolGateway:
         if name == "post_message":
             self.workflow.post_message(self.chat, self.actor, args["body"], task=self.task)
             return {"posted": True}
+        if name in _GIT_TOOLS:
+            return self._git(name, args)
         if name == "search_memory":
             return self.memory.search(self.task, self.actor, **args)
         if name == "select_memory":
@@ -289,21 +316,60 @@ class ToolGateway:
             return {"selected": True}
         raise ToolRequestError("Unsupported tool")
 
+    def _git(self, name, args):
+        repository = args["repository"]
+        if name == "git_status":
+            return self.git.status(repository)
+        if name == "git_diff":
+            return self.git.diff(repository, staged=args["scope"] == "staged")
+        if name == "git_log":
+            return self.git.log(repository, limit=args["limit"])
+        if name == "git_commit":
+            # Contents come from this task's own files through broker ownership checks.
+            contents = {destination: self.files.read_text(self.task, self.actor, source)["content"]
+                        for destination, source in args["files"].items()}
+            return self.git.commit(repository, sorted(contents), args["message"], actor=self.actor,
+                                   task=self.task, contents=contents)
+        binding = self.git.prepare_push(repository, args["remote"], args["branch"])
+        action = {"tool": "git_push", "arguments": args, "binding": binding}
+        expected = (f"at {binding['expected_remote']}" if binding["expected_remote"] else "to be absent")
+        request = self.workflow.ask_human(
+            self.task, self.actor, self.human,
+            f"Approve fast-forward push of commit {binding['commit']} to branch '{binding['branch']}' on remote "
+            f"'{binding['remote']}' ({binding['remote_url']}), expecting the remote branch {expected}?",
+            action=action)
+        return {"request_id": request, "action": action}
+
     def release_approved(self, request_id):
         """Trusted controller entry point, deliberately absent from model tools.
 
-        Release before effect, recheck the exact file hash, and never auto-retry.
-        Failure after release needs reconciliation and a new approval.
+        Release before effect, recheck the exact file hash or repository state,
+        and never auto-retry. Failure after release needs reconciliation and a
+        new approval.
         """
         request = self.workflow.request(request_id, self.actor)
         if request["task"] != self.task or request["responder"] != self.human or not request["action"]:
             raise ToolRequestError("Approval belongs to another task or human")
         action = strict_json(request["action"])
-        if set(action) != {"tool", "arguments"} or action["tool"] != "delete_text":
+        tool = action.get("tool") if isinstance(action, dict) else None
+        keys = {"tool", "arguments", "binding"} if tool == "git_push" else {"tool", "arguments"}
+        if tool not in {"delete_text", "git_push"} or set(action) != keys or tool not in self.allowed:
             raise ToolRequestError("Unsupported approved action")
         _, args = self._validate({"id": "approved", "type": "function", "function": {
             "name": action["tool"], "arguments": json.dumps(action["arguments"]),
         }})
+        if tool == "git_push":
+            binding = action["binding"]
+            if (not isinstance(binding, dict) or {k: binding.get(k) for k in ("repository", "remote", "branch")}
+                    != {"repository": args["repository"], "remote": args["remote"], "branch": args["branch"]}):
+                raise ToolRequestError("Approved push binding does not match its arguments")
+            # Recheck exact local commit and remote state before consuming approval.
+            self.git.verify_binding(binding)
+            self.workflow.consume_approval(request_id, self.actor, action)
+            try:
+                return self.git.push_approved(binding, actor=self.actor, task=self.task, request_id=request_id)
+            except WorkflowError as error:
+                raise ToolRequestError("Approval released but push did not verify: " + str(error)) from None
         self.workflow.consume_approval(request_id, self.actor, action)
         try:
             return self.files.delete_text(self.task, self.actor, **args)

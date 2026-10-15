@@ -14,6 +14,7 @@ from .widgets.artifacts import ArtifactsPane
 from .widgets.base import Pane
 from .widgets.conversations import ConversationsPane
 from .widgets.dashboard import DashboardPane
+from .widgets.git import GitPane
 from .widgets.header import StatusHeader
 from .widgets.logs import LogsPane
 from .widgets.memory import MemoryPane
@@ -27,6 +28,7 @@ TABS = [
     ("memory", "Memory", MemoryPane, "f5"),
     ("approvals", "Approvals", ApprovalsPane, "f6"),
     ("logs", "Logs", LogsPane, "f7"),
+    ("git", "Git", GitPane, "f8"),
 ]
 
 
@@ -41,6 +43,7 @@ class ControlCenterApp(App):
         Binding("ctrl+t", "new_task", "New task"),
         Binding("ctrl+p", "show_tab('approvals')", "Approvals"),
         Binding("ctrl+l", "show_tab('logs')", "Logs"),
+        Binding("ctrl+g", "show_tab('git')", "Git"),
         Binding("ctrl+r", "refresh_all", "Refresh"),
         Binding("question_mark", "help", "Help"),
         Binding("ctrl+q", "quit", "Quit", priority=True),

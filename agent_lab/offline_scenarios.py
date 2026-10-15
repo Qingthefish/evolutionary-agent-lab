@@ -8,6 +8,8 @@ transcript, so a scheduler can be reconstructed after an application restart.
 
 from dataclasses import dataclass, field
 import json
+import os
+from pathlib import Path
 
 from .core import WorkflowError
 from .deepseek import DeepSeekClient
@@ -15,7 +17,8 @@ from .scheduler import MultiAgentScheduler, Role
 from .scheduler_fixture import DelegationFixture, fixture_roles
 
 FIXTURE_MODEL = "offline-scenario-fixture"
-AGENTS = ("coordinator", "writer", "editor", "archivist", "researcher")
+AGENTS = ("coordinator", "writer", "editor", "archivist", "researcher", "integrator")
+DEMO_REPOSITORY, DEMO_BRANCH, DEMO_REMOTE = "demo", "agent/demo", "origin"
 
 
 @dataclass(frozen=True)
@@ -73,6 +76,90 @@ def approval_roles():
                               ("create_text", "read_text", "delete_text"))}
 
 
+class GitScript:
+    """Integrator writes a note, commits it to the demo repository, then requests a push."""
+
+    @staticmethod
+    def note(task_id):
+        return f"# Agent note\n\nWritten by the integrator for task {task_id} (offline scenario).\n"
+
+    def __call__(self, payload):
+        request = json.loads(payload)
+        stage = sum(m["role"] == "assistant" for m in request["messages"])
+        context = json.loads(request["messages"][1]["content"])
+        if stage == 0:
+            return _response("integrator", stage, [
+                _call(stage, "create_text", {"path": "agent-note.md", "content": self.note(context["task_id"])})])
+        if stage == 1:
+            return _response("integrator", stage, [
+                _call(stage, "git_status", {"repository": DEMO_REPOSITORY}),
+                _call(stage, "git_commit", {"repository": DEMO_REPOSITORY, "files": {"docs/agent-note.md": "agent-note.md"},
+                                            "message": "Add integrator note (offline scenario)"}, 1)])
+        if stage == 2:
+            return _response("integrator", stage, [_call(stage, "git_push", {
+                "repository": DEMO_REPOSITORY, "remote": DEMO_REMOTE, "branch": DEMO_BRANCH})])
+        return _response("integrator", stage, text="Synthetic: note committed and pushed; ready for independent checking.")
+
+
+def git_roles():
+    return {"integrator": Role("Commit task notes to the trusted demo repository; pushes need the human's exact approval.",
+                               ("create_text", "read_text", "git_status", "git_diff", "git_log", "git_commit", "git_push"))}
+
+
+def demo_repository_config(state_dir):
+    """Trusted configuration for the disposable scenario repository."""
+    from .git_tools import TrustedRepository
+    base = os.path.realpath(os.path.join(state_dir, "git-demo"))
+    return TrustedRepository(DEMO_REPOSITORY, os.path.join(base, "work"), writable_branches=(DEMO_BRANCH,),
+                             writable_paths=("docs/",), remotes=((DEMO_REMOTE, os.path.join(base, "remote.git")),))
+
+
+def prepare_demo_repository(git, repository):
+    """Trusted fixture setup: a local work tree and bare remote; never a real GitHub remote."""
+    from .git_tools import _SAFE, _run
+    work = Path(repository.path)
+    remote = repository.remote_url(DEMO_REMOTE)
+    if work.exists():
+        return False
+    work.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    env = git._env() | {"GIT_AUTHOR_NAME": "Scenario fixture", "GIT_AUTHOR_EMAIL": "fixture@agent-lab.invalid",
+                        "GIT_COMMITTER_NAME": "Scenario fixture", "GIT_COMMITTER_EMAIL": "fixture@agent-lab.invalid"}
+
+    def run(*arguments, cwd=None):
+        code, _, err, interrupted = _run([git.binary, *_SAFE, *arguments], env, seconds=20, output_bytes=65536, cwd=cwd)
+        if code != 0 or interrupted:
+            raise WorkflowError("Demo repository setup failed: " + err.decode("utf-8", "replace")[:200])
+    run("init", "-q", "--bare", remote)
+    run("init", "-q", "-b", "main", str(work))
+    (work / "docs").mkdir()
+    (work / "README.md").write_text("# Disposable demo repository\n\nCreated by the control-center git scenario.\n")
+    (work / "docs" / "index.md").write_text("# Notes\n")
+    run("add", "README.md", "docs/index.md", cwd=str(work))
+    run("commit", "-q", "--no-verify", "-m", "Initial fixture commit", cwd=str(work))
+    run("push", "-q", "--no-verify", remote, "main:refs/heads/main", cwd=str(work))
+    run("switch", "-q", "-c", DEMO_BRANCH, cwd=str(work))
+    return True
+
+
+def git_verifier(workflow, git, task):
+    """Trusted acceptance: a verified push of the expected note exists on the remote."""
+    repository = git.repositories[DEMO_REPOSITORY]
+    remote = repository.remote_url(DEMO_REMOTE)
+
+    def verify():
+        row = workflow.db.execute(
+            "SELECT result FROM git_operations WHERE task=? AND operation='push' AND status='verified' "
+            "ORDER BY started DESC LIMIT 1", (task,)).fetchone()
+        if row is None:
+            return {"push_verified": False}
+        commit = json.loads(row["result"])["commit"]
+        code, out, _, _ = git._remote_git(["--git-dir", remote, "show", f"{commit}:docs/agent-note.md"])
+        return {"push_verified": True,
+                "remote_branch_at_commit": git._remote_head(remote, DEMO_BRANCH) == commit,
+                "remote_note_matches": code == 0 and out.decode("utf-8", "replace") == GitScript.note(task)}
+    return verify
+
+
 SCENARIOS = {
     "chat": Scenario(
         "chat", "Private and group message routing",
@@ -97,10 +184,18 @@ SCENARIOS = {
         scripted=("file contents written by fixture code", "lesson text"),
         real=("memory scope (owner/conversation/namespace)", "provenance", "retrieval/selection history",
               "actual text verification")),
+    "git": Scenario(
+        "git", "Git commit and approved push (disposable local repository)",
+        "Integrator commits a task note to a local test repository, then requests a fast-forward push. You approve the exact "
+        "commit/branch/remote binding, release it, and the remote branch is verified. No GitHub remote is used.",
+        scripted=("provider responses (GitScript)", "initial fixture commit"),
+        real=("restricted Git CLI", "path/branch allowlists", "approval binding to commit and remote state",
+              "post-push remote verification", "independent acceptance check"),
+        requires=("git",)),
 }
 
 
-def scheduler_for(workflow, files, root, scenario, *, human, memory=None):
+def scheduler_for(workflow, files, root, scenario, *, human, memory=None, git=None):
     """Rebuild the exact persisted configuration for a scenario root."""
     if scenario == "delegation":
         roles = fixture_roles()
@@ -121,10 +216,20 @@ def scheduler_for(workflow, files, root, scenario, *, human, memory=None):
             verifier_factory=lambda task: (files.text_verifier(task["id"], task["assignee"],
                                                                {"keep.txt": ApprovalScript.KEEP}),
                                            "tui-approval-keep-text-v1"))
+    if scenario == "git":
+        if git is None:
+            raise WorkflowError("Git tools are not configured in this session")
+        roles = git_roles()
+        return MultiAgentScheduler(
+            workflow, files, root, human=human, roles=roles,
+            clients={a: DeepSeekClient(FIXTURE_MODEL, GitScript(), max_tokens=128) for a in roles},
+            mode="offline_fixture", constraints=["Never push without exact approval", "Only fast-forward pushes"],
+            acceptance_id="tui-git-push-v1", git=git,
+            verifier_factory=lambda task: (git_verifier(workflow, git, task["id"]), "tui-git-remote-note-v1"))
     raise KeyError(scenario)
 
 
-def start(name, workflow, files, memory, *, human):
+def start(name, workflow, files, memory, *, human, git=None):
     """Create the scenario's conversations/tasks; return (root task or None, summary)."""
     if name == "chat":
         private = workflow.create_chat("private", [human, "researcher"])
@@ -145,6 +250,13 @@ def start(name, workflow, files, memory, *, human):
         return root, {"chat": chat}
     if name == "memory":
         return None, _memory(workflow, files, memory, human=human)
+    if name == "git":
+        if git is None or DEMO_REPOSITORY not in git.repositories:
+            raise WorkflowError("The demo Git repository is not configured in this session")
+        created = prepare_demo_repository(git, git.repositories[DEMO_REPOSITORY])
+        chat = workflow.create_chat("private", [human, "integrator"])
+        root = workflow.create_task(chat, human, "integrator", "Commit a note to the demo repository and push agent/demo")
+        return root, {"chat": chat, "repository_created": created}
     raise KeyError(name)
 
 

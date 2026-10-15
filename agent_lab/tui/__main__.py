@@ -22,6 +22,7 @@ def main(argv=None):
     parser.add_argument("--live", action="store_true", help="Enable live DeepSeek execution (requires --model and --api-key-env)")
     parser.add_argument("--model", help="Explicit course-approved DeepSeek model identifier")
     parser.add_argument("--api-key-env", help="Name of the environment variable holding the DeepSeek API key")
+    parser.add_argument("--git-config", help="JSON file listing additional trusted repositories (local remotes only by default)")
     parser.add_argument("--refresh-seconds", type=float, default=5.0, help="Automatic status refresh interval; 0 disables")
     args = parser.parse_args(argv)
     live = None
@@ -39,8 +40,15 @@ def main(argv=None):
     except ImportError:
         parser.exit(2, "Textual is not installed. Install the optional UI dependency: "
                        "python3 -m pip install -r requirements-tui.txt\n")
+    repositories = []
+    if args.git_config:
+        from ..git_tools import load_trusted_repositories
+        try:
+            repositories = load_trusted_repositories(args.git_config)
+        except (OSError, ValueError, KeyError, WorkflowError) as error:
+            parser.error(f"Invalid --git-config: {error}")
     try:
-        controller = ControlCenter(args.state_dir, human=args.human, live=live)
+        controller = ControlCenter(args.state_dir, human=args.human, live=live, repositories=repositories)
     except (WorkflowError, OSError) as error:
         parser.exit(1, f"Cannot open session: {error}\n")
     try:
