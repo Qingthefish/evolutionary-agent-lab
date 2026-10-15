@@ -149,6 +149,8 @@ class DeepSeekClient:
             counts = {key: usage[key] for key in ("prompt_tokens", "completion_tokens", "total_tokens")}
             if any(type(value) is not int or value < 0 for value in counts.values()):
                 raise ValueError()
+            if counts["total_tokens"] != counts["prompt_tokens"] + counts["completion_tokens"]:
+                raise ValueError()
             if any(not isinstance(data[key], str) or not data[key] for key in ("id", "model")):
                 raise ValueError()
         except (ValueError, KeyError, TypeError, UnicodeError, RecursionError):

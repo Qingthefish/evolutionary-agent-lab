@@ -69,7 +69,7 @@ class ProviderTests(unittest.TestCase):
         variants = []
         for changes in [{"choices": []}, {"choices": [None]}, {"usage": {}}, {"model": ""}]:
             variants.append(completion() | changes)
-        for counts in [True, -1, 1.5, "10"]:
+        for counts in [True, -1, 1.5, "10", 15]:
             item = completion()
             item["usage"]["total_tokens"] = counts
             variants.append(item)
