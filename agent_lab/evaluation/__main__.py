@@ -1,0 +1,37 @@
+"""Run development evaluation cases: `python -m agent_lab.evaluation run`."""
+
+import argparse
+import json
+import sys
+
+from ..core import WorkflowError
+from .cases import load_cases
+from .harness import Evaluator
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="python -m agent_lab.evaluation",
+                                     description="Development evaluation harness (offline fixtures unless live is configured)")
+    commands = parser.add_subparsers(dest="command", required=True)
+    run = commands.add_parser("run", help="Run cases and write results.json and report.md")
+    run.add_argument("--cases", default="evaluation/dev", help="Directory of case JSON files")
+    run.add_argument("--output", default="runs/evaluations", help="Directory for run results (ignored by Git)")
+    run.add_argument("--case", action="append", help="Run only this case id (repeatable)")
+    commands.add_parser("list", help="List case definitions").add_argument("--cases", default="evaluation/dev")
+    args = parser.parse_args(argv)
+    try:
+        cases = load_cases(args.cases)
+        if args.command == "list":
+            for case in cases:
+                print(json.dumps(case.summary()))
+            return 0
+        result = Evaluator(cases, output_root=args.output).run(args.case)
+    except (WorkflowError, KeyError) as error:
+        parser.exit(1, f"Evaluation failed to start: {error}\n")
+    print(json.dumps({k: result[k] for k in ("run_id", "mode", "benchmark_valid", "summary")}, indent=2))
+    print(f"Report: {args.output}/{result['run_id']}/report.md")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -212,6 +212,25 @@ class ControlCenterAppTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("verified", str(operations.get_row_at(0)[2]))
             self.assertIn("remote branch verified", str(pane.query_one("#git-pending", DataTable).get_row_at(0)[3]))
 
+    async def test_evaluation_tab_runs_cases_and_labels_results(self):
+        from textual.widgets import DataTable
+        app = self.app()
+        async with app.run_test(size=(170, 50)) as pilot:
+            await pilot.press("f9")
+            await settle(app, pilot)
+            pane = app.panes["evaluation"]
+            cases = pane.query_one("#eval-cases", DataTable)
+            self.assertIn("Not configured", str(cases.get_row("dev-live-summary")[4]))
+            await pilot.click("#eval-run-all")
+            await settle(app, pilot)
+            runs = self.center.eval_runs()
+            self.assertEqual(len(runs), 1)
+            self.assertEqual(runs[0]["mode"], "offline_fixture")
+            results = pane.query_one("#eval-results", DataTable)
+            self.assertIn("not configured", str(results.get_row("dev-live-summary")[1]))
+            self.assertIn("negative control", str(results.get_row("dev-negative-control")[1]))
+            self.assertIn("benchmark_valid: false", str(pane.query_one("#eval-summary").render()))
+
     async def test_history_is_visible_after_restart(self):
         from textual.widgets import DataTable
         self.center.run_scenario("approval")

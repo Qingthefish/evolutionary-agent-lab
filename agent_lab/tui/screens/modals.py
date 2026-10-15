@@ -159,6 +159,7 @@ HELP = """\
   F1  Dashboard        F2  Conversations     F3  Tasks
   F4  Artifacts        F5  Memory            F6 / Ctrl+P  Approvals
   F7 / Ctrl+L  Execution logs      F8 / Ctrl+G  Git dashboard
+  F9 / Ctrl+E  Evaluation (Ctrl+E works when not typing in a text field)
   Tab / Shift+Tab  move focus;  arrows and Enter operate lists, trees, tables
 
 [b]Actions[/b]

@@ -24,6 +24,9 @@ from ..memory import ExperienceMemory
 from ..queries import TERMINAL, WorkflowQueries, redact, require_human
 from ..scheduler import MultiAgentScheduler, Role
 from .. import offline_scenarios
+from ..evaluation import Evaluator, compare_memory, list_runs, load_cases, load_run
+
+DEFAULT_CASES = Path(__file__).resolve().parents[2] / "evaluation" / "dev"
 
 MEMORY_NAMESPACE = "tui-development"
 
@@ -142,7 +145,7 @@ class _Backend:
 
 
 class ControlCenter:
-    def __init__(self, state_dir, *, human="operator", live=None, clock=None, repositories=()):
+    def __init__(self, state_dir, *, human="operator", live=None, clock=None, repositories=(), cases_dir=None):
         if live is not None and not isinstance(live, LiveConfig):
             raise ControllerError("Live mode requires an explicit LiveConfig")
         self.state_dir = Path(state_dir)
@@ -153,6 +156,8 @@ class ControlCenter:
         self._queue = queue.Queue()
         self._clock = clock
         self._repositories = tuple(repositories)
+        self.cases_dir = Path(cases_dir) if cases_dir else DEFAULT_CASES
+        self.evaluations_dir = self.state_dir / "evaluations"
         self._factory_error = None
         self._thread = threading.Thread(target=self._loop, name="agent-lab-backend", daemon=True)
         self._thread.start()
@@ -330,6 +335,31 @@ class ControlCenter:
     def git_reconcile(self, operation):
         return self._action(f"Reconciled push {operation[:8]} (observation only)",
                             lambda b: b.git.reconcile(operation, actor=b.human))
+
+    # ---- evaluation (independent of the backend thread: each case has its own state) ----
+    def eval_cases(self):
+        try:
+            cases = load_cases(self.cases_dir)
+        except WorkflowError as error:
+            return {"error": str(error), "cases": []}
+        return {"error": None, "cases": [c.summary() | {"configured": c.driver != "live_scheduler" or self.live is not None}
+                                         for c in cases]}
+
+    def eval_run(self, case_ids=None):
+        cases = load_cases(self.cases_dir)
+        run = Evaluator(cases, output_root=self.evaluations_dir, live=self.live).run(case_ids)
+        self._log(f"Evaluation run {run['run_id']} ({run['mode']}): "
+                  f"{run['summary']['completed']}/{run['summary']['executed']} completed")
+        return run
+
+    def eval_runs(self):
+        return list_runs(self.evaluations_dir)
+
+    def eval_result(self, run_id):
+        return load_run(self.evaluations_dir, run_id)
+
+    def eval_compare(self, on_run, off_run):
+        return compare_memory(self.eval_result(on_run), self.eval_result(off_run))
 
     def scenarios(self):
         return [{"name": s.name, "title": s.title, "description": s.description,
