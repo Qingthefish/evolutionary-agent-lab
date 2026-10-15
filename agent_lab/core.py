@@ -268,23 +268,32 @@ class Workflow:
             self._event(task["id"], actor, "approval_consumed", {"request": identifier, "digest": digest})
         return json.loads(request["action"])
 
-    def finish_task(self, identifier, actor, *, checks=None, error=None):
+    def finish_task(self, identifier, actor, *, checks=None, error=None, verifier=None):
         """Record trusted-caller checks, not a model's self-reported success.
 
-        A real artifact verifier is not implemented in this foundation.
+        A trusted verifier may compute checks inside the state transaction.
+        Neither the callable nor its expectations may be supplied by a model.
         """
         success = error is None
-        if success:
+        if verifier is not None and (not callable(verifier) or checks is not None or error is not None):
+            raise WorkflowError("Use either a trusted verifier or explicit checks/failure")
+        if success and verifier is None:
             if (not isinstance(checks, dict) or not checks
                     or any(not isinstance(k, str) or not k.strip() or v is not True
                            for k, v in checks.items())):
                 raise WorkflowError("Success requires named passing checks from the trusted caller")
-        elif not isinstance(error, str) or not error.strip():
+        elif not success and (not isinstance(error, str) or not error.strip()):
             raise WorkflowError("A failure requires an explanation")
         with self._transaction():
             row = self._task(identifier, actor, assigned=True)
             if row["state"] != "running":
                 raise WorkflowError("Only a running task can finish")
+            if verifier is not None:
+                checks = verifier()
+                if (not isinstance(checks, dict) or not checks
+                        or any(not isinstance(k, str) or not k.strip() or v is not True
+                               for k, v in checks.items())):
+                    raise WorkflowError("Artifact verification failed; task remains running")
             children = self.db.execute("SELECT state FROM tasks WHERE parent=?", (identifier,)).fetchall()
             if success and any(c["state"] != "succeeded" for c in children):
                 raise WorkflowError("A parent cannot succeed while delegated work is incomplete or failed")
