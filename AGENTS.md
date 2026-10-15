@@ -28,5 +28,6 @@
 - Keep secrets, personal materials, full local paths from reference documents, model weights, and unrelated coursework out of commits.
 - Cite borrowed implementations and record cross-course reuse only after applicable course policies are confirmed. Do not transfer another course's scores as evidence of this system.
 - Maintain genuine contribution attribution and ongoing commit history. AI assistance does not establish human authorship of another member's work.
+- The owner authorizes merging verified, focused project changes into main without repeated confirmation. Preserve published commit history and obey repository protections; do not claim unrun CI or bypass required checks.
 - Do not launch paid experiments or create external integrations without a defined budget and user authorization.
 - Update README.md when status changes, requirements when official constraints change, and direction.md when a decision is made. Avoid duplicate progress documents.
