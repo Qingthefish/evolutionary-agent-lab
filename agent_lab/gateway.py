@@ -6,6 +6,7 @@ import re
 
 from .core import WorkflowError
 from .protocol import strict_json
+from . import budget
 
 
 class ToolRequestError(WorkflowError):
@@ -201,6 +202,10 @@ class ToolGateway:
             raise ToolRequestError("Duplicate tool call identifiers")
         with self.workflow._transaction():
             row = self.workflow._task(self.task, self.actor, assigned=True)
+            try:
+                budget.preflight_tools(self.workflow, self.task, len(calls))
+            except budget.TreeBudgetError as error:
+                raise ToolBudgetError(str(error)) from None
             if row["state"] != "running":
                 raise ToolRequestError("Only an assigned running task may propose tools")
             records = self.workflow.db.execute("SELECT call_id FROM tool_calls WHERE task=?", (self.task,)).fetchall()
@@ -226,6 +231,10 @@ class ToolGateway:
             maximum = self.workflow.db.execute("SELECT maximum FROM tool_budgets WHERE task=?", (self.task,)).fetchone()[0]
             if used >= maximum:
                 raise ToolBudgetError("Task tool-call budget exhausted; preserve artifacts and stop")
+            try:
+                budget.check(self.workflow, self.task, reserve="tool_calls")
+            except budget.TreeBudgetError as error:
+                raise ToolBudgetError(str(error)) from None
             self.workflow.db.execute("INSERT INTO tool_calls VALUES(?,?,?,?,?,'reserved',NULL)", (
                 self.task, call["id"], self.actor, name, encoded,
             ))

@@ -178,6 +178,8 @@ class Workflow:
                 source = self._task(parent, actor, assigned=True)
                 if source["state"] != "running" or source["chat"] != chat:
                     raise WorkflowError("Delegate only from a running task in the same conversation")
+                from .budget import check
+                check(self, parent, reserve="child")
             elif self._row("actors", actor)["kind"] != "human":
                 raise WorkflowError("An agent needs a parent task to delegate work")
             identifier = uuid4().hex
@@ -268,6 +270,8 @@ class Workflow:
                     or task["state"] != "running"
                     or task["revision"] != request["resume_revision"]):
                 raise WorkflowError("Approval is missing, stale, consumed, or for another action")
+            from .budget import check
+            check(self, task["id"], after_response=True)
             self.db.execute("UPDATE requests SET consumed=1 WHERE id=?", (identifier,))
             self._event(task["id"], actor, "approval_consumed", {"request": identifier, "digest": digest})
         return json.loads(request["action"])
@@ -308,6 +312,9 @@ class Workflow:
                 (identifier, row["revision"]),
             ).fetchone():
                 raise WorkflowError("Approved action has not been released or reconciled")
+            if success:
+                from .budget import check
+                check(self, identifier, after_response=True)
             self._transition(row, "succeeded" if success else "failed")
             self.db.execute("UPDATE tasks SET evidence=? WHERE id=?", (
                 json.dumps({"checks": checks} if success else {"error": error}, sort_keys=True), identifier,
