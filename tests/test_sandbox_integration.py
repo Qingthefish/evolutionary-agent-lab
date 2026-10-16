@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 import json
+import hashlib
 import os
 from pathlib import Path
 import tempfile
@@ -13,6 +14,9 @@ from uuid import uuid4
 from agent_lab import Workflow, WorkflowError
 from agent_lab.files import FileTools
 from agent_lab.sandbox import DockerPythonExecutor, SandboxLimits
+from agent_lab.deepseek import DeepSeekClient
+from agent_lab.runner import Limits
+from agent_lab.scheduler import MultiAgentScheduler, Role
 
 
 HOST = os.environ.get("AGENT_LAB_DOCKER_HOST")
@@ -75,6 +79,103 @@ class DockerIntegrationTests(unittest.TestCase):
         self.assertIn("AssertionError", result["execution"]["stderr"])
         self.assertEqual(result["artifacts"], [])
         self.assertEqual(self.workflow.task(self.task, "user")["state"], "running")
+
+    def scheduled_execution(self, *, failing=False):
+        """Synthetic model proposals; actual Docker execution and verification."""
+        from test_runner import response, tool
+        code = ("from pathlib import Path\n"
+                "def normalize(values): return sorted(set(values))\n"
+                "assert normalize([3, -1, 3]) == [-1, 3]\n"
+                "assert normalize([]) == []\n"
+                "Path('result.txt').write_text(','.join(map(str, normalize([3, -1, 3]))) + '\\n')\n")
+        if failing:
+            code += "raise SystemExit(9)\n"
+        expected = "-1,3\n"  # Independent fixture expectation, not model-supplied.
+        goal = self.new_task("reviewer")
+        roles = {
+            "reviewer": Role("Delegate the text-processing script, accept its checked artifact, and deliver it.",
+                             ("delegate_task", "accept_artifact"), ("coder",), limits=Limits(model_attempts=4)),
+            "coder": Role("Implement and run the script in the sandbox, then offer the actual result to your parent.",
+                          ("create_text", "run_python", "offer_artifact"), limits=Limits(model_attempts=4)),
+        }
+
+        def transport(payload):
+            request = json.loads(payload)
+            messages = request["messages"]
+            context = json.loads(messages[1]["content"])
+            stage = sum(item["role"] == "assistant" for item in messages)
+            actor = context["role"]["agent"]
+            calls = None
+            if actor == "reviewer" and stage == 0:
+                calls = [tool("delegate_task", {"assignee": "coder", "title": "Implement normalize, execute checks, and deliver result.txt"})]
+            elif actor == "reviewer" and stage == 1:
+                child = next(json.loads(item["content"]) for item in reversed(messages)
+                             if item["role"] == "user" and json.loads(item["content"]).get("kind") == "child_task_result")
+                calls = [tool("accept_artifact", {"artifact_id": child["offered_artifacts"][0]["artifact_id"], "path": "result.txt"}, "accept")]
+            elif actor == "coder" and stage == 0:
+                calls = [tool("create_text", {"path": "main.py", "content": code})]
+            elif actor == "coder" and stage == 1:
+                calls = [tool("run_python", {"entrypoint": "main.py", "input_files": {
+                    "main.py": hashlib.sha256(code.encode()).hexdigest()}, "arguments": [], "outputs": ["result.txt"]}, "execute")]
+            elif actor == "coder" and stage == 2:
+                if failing:
+                    # Simulate a misleading repair: manufacture the expected
+                    # artifact after a failed process, then claim completion.
+                    calls = [tool("create_text", {"path": "result.txt", "content": expected}, "fabricate")]
+                else:
+                    calls = [tool("offer_artifact", {"path": "result.txt", "target_task": context["parent_task_id"],
+                        "expected_sha256": hashlib.sha256(expected.encode()).hexdigest()}, "offer")]
+            return json.dumps(response(calls, text="Synthetic proposal: ready for independent checking")).encode()
+
+        def acceptance(task):
+            text_check = self.files.text_verifier(task["id"], task["assignee"], {"result.txt": expected})
+
+            def verify():
+                checks = text_check()
+                if task["assignee"] == "coder":
+                    row = self.workflow.db.execute("SELECT result FROM sandbox_runs WHERE task=? ORDER BY rowid DESC LIMIT 1",
+                                                   (task["id"],)).fetchone()
+                    runtime = json.loads(row[0]) if row and row[0] else {}
+                    checks["sandbox_exit_zero"] = (runtime.get("execution") or {}).get("exit_code") == 0
+                    checks["sandbox_cleanup"] = runtime.get("cleanup_confirmed") is True
+                    checks["actual_process_sandbox"] = runtime.get("process_sandbox") is True
+                return checks
+            return verify, "fixture-actual-execution-and-text-v1"
+
+        scheduler = MultiAgentScheduler(self.workflow, self.files, goal, human="user", roles=roles,
+            clients={actor: DeepSeekClient("explicit-offline-fixture", transport, max_tokens=256) for actor in roles},
+            mode="offline_fixture", constraints=["Actually execute checks; a matching file alone is insufficient"],
+            verifier_factory=acceptance, acceptance_id="fixture-delegated-execution-v1", executor=self.executor)
+        state = scheduler.run()
+        child = self.workflow.db.execute("SELECT id FROM tasks WHERE parent=?", (goal,)).fetchone()[0]
+        runtime = json.loads(self.workflow.db.execute("SELECT result FROM sandbox_runs WHERE task=?", (child,)).fetchone()[0])
+        self.assertTrue(runtime["cleanup_confirmed"])
+        self.assertTrue(runtime["process_sandbox"])
+        self.assertEqual(state["model_calls"], 0)
+        self.assertFalse(state["benchmark_valid"])
+        return state, child, runtime
+
+    def test_scheduler_delegates_actual_python_and_verifies_handoff(self):
+        state, child, runtime = self.scheduled_execution()
+        self.assertEqual(state["task_state"], "succeeded")
+        self.assertEqual(runtime["execution"]["exit_code"], 0)
+        self.assertEqual(state["budget"]["tasks"], 2)
+        self.assertEqual(self.workflow.task(child, "user")["state"], "succeeded")
+        self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM artifacts WHERE source_task=? AND consumed=1", (child,)).fetchone()[0], 1)
+
+    def test_scheduler_rejects_matching_file_after_failed_actual_execution(self):
+        state, child, runtime = self.scheduled_execution(failing=True)
+        self.assertEqual(runtime["execution"]["exit_code"], 9)
+        self.assertEqual(state["task_state"], "failed")
+        self.assertEqual(self.workflow.task(child, "user")["state"], "failed")
+        transcript = self.workflow.db.execute("SELECT transcript FROM runner_sessions WHERE task=?", (child,)).fetchone()[0]
+        self.assertIn("sandbox_exit_zero", transcript)
+        # The misleading output exists, but no child artifact was accepted and
+        # no task was certified from the expected text alone.
+        results = list((self.root / "files/tasks").rglob("result.txt"))
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].read_text(), "-1,3\n")
+        self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM artifacts WHERE source_task=?", (child,)).fetchone()[0], 0)
 
     def test_network_host_files_secrets_root_writes_and_supervisor_signals_are_blocked(self):
         canary = self.root / "host-only.txt"
