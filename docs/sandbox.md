@@ -58,3 +58,9 @@ This stops its processes and releases VM memory. It preserves its image cache an
 - [Colima installation](https://colima.run/docs/installation/) and [configuration](https://colima.run/docs/configuration/).
 - [Docker execution flags](https://docs.docker.com/reference/cli/docker/container/run/), [resource constraints](https://docs.docker.com/engine/containers/resource_constraints/), [none networking](https://docs.docker.com/engine/network/drivers/none/), and [tmpfs options](https://docs.docker.com/engine/storage/tmpfs/).
 - [Docker security boundaries](https://docs.docker.com/engine/security/). A restricted container is an isolation mechanism, not an unconditional security guarantee.
+
+## Delegated execution checks
+
+The opt-in suite also runs two scheduler integration cases with fixed synthetic provider responses and the actual Docker backend. A reviewer delegates Python work to a coder; source creation, sandbox execution, explicit artifact offer/accept, and independent text/execution checks run through the scheduler and gateway. The successful case completes both tasks after actual zero-exit execution and confirmed cleanup. In the negative case, code exits with status 9, then a synthetic proposal writes the expected text through the file tool. The independent verifier still rejects it because the stored sandbox execution failed; the bounded child and root fail rather than receiving success for matching text alone.
+
+Run just these cases with the same explicit environment settings using `python3 -m unittest discover -s tests -p test_sandbox_integration.py -k scheduler -v`. They are engineering integration checks, make zero model/API calls, and establish neither live autonomous collaboration nor performance on the instructor's test set. They require actual containers and are skipped when the Docker settings are absent.
