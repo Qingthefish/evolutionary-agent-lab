@@ -24,6 +24,10 @@ def language(path):
     return LANGUAGES.get(os.path.splitext(path)[1].lower(), "text")
 
 
+class ArtifactMissingError(FileToolError):
+    """The authorized inspection positively observed that a file is absent."""
+
+
 class ArtifactInspector:
     def __init__(self, workflow, files):
         if files.workflow is not workflow:
@@ -96,7 +100,7 @@ class ArtifactInspector:
         self._supervisor(task, actor)
         data = self._read(task, path)
         if data is None:
-            raise FileToolError("File is absent from this task's directory")
+            raise ArtifactMissingError("File is absent from this task's directory")
         return {"path": path, "language": language(path), "content": data.decode("utf-8"),
                 "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
 

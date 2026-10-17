@@ -8,6 +8,9 @@ from unittest.mock import patch
 
 from agent_lab.evaluation import (CaseError, Evaluator, compare_memory, list_runs, load_cases, load_run,
                                   parse_case, summarize)
+from agent_lab.files import FileToolError
+from agent_lab.inspection import ArtifactInspector
+from agent_lab.core import WorkflowError
 
 CASES = Path(__file__).resolve().parents[1] / "evaluation" / "dev"
 
@@ -117,9 +120,36 @@ class EvaluationTests(unittest.TestCase):
               "summary": {"completion_rate": 1.0, "mean_duration_seconds": 3.0}}
         off = {"mode": "live", "memory": "off", "results": [{"case": {"id": "a"}}],
                "summary": {"completion_rate": 0.0, "mean_duration_seconds": 5.0}}
+        self.assertEqual(compare_memory(on, off)["status"], "not_comparable")
+        # Explicit synthetic comparison arithmetic, not an executed experiment.
+        on["memory_exercised"] = True
         compared = compare_memory(on, off)
         self.assertEqual((compared["status"], compared["completion_rate"]), ("compared", {"on": 1.0, "off": 0.0}))
         self.assertIn("no causal claim", compared["note"])
+
+    def test_absence_requires_missing_file_not_inspection_failure(self):
+        item = parse_case(case(expected={"final_state": "succeeded", "artifacts": {"note.txt": "Hello\n"},
+                                         "absent_artifacts": ["blocked.txt"]}))
+        normal = Evaluator([item], output_root=self.output).run()
+        self.assertTrue(normal["results"][0]["checks"]["absent:blocked.txt"])
+        original = ArtifactInspector.read_file
+
+        def unreadable(inspector, task, actor, path):
+            if path == "blocked.txt":
+                raise FileToolError("Unsafe or unreadable file")
+            return original(inspector, task, actor, path)
+
+        with patch.object(ArtifactInspector, "read_file", unreadable):
+            result = Evaluator([item], output_root=self.output).run()["results"][0]
+        self.assertFalse(result["checks"]["absent:blocked.txt"])
+        self.assertEqual(result["classification"], "acceptance_failed")
+
+    def test_live_memory_on_refuses_before_any_provider_call(self):
+        with self.assertRaisesRegex(WorkflowError, "not implemented"):
+            Evaluator([], output_root=self.output, live=object(), memory="on")
+        offline = Evaluator([parse_case(case())], output_root=self.output, memory="on").run()
+        self.assertEqual(offline["memory"], "not_exercised")
+        self.assertFalse(offline["memory_exercised"])
 
     def test_cases_are_isolated(self):
         cases = [parse_case(case(id="first")), parse_case(case(id="second"))]

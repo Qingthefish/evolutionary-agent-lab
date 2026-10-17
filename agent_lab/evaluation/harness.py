@@ -15,7 +15,7 @@ from uuid import uuid4
 
 from ..core import Workflow, WorkflowError
 from ..files import FileTools
-from ..inspection import ArtifactInspector
+from ..inspection import ArtifactInspector, ArtifactMissingError
 from ..memory import ExperienceMemory
 from .. import offline_scenarios
 
@@ -132,8 +132,12 @@ def _checks(case, session, root, duration):
         try:
             session.inspector.read_file(root, HUMAN, path)
             checks["absent:" + path] = False
-        except WorkflowError:
+        except ArtifactMissingError:
             checks["absent:" + path] = True
+        except WorkflowError:
+            # Invalid paths, denied access and unsafe/unreadable files are not
+            # proof of absence. Acceptance must fail closed.
+            checks["absent:" + path] = False
     if case.expected.remote_branch_verified:
         ids = [row["id"] for row in tree]
         marks = ",".join("?" * len(ids))
@@ -174,6 +178,8 @@ class Evaluator:
     def __init__(self, cases, *, output_root, live=None, memory="off"):
         if memory not in {"on", "off"}:
             raise WorkflowError("Memory mode must be 'on' or 'off'")
+        if live is not None and memory == "on":
+            raise WorkflowError("Live memory-on execution is not implemented; refusing a misleading experiment label")
         self.cases = {case.id: case for case in cases}
         self.output_root = Path(output_root)
         self.live, self.memory = live, memory
@@ -195,6 +201,7 @@ class Evaluator:
                                   "benchmarks." if mode != "live" else
                                   "Live development cases only; not the instructor's held-out evaluation."),
                "memory": self.memory if live_executed else "not_exercised",
+               "memory_exercised": False,
                "model_calls": 0 if not live_executed else None,
                "started": started, "ended": time.time(), "summary": summary, "results": results}
         (directory / "results.json").write_text(json.dumps(run, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -256,6 +263,8 @@ def compare_memory(run_on, run_off):
         reasons.append("runs must be explicitly memory=on and memory=off")
     if run_on.get("mode") != "live" or run_off.get("mode") != "live":
         reasons.append("both runs must be live-model runs; offline fixtures do not use memory")
+    if run_on.get("memory_exercised") is not True:
+        reasons.append("memory-on execution must be implemented and recorded, not just labelled on")
     ids_on = {r["case"]["id"] for r in run_on.get("results", [])}
     ids_off = {r["case"]["id"] for r in run_off.get("results", [])}
     if ids_on != ids_off:
