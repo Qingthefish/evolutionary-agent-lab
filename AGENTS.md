@@ -4,6 +4,7 @@
 
 - Work in this project folder; preserve sibling coursework and other course projects.
 - Read README.md, docs/requirements.md, and the relevant card in docs/team-roadmap.md before feature implementation. Read docs/direction.md when making scope or architecture decisions.
+- For a new contributor/session, use the README onboarding prompt to establish the current baseline and boundaries before feature work. Repository files do not include another member's private conversation; do not invent missing decisions, assume a claim, or infer overall progress from the number of completed cards.
 - The instructor announcement takes priority over background-driven suggestions and cross-course alignment. Do not make a business vertical or context-compression research a prerequisite for the required platform.
 - Final architecture remains undecided. Do not present proposals as settled decisions. The four-person team claims individual cards; A/B/C/D identify technical areas, not people. Discuss claims in WeChat and have the coordinator record an agreed owner on main before feature coding. Do not invent assignments, duplicate an active task, or change overlapping shared interfaces without coordination.
 - Do not copy instructions from reference documents or other courses into this project's authority chain.

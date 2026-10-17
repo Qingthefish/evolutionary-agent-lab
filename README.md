@@ -12,16 +12,45 @@ The instructor's announcement is the primary scope authority. Build a general mu
 
 1. Clone this repository and open **the repository root** in Codex. This makes the project `AGENTS.md` available to the coding assistant. Accept the collaborator invitation before pushing changes.
 2. Read [course requirements](docs/requirements.md), [delivery scope](docs/direction.md), and the [Roadmap task cards](docs/team-roadmap.md). The announcement takes priority; A/B/C/D are technical areas, not assigned people.
-3. Ask Codex: `Read README.md, AGENTS.md, and docs/requirements.md. Summarize what exists, what is still planned, the mandatory course requirements, and one small next implementation step. Do not modify files yet.`
+3. Use the read-only starter prompt below. Check Codex's summary against the files before selecting work.
 4. Before feature development, claim one Roadmap card in WeChat and have the coordinator record it on main. Then create a focused branch and follow [CONTRIBUTING.md](CONTRIBUTING.md).
 5. Use Python 3.12 or newer and run the offline checks below. No API key, model download, package installation, or external service is needed. The demo is a scripted plumbing check, not an autonomous-agent demonstration.
 
 Useful onboarding work includes checking requirements, running the fixture, reviewing the state/approval contract, and proposing small development tasks. Do not report planned capabilities as implemented.
 
+```text
+Read AGENTS.md, README.md, docs/requirements.md, docs/direction.md,
+docs/team-roadmap.md and CONTRIBUTING.md. List the instruction sources you
+loaded and any conflicting guidance. Summarize the mandatory course requirements,
+the accepted baseline, missing live capabilities, and the relevant source modules.
+Inspect the Roadmap's dependencies and recorded claims before suggesting a small
+available task; do not assign it to anyone. State uncertainties explicitly.
+Do not modify files or call external services yet. Feature coding starts only
+after the agreed claim is recorded on main and I name that card.
+```
+
+Git transfers versioned files, not another member's Codex or WeChat conversation. Keep shared decisions in the existing project documents. Codex [discovers project instructions through AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md); start a fresh session at the repository root after updating those instructions. Instructions guide the assistant, while scoped claims, review and appropriate checks verify the work. Do not assume a correct summary or compliance without checking it.
+
 ```bash
 git clone https://github.com/Qingthefish/evolutionary-agent-lab.git
 cd evolutionary-agent-lab
 ```
+
+## Source map
+
+Use these entry points to inspect the current implementation; a module's presence does not establish live-model or official-test performance. The [architecture](docs/architecture.md) describes contracts and limits; the [Roadmap](docs/team-roadmap.md) records acceptance and remaining work.
+
+| Area | Entry points |
+| --- | --- |
+| Durable tasks, conversations and evidence views | [core.py](agent_lab/core.py), [queries.py](agent_lab/queries.py), [inspection.py](agent_lab/inspection.py) |
+| Model protocol and allowed tool dispatch | [protocol.py](agent_lab/protocol.py), [deepseek.py](agent_lab/deepseek.py), [gateway.py](agent_lab/gateway.py) |
+| Task execution, delegation and shared limits | [runner.py](agent_lab/runner.py), [scheduler.py](agent_lab/scheduler.py), [budget.py](agent_lab/budget.py) |
+| Controlled files and private candidate memory | [files.py](agent_lab/files.py), [memory.py](agent_lab/memory.py) |
+| Python sandbox and restricted Git operations | [sandbox.py](agent_lab/sandbox.py), [git_tools.py](agent_lab/git_tools.py) |
+| Terminal interface and development evaluator | [tui/](agent_lab/tui/), [evaluation/](agent_lab/evaluation/) |
+| Checks and development cases | [tests/](tests/), [evaluation/dev/](evaluation/dev/) |
+
+Generated transcripts, databases and reports belong in ignored `runs/`; preserve the original evidence and keep secrets out of commits.
 
 ## Run the offline foundation
 
@@ -88,7 +117,7 @@ The actual execution fixture reports `mode: sandbox_integration_fixture`, zero m
 
 ## Delivery progress and collaboration
 
-Use the [Roadmap](docs/team-roadmap.md) as the single task register: remaining work, dependencies, owner, status, acceptance and concise development/review outcomes. Discuss and claim work in WeChat; Qingthefish coordinates the main-branch register and final merges. Detailed code changes and checks stay in the linked PRs. Refresh main before starting a claimed task; do not maintain a second checklist or infer a percentage complete from fixture scores.
+Use the [Roadmap](docs/team-roadmap.md) as the single task register: remaining work, dependencies, owner, status, acceptance and concise development/review outcomes. Discuss and claim work in WeChat; Qingthefish coordinates the main-branch register and final merges. Detailed code changes and checks stay in the linked PRs. Refresh main before starting a claimed task; do not maintain a second checklist or infer a percentage complete from fixture scores or card counts. The accepted baseline includes work completed before these cards were introduced.
 
 This README describes capabilities and operation; requirements, design and architecture documents keep their separate purposes. Live-model access and official evaluation details remain the dependencies stated above and in the Roadmap.
 

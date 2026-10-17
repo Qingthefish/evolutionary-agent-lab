@@ -2,6 +2,8 @@
 
 Updated: 2026-10-18 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. No coding tasks have been assigned by this document. The instructor's [requirements](requirements.md) remain the scope authority.
 
+**How to read progress:** Use the accepted baseline and milestone exit evidence, not a ratio of Done cards to all cards. I01–I03 record the review/integration of PRs #7–#9; substantial earlier work in #1–#6 is recorded separately in [Accepted baseline](#accepted-baseline). The card index covers that integration and the remaining delivery work, rather than every historical task. Cards differ in size and may be split as evidence reveals more work. Three Done cards therefore do **not** mean the project is only one ninth complete; no overall percentage is established.
+
 ## Start here
 
 1. Read the finish line and milestones below, then pick an **Unclaimed** card whose prerequisites can be met. Prefixes A/B/C/D identify technical areas, not people or permanent assignments.
@@ -30,6 +32,8 @@ Deliver a runnable general multi-agent platform and an evaluation entry point: a
 | M5 — official delivery | Issued test protocol/results and required submission materials | Await official set and actual deadlines |
 
 These are gates, not claimed percentages. Independent cards can proceed in parallel; external model access need not block offline implementation. Draft the architecture/presentation during M3/M4. The announcement says presentation in week 13, report after week 13, and has conflicting “3 weeks” / “3/1 weeks” dataset wording: confirm exact dates and memory/intervention/repeat rules. Optional extensions and UI styling must not delay mandatory coverage.
+
+Validate and improve the platform with independent development cases before the official set arrives. Release of that set begins the official evaluation phase, not the first round of testing. The required capabilities and submission components are known; the exact test tasks, issued model/quota and unresolved evaluation details are not. Meeting a roadmap gate requires actual evidence and does not guarantee a benchmark score or grade.
 
 ## Documents and directory boundaries
 
