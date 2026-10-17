@@ -4,7 +4,7 @@ Status: implementation recommendation, not an instructor-issued rubric or an app
 
 ## Primary authority
 
-The instructor's final-project announcement defines the objective and mandatory boundaries. Personal experience and other courses are optional context. They must not replace required capabilities, change the model-provider restriction, or add unnecessary scope. Human team allocation is deferred.
+The instructor's final-project announcement defines the objective and mandatory boundaries. Personal experience and other courses are optional context. They must not replace required capabilities, change the model-provider restriction, or add unnecessary scope. Work is claimed per card through WeChat and the [Roadmap](team-roadmap.md); technical areas do not assign people.
 
 Build a general multi-agent collaboration platform. Do not require selection of an industry vertical before starting. The unknown standardized test set makes general search, files, code, execution, and Git capabilities important.
 
@@ -56,10 +56,7 @@ The complete acceptance target still includes private/group human interaction, i
 
 ## Delivery gates
 
-1. One real-model task runs end to end with delegated work, real tools, verified outputs, and measured time. This vertical slice alone is not full course compliance.
-2. Cover every requirement in requirements.md, including private/group interaction, specialist-to-specialist assignment, clarification/approval, isolation, file CRUD, search, code execution, Git, and per-agent learning. Exercise failures and denied actions as well as successful paths.
-3. Freeze a development protocol and run controlled comparisons: single versus multiple agents with comparable tools and budgets, then experience memory off versus on for future tasks. Report completion and elapsed time, including failures. Additional comparisons need a specific hypothesis.
-4. Apply the official test protocol when released; produce architecture documentation, performance/failure/memory analysis, commit evidence, and presentation.
+The [Roadmap](team-roadmap.md#finish-line-and-milestones) holds the delivery stages, card dependencies and live task records. This document records design choices only. First demonstrate the live slice, then cover the announcement, stabilize/evaluate, and apply the official protocol when issued. Private/group interaction, all required tools, per-agent learning and genuine contribution evidence remain part of the finish line.
 
 ## Feasibility and dependencies
 
