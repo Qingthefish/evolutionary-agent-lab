@@ -158,7 +158,7 @@ HELP = """\
 [b]Navigation[/b]
   F1  Dashboard        F2  Conversations     F3  Tasks
   F4  Artifacts        F5  Memory            F6 / Ctrl+P  Approvals
-  F7 / Ctrl+L  Execution logs
+  F7 / Ctrl+L  Execution logs      F8 / Ctrl+G  Git dashboard
   Tab / Shift+Tab  move focus;  arrows and Enter operate lists, trees, tables
 
 [b]Actions[/b]

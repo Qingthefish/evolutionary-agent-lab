@@ -178,6 +178,41 @@ class ControlCenterTests(unittest.TestCase):
         states = sorted(t["state"] for t in self.center.tasks())
         self.assertEqual(states, ["succeeded"] * 4)
 
+    def test_git_scenario_push_requires_approval_and_survives_restart(self):
+        result = self.center.run_scenario("git")
+        self.assertTrue(result["summary"]["repository_created"])
+        request = self.pending("approval")
+        binding = request["action"]["binding"]
+        self.assertEqual((binding["branch"], binding["expected_remote"]), ("agent/demo", None))
+        overview = self.center.git_overview("demo")
+        self.assertEqual(overview["log"][0]["subject"], "Add integrator note (offline scenario)")
+        self.assertEqual(overview["log"][0]["sha"], binding["commit"])
+        self.assertEqual(overview["status"]["entries"], [])
+        self.reopen()
+        self.center.decide(request["id"], True)
+        self.assertEqual(self.center.request_detail(request["id"])["status"], "granted_awaiting_release")
+        self.center.release(request["id"])
+        outcome = self.center.request_detail(request["id"])["outcome"]
+        self.assertEqual((outcome["kind"], outcome["detail"]["observed_remote"]), ("git_push_verified", binding["commit"]))
+        final = self.center.advance(request["task"])
+        self.assertEqual(final["task_state"], "succeeded")
+        checks = self.center.task_detail(request["task"])["task"]["evidence"]["checks"]
+        self.assertEqual(checks, {"push_verified": True, "remote_branch_at_commit": True, "remote_note_matches": True})
+        operations = [(op["operation"], op["status"]) for op in self.center.git_operations()]
+        self.assertEqual(operations, [("push", "verified"), ("commit", "succeeded")])
+
+    def test_rejected_git_push_changes_nothing_remote(self):
+        self.center.run_scenario("git")
+        request = self.pending("approval")
+        self.center.decide(request["id"], False)
+        self.assertEqual(self.center.task_detail(request["task"])["task"]["state"], "cancelled")
+        with self.assertRaises(ControllerError):
+            self.center.release(request["id"])
+        remote = self.center.call(lambda b: b.git._remote_head(
+            b.git.repositories["demo"].remote_url("origin"), "agent/demo"))
+        self.assertIsNone(remote)
+        self.assertEqual([op["operation"] for op in self.center.git_operations()], ["commit"])
+
     # ---- threading ----------------------------------------------------------
     def test_backend_calls_from_many_threads_run_on_one_owner_thread(self):
         owners, errors = set(), []

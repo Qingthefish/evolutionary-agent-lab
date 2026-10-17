@@ -181,6 +181,37 @@ class ControlCenterAppTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((task["assignee"], task["state"]), ("writer", "pending"))
             self.assertTrue(any("will not" in n.message or "stays pending" in n.message for n in app._notifications))
 
+    async def test_git_dashboard_shows_repository_and_verified_push(self):
+        from textual.widgets import DataTable
+        self.center.run_scenario("git")
+        request = self.pending("approval")
+        app = self.app()
+        async with app.run_test(size=(170, 50)) as pilot:
+            await pilot.press("ctrl+g")
+            await settle(app, pilot)
+            self.assertEqual(app.tabs.active, "git")
+            pane = app.panes["git"]
+            self.assertIn("agent/demo", str(pane.query_one("#git-summary").render()))
+            self.assertIn("pending", str(pane.query_one("#git-pending", DataTable).get_row_at(0)[3]))
+            await pilot.press("ctrl+p")
+            await settle(app, pilot)
+            await self.select_request(app, pilot, request["id"])
+            await pilot.click("#approval-approve")
+            await pilot.pause()
+            self.assertIn("fast_forward_push", str(app.screen.query_one("#confirm-parameters").render()))
+            await pilot.click("#confirm")
+            await settle(app, pilot)
+            await self.select_request(app, pilot, request["id"])
+            await pilot.click("#approval-release")
+            await pilot.pause()
+            await pilot.click("#confirm")
+            await settle(app, pilot)
+            await pilot.press("ctrl+g")
+            await settle(app, pilot)
+            operations = pane.query_one("#git-operations", DataTable)
+            self.assertIn("verified", str(operations.get_row_at(0)[2]))
+            self.assertIn("remote branch verified", str(pane.query_one("#git-pending", DataTable).get_row_at(0)[3]))
+
     async def test_history_is_visible_after_restart(self):
         from textual.widgets import DataTable
         self.center.run_scenario("approval")

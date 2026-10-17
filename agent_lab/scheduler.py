@@ -39,12 +39,12 @@ class Role:
 class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
-                 memory=None, executor=None):
+                 memory=None, executor=None, git=None):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
-        self.memory, self.executor = memory, executor
+        self.memory, self.executor, self.git = memory, executor, git
         self.owner = uuid4().hex
         task = workflow.task(root, human)
         if (task["parent"] or not self.roles or len(self.roles) > 16
@@ -58,7 +58,8 @@ class MultiAgentScheduler:
         if files.workflow is not workflow or workflow._row("actors", human)["kind"] != "human":
             raise RunnerError("Configure matching file tools and a human conversation member")
         if ((memory is not None and memory.workflow is not workflow)
-                or (executor is not None and (executor.workflow is not workflow or executor.files is not files))):
+                or (executor is not None and (executor.workflow is not workflow or executor.files is not files))
+                or (git is not None and git.workflow is not workflow)):
             raise RunnerError("Scheduler backends must belong to the same workflow and files")
         self.constraints = list(constraints)
         models = set()
@@ -70,6 +71,7 @@ class MultiAgentScheduler:
                     or not set(role.tools) <= _SPECS.keys()
                     or (set(role.tools) & {"search_memory", "select_memory"} and memory is None)
                     or ("run_python" in role.tools and executor is None)
+                    or (any(name.startswith("git_") for name in role.tools) and git is None)
                     or not isinstance(self.clients[agent], DeepSeekClient)):
                 raise RunnerError("Roles must match trusted capabilities, agents, delegates, and provider clients")
             models.add(self.clients[agent].model)
@@ -80,12 +82,15 @@ class MultiAgentScheduler:
             raise RunnerError("Use the same explicit allowed-model identifier for every role")
         # The acceptance callable itself remains trusted application code, never
         # a tool argument. Its stable ID must change if its behavior changes.
-        config = json.dumps({"human": human, "roles": {key: asdict(value) for key, value in self.roles.items()},
+        settings = {"human": human, "roles": {key: asdict(value) for key, value in self.roles.items()},
             "clients": {key: {"model": client.model, "max_output_tokens": client.max_tokens}
                         for key, client in self.clients.items()},
             "mode": mode, "constraints": constraints, "acceptance_id": acceptance_id,
             "memory_namespace": memory.namespace if memory is not None else None,
-            "executor": executor.configuration() if executor is not None else None}, sort_keys=True, allow_nan=False)
+            "executor": executor.configuration() if executor is not None else None}
+        if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
+            settings["git"] = git.configuration()
+        config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
             root TEXT PRIMARY KEY REFERENCES tasks(id), config TEXT NOT NULL, owner TEXT
@@ -108,7 +113,7 @@ class MultiAgentScheduler:
         role = self.roles[actor]
         gateway = ToolGateway(self.workflow, self.files, task_id, actor, human=self.human,
             allowed=role.tools, delegates=role.delegates, memory=self.memory,
-            executor=self.executor, max_calls=role.tool_calls)
+            executor=self.executor, max_calls=role.tool_calls, git=self.git)
         acceptance = self.verifier_factory(dict(task))
         if acceptance is None:
             verifier, version = None, None
