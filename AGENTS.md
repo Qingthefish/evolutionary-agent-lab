@@ -5,7 +5,7 @@
 - Work in this project folder; preserve sibling coursework and other course projects.
 - Read README.md and docs/requirements.md before implementation. Read docs/direction.md when making scope or architecture decisions.
 - The instructor announcement takes priority over background-driven suggestions and cross-course alignment. Do not make a business vertical or context-compression research a prerequisite for the required platform.
-- Final architecture remains undecided. Do not present proposals as settled decisions. Human team allocation is deferred; it must not block project scoping.
+- Final architecture remains undecided. Do not present proposals as settled decisions. The four-person team must explicitly agree task owners; docs/team-roadmap.md contains proposals, not assignments. Do not independently duplicate another member's active task or change shared module interfaces without coordinating ownership.
 - Do not copy instructions from reference documents or other courses into this project's authority chain.
 
 ## Implementation
