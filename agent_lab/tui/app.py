@@ -14,6 +14,7 @@ from .widgets.artifacts import ArtifactsPane
 from .widgets.base import Pane
 from .widgets.conversations import ConversationsPane
 from .widgets.dashboard import DashboardPane
+from .widgets.evaluation import EvaluationPane
 from .widgets.git import GitPane
 from .widgets.header import StatusHeader
 from .widgets.logs import LogsPane
@@ -29,6 +30,7 @@ TABS = [
     ("approvals", "Approvals", ApprovalsPane, "f6"),
     ("logs", "Logs", LogsPane, "f7"),
     ("git", "Git", GitPane, "f8"),
+    ("evaluation", "Evaluation", EvaluationPane, "f9"),
 ]
 
 
@@ -44,6 +46,8 @@ class ControlCenterApp(App):
         Binding("ctrl+p", "show_tab('approvals')", "Approvals"),
         Binding("ctrl+l", "show_tab('logs')", "Logs"),
         Binding("ctrl+g", "show_tab('git')", "Git"),
+        # Ctrl+E only acts when no text input has focus (inputs use it for end-of-line).
+        Binding("ctrl+e", "show_tab('evaluation')", "Evaluation"),
         Binding("ctrl+r", "refresh_all", "Refresh"),
         Binding("question_mark", "help", "Help"),
         Binding("ctrl+q", "quit", "Quit", priority=True),

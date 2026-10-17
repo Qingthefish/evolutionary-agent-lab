@@ -71,6 +71,15 @@ The Git tab (`Ctrl+G`) shows a disposable, scenario-created local repository and
 
 Live mode must be requested explicitly (`--live --model <id> --api-key-env <VAR>`) and uses only the DeepSeek adapter; there is no fallback provider. It has not been exercised against the real endpoint. See [control-center boundaries](docs/architecture.md#terminal-control-center).
 
+## Run development evaluations
+
+```bash
+python3 -m agent_lab.evaluation list
+python3 -m agent_lab.evaluation run
+```
+
+The harness loads development cases from `evaluation/dev/*.json`, runs each in a fresh state directory, computes independent acceptance checks (final task state, exact artifact text, absent files, verified remote branch, time limit) from persisted records and actual files, classifies failures, and writes `results.json` plus a Markdown `report.md` under the ignored `runs/evaluations/`. Offline cases execute fixed scripts and are reported as `offline_fixture` with `benchmark_valid: false`; a negative-control case checks that the evaluator reports a mismatch. The live case is reported as *not configured* (never as a success) until a DeepSeek/HKGAI runtime is configured. The same evaluator backs the control center's Evaluation tab (`F9`). These are development cases, not the instructor's held-out set; Memory ON/OFF comparison is an interface that refuses offline, unmatched, or unexercised-memory runs. Live memory-on execution is not implemented and is rejected before provider calls.
+
 ## Run actual Python sandbox checks
 
 The default offline commands above do not need Docker and skip actual-container tests. An explicitly configured Docker engine and an already-pulled, digest-pinned official Python image enable `sandbox-demo` and the real isolation checks. See [sandbox setup and validation](docs/sandbox.md) for the dedicated Colima environment, exact commands, limits, recovery, and shutdown.
