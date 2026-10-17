@@ -11,9 +11,9 @@ The instructor's announcement is the primary scope authority. Build a general mu
 ## First 10 minutes / 新成员从这里开始
 
 1. Clone this repository and open **the repository root** in Codex. This makes the project `AGENTS.md` available to the coding assistant. Accept the collaborator invitation before pushing changes.
-2. Read [course requirements](docs/requirements.md), then [delivery scope](docs/direction.md). The announcement's mandatory requirements come before optional research ideas.
+2. Read [course requirements](docs/requirements.md), [delivery scope](docs/direction.md), and the [Roadmap task cards](docs/team-roadmap.md). The announcement takes priority; A/B/C/D are technical areas, not assigned people.
 3. Ask Codex: `Read README.md, AGENTS.md, and docs/requirements.md. Summarize what exists, what is still planned, the mandatory course requirements, and one small next implementation step. Do not modify files yet.`
-4. Before making changes, create a focused branch, agree on observable acceptance criteria, and follow [CONTRIBUTING.md](CONTRIBUTING.md).
+4. Before feature development, claim one Roadmap card in WeChat and have the coordinator record it on main. Then create a focused branch and follow [CONTRIBUTING.md](CONTRIBUTING.md).
 5. Use Python 3.12 or newer and run the offline checks below. No API key, model download, package installation, or external service is needed. The demo is a scripted plumbing check, not an autonomous-agent demonstration.
 
 Useful onboarding work includes checking requirements, running the fixture, reviewing the state/approval contract, and proposing small development tasks. Do not report planned capabilities as implemented.
@@ -86,22 +86,18 @@ The default offline commands above do not need Docker and skip actual-container 
 
 The actual execution fixture reports `mode: sandbox_integration_fixture`, zero model/API network calls, and `benchmark_valid: false`. It runs fixed source/tests inside a real container, exports actual text through the broker, confirms removal, and independently verifies the artifact before completion. It is not an autonomous-agent or model-performance result. The backend serializes sandbox executions per workflow and supports Python text/source snapshots only; full course coverage and the instructor's accepted minimum isolation boundary still need confirmation.
 
-## Initial delivery milestones
+## Delivery progress and collaboration
 
-- [ ] Verify an allowed DeepSeek/HKGAI model connection and the local sandbox approach.
-- [ ] Run one delegated task end to end with the real allowed model, real tools, and independently checked outputs.
-- [ ] Cover every mandatory capability, including private/group chat, delegation, human pause/resume, isolation, Git, and independent experience memory.
-- [ ] Run controlled completion/time comparisons and analyze failures and memory effects.
-- [ ] Evaluate the official test set and prepare the architecture document, performance report, commit evidence, and presentation.
+Use the [Roadmap](docs/team-roadmap.md) as the single task register: remaining work, dependencies, owner, status, acceptance and concise development/review outcomes. Discuss and claim work in WeChat; Qingthefish coordinates the main-branch register and final merges. Detailed code changes and checks stay in the linked PRs. Refresh main before starting a claimed task; do not maintain a second checklist or infer a percentage complete from fixture scores.
 
-These unchecked milestones are planned work, not claimed results. The API key will be provided by the course later; quotas and official evaluation details remain to be confirmed.
+This README describes capabilities and operation; requirements, design and architecture documents keep their separate purposes. Live-model access and official evaluation details remain the dependencies stated above and in the Roadmap.
 
 ## Read next
 
 - [Course requirements](docs/requirements.md): mandatory capabilities and acceptance evidence.
 - [Direction discussion](docs/direction.md): announcement-first scope, concrete task examples, and staged delivery.
 - [Contribution guide](CONTRIBUTING.md): development and evidence practices.
-- [Team roadmap](docs/team-roadmap.md): delivery gates, proposed ownership boundaries, and small task cards; claim an owner before parallel work.
+- [Team roadmap](docs/team-roadmap.md): the shared task register; choose a card, coordinate in WeChat, and record the owner before coding.
 - [AGENTS.md](AGENTS.md): instructions for coding assistants working in this project.
 - [Architecture and boundaries](docs/architecture.md): the implemented state and approval contract, with missing integrations stated explicitly.
 

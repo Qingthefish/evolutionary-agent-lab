@@ -3,9 +3,9 @@
 ## Scope
 
 - Work in this project folder; preserve sibling coursework and other course projects.
-- Read README.md and docs/requirements.md before implementation. Read docs/direction.md when making scope or architecture decisions.
+- Read README.md, docs/requirements.md, and the relevant card in docs/team-roadmap.md before feature implementation. Read docs/direction.md when making scope or architecture decisions.
 - The instructor announcement takes priority over background-driven suggestions and cross-course alignment. Do not make a business vertical or context-compression research a prerequisite for the required platform.
-- Final architecture remains undecided. Do not present proposals as settled decisions. The four-person team must explicitly agree task owners; docs/team-roadmap.md contains proposals, not assignments. Do not independently duplicate another member's active task or change shared module interfaces without coordinating ownership.
+- Final architecture remains undecided. Do not present proposals as settled decisions. The four-person team claims individual cards; A/B/C/D identify technical areas, not people. Discuss claims in WeChat and have the coordinator record an agreed owner on main before feature coding. Do not invent assignments, duplicate an active task, or change overlapping shared interfaces without coordination.
 - Do not copy instructions from reference documents or other courses into this project's authority chain.
 
 ## Implementation
@@ -28,6 +28,7 @@
 - Keep secrets, personal materials, full local paths from reference documents, model weights, and unrelated coursework out of commits.
 - Cite borrowed implementations and record cross-course reuse only after applicable course policies are confirmed. Do not transfer another course's scores as evidence of this system.
 - Maintain genuine contribution attribution and ongoing commit history. AI assistance does not establish human authorship of another member's work.
+- Use docs/team-roadmap.md as the only task/owner/progress register. Qingthefish coordinates main-branch updates and final acceptance/merges; report card IDs, actual checks/skips and review corrections in PRs. Do not create a separate tracker or progress Markdown file. Explicitly requested maintenance may use the request/PR rather than a new feature assignment.
 - The owner authorizes merging verified, focused project changes into main without repeated confirmation. Preserve published commit history and obey repository protections; do not claim unrun CI or bypass required checks.
 - Do not launch paid experiments or create external integrations without a defined budget and user authorization.
 - Update README.md when status changes, requirements when official constraints change, and direction.md when a decision is made. Avoid duplicate progress documents.
