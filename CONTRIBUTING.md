@@ -1,6 +1,6 @@
 # Contribution guide
 
-The final team is not yet confirmed. Human task allocation is deferred and does not block scope preparation.
+The team has four members. Module ownership and task assignments still need explicit agreement; use the [team roadmap](docs/team-roadmap.md) to claim one owner per task and avoid overlapping Codex work.
 
 1. Start from the current main branch and use a focused branch for a change.
 2. Define the requirement and observable acceptance evidence before implementation.
