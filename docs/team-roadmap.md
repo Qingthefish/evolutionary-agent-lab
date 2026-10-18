@@ -265,14 +265,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Define independent development cases**
 
-- **Stage / status:** M2 / In review
+- **Stage / status:** M2 / Done
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** I03.
 - **Scope:** evaluation/cases.py, evaluation/dev/, focused harness acceptance checks and related tests; no scheduler, UI or live-provider changes.
 - **Acceptance:** Small positive and negative cases have expectations written independently of candidate implementations. Cases cover goal/subtask outcomes and human intervention; acceptance criteria are available to A04 before live experiments.
-- **Base revision / branch / PR / evidence:** Scope baseline debc027; claim on main 055d895; branch feat/C01-independent-acceptance from 055d895. Criteria b54a704, implementation 950c4da; [PR #13](https://github.com/Qingthefish/evolutionary-agent-lab/pull/13). Python 3.14.7: 200 passed, 22 skipped (13 Docker, 9 optional UI); five negative controls detected, one live case not configured. Raw evidence: ignored runs/review-20261018-c01/.
+- **Base revision / branch / PR / evidence:** Scope baseline debc027; claim on main 055d895; branch feat/C01-independent-acceptance from 055d895. Criteria b54a704, implementation 950c4da, synchronized branch 92ee146; [PR #13](https://github.com/Qingthefish/evolutionary-agent-lab/pull/13). Python 3.14.7: 200 passed, 22 skipped (13 Docker, 9 optional UI); five negative controls detected, one live case not configured. Raw evidence: ignored runs/review-20261018-c01/.
 - **Reviewer:** Codex-assisted self-review under Qingthefish's standing merge authorization; no independent reviewer or formal peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-18: Claimed on main before feature work; progress 960866f; now in review. Defined criteria first, then enforced descendant state/artifacts and scoped clarification/approval counts. Rejected ignored/malformed criteria; corrected negative-control statistics so driver failures do not count as detected mismatches. Existing README/architecture updated, 77 local links checked; no new Markdown tracker, live model calls or Actions result. Acceptance/merge pending.
+- **Progress / review changes / outcome:** 2026-10-18: Claimed on main before feature work; progress 960866f; review recorded in ae8dd5f. Defined criteria first, then enforced descendant state/artifacts and scoped clarification/approval counts. Rejected ignored/malformed criteria; corrected negative-control statistics so driver failures do not count as detected mismatches. Existing README/architecture updated, 77 local links checked; no new Markdown tracker, live model calls or Actions result. Accepted and merged via PR #13 on 2026-10-18 in cbcbae3. Merged tree matches the reviewed feature tree; C01 is complete, while live capability and official evaluation remain separate cards.
 
 ### C02
 
