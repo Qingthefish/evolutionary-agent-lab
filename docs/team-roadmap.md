@@ -265,14 +265,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Define independent development cases**
 
-- **Stage / status:** M2 / Claimed
+- **Stage / status:** M2 / In progress
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** I03.
 - **Scope:** evaluation/cases.py, evaluation/dev/, focused harness acceptance checks and related tests; no scheduler, UI or live-provider changes.
 - **Acceptance:** Small positive and negative cases have expectations written independently of candidate implementations. Cases cover goal/subtask outcomes and human intervention; acceptance criteria are available to A04 before live experiments.
-- **Base revision / branch / PR / evidence:** Baseline debc027; planned branch feat/C01-independent-acceptance; PR/check evidence pending.
+- **Base revision / branch / PR / evidence:** Scope baseline debc027; claim published in 055d895; branch feat/C01-independent-acceptance from 055d895. Criteria committed first in b54a704; implementation/check evidence prepared; PR pending.
 - **Reviewer:** —
-- **Progress / review changes / outcome:** 2026-10-18: owner-authorized claim recorded before implementation. I03 accepted; no overlapping claim or open PR observed. Define subtask/human-evidence expectations and negative controls before changing their evaluator. Acceptance and merge pending.
+- **Progress / review changes / outcome:** 2026-10-18: owner-authorized claim recorded before implementation. I03 accepted; no overlapping claim or open PR observed. Define subtask/human-evidence expectations and negative controls before changing their evaluator. Implementation and local regression complete; review/merge pending. Scope remained within evaluation cases, acceptance checks and their documentation.
 
 ### C02
 
