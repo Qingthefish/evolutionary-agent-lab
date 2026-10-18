@@ -174,14 +174,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Unify runtime configuration**
 
-- **Stage / status:** M2 / In review
+- **Stage / status:** M2 / Done
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** M1; agree callable/config shapes with anyone claiming related UI/evaluation work.
 - **Scope:** A shared runtime configuration entry plus focused CLI/TUI/evaluation wiring; preserve current state and permission checks.
 - **Acceptance:** UI and evaluation use the same role/tool/limit/acceptance policy and original constraints. Unsupported backends are explicitly disabled. Offline contract checks can proceed before A01.
-- **Base revision / branch / PR / evidence:** Scope baseline d76d585; main claim 127f511; branch feat/A02-shared-runtime. PR pending. Python 3.14.7: 212 passed, 22 skipped (13 Docker, 9 optional UI); 12 shared-runtime contracts passed. Offline batch: four ordinary cases completed, five controls detected, one live case not configured. Raw evidence: ignored runs/review-20261018-a02/.
+- **Base revision / branch / PR / evidence:** Scope baseline d76d585; main claim 127f511; branch feat/A02-shared-runtime. Implementation c5086f8, synchronized branch bc84cf9; [PR #14](https://github.com/Qingthefish/evolutionary-agent-lab/pull/14); merged 2026-10-18 in dfeb305. Python 3.14.7: 212 passed, 22 skipped (13 Docker, 9 optional UI); 12 shared-runtime contracts passed. Offline batch: four ordinary cases completed, five controls detected, one live case not configured. Raw evidence: ignored runs/review-20261018-a02/.
 - **Reviewer:** Codex-assisted self-review under Qingthefish's standing merge authorization; no independent reviewer or formal peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-18: shared roles/tools/task-tree limits, acceptance factory and CLI flags wired into UI/evaluation. Original constraints/root expectations persist across restart; changed contracts/budgets reject resume. Review added direct-call constraint preservation, combined-limit preflight and known legacy-task compatibility. Both CLI entry points and 79 local links checked; no new Markdown file. Search/execution/Git/memory remain disabled in this live setup; no model/API calls or Actions result. Acceptance/merge pending.
+- **Progress / review changes / outcome:** 2026-10-18: shared roles/tools/task-tree limits, acceptance factory and CLI flags wired into UI/evaluation. Original constraints/root expectations persist across restart; changed contracts/budgets reject resume. Review added direct-call constraint preservation, combined-limit preflight and known legacy-task compatibility. Both CLI entry points and 79 local links checked; no new Markdown file. Search/execution/Git/memory remain disabled in this live setup; no model/API calls or Actions result. Review recorded in 496ac1d. Accepted and merged via PR #14 in dfeb305; merged tree matches the checked feature tree. A02 complete; live validation and tool/learning integrations remain separate cards.
 
 ### A03
 
