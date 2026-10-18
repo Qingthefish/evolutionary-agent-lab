@@ -24,7 +24,7 @@ Deliver a runnable general multi-agent platform and an evaluation entry point: a
 
 | Gate | Exit evidence | Current position |
 | --- | --- | --- |
-| M0 — coordinate | Common baseline, visible claims and agreed boundaries | Register ready; future coding owners unclaimed |
+| M0 — coordinate | Common baseline, visible claims and agreed boundaries | Register ready; individual claims recorded below |
 | M1 — foundation integration | Existing platform plus #7/#8/#9 reviewed and integrated with honest evidence labels | Done; I01–I03 record that integration |
 | M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Pending live access and integration cards |
 | M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Pending remaining tool, learning and interaction work |
@@ -265,14 +265,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Define independent development cases**
 
-- **Stage / status:** M2 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M2 / Claimed
+- **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** I03.
-- **Scope:** evaluation/cases.py, evaluation/dev/ and case/acceptance tests; coordinate shared harness edits.
+- **Scope:** evaluation/cases.py, evaluation/dev/, focused harness acceptance checks and related tests; no scheduler, UI or live-provider changes.
 - **Acceptance:** Small positive and negative cases have expectations written independently of candidate implementations. Cases cover goal/subtask outcomes and human intervention; acceptance criteria are available to A04 before live experiments.
-- **Base revision / branch / PR / evidence:** —
+- **Base revision / branch / PR / evidence:** Baseline debc027; planned branch feat/C01-independent-acceptance; PR/check evidence pending.
 - **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Progress / review changes / outcome:** 2026-10-18: owner-authorized claim recorded before implementation. I03 accepted; no overlapping claim or open PR observed. Define subtask/human-evidence expectations and negative controls before changing their evaluator. Acceptance and merge pending.
 
 ### C02
 
