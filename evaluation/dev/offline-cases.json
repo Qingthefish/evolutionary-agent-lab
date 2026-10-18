@@ -149,6 +149,10 @@
         "summary.md": "Agents collaborate.\n"
       },
       "max_seconds": 300
-    }
+    },
+    "constraints": [
+      "Use only the supplied task text; no external research is needed.",
+      "Write the requested Markdown artifact."
+    ]
   }
 ]

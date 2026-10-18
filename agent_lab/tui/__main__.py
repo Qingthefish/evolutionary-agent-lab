@@ -6,11 +6,11 @@ holding the DeepSeek key; there is no implicit key discovery or fallback.
 """
 
 import argparse
-import os
 import sys
 
 from ..core import WorkflowError
-from .controller import ControlCenter, LiveConfig
+from ..runtime import add_live_arguments, live_config_from_args
+from .controller import ControlCenter
 
 
 def main(argv=None):
@@ -19,22 +19,14 @@ def main(argv=None):
     parser.add_argument("--state-dir", default="runs/tui-session",
                         help="Persistent session directory (reused across restarts; ignored by Git)")
     parser.add_argument("--human", default="operator", help="Local human operator identifier (trusted local setup)")
-    parser.add_argument("--live", action="store_true", help="Enable live DeepSeek execution (requires --model and --api-key-env)")
-    parser.add_argument("--model", help="Explicit course-approved DeepSeek model identifier")
-    parser.add_argument("--api-key-env", help="Name of the environment variable holding the DeepSeek API key")
+    add_live_arguments(parser)
     parser.add_argument("--git-config", help="JSON file listing additional trusted repositories (local remotes only by default)")
     parser.add_argument("--refresh-seconds", type=float, default=5.0, help="Automatic status refresh interval; 0 disables")
     args = parser.parse_args(argv)
-    live = None
-    if args.live:
-        if not args.model or not args.api_key_env:
-            parser.error("--live requires --model and --api-key-env")
-        key = os.environ.get(args.api_key_env)
-        if not key:
-            parser.error(f"Environment variable {args.api_key_env} is not set; refusing to start live mode")
-        live = LiveConfig(model=args.model, api_key=key)
-    elif args.model or args.api_key_env:
-        parser.error("--model/--api-key-env are only used with --live")
+    try:
+        live = live_config_from_args(args)
+    except WorkflowError as error:
+        parser.error(str(error))
     try:
         from .app import ControlCenterApp
     except ImportError:

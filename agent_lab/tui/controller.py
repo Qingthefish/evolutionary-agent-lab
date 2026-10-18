@@ -8,7 +8,6 @@ by the existing backend APIs rather than reimplemented here.
 """
 
 from concurrent.futures import Future
-from dataclasses import dataclass, field
 import json
 from pathlib import Path
 import queue
@@ -16,67 +15,19 @@ import threading
 import time
 
 from ..core import Workflow, WorkflowError
-from ..deepseek import DeepSeekClient, DeepSeekHTTP
 from ..files import FileTools
 from ..git_tools import GitTools
 from ..inspection import ArtifactInspector
 from ..memory import ExperienceMemory
 from ..queries import TERMINAL, WorkflowQueries, redact, require_human
-from ..scheduler import MultiAgentScheduler, Role
+from ..runtime import (LiveConfig, RuntimeSetupError as ControllerError, bind_task_policy,
+                       build_live_scheduler, live_roles, policy_for_task)
 from .. import offline_scenarios
 from ..evaluation import Evaluator, compare_memory, list_runs, load_cases, load_run
 
 DEFAULT_CASES = Path(__file__).resolve().parents[2] / "evaluation" / "dev"
 
 MEMORY_NAMESPACE = "tui-development"
-
-
-class ControllerError(WorkflowError):
-    """A control-center request that cannot be performed as asked."""
-
-
-@dataclass(frozen=True)
-class LiveConfig:
-    """Explicit live-provider settings. Only DeepSeek is supported today.
-
-    HKGAI needs its issued interface details. There is no environment-key
-    discovery and no fallback: absent configuration means offline mode.
-    """
-    model: str
-    api_key: str = field(repr=False)
-    provider: str = "deepseek"
-    max_output_tokens: int = 2048
-
-    def __post_init__(self):
-        if self.provider != "deepseek":
-            raise ControllerError("Only the DeepSeek adapter is implemented; HKGAI awaits its official interface")
-        if not isinstance(self.model, str) or not self.model.strip():
-            raise ControllerError("Live mode needs an explicit course-approved model identifier")
-
-
-_LIVE_ROLES = {
-    "coordinator": ("Decompose the goal, delegate to eligible specialists, accept their offered artifacts, and deliver the result.",
-                    ("delegate_task", "accept_artifact", "post_message", "ask_human", "read_text", "create_text")),
-    "writer": ("Draft Markdown or plain-text deliverables and offer them to your parent task.",
-               ("create_text", "read_text", "update_text", "offer_artifact", "accept_artifact", "ask_human", "post_message")),
-    "editor": ("Review and revise text deliverables; offer the revised snapshot to your parent task.",
-               ("create_text", "read_text", "update_text", "offer_artifact", "accept_artifact", "ask_human")),
-    "researcher": ("Collect information from supplied files only; internet search is not configured.",
-                   ("create_text", "read_text", "offer_artifact", "ask_human")),
-}
-
-
-def live_roles(members):
-    """Roles for agents present in a conversation; delegation stays inside it."""
-    present = [agent for agent in _LIVE_ROLES if agent in members]
-    roles = {}
-    for agent in present:
-        instructions, tools = _LIVE_ROLES[agent]
-        delegates = tuple(a for a in present if a != agent) if "delegate_task" in tools else ()
-        if "delegate_task" in tools and not delegates:
-            tools = tuple(t for t in tools if t != "delegate_task")
-        roles[agent] = Role(instructions, tools, delegates)
-    return roles
 
 
 class _Backend:
@@ -124,16 +75,7 @@ class _Backend:
         if kind == "live":
             if self.live is None:
                 raise ControllerError("This is a live-model run; reopen the control center in configured live mode to continue it")
-            chat = self.workflow.task(root, self.human)["chat"]
-            members = {m["id"] for c in self.queries.conversations(self.human) if c["id"] == chat for m in c["members"]}
-            roles = live_roles(members)
-            transport = DeepSeekHTTP(self.live.api_key, allow_network=True)
-            return MultiAgentScheduler(
-                self.workflow, self.files, root, human=self.human, roles=roles,
-                clients={a: DeepSeekClient(self.live.model, transport, max_tokens=self.live.max_output_tokens) for a in roles},
-                mode="live", constraints=[], acceptance_id="tui-live-human-review-v1",
-                # No automatic acceptance rule: proposals await the human reviewer.
-                verifier_factory=lambda task: None, memory=None)
+            return build_live_scheduler(self.workflow, self.files, root, human=self.human, live=self.live)
         return offline_scenarios.scheduler_for(self.workflow, self.files, root, kind, human=self.human,
                                                memory=self.memory, git=self.git)
 
@@ -230,9 +172,9 @@ class ControlCenter:
         return self.call(collect)
 
     def runtimes(self):
-        return {"model": "live (DeepSeek)" if self.live else "offline fixtures only",
+        return {"model": ("DeepSeek configured; network " + ("enabled" if self.live.allow_network else "disabled")) if self.live else "offline fixtures only",
                 "sandbox": "not configured", "search": "disabled",
-                "git": f"{1 + len(self._repositories)} trusted repo(s), local remotes only"}
+                "git": ("disabled for live tasks; " if self.live else "") + f"{1 + len(self._repositories)} local fixture repo(s)"}
 
     def actors(self):
         return self.call(lambda b: b.queries.actors())
@@ -376,10 +318,12 @@ class ControlCenter:
     def post_message(self, chat, body):
         return self._action(f"Posted message to {chat[:8]}", lambda b: b.workflow.post_message(chat, b.human, body))
 
-    def create_task(self, chat, assignee, title):
+    def create_task(self, chat, assignee, title, *, constraints=(), expected_artifacts=()):
         """Create a real task. Posting a message never creates or runs a task."""
+        policy = policy_for_task(self.live, constraints=constraints, root_artifacts=expected_artifacts)
         def create(b):
             task = b.workflow.create_task(chat, b.human, assignee, title)
+            bind_task_policy(b.workflow, task, b.human, policy)
             if self.live is None:
                 return {"task": task, "execution": "not_started",
                         "explanation": "Offline mode has no model; the task stays pending. Run a scripted scenario to exercise execution."}

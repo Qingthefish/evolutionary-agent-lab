@@ -8,6 +8,8 @@ Evolutionary Multi-Agent Collaboration System
 
 The instructor's announcement is the primary scope authority. Build a general multi-agent collaboration platform with autonomous delegation, human interaction, private sandboxes, per-agent memory and learning, required tools, and automatic completion/time evaluation. The proposed implementation emphasis is reliable execution with observable results and bounded recovery. A business vertical is not required to start the project.
 
+2026-10-18: UI and live evaluation now use one shared runtime setup for roles, tools, task/tree limits and acceptance. Original task constraints and root text expectations are persisted and restored across restart; conflicting policies/configurations are rejected. This is validated through offline configuration contracts, not live-model performance.
+
 ## First 10 minutes / 新成员从这里开始
 
 1. Clone this repository and open **the repository root** in Codex. This makes the project `AGENTS.md` available to the coding assistant. Accept the collaborator invitation before pushing changes.
@@ -44,6 +46,7 @@ Use these entry points to inspect the current implementation; a module's presenc
 | --- | --- |
 | Durable tasks, conversations and evidence views | [core.py](agent_lab/core.py), [queries.py](agent_lab/queries.py), [inspection.py](agent_lab/inspection.py) |
 | Model protocol and allowed tool dispatch | [protocol.py](agent_lab/protocol.py), [deepseek.py](agent_lab/deepseek.py), [gateway.py](agent_lab/gateway.py) |
+| Shared live configuration, task policies and CLI flags | [runtime.py](agent_lab/runtime.py) |
 | Task execution, delegation and shared limits | [runner.py](agent_lab/runner.py), [scheduler.py](agent_lab/scheduler.py), [budget.py](agent_lab/budget.py) |
 | Controlled files and private candidate memory | [files.py](agent_lab/files.py), [memory.py](agent_lab/memory.py) |
 | Python sandbox and restricted Git operations | [sandbox.py](agent_lab/sandbox.py), [git_tools.py](agent_lab/git_tools.py) |
@@ -98,7 +101,7 @@ The default session directory `runs/tui-session` is reused across restarts, so c
 
 The Git tab (`Ctrl+G`) shows a disposable, scenario-created local repository and any repositories listed with `--git-config repos.json`. The `git` scenario has a scripted integrator commit a task note through the restricted Git tools and request a push; the push happens only after you approve the exact commit/branch/remote binding and release it, and the remote branch is then verified. No GitHub remote or credential is used. See [restricted Git tools](docs/architecture.md#restricted-git-tools).
 
-Live mode must be requested explicitly (`--live --model <id> --api-key-env <VAR>`) and uses only the DeepSeek adapter; there is no fallback provider. It has not been exercised against the real endpoint. See [control-center boundaries](docs/architecture.md#terminal-control-center).
+Live mode must be requested explicitly (`--live --model <id> --api-key-env <VAR>`) and uses only the DeepSeek adapter; there is no fallback provider. It has not been exercised against the real endpoint. Both the TUI and evaluation `run` command share these flags, plus repeatable `--constraint`, `--max-output-tokens`, `--task-attempts` and `--tree-attempts`. Live flags are rejected without `--live`. The launcher reads only the named key variable; programmatic `LiveConfig` defaults to network disabled. Obtain the issued model/key and authorize a run budget before live execution. See [shared runtime setup](docs/architecture.md#shared-runtime-setup) and [control-center boundaries](docs/architecture.md#terminal-control-center).
 
 ## Run development evaluations
 
@@ -110,6 +113,8 @@ python3 -m agent_lab.evaluation run
 The harness loads development cases from `evaluation/dev/*.json`, runs each in a fresh state directory, computes independent acceptance checks (final task state, exact artifact text, absent files, verified remote branch, time limit) from persisted records and actual files, classifies failures, and writes `results.json` plus a Markdown `report.md` under the ignored `runs/evaluations/`. Offline cases execute fixed scripts and are reported as `offline_fixture` with `benchmark_valid: false`; negative-control cases check that the evaluator reports mismatches. The live case is reported as *not configured* (never as a success) until a DeepSeek/HKGAI runtime is configured. The same evaluator backs the control center's Evaluation tab (`F9`). These are development cases, not the instructor's held-out set; Memory ON/OFF comparison is an interface that refuses offline, unmatched, or unexercised-memory runs. Live memory-on execution is not implemented and is rejected before provider calls.
 
 Cases can also require uniquely identified descendant tasks, their states and actual artifacts, plus exact counts of persisted clarification/approval outcomes within the goal's task tree. Negative controls exercise wrong child results and missing/wrong human evidence even when the root output matches. Invalid/unknown criteria are rejected before execution; driver crashes do not count as detected controls. Full expected criteria and matched task/request evidence are retained in `results.json`. See the [case contract](docs/architecture.md#evaluation-harness-foundation) and [development definitions](evaluation/dev/).
+
+For `live_scheduler` cases, optional `constraints` are combined with the CLI's original constraints and persisted in the shared task policy. Scripted fixtures reject custom constraints because they do not interpret arbitrary requests. A trusted root exact-text expectation uses the same verifier in the UI API and evaluator; absent criteria and child proposals require trusted review. The shared live setup currently disables search, execution, Git and memory backends; their separate offline scenarios/checks remain available. Actual live tool/learning coverage remains future work.
 
 ## Run actual Python sandbox checks
 
