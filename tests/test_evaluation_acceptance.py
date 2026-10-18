@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from agent_lab.evaluation import CaseError, Evaluator, load_cases, parse_case
+from agent_lab.evaluation import CaseError, Evaluator, load_cases, parse_case, summarize
 from agent_lab.evaluation.harness import HUMAN, _Session, _checks, _drive_offline
 
 
@@ -47,6 +47,7 @@ class AcceptanceContractTests(unittest.TestCase):
             "assignee": "writer", "title": CHILD_TITLE, "final_state": "succeeded",
             "artifacts": {"note.txt": "Hello\n"}, "absent_artifacts": ["scratch.txt"]}]))
         self.assertEqual(result["classification"], "completed", result)
+        self.assertEqual(result["case"]["expected"]["subtasks"][0]["artifacts"], {"note.txt": "Hello\n"})
 
     def test_missing_or_ambiguous_child_never_passes_by_task_count(self):
         for title, duplicate in (("A step that does not exist", False), (CHILD_TITLE, True)):
@@ -146,7 +147,8 @@ class AcceptanceContractTests(unittest.TestCase):
                     parse_case(item)
 
     def test_duplicate_json_keys_and_duplicate_selectors_are_rejected(self):
-        (self.root / "bad.json").write_text('{"id":"first","id":"second"}')
+        # Both values are valid IDs; ordinary json.loads would silently keep the last one.
+        (self.root / "bad.json").write_text('{"id":"first",' + json.dumps(definition())[1:])
         with self.assertRaises(CaseError):
             load_cases(self.root)
         child = {"assignee": "writer", "title": CHILD_TITLE, "final_state": "succeeded"}
@@ -155,6 +157,14 @@ class AcceptanceContractTests(unittest.TestCase):
                      definition(human_requests=[human, copy.deepcopy(human)])):
             with self.assertRaises(CaseError):
                 parse_case(item)
+
+    def test_driver_failure_is_not_a_detected_negative_control(self):
+        rows = [{"status": "executed", "control": "negative", "classification": classification,
+                 "duration_seconds": 1.0} for classification in
+                ("acceptance_failed", "driver_error", "timeout", "blocked", "completed")]
+        summary = summarize(rows)
+        self.assertEqual((summary["negative_controls"], summary["negative_controls_detected"]), (5, 1))
+        self.assertIsNone(summary["completion_rate"])
 
 
 if __name__ == "__main__":

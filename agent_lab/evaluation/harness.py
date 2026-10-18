@@ -114,6 +114,39 @@ def _drive_live(case, session, live):
     return root, scheduler.run()
 
 
+def _artifact_checks(session, task, expected, prefix=""):
+    checks = {}
+    for path, text in expected.artifacts.items():
+        try:
+            checks[prefix + "artifact:" + path] = session.inspector.read_file(task, HUMAN, path)["content"] == text
+        except WorkflowError:
+            checks[prefix + "artifact:" + path] = False
+    for path in expected.absent_artifacts:
+        try:
+            session.inspector.read_file(task, HUMAN, path)
+            checks[prefix + "absent:" + path] = False
+        except ArtifactMissingError:
+            checks[prefix + "absent:" + path] = True
+        except WorkflowError:
+            # Denied/unsafe/unreadable is not proof of absence.
+            checks[prefix + "absent:" + path] = False
+    return checks
+
+
+def _human_matches(request, outcome):
+    if outcome == "unanswered":
+        return not request["answered"]
+    if not request["answered"]:
+        return False
+    if outcome == "answered":
+        return True
+    if outcome == "rejected":
+        return request["approved"] == 0
+    if outcome == "approved":
+        return request["approved"] == 1
+    return outcome == "consumed" and request["approved"] == 1 and bool(request["consumed"])
+
+
 def _checks(case, session, root, duration):
     workflow = session.workflow
     task = workflow.task(root, HUMAN)
@@ -123,24 +156,35 @@ def _checks(case, session, root, duration):
     checks = {"final_state": task["state"] == case.expected.final_state,
               "task_count": len(tree) >= case.expected.min_tasks,
               "within_time": duration <= case.expected.max_seconds}
-    for path, text in case.expected.artifacts.items():
-        try:
-            checks["artifact:" + path] = session.inspector.read_file(root, HUMAN, path)["content"] == text
-        except WorkflowError:
-            checks["artifact:" + path] = False
-    for path in case.expected.absent_artifacts:
-        try:
-            session.inspector.read_file(root, HUMAN, path)
-            checks["absent:" + path] = False
-        except ArtifactMissingError:
-            checks["absent:" + path] = True
-        except WorkflowError:
-            # Invalid paths, denied access and unsafe/unreadable files are not
-            # proof of absence. Acceptance must fail closed.
-            checks["absent:" + path] = False
+    checks.update(_artifact_checks(session, root, case.expected))
+    subtask_records = []
+    for index, expected in enumerate(case.expected.subtasks):
+        prefix = f"subtask:{index}:"
+        matches = [row for row in tree if row["id"] != root and row["assignee"] == expected.assignee
+                   and row["title"] == expected.title]
+        checks[prefix + "unique_match"] = len(matches) == 1
+        checks[prefix + "final_state"] = len(matches) == 1 and matches[0]["state"] == expected.final_state
+        subtask_records.append({"selector": {"assignee": expected.assignee, "title": expected.title},
+                                "matches": [{"task_id": r["id"], "state": r["state"]} for r in matches]})
+        if len(matches) == 1:
+            checks.update(_artifact_checks(session, matches[0]["id"], expected, prefix))
+        else:
+            checks.update({prefix + "artifact:" + p: False for p in expected.artifacts})
+            checks.update({prefix + "absent:" + p: False for p in expected.absent_artifacts})
+    ids = [row["id"] for row in tree]
+    marks = ",".join("?" * len(ids))
+    requests = workflow.db.execute(f"""SELECT r.*,t.assignee FROM requests r JOIN tasks t ON t.id=r.task
+        WHERE r.task IN ({marks})""", ids).fetchall() if case.expected.human_requests else []
+    human_records = []
+    for index, expected in enumerate(case.expected.human_requests):
+        matches = [r for r in requests if r["kind"] == expected.kind
+                   and (expected.assignee is None or r["assignee"] == expected.assignee)
+                   and _human_matches(r, expected.outcome)]
+        checks[f"human:{index}:{expected.kind}:{expected.outcome}"] = len(matches) == expected.count
+        human_records.append({"kind": expected.kind, "outcome": expected.outcome, "assignee": expected.assignee,
+                              "expected_count": expected.count, "actual_count": len(matches),
+                              "request_ids": [r["id"] for r in matches]})
     if case.expected.remote_branch_verified:
-        ids = [row["id"] for row in tree]
-        marks = ",".join("?" * len(ids))
         verified = workflow.db.execute(
             f"SELECT result FROM git_operations WHERE operation='push' AND status='verified' AND task IN ({marks})",
             ids).fetchone() if session.git is not None else None
@@ -158,6 +202,7 @@ def _checks(case, session, root, duration):
     return checks, {"root_state": task["state"], "tasks": len(tree), "task_states": states,
                     "workflow_elapsed_seconds": record["elapsed_seconds"],
                     "human_wait_seconds": record["human_wait_seconds"],
+                    "subtask_checks": subtask_records, "human_request_checks": human_records,
                     "evidence": json.loads(task["evidence"]) if task["evidence"] else None}
 
 
@@ -252,7 +297,8 @@ def summarize(results):
             "total_duration_seconds": sum(durations) if durations else None,
             "not_configured": classes["not_configured"],
             "negative_controls": len(controls),
-            "negative_controls_detected": sum(r["classification"] != "completed" for r in controls),
+            # A crashed/timed-out driver did not demonstrate a working acceptance check.
+            "negative_controls_detected": sum(r["classification"] == "acceptance_failed" for r in controls),
             "classifications": classes}
 
 

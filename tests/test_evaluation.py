@@ -63,7 +63,7 @@ class EvaluationTests(unittest.TestCase):
         summary = run["summary"]
         # Controls and unconfigured live cases are excluded from the scored denominator.
         self.assertEqual((summary["executed"], summary["completed"], summary["completion_rate"]), (4, 4, 1.0))
-        self.assertEqual((summary["negative_controls"], summary["negative_controls_detected"]), (1, 1))
+        self.assertEqual((summary["negative_controls"], summary["negative_controls_detected"]), (5, 5))
         self.assertEqual(summary["not_configured"], 1)
         report = (self.output / run["run_id"] / "report.md").read_text()
         self.assertIn("`offline_fixture`", report)
