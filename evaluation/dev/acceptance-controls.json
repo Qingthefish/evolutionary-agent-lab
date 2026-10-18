@@ -1,0 +1,95 @@
+[
+  {
+    "id": "dev-negative-subtask-state",
+    "title": "Root succeeds but the required child state differs",
+    "goal": "Negative evaluator control: the root note matches, but the independent process expectation must fail.",
+    "driver": "offline_delegation",
+    "control": "negative",
+    "human_responses": [
+      "English"
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Hello\n"
+      },
+      "subtasks": [
+        {
+          "assignee": "writer",
+          "title": "Deliver note.txt containing Hello followed by a newline",
+          "final_state": "failed"
+        }
+      ]
+    }
+  },
+  {
+    "id": "dev-negative-subtask-artifact",
+    "title": "Root artifact matches but child artifact differs",
+    "goal": "Negative evaluator control: the root note matches, but the independent process expectation must fail.",
+    "driver": "offline_delegation",
+    "control": "negative",
+    "human_responses": [
+      "English"
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Hello\n"
+      },
+      "subtasks": [
+        {
+          "assignee": "writer",
+          "title": "Deliver note.txt containing Hello followed by a newline",
+          "final_state": "succeeded",
+          "artifacts": {
+            "note.txt": "Wrong child output\n"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "dev-negative-human-evidence",
+    "title": "A clarification cannot satisfy a consumed approval expectation",
+    "goal": "Negative evaluator control: the root note matches, but the independent process expectation must fail.",
+    "driver": "offline_delegation",
+    "control": "negative",
+    "human_responses": [
+      "English"
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Hello\n"
+      },
+      "human_requests": [
+        {
+          "kind": "approval",
+          "outcome": "consumed",
+          "count": 1
+        }
+      ]
+    }
+  },
+  {
+    "id": "dev-negative-human-decision",
+    "title": "An approved deletion cannot satisfy a rejected-decision expectation",
+    "goal": "Negative evaluator control: the deletion completes, but a rejected approval must not be inferred.",
+    "driver": "offline_approval",
+    "control": "negative",
+    "approval": "approve",
+    "expected": {
+      "final_state": "succeeded",
+      "absent_artifacts": [
+        "scratch.txt"
+      ],
+      "human_requests": [
+        {
+          "kind": "approval",
+          "outcome": "rejected",
+          "count": 1
+        }
+      ]
+    }
+  }
+]

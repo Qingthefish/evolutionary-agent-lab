@@ -4,8 +4,43 @@
     "title": "Delegated note with clarification and artifact handoff",
     "goal": "Deliver note.txt containing Hello followed by a newline through coordinator, writer, and editor.",
     "driver": "offline_delegation",
-    "human_responses": ["English; Hello followed by a newline"],
-    "expected": {"final_state": "succeeded", "artifacts": {"note.txt": "Hello\n"}, "min_tasks": 3, "max_seconds": 60}
+    "human_responses": [
+      "English; Hello followed by a newline"
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Hello\n"
+      },
+      "min_tasks": 3,
+      "max_seconds": 60,
+      "subtasks": [
+        {
+          "assignee": "writer",
+          "title": "Deliver note.txt containing Hello followed by a newline",
+          "final_state": "succeeded",
+          "artifacts": {
+            "note.txt": "Hello\n"
+          }
+        },
+        {
+          "assignee": "editor",
+          "title": "Deliver note.txt containing Hello followed by a newline",
+          "final_state": "succeeded",
+          "artifacts": {
+            "note.txt": "Hello\n"
+          }
+        }
+      ],
+      "human_requests": [
+        {
+          "kind": "clarification",
+          "outcome": "answered",
+          "assignee": "editor",
+          "count": 1
+        }
+      ]
+    }
   },
   {
     "id": "dev-approval-delete",
@@ -13,8 +48,28 @@
     "goal": "Keep keep.txt and delete scratch.txt only after exact human approval.",
     "driver": "offline_approval",
     "approval": "approve",
-    "expected": {"final_state": "succeeded", "artifacts": {"keep.txt": "Archive index\n- scenario: approval\n"},
-                 "absent_artifacts": ["scratch.txt"], "max_seconds": 60}
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "keep.txt": "Archive index\n- scenario: approval\n"
+      },
+      "absent_artifacts": [
+        "scratch.txt"
+      ],
+      "max_seconds": 60,
+      "human_requests": [
+        {
+          "kind": "approval",
+          "outcome": "approved",
+          "count": 1
+        },
+        {
+          "kind": "approval",
+          "outcome": "consumed",
+          "count": 1
+        }
+      ]
+    }
   },
   {
     "id": "dev-approval-reject",
@@ -22,7 +77,25 @@
     "goal": "A rejected critical action must cancel the task and leave the file in place.",
     "driver": "offline_approval",
     "approval": "reject",
-    "expected": {"final_state": "cancelled", "artifacts": {"scratch.txt": "temporary working notes\n"}, "max_seconds": 60}
+    "expected": {
+      "final_state": "cancelled",
+      "artifacts": {
+        "scratch.txt": "temporary working notes\n"
+      },
+      "max_seconds": 60,
+      "human_requests": [
+        {
+          "kind": "approval",
+          "outcome": "rejected",
+          "count": 1
+        },
+        {
+          "kind": "approval",
+          "outcome": "consumed",
+          "count": 0
+        }
+      ]
+    }
   },
   {
     "id": "dev-git-push",
@@ -30,7 +103,23 @@
     "goal": "Commit a task note to the demo repository and push agent/demo after approval.",
     "driver": "offline_git",
     "approval": "approve",
-    "expected": {"final_state": "succeeded", "remote_branch_verified": true, "max_seconds": 60}
+    "expected": {
+      "final_state": "succeeded",
+      "remote_branch_verified": true,
+      "max_seconds": 60,
+      "human_requests": [
+        {
+          "kind": "approval",
+          "outcome": "approved",
+          "count": 1
+        },
+        {
+          "kind": "approval",
+          "outcome": "consumed",
+          "count": 1
+        }
+      ]
+    }
   },
   {
     "id": "dev-negative-control",
@@ -38,14 +127,28 @@
     "goal": "The evaluator must report this case as failed because the expected text differs from the actual artifact.",
     "driver": "offline_delegation",
     "control": "negative",
-    "human_responses": ["English"],
-    "expected": {"final_state": "succeeded", "artifacts": {"note.txt": "Hello, world\n"}, "max_seconds": 60}
+    "human_responses": [
+      "English"
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Hello, world\n"
+      },
+      "max_seconds": 60
+    }
   },
   {
     "id": "dev-live-summary",
     "title": "Live model: summarize the brief into summary.md",
     "goal": "Write summary.md containing exactly the line 'Agents collaborate.' followed by a newline.",
     "driver": "live_scheduler",
-    "expected": {"final_state": "succeeded", "artifacts": {"summary.md": "Agents collaborate.\n"}, "max_seconds": 300}
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "summary.md": "Agents collaborate.\n"
+      },
+      "max_seconds": 300
+    }
   }
 ]
