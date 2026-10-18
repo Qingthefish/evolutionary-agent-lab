@@ -5,6 +5,7 @@ import json
 import sys
 
 from ..core import WorkflowError
+from ..runtime import add_live_arguments, live_config_from_args
 from .cases import load_cases
 from .harness import Evaluator
 
@@ -17,6 +18,7 @@ def main(argv=None):
     run.add_argument("--cases", default="evaluation/dev", help="Directory of case JSON files")
     run.add_argument("--output", default="runs/evaluations", help="Directory for run results (ignored by Git)")
     run.add_argument("--case", action="append", help="Run only this case id (repeatable)")
+    add_live_arguments(run)
     commands.add_parser("list", help="List case definitions").add_argument("--cases", default="evaluation/dev")
     args = parser.parse_args(argv)
     try:
@@ -25,7 +27,8 @@ def main(argv=None):
             for case in cases:
                 print(json.dumps(case.summary()))
             return 0
-        result = Evaluator(cases, output_root=args.output).run(args.case)
+        live = live_config_from_args(args)
+        result = Evaluator(cases, output_root=args.output, live=live).run(args.case)
     except (WorkflowError, KeyError) as error:
         parser.exit(1, f"Evaluation failed to start: {error}\n")
     print(json.dumps({k: result[k] for k in ("run_id", "mode", "benchmark_valid", "summary")}, indent=2))

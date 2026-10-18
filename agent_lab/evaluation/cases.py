@@ -13,6 +13,7 @@ import re
 from ..core import WorkflowError
 from ..files import _parts
 from ..protocol import strict_json
+from ..runtime import normalize_constraints
 
 DRIVERS = {"offline_delegation", "offline_approval", "offline_git", "live_scheduler"}
 STATES = {"succeeded", "failed", "cancelled"}
@@ -64,11 +65,13 @@ class EvalCase:
     approval: str | None = None             # "approve" | "reject" scripted human decision
     expected: Expected = field(default_factory=lambda: Expected("succeeded"))
     source: str = ""
+    constraints: tuple = ()
 
     def summary(self):
         return {"id": self.id, "title": self.title, "goal": self.goal, "driver": self.driver, "split": self.split,
                 "control": self.control, "scripted_human": bool(self.human_responses or self.approval),
-                "expected_state": self.expected.final_state, "expected": asdict(self.expected), "source": self.source}
+                "expected_state": self.expected.final_state, "expected": asdict(self.expected), "source": self.source,
+                "constraints": list(self.constraints)}
 
 
 def _object(value, allowed, required, label):
@@ -118,13 +121,19 @@ def _artifact_checks(data):
 
 def parse_case(data, *, source=""):
     """Validate the entire JSON contract before creating any runtime or run directory."""
-    _object(data, {"id", "title", "goal", "driver", "split", "control", "human_responses", "approval", "expected"},
+    _object(data, {"id", "title", "goal", "driver", "split", "control", "human_responses", "approval", "expected", "constraints"},
             {"id", "title", "goal", "driver", "expected"}, "case")
     identifier = _text(data["id"], "id")
     if not _ID.fullmatch(identifier):
         raise CaseError("Case id must contain 3–64 lowercase letters, digits or hyphens")
     title, goal = _text(data["title"], "title"), _text(data["goal"], "goal")
     driver = _choice(data["driver"], DRIVERS, "driver")
+    try:
+        constraints = normalize_constraints(_array(data.get("constraints", []), "constraints"))
+    except WorkflowError as error:
+        raise CaseError(str(error)) from None
+    if constraints and driver != "live_scheduler":
+        raise CaseError("Offline fixtures have fixed constraints; custom constraints require live_scheduler")
     split = _choice(data.get("split", "development"), {"development", "heldout"}, "split")
     control = _choice(data.get("control"), {None, "negative"}, "control")
     approval = _choice(data.get("approval"), {None, "approve", "reject"}, "approval")
@@ -166,7 +175,7 @@ def parse_case(data, *, source=""):
         raise CaseError("Duplicate human-request expectation")
     return EvalCase(identifier, title, goal, driver, split, control, responses, approval,
                     Expected(final_state, artifacts, absent, min_tasks, float(seconds), remote,
-                             tuple(subtasks), tuple(humans)), source)
+                             tuple(subtasks), tuple(humans)), source, constraints)
 
 
 def load_cases(directory):

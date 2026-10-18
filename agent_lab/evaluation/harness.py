@@ -17,6 +17,7 @@ from ..core import Workflow, WorkflowError
 from ..files import FileTools
 from ..inspection import ArtifactInspector, ArtifactMissingError
 from ..memory import ExperienceMemory
+from ..runtime import LIVE_AGENTS, LiveConfig, build_live_scheduler, policy_for_task
 from .. import offline_scenarios
 
 HUMAN = "evaluator"
@@ -92,25 +93,11 @@ def _drive_offline(case, session):
 
 def _drive_live(case, session, live):
     """Live DeepSeek scheduler run. Unvalidated: no live call has been made yet."""
-    from ..deepseek import DeepSeekClient, DeepSeekHTTP
-    from ..scheduler import MultiAgentScheduler
-    from ..tui.controller import live_roles
-    members = ["coordinator", "writer", "editor", "researcher"]
+    members = LIVE_AGENTS
     chat = session.workflow.create_chat("group", [HUMAN, *members])
     root = session.workflow.create_task(chat, HUMAN, "coordinator", case.goal)
-    roles = live_roles(set(members))
-    transport = DeepSeekHTTP(live.api_key, allow_network=True)
-    expected = case.expected.artifacts
-
-    def acceptance(task):
-        # Only the root has a case-defined, independent acceptance rule.
-        if task["id"] == root and expected:
-            return session.files.text_verifier(task["id"], task["assignee"], expected), f"eval-{case.id}-artifacts"
-        return None
-    scheduler = MultiAgentScheduler(
-        session.workflow, session.files, root, human=HUMAN, roles=roles,
-        clients={a: DeepSeekClient(live.model, transport, max_tokens=live.max_output_tokens) for a in roles},
-        mode="live", constraints=[], acceptance_id=f"eval-{case.id}-v1", verifier_factory=acceptance)
+    scheduler = build_live_scheduler(session.workflow, session.files, root, human=HUMAN, live=live,
+        policy=policy_for_task(live, constraints=case.constraints, root_artifacts=case.expected.artifacts))
     return root, scheduler.run()
 
 
@@ -225,7 +212,13 @@ class Evaluator:
             raise WorkflowError("Memory mode must be 'on' or 'off'")
         if live is not None and memory == "on":
             raise WorkflowError("Live memory-on execution is not implemented; refusing a misleading experiment label")
+        if live is not None and not isinstance(live, LiveConfig):
+            raise WorkflowError("Live evaluation requires the shared explicit LiveConfig")
         self.cases = {case.id: case for case in cases}
+        if live is not None:
+            for case in self.cases.values():
+                if case.driver == "live_scheduler":
+                    policy_for_task(live, constraints=case.constraints, root_artifacts=case.expected.artifacts)
         self.output_root = Path(output_root)
         self.live, self.memory = live, memory
 
