@@ -174,14 +174,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Unify runtime configuration**
 
-- **Stage / status:** M2 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M2 / In progress
+- **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** M1; agree callable/config shapes with anyone claiming related UI/evaluation work.
 - **Scope:** A shared runtime configuration entry plus focused CLI/TUI/evaluation wiring; preserve current state and permission checks.
 - **Acceptance:** UI and evaluation use the same role/tool/limit/acceptance policy and original constraints. Unsupported backends are explicitly disabled. Offline contract checks can proceed before A01.
-- **Base revision / branch / PR / evidence:** —
+- **Base revision / branch / PR / evidence:** Scope baseline d76d585; branch feat/A02-shared-runtime; claim published before feature work. PR/check evidence pending.
 - **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Progress / review changes / outcome:** 2026-10-18: owner-authorized claim; M1 accepted, C01 available, no overlapping claim or open PR observed. Centralize role/tool/limit/acceptance configuration for UI/evaluation and retain original task constraints across restart. No live API call or new external integration authorized by this implementation task; acceptance/merge pending.
 
 ### A03
 
