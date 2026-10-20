@@ -124,8 +124,7 @@ class EvaluationTests(unittest.TestCase):
         # Explicit synthetic comparison arithmetic, not an executed experiment.
         on["memory_exercised"] = True
         compared = compare_memory(on, off)
-        self.assertEqual((compared["status"], compared["completion_rate"]), ("compared", {"on": 1.0, "off": 0.0}))
-        self.assertIn("no causal claim", compared["note"])
+        self.assertEqual(compared["status"], "not_comparable")  # Legacy labels alone do not establish matched conditions.
 
     def test_absence_requires_missing_file_not_inspection_failure(self):
         item = parse_case(case(expected={"final_state": "succeeded", "artifacts": {"note.txt": "Hello\n"},
