@@ -42,7 +42,7 @@ class EvaluationPane(Pane):
 
     def on_mount(self):
         self.query_one("#eval-cases", DataTable).add_columns("Case", "Driver", "Expected", "Control", "Runtime")
-        self.query_one("#eval-runs", DataTable).add_columns("Run", "Mode", "Completed", "Rate", "Mean time", "Not cfg.")
+        self.query_one("#eval-runs", DataTable).add_columns("Run", "Mode", "Accepted", "Accept. rate", "Driver time", "Not cfg.")
         self.query_one("#eval-results", DataTable).add_columns("Case", "Class", "Time", "Failed checks")
         self.selected_case, self.selected_run, self.run = None, None, None
         self.query_one("#eval-memory", Static).update(
@@ -88,8 +88,8 @@ class EvaluationPane(Pane):
             f"[b]Run[/] {run['run_id']}   [b]Mode:[/] {escape(run['mode'])}   "
             f"[b]benchmark_valid:[/] {str(run['benchmark_valid']).lower()}   [b]Started:[/] {stamp(run['started'])}\n"
             f"{escape(run['benchmark_note'])}\n"
-            f"[b]Completion:[/] {summary['completed']}/{summary['executed']} scored cases "
-            f"({'—' if rate is None else f'{rate:.0%}'})   [b]Mean time:[/] {seconds(summary['mean_duration_seconds'])}   "
+            f"[b]Contract acceptance:[/] {summary['completed']}/{summary['executed']} scored cases "
+            f"({'—' if rate is None else f'{rate:.0%}'})   [b]Driver observation time:[/] {seconds(summary['mean_duration_seconds'])}   "
             f"[b]Not configured:[/] {summary['not_configured']}   "
             f"[b]Negative controls detected:[/] {summary['negative_controls_detected']}/{summary['negative_controls']}")
         for result in run["results"]:

@@ -69,7 +69,7 @@ class EvalCase:
 
     def summary(self):
         return {"id": self.id, "title": self.title, "goal": self.goal, "driver": self.driver, "split": self.split,
-                "control": self.control, "scripted_human": bool(self.human_responses or self.approval),
+                "control": self.control, "scripted_human": self.driver != "live_scheduler" and bool(self.human_responses or self.approval),
                 "expected_state": self.expected.final_state, "expected": asdict(self.expected), "source": self.source,
                 "constraints": list(self.constraints)}
 
