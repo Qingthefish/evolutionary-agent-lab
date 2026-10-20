@@ -12,6 +12,8 @@ The instructor's announcement is the primary scope authority. Build a general mu
 
 2026-10-21: trusted exact-text child criteria now use that shared runtime policy. Offline checks exercise failed child verification, concrete repair feedback, restart, checked handoff and parent completion within existing budgets. Unknown/ambiguous child proposals still pause for trusted review. A04 remains in progress until its final live check; this is no evidence of autonomous-model performance.
 
+2026-10-21: optional runtime services now connect public HTTPS search/retrieval, private candidate experience, isolated Python and trusted Git repositories to the shared scheduler. Specialists can delegate with input snapshots and read scoped coordination messages. A combined engineering fixture has exercised public retrieval, actual Docker execution, verified local-remote push, restart and later scoped memory selection. All model decisions in that fixture are scripted; live-model validation, actual GitHub runtime pushing and learning gains remain unestablished.
+
 ## First 10 minutes / 新成员从这里开始
 
 1. Clone this repository and open **the repository root** in Codex. This makes the project `AGENTS.md` available to the coding assistant. Accept the collaborator invitation before pushing changes.
@@ -50,7 +52,7 @@ Use these entry points to inspect the current implementation; a module's presenc
 | Model protocol and allowed tool dispatch | [protocol.py](agent_lab/protocol.py), [deepseek.py](agent_lab/deepseek.py), [gateway.py](agent_lab/gateway.py) |
 | Shared live configuration, task policies and CLI flags | [runtime.py](agent_lab/runtime.py) |
 | Task execution, delegation and shared limits | [runner.py](agent_lab/runner.py), [scheduler.py](agent_lab/scheduler.py), [budget.py](agent_lab/budget.py) |
-| Controlled files and private candidate memory | [files.py](agent_lab/files.py), [memory.py](agent_lab/memory.py) |
+| Controlled files, public text retrieval and private candidate memory | [files.py](agent_lab/files.py), [retrieval.py](agent_lab/retrieval.py), [memory.py](agent_lab/memory.py) |
 | Python sandbox and restricted Git operations | [sandbox.py](agent_lab/sandbox.py), [git_tools.py](agent_lab/git_tools.py) |
 | Terminal interface and development evaluator | [tui/](agent_lab/tui/), [evaluation/](agent_lab/evaluation/) |
 | Checks and development cases | [tests/](tests/), [evaluation/dev/](evaluation/dev/) |
@@ -112,15 +114,61 @@ python3 -m agent_lab.evaluation list
 python3 -m agent_lab.evaluation run
 ```
 
-The harness loads development cases from `evaluation/dev/*.json`, runs each in a fresh state directory, computes independent acceptance checks (final task state, exact artifact text, absent files, verified remote branch, time limit) from persisted records and actual files, classifies failures, and writes `results.json` plus a Markdown `report.md` under the ignored `runs/evaluations/`. Offline cases execute fixed scripts and are reported as `offline_fixture` with `benchmark_valid: false`; negative-control cases check that the evaluator reports mismatches. The live case is reported as *not configured* (never as a success) until a DeepSeek/HKGAI runtime is configured. The same evaluator backs the control center's Evaluation tab (`F9`). These are development cases, not the instructor's held-out set; Memory ON/OFF comparison is an interface that refuses offline, unmatched, or unexercised-memory runs. Live memory-on execution is not implemented and is rejected before provider calls.
+The harness loads development cases from `evaluation/dev/*.json`, runs each in a fresh state directory, computes independent acceptance checks (final task state, exact artifact text, absent files, verified remote branch, time limit) from persisted records and actual files, classifies failures, and writes `results.json` plus a Markdown `report.md` under the ignored `runs/evaluations/`. Offline cases execute fixed scripts and are reported as `offline_fixture` with `benchmark_valid: false`; negative-control cases check that the evaluator reports mismatches. The live case is reported as *not configured* (never as a success) until a DeepSeek/HKGAI runtime is configured. The same evaluator backs the control center's Evaluation tab (`F9`). These are development cases, not the instructor's held-out set; Memory ON/OFF comparison is an interface that refuses offline, unmatched, or unexercised-memory runs. Memory-enabled batch evaluation is rejected before provider calls pending its cross-task/reset protocol; interactive runtime memory is available with explicit configuration.
 
 Cases can also require uniquely identified descendant tasks, their states and actual artifacts, plus exact counts of persisted clarification/approval outcomes within the goal's task tree. Negative controls exercise wrong child results and missing/wrong human evidence even when the root output matches. Invalid/unknown criteria are rejected before execution; driver crashes do not count as detected controls. Full expected criteria and matched task/request evidence are retained in `results.json`. See the [case contract](docs/architecture.md#evaluation-harness-foundation) and [development definitions](evaluation/dev/).
 
-For `live_scheduler` cases, optional `constraints` are combined with the CLI's original constraints and persisted in the shared task policy. Scripted fixtures reject custom constraints because they do not interpret arbitrary requests. Trusted root and supported child exact-text expectations use the same verifier factory in the UI API and evaluator. Child criteria select an exact assignee/title and must be independently supplied before execution; the evaluator enables automatic acceptance only for success criteria with nonempty text expectations and no unsupported absence criteria. Unknown, ambiguous or unsupported child proposals require trusted review. A root with configured child rules cannot pass by producing its own file while skipping required children. The shared live setup currently disables search, execution, Git and memory backends; their separate offline scenarios/checks remain available. Actual live tool/learning coverage remains future work.
+For `live_scheduler` cases, optional `constraints` are combined with the CLI's original constraints and persisted in the shared task policy. Scripted fixtures reject custom constraints because they do not interpret arbitrary requests. Trusted root and supported child exact-text expectations use the same verifier factory in the UI API and evaluator. Child criteria select an exact assignee/title and must be independently supplied before execution; the evaluator enables automatic acceptance only for success criteria with nonempty text expectations and no unsupported absence criteria. Unknown, ambiguous or unsupported child proposals require trusted review. A root with configured child rules cannot pass by producing its own file while skipping required children. Optional runtime backends now require explicit flags and matching session-owned services. Without those settings, their tools stay disabled. Live batch evaluation can use configured web/Python/Git tools, but memory-enabled batch evaluation still refuses to run until its cross-task/reset protocol is versioned. Actual live model/tool behavior and learning gains remain unvalidated.
 
 Reports distinguish **contract acceptance** (including correct rejection behavior) from verified **goal completion** and **subtask completion**. They show expected/executed/blocked/unconfigured cases, missing evidence, task states, assignment-to-final-status time, unfinished elapsed time and cumulative per-task human waits. Failed/cancelled times remain visible; waits are not subtracted. The legacy JSON `completion_rate` remains the acceptance fraction for compatibility; use `goal_completion_rate` and `subtask_completion_rate` for task outcomes. Offline fractions remain fixture results.
 
 Each run saves a fingerprinted manifest of full task/acceptance content, requested model, role prompts/tools/budgets, code/templates, intervention protocol and initial-memory reset conditions, plus observed model IDs and actual task/request evidence. Memory comparisons reject legacy/missing/corrupt or unmatched evidence, even if case IDs agree. The current protocol uses a fresh empty memory store per case; actual memory-on execution and controlled learning trials remain C02/C05 work. Fingerprints detect condition changes and do not authenticate results. See [evaluation evidence and comparison](docs/architecture.md#evaluation-evidence-and-comparison).
+
+## Run a real task without the optional interface
+
+The standard-library console uses the same task service as the TUI. No model call occurs when creating a task; an unconfigured task remains pending.
+
+```bash
+python3 -m agent_lab.console new --goal 'Prepare a cited Markdown explanation'
+python3 -m agent_lab.console status
+python3 -m agent_lab.console status --task TASK_ID
+```
+
+After the issued model/key and run budget are available, supply the same live flags when creating or advancing a live task. Set the named model-key variable outside the repository; never paste its value into a command argument or committed file.
+
+```bash
+python3 -m agent_lab.console --live --model ISSUED_MODEL --api-key-env AGENT_LAB_MODEL_KEY --enable-web --enable-memory new --goal 'Prepare a cited Markdown explanation'
+python3 -m agent_lab.console --live --model ISSUED_MODEL --api-key-env AGENT_LAB_MODEL_KEY --enable-web --enable-memory advance TASK_ID
+```
+
+Use `answer REQUEST_ID 'clarification'`, `decide REQUEST_ID approve|deny`, `release REQUEST_ID`, and `review TASK_ID accept|reject --feedback 'concrete evidence'`. Answering/approving only records the human response; releasing executes an exact approved action. Without supported independent criteria a final proposal waits for review. A trusted `new --policy policy.json` may supply `artifacts` and `child_rules`; the model cannot edit them. This is a trusted local interface, not a multi-user authentication service.
+
+Optional live capabilities share the console, TUI and evaluator configuration:
+
+- `--enable-web`: bounded public HTTPS search and cited `.md`/`.txt` retrieval. Search availability/relevance depends on the public endpoint; empty/challenge/failure results are retained. JavaScript, login pages and proprietary documents are unsupported.
+- `--enable-memory --memory-namespace NAME`: private candidate retrieval/selection, staged model hypotheses and terminal outcome capture. A later task must share the same agent, conversation and namespace to retrieve a lesson. A selected lesson does not authorize an action or prove improvement.
+- `--docker-host unix:///EXPLICIT_SOCKET --python-image python@sha256:PINNED_DIGEST`: use the existing Docker backend. No VM startup, image pull or host execution fallback occurs in the application.
+- `--git-config repos.json`: explicitly allowlisted repositories/branches/paths. An optional `credential_env` names a separately provisioned, repository-scoped GitHub credential. Credentials are never discovered from the developer's Git setup; the project has not performed an actual GitHub runtime push.
+
+A trusted repository configuration contains references and permissions, never the token value:
+
+```json
+{"repositories":[{"name":"output","path":"/ABSOLUTE/PATH/TO/TRUSTED/REPO","writable_branches":["agent-output"],"writable_paths":["docs/"],"remotes":{"origin":"https://github.com/OWNER/REPOSITORY.git"},"allow_network":true,"credential_env":"AGENT_LAB_GITHUB_TOKEN"}]}
+```
+
+Provision a token limited to that test repository outside the project files. The application disables redirects and ambient Git credentials, binds approval to the exact commit/remote/branch and independently reads the remote SHA after a push. A local fixture push is not GitHub evidence.
+
+See [shared runtime setup](docs/architecture.md#shared-runtime-setup) and [Git boundaries](docs/architecture.md#restricted-git-tools). New capabilities are opt-in; changing an existing task's roles/tools/policy does not silently reinterpret its persisted configuration.
+
+## Run the combined actual-tool fixture
+
+With an existing local Docker socket and cached pinned image:
+
+```bash
+python3 -m agent_lab integrated-demo --docker-host "unix://${HOME}/.colima/agent-lab/docker.sock" --image 'python@sha256:REPLACE_WITH_INSPECTED_DIGEST' --with-web
+```
+
+The fixed synthetic agents retrieve official Python text (only with `--with-web`), hand off input snapshots, run Python in the real container, independently check the output, commit/push to a disposable **local bare remote**, restart at exact-action approval and select scoped experience in a later task. Without `--with-web`, the source is explicitly a fixture. The approval is scripted for this disposable remote. `report.json` records zero model calls, `benchmark_valid: false`, no established autonomous collaboration/learning gain and no GitHub push. A negative actual-container test rejects a wrong output before any push. All evidence stays in ignored `runs/`; existing evidence is preserved.
 
 ## Run actual Python sandbox checks
 
