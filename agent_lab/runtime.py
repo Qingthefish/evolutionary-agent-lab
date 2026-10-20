@@ -61,48 +61,77 @@ class LiveConfig:
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
 
 
+def _text_expectations(items):
+    if isinstance(items, dict):
+        items = tuple(items.items())
+    if (not isinstance(items, (list, tuple)) or len(items) > 100
+            or any(not isinstance(p, (list, tuple)) or len(p) != 2
+                   or not isinstance(p[0], str) or not isinstance(p[1], str) for p in items)):
+        raise RuntimeSetupError("Expectations must be distinct path/exact-text pairs")
+    for path, text in items:
+        _parts(path)
+    if len({p for p, _ in items}) != len(items):
+        raise RuntimeSetupError("Duplicate artifact expectation")
+    return tuple(sorted((p, t) for p, t in items))
+
+
+@dataclass(frozen=True)
+class ChildTextRule:
+    """Human/application-supplied criterion, never derived from a model proposal."""
+    assignee: str
+    title: str
+    artifacts: tuple
+
+    def __post_init__(self):
+        if any(not isinstance(s, str) or not s.strip() or len(s) > limit
+               for s, limit in ((self.assignee, 128), (self.title, 4096))):
+            raise RuntimeSetupError("Child acceptance requires an exact assignee and task title")
+        object.__setattr__(self, "artifacts", _text_expectations(self.artifacts))
+        if not self.artifacts:
+            raise RuntimeSetupError("Child text acceptance requires at least one independent expected artifact")
+
+    def record(self):
+        return {"assignee": self.assignee, "title": self.title, "artifacts": dict(self.artifacts)}
+
+
 @dataclass(frozen=True)
 class TaskPolicy:
-    """Trusted original constraints and optional root exact-text expectations.
-
-    No expectation means human review; children also require trusted review.
-    Subtask acceptance is a separate integration, never guessed from model text.
-    """
+    """Trusted original constraints and exact-text criteria; otherwise human review."""
     constraints: tuple = ()
     root_artifacts: tuple = ()
+    child_rules: tuple = ()
 
     def __post_init__(self):
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
-        items = self.root_artifacts
-        if isinstance(items, dict):
-            items = tuple(items.items())
-        if (not isinstance(items, (list, tuple)) or len(items) > 100
-                or any(not isinstance(p, (list, tuple)) or len(p) != 2
-                       or not isinstance(p[0], str) or not isinstance(p[1], str) for p in items)):
-            raise RuntimeSetupError("Root expectations must be distinct path/exact-text pairs")
-        for path, text in items:
-            _parts(path)
-        if len({p for p, _ in items}) != len(items):
-            raise RuntimeSetupError("Duplicate root artifact expectation")
-        object.__setattr__(self, "root_artifacts", tuple(sorted((p, t) for p, t in items)))
+        object.__setattr__(self, "root_artifacts", _text_expectations(self.root_artifacts))
+        if (not isinstance(self.child_rules, (tuple, list)) or len(self.child_rules) > 100
+                or any(not isinstance(r, ChildTextRule) for r in self.child_rules)):
+            raise RuntimeSetupError("Supply at most 100 trusted ChildTextRule objects")
+        rules = tuple(sorted(self.child_rules, key=lambda r: (r.assignee, r.title)))
+        if len({(r.assignee, r.title) for r in rules}) != len(rules):
+            raise RuntimeSetupError("Duplicate child acceptance selector")
+        object.__setattr__(self, "child_rules", rules)
 
     def record(self):
-        return {"version": 1, "constraints": list(self.constraints), "root_artifacts": dict(self.root_artifacts)}
+        record = {"version": 1, "constraints": list(self.constraints), "root_artifacts": dict(self.root_artifacts)}
+        if self.child_rules:
+            record.update(version=2, child_rules=[r.record() for r in self.child_rules])
+        return record
 
     @property
     def acceptance_id(self):
         digest = hashlib.sha256(_encode(self.record()).encode()).hexdigest()
-        return "runtime-text-or-human-v1-" + digest
+        return f"runtime-text-or-human-v{self.record()['version']}-" + digest
 
 
 def _encode(value):
     return json.dumps(value, sort_keys=True, allow_nan=False, ensure_ascii=True)
 
 
-def policy_for_task(live=None, *, constraints=(), root_artifacts=()):
+def policy_for_task(live=None, *, constraints=(), root_artifacts=(), child_rules=()):
     if live is not None and not isinstance(live, LiveConfig):
         raise RuntimeSetupError("Use the shared LiveConfig")
-    return TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)), root_artifacts)
+    return TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)), root_artifacts, child_rules)
 
 
 def bind_task_policy(workflow, root, human, policy=None, *, default=None):
@@ -120,11 +149,18 @@ def bind_task_policy(workflow, root, human, policy=None, *, default=None):
         if row:
             try:
                 data = strict_json(row["policy"])
-                if (set(data) != {"version", "constraints", "root_artifacts"}
-                        or type(data["version"]) is not int or data["version"] != 1
+                if (not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] not in (1, 2)
+                        or set(data) != ({"version", "constraints", "root_artifacts"} |
+                                        ({"child_rules"} if data["version"] == 2 else set()))
                         or not isinstance(data["root_artifacts"], dict)):
                     raise ValueError()
-                stored = TaskPolicy(data["constraints"], data["root_artifacts"])
+                records = data.get("child_rules", [])
+                if (not isinstance(records, list) or (data["version"] == 2 and not records)
+                        or any(not isinstance(r, dict) or set(r) != {"assignee", "title", "artifacts"}
+                               or not isinstance(r["artifacts"], dict) for r in records)):
+                    raise ValueError()
+                stored = TaskPolicy(data["constraints"], data["root_artifacts"],
+                                    tuple(ChildTextRule(**r) for r in records))
             except (ValueError, TypeError, KeyError, WorkflowError):
                 raise RuntimeSetupError("Persisted task policy is invalid; preserve state and reconcile") from None
             if policy is not None and stored != policy:
@@ -162,6 +198,50 @@ def live_roles(members, config=None):
     return roles
 
 
+def text_acceptance_factory(workflow, files, root, policy):
+    """One trusted policy for live wiring and explicitly labelled offline checks."""
+    def matches(rule):
+        return [t for t in workflow.db.execute("""WITH RECURSIVE tree(id) AS (
+            SELECT ? UNION ALL SELECT t.id FROM tasks t JOIN tree ON t.parent=tree.id
+        ) SELECT t.* FROM tasks t JOIN tree ON tree.id=t.id WHERE t.id!=?""", (root, root))
+                if t["assignee"] == rule.assignee and t["title"] == rule.title]
+
+    def factory(candidate):
+        if candidate["id"] == root:
+            if not policy.root_artifacts:
+                return None
+            text = files.text_verifier(root, candidate["assignee"], dict(policy.root_artifacts))
+
+            def verify_root():
+                checks = text()
+                for i, rule in enumerate(policy.child_rules):
+                    selected = matches(rule)
+                    evidence = json.loads(selected[0]["evidence"]) if len(selected) == 1 and selected[0]["evidence"] else {}
+                    passing = evidence.get("checks", {})
+                    checks[f"child:{i}:unique_match"] = len(selected) == 1
+                    checks[f"child:{i}:verified_success"] = (len(selected) == 1 and selected[0]["state"] == "succeeded"
+                                                              and bool(passing) and all(v is True for v in passing.values()))
+                return checks
+            return verify_root, policy.acceptance_id + ":root"
+        rule = next((r for r in policy.child_rules if (r.assignee, r.title) ==
+                     (candidate["assignee"], candidate["title"])), None)
+        if rule is None or len(matches(rule)) != 1:
+            return None  # Unknown or ambiguous proposals need explicit trusted review.
+        text = files.text_verifier(candidate["id"], candidate["assignee"], dict(rule.artifacts))
+
+        def verify_child():
+            try:
+                checks = text()
+            except WorkflowError as error:
+                paths = ", ".join(p for p, _ in rule.artifacts)[:1024]
+                raise RuntimeSetupError("Required child text unreadable; inspect " + paths) from error
+            selected = matches(rule)  # Check again inside the completion transaction.
+            checks["child:unique_match"] = len(selected) == 1 and selected[0]["id"] == candidate["id"]
+            return checks
+        return verify_child, policy.acceptance_id + ":child"
+    return factory
+
+
 def build_live_scheduler(workflow, files, root, *, human, live, policy=None):
     if not isinstance(live, LiveConfig):
         raise RuntimeSetupError("Live execution requires the shared explicit LiveConfig")
@@ -182,21 +262,18 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None):
             and policy.constraints[:len(live.constraints)] != live.constraints):
         # Direct API callers cannot accidentally omit the launcher's constraints.
         # UI/evaluation already supply this prefix; do not append it twice.
-        policy = policy_for_task(live, constraints=policy.constraints, root_artifacts=policy.root_artifacts)
+        policy = policy_for_task(live, constraints=policy.constraints, root_artifacts=policy.root_artifacts,
+                                 child_rules=policy.child_rules)
     policy = bind_task_policy(workflow, root, human, TaskPolicy() if legacy else policy,
                               default=TaskPolicy(live.constraints))
     acceptance_id = "tui-live-human-review-v1" if legacy else policy.acceptance_id
-
-    def acceptance(candidate):
-        if candidate["id"] == root and policy.root_artifacts:
-            return files.text_verifier(root, candidate["assignee"], dict(policy.root_artifacts)), acceptance_id + ":root"
-        return None
 
     transport = DeepSeekHTTP(live.api_key, allow_network=live.allow_network, timeout=live.socket_timeout)
     return MultiAgentScheduler(workflow, files, root, human=human, roles=roles,
         clients={a: DeepSeekClient(live.model, transport, max_tokens=live.max_output_tokens) for a in roles},
         mode="live", constraints=list(policy.constraints), acceptance_id=acceptance_id,
-        verifier_factory=acceptance, limits=live.tree_limits, memory=None, executor=None, git=None)
+        verifier_factory=text_acceptance_factory(workflow, files, root, policy),
+        limits=live.tree_limits, memory=None, executor=None, git=None)
 
 
 def add_live_arguments(parser):
