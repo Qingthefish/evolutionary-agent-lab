@@ -1,6 +1,6 @@
 # Team roadmap and task register
 
-Updated: 2026-10-18 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. No coding tasks have been assigned by this document. The instructor's [requirements](requirements.md) remain the scope authority.
+Updated: 2026-10-20 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. No coding tasks have been assigned by this document. The instructor's [requirements](requirements.md) remain the scope authority.
 
 **How to read progress:** Use the accepted baseline and milestone exit evidence, not a ratio of Done cards to all cards. I01–I03 record the review/integration of PRs #7–#9; substantial earlier work in #1–#6 is recorded separately in [Accepted baseline](#accepted-baseline). The card index covers that integration and the remaining delivery work, rather than every historical task. Cards differ in size and may be split as evidence reveals more work. Those integration records alone do **not** measure the whole project; no overall percentage is established.
 
@@ -304,14 +304,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Make evaluation results comparable**
 
-- **Stage / status:** M3 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M3 / In progress
+- **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** C01 and A02; agree memory metadata with C02.
 - **Scope:** evaluation/harness.py, result manifests and reporting/tests.
 - **Acceptance:** Report separate root/subtask completion and assignment-to-final time, failures and human waits; show expected/executed/blocked/not-configured counts. Record dataset content, model, prompts, tools, budgets, interventions and initial memory so incompatible runs are rejected.
-- **Base revision / branch / PR / evidence:** —
+- **Base revision / branch / PR / evidence:** Scope baseline 3680542; planned branch feat/C04-evaluation-evidence; claim published before implementation. PR/check evidence pending.
 - **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Progress / review changes / outcome:** 2026-10-20: owner-authorized claim; C01/A02 accepted and no overlapping claim/open PR observed. Separate contract acceptance from goal/subtask outcomes and assignment timing; persist comparable case/runtime/intervention/memory manifests. C02 remains unclaimed: define a versioned fresh-memory contract for future wiring and continue rejecting unimplemented memory-on runs. No live-model budget or key is available; this task runs offline checks only. Acceptance/merge pending.
 
 ### C05
 
