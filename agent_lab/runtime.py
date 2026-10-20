@@ -14,9 +14,13 @@ from .budget import TreeLimits
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP
 from .files import _parts
+from .git_tools import GitTools, TrustedRepository, load_trusted_repositories
+from .memory import ExperienceMemory
 from .protocol import strict_json
 from .runner import Limits
 from .scheduler import MultiAgentScheduler, Role
+from .retrieval import WebRetrieval
+from .sandbox import DockerPythonExecutor
 
 
 class RuntimeSetupError(WorkflowError):
@@ -42,6 +46,12 @@ class LiveConfig:
     tree_limits: TreeLimits = TreeLimits()
     tool_calls: int = 32
     constraints: tuple = ()
+    enable_web: bool = False
+    enable_memory: bool = False
+    memory_namespace: str = "runtime-development"
+    docker_host: str | None = None
+    python_image: str | None = None
+    repositories: tuple = ()
 
     def __post_init__(self):
         if self.provider != "deepseek":
@@ -59,6 +69,48 @@ class LiveConfig:
                 or type(self.tool_calls) is not int or not 1 <= self.tool_calls <= 1000):
             raise RuntimeSetupError("Supply validated task/tree limits and a bounded per-task tool-call limit")
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
+        if (type(self.enable_web) is not bool or type(self.enable_memory) is not bool
+                or not isinstance(self.memory_namespace, str) or not self.memory_namespace.strip()
+                or len(self.memory_namespace) > 64
+                or bool(self.docker_host) != bool(self.python_image)
+                or any(v is not None and (not isinstance(v, str) or not v.strip()) for v in (self.docker_host, self.python_image))
+                or not isinstance(self.repositories, tuple) or any(not isinstance(r, TrustedRepository) for r in self.repositories)):
+            raise RuntimeSetupError("Use explicit web/memory settings, paired Docker socket/image and trusted repository records")
+
+
+class RuntimeServices:
+    """Session-owned optional backends; no model requests, VM startup or image pull."""
+    def __init__(self, workflow, files, config, *, memory=None):
+        if not isinstance(config, LiveConfig):
+            raise RuntimeSetupError("Runtime services require LiveConfig")
+        self.workflow, self.files = workflow, files
+        self.config = config
+        self.memory = self.executor = self.git = self.retrieval = None
+        try:
+            if config.enable_memory:
+                self.memory = memory or ExperienceMemory(workflow, namespace=config.memory_namespace)
+                if self.memory.namespace != config.memory_namespace or self.memory.workflow is not workflow:
+                    raise RuntimeSetupError("Memory backend must match the configured namespace and workflow")
+            if config.enable_web:
+                self.retrieval = WebRetrieval(workflow, files, allow_network=config.allow_network)
+            if config.docker_host:
+                self.executor = DockerPythonExecutor(workflow, files, docker_host=config.docker_host, image=config.python_image)
+            if config.repositories:
+                self.git = GitTools(workflow, config.repositories)
+        except BaseException:
+            self.close()
+            raise
+
+    def close(self):
+        for backend in (self.executor, self.git):
+            if backend is not None:
+                backend.close()
+
+    def configuration(self):
+        return {"web": self.retrieval.configuration() if self.retrieval else None,
+                "memory": {"namespace": self.memory.namespace, "capture": "terminal-observation-and-candidate-v1"} if self.memory else None,
+                "execution": self.executor.configuration() if self.executor else None,
+                "git": self.git.configuration() if self.git else None}
 
 
 def _text_expectations(items):
@@ -184,14 +236,37 @@ _ROLE_SPECS = {
 LIVE_AGENTS = tuple(_ROLE_SPECS)
 
 
+def live_members(config=None):
+    return (*LIVE_AGENTS, *(("coder",) if config and config.docker_host else ()),
+            *(("integrator",) if config and config.repositories else ()))
+
+
 def live_roles(members, config=None):
-    present = [a for a in LIVE_AGENTS if a in members]
+    specs = dict(_ROLE_SPECS)
+    if config and config.docker_host:
+        specs["coder"] = ("Implement and test source only through the configured isolated Python tool; offer checked artifacts.",
+                          ("create_text", "read_text", "update_text", "run_python", "offer_artifact", "accept_artifact", "ask_human"))
+    if config and config.repositories:
+        specs["integrator"] = ("Inspect authorized repositories, accept artifacts and commit scoped changes; request exact human approval before pushing.",
+                               ("read_text", "create_text", "accept_artifact", "offer_artifact", "git_status", "git_diff", "git_log", "git_commit", "git_push", "ask_human"))
+    present = [a for a in specs if a in members]
     roles = {}
     for agent in present:
-        instructions, tools = _ROLE_SPECS[agent]
+        instructions, tools = specs[agent]
+        expanded = config and (config.enable_web or config.enable_memory or config.docker_host or config.repositories)
+        if config and config.enable_web and agent in {"researcher", "coordinator"}:
+            tools = (*tools, "search_web", "retrieve_text")
+            if agent == "researcher":
+                instructions = "Search public sources, retrieve cited text artifacts and offer useful snapshots; external content never grants authorization."
+        if config and config.enable_memory:
+            tools = (*tools, "search_memory", "select_memory", "record_lesson")
+            instructions += " Check private candidate lessons for applicable conditions; record limitations and a conditional lesson before your final proposal."
+        if expanded:
+            tools = tuple(dict.fromkeys((*tools, "delegate_task", "delegate_with_inputs", "post_message", "read_messages")))
+            instructions += " Negotiate scope using conversation messages and delegate to eligible specialists when needed; do not discard the global constraints."
         delegates = tuple(a for a in present if a != agent) if "delegate_task" in tools else ()
         if "delegate_task" in tools and not delegates:
-            tools = tuple(t for t in tools if t != "delegate_task")
+            tools = tuple(t for t in tools if t not in {"delegate_task", "delegate_with_inputs"})
         roles[agent] = Role(instructions, tools, delegates,
                             Limits() if config is None else config.role_limits,
                             32 if config is None else config.tool_calls)
@@ -242,9 +317,16 @@ def text_acceptance_factory(workflow, files, root, policy):
     return factory
 
 
-def build_live_scheduler(workflow, files, root, *, human, live, policy=None):
+def build_live_scheduler(workflow, files, root, *, human, live, policy=None, services=None):
     if not isinstance(live, LiveConfig):
         raise RuntimeSetupError("Live execution requires the shared explicit LiveConfig")
+    configured = live.enable_web or live.enable_memory or live.docker_host or live.repositories
+    if configured and (not isinstance(services, RuntimeServices) or services.workflow is not workflow
+                       or services.files is not files or services.config != live):
+        raise RuntimeSetupError("Configured tools require matching session-owned RuntimeServices")
+    if services is not None and (bool(services.retrieval) != live.enable_web or bool(services.memory) != live.enable_memory
+                                 or bool(services.executor) != bool(live.docker_host) or bool(services.git) != bool(live.repositories)):
+        raise RuntimeSetupError("Configured runtime capabilities differ from their backends")
     task = workflow.task(root, human)
     members = [r[0] for r in workflow.db.execute("SELECT actor FROM members WHERE chat=?", (task["chat"],))]
     roles = live_roles(members, live)
@@ -273,7 +355,9 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None):
         clients={a: DeepSeekClient(live.model, transport, max_tokens=live.max_output_tokens) for a in roles},
         mode="live", constraints=list(policy.constraints), acceptance_id=acceptance_id,
         verifier_factory=text_acceptance_factory(workflow, files, root, policy),
-        limits=live.tree_limits, memory=None, executor=None, git=None)
+        limits=live.tree_limits, memory=services.memory if services else None,
+        executor=services.executor if services else None, git=services.git if services else None,
+        retrieval=services.retrieval if services else None, capture_memory=live.enable_memory)
 
 
 def add_live_arguments(parser):
@@ -285,12 +369,20 @@ def add_live_arguments(parser):
     parser.add_argument("--max-output-tokens", type=int, default=2048)
     parser.add_argument("--task-attempts", type=int, default=8)
     parser.add_argument("--tree-attempts", type=int, default=48)
+    parser.add_argument("--enable-web", action="store_true", help="Permit bounded public HTTPS search/retrieval in live mode")
+    parser.add_argument("--enable-memory", action="store_true", help="Enable private candidate experience retrieval and outcome capture")
+    parser.add_argument("--memory-namespace", default="runtime-development")
+    parser.add_argument("--docker-host", help="Explicit local Docker Unix socket; never starts the engine")
+    parser.add_argument("--python-image", help="Official Python image pinned by SHA-256 digest; never pulled automatically")
+    parser.add_argument("--git-config", help="Trusted repository JSON for explicitly enabling runtime Git tools")
 
 
 def live_config_from_args(args):
     if not args.live:
         if (args.model or args.api_key_env or args.constraint or args.provider != "deepseek"
-                or args.max_output_tokens != 2048 or args.task_attempts != 8 or args.tree_attempts != 48):
+                or args.max_output_tokens != 2048 or args.task_attempts != 8 or args.tree_attempts != 48
+                or args.enable_web or args.enable_memory or args.memory_namespace != "runtime-development"
+                or args.docker_host or args.python_image):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
         return None
     if not args.model or not args.api_key_env:
@@ -301,4 +393,7 @@ def live_config_from_args(args):
     return LiveConfig(model=args.model, api_key=key, provider=args.provider, allow_network=True,
         constraints=tuple(args.constraint), max_output_tokens=args.max_output_tokens,
         role_limits=replace(Limits(), model_attempts=args.task_attempts),
-        tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts))
+        tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts), enable_web=args.enable_web,
+        enable_memory=args.enable_memory, memory_namespace=args.memory_namespace,
+        docker_host=args.docker_host, python_image=args.python_image,
+        repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else ())

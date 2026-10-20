@@ -20,8 +20,8 @@ from ..git_tools import GitTools
 from ..inspection import ArtifactInspector
 from ..memory import ExperienceMemory
 from ..queries import TERMINAL, WorkflowQueries, redact, require_human
-from ..runtime import (LiveConfig, RuntimeSetupError as ControllerError, bind_task_policy,
-                       build_live_scheduler, live_roles, policy_for_task)
+from ..runtime import (LiveConfig, RuntimeServices, RuntimeSetupError as ControllerError, bind_task_policy,
+                       build_live_scheduler, live_members, live_roles, policy_for_task)
 from .. import offline_scenarios
 from ..evaluation import Evaluator, compare_memory, list_runs, load_cases, load_run
 
@@ -37,15 +37,18 @@ class _Backend:
         self.state_dir, self.human, self.live = state_dir, human, live
         self.workflow = Workflow(state_dir / "workflow.sqlite3", **({"clock": clock} if clock else {}))
         self.files = self.git = None
+        self.services = None
         try:
             self.workflow.register_actor(human, "human")
-            for agent in offline_scenarios.AGENTS:
+            for agent in tuple(dict.fromkeys((*offline_scenarios.AGENTS, *live_members(live)))):
                 self.workflow.register_actor(agent, "agent")
             self.files = FileTools(self.workflow, state_dir / "files")
-            self.memory = ExperienceMemory(self.workflow, namespace=MEMORY_NAMESPACE)
+            self.memory = ExperienceMemory(self.workflow, namespace=live.memory_namespace if live and live.enable_memory else MEMORY_NAMESPACE)
             self.queries = WorkflowQueries(self.workflow)
             self.inspector = ArtifactInspector(self.workflow, self.files)
             self.git = GitTools(self.workflow, [offline_scenarios.demo_repository_config(state_dir), *repositories])
+            if live is not None:
+                self.services = RuntimeServices(self.workflow, self.files, live, memory=self.memory)
             self.workflow.db.executescript("""
                 CREATE TABLE IF NOT EXISTS tui_runs (
                     root TEXT PRIMARY KEY REFERENCES tasks(id), scenario TEXT NOT NULL, created REAL NOT NULL
@@ -56,6 +59,9 @@ class _Backend:
             raise
 
     def close(self):
+        if self.services is not None:
+            self.services.close()
+            self.services = None
         if self.git is not None:
             self.git.close()
             self.git = None
@@ -75,7 +81,7 @@ class _Backend:
         if kind == "live":
             if self.live is None:
                 raise ControllerError("This is a live-model run; reopen the control center in configured live mode to continue it")
-            return build_live_scheduler(self.workflow, self.files, root, human=self.human, live=self.live)
+            return build_live_scheduler(self.workflow, self.files, root, human=self.human, live=self.live, services=self.services)
         return offline_scenarios.scheduler_for(self.workflow, self.files, root, kind, human=self.human,
                                                memory=self.memory, git=self.git)
 
@@ -173,8 +179,11 @@ class ControlCenter:
 
     def runtimes(self):
         return {"model": ("DeepSeek configured; network " + ("enabled" if self.live.allow_network else "disabled")) if self.live else "offline fixtures only",
-                "sandbox": "not configured", "search": "disabled",
-                "git": ("disabled for live tasks; " if self.live else "") + f"{1 + len(self._repositories)} local fixture repo(s)"}
+                "sandbox": "isolated Python configured; checked on use" if self.live and self.live.docker_host else "not configured",
+                "search": "public HTTPS configured" if self.live and self.live.enable_web else "disabled",
+                "memory": "private candidate lifecycle enabled" if self.live and self.live.enable_memory else "fixture/API only",
+                "git": f"{len(self.live.repositories)} trusted runtime repo(s)" if self.live and self.live.repositories
+                       else ("disabled for live tasks; " if self.live else "") + f"{1 + len(self._repositories)} local fixture repo(s)"}
 
     def actors(self):
         return self.call(lambda b: b.queries.actors())
@@ -381,6 +390,8 @@ class ControlCenter:
             if accept:
                 assignee = b.workflow.task(task, b.human)["assignee"]
                 b.workflow.finish_task(task, assignee, checks={"human_review_accepted": True})
+                if b.services is not None and b.services.memory is not None:
+                    b.services.memory.observe_terminal(task, assignee)
             else:
                 runner.review_failed(feedback)
         return self._action(f"{'Accepted' if accept else 'Rejected'} proposal for {task[:8]}", run)

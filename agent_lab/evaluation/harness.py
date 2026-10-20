@@ -18,7 +18,8 @@ from ..core import Workflow, WorkflowError
 from ..files import FileTools
 from ..inspection import ArtifactInspector, ArtifactMissingError
 from ..memory import ExperienceMemory
-from ..runtime import LIVE_AGENTS, ChildTextRule, LiveConfig, build_live_scheduler, policy_for_task
+from ..runtime import (LIVE_AGENTS, ChildTextRule, LiveConfig, RuntimeServices,
+                       build_live_scheduler, live_members, policy_for_task)
 from .. import offline_scenarios
 from .manifest import build_manifest, comparison_conditions, digest
 
@@ -35,9 +36,10 @@ class _Session:
         self.directory = directory
         self.workflow = Workflow(directory / "workflow.sqlite3")
         self.files = self.git = None
+        self.services = None
         try:
             self.workflow.register_actor(HUMAN, "human")
-            for agent in offline_scenarios.AGENTS:
+            for agent in (*offline_scenarios.AGENTS, "coder"):
                 self.workflow.register_actor(agent, "agent")
             self.files = FileTools(self.workflow, directory / "files")
             self.memory = ExperienceMemory(self.workflow, namespace=memory_namespace)
@@ -53,6 +55,8 @@ class _Session:
         return self.git
 
     def close(self):
+        if self.services is not None:
+            self.services.close()
         if self.git is not None:
             self.git.close()
         if self.files is not None:
@@ -105,11 +109,13 @@ def _case_policy(case, live):
 
 def _drive_live(case, session, live):
     """Live DeepSeek scheduler run. Unvalidated: no live call has been made yet."""
-    members = LIVE_AGENTS
+    members = live_members(live)
+    if session.services is None:
+        session.services = RuntimeServices(session.workflow, session.files, live)
     chat = session.workflow.create_chat("group", [HUMAN, *members])
     root = session.workflow.create_task(chat, HUMAN, "coordinator", case.goal)
     scheduler = build_live_scheduler(session.workflow, session.files, root, human=HUMAN, live=live,
-        policy=_case_policy(case, live))
+        policy=_case_policy(case, live), services=session.services)
     return root, scheduler.run()
 
 
@@ -251,9 +257,11 @@ class Evaluator:
         if memory not in {"on", "off"}:
             raise WorkflowError("Memory mode must be 'on' or 'off'")
         if live is not None and memory == "on":
-            raise WorkflowError("Live memory-on execution is not implemented; refusing a misleading experiment label")
+            raise WorkflowError("Live memory-on batch comparison protocol is not implemented; refusing a misleading experiment label")
         if live is not None and not isinstance(live, LiveConfig):
             raise WorkflowError("Live evaluation requires the shared explicit LiveConfig")
+        if live is not None and live.enable_memory:
+            raise WorkflowError("Memory-enabled live batch evaluation awaits its versioned cross-task/reset protocol; runtime task memory is available")
         cases = list(cases)
         if len({case.id for case in cases}) != len(cases):
             raise WorkflowError("Evaluation requires unique case IDs")
