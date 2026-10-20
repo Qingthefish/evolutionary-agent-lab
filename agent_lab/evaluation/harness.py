@@ -18,7 +18,7 @@ from ..core import Workflow, WorkflowError
 from ..files import FileTools
 from ..inspection import ArtifactInspector, ArtifactMissingError
 from ..memory import ExperienceMemory
-from ..runtime import LIVE_AGENTS, LiveConfig, build_live_scheduler, policy_for_task
+from ..runtime import LIVE_AGENTS, ChildTextRule, LiveConfig, build_live_scheduler, policy_for_task
 from .. import offline_scenarios
 from .manifest import build_manifest, comparison_conditions, digest
 
@@ -93,13 +93,23 @@ def _drive_offline(case, session):
     return root, state
 
 
+def _case_policy(case, live):
+    # Only the already-defined exact-text success contract has a runtime checker.
+    # Other child criteria are still checked by the evaluator and require review
+    # at runtime; never silently weaken them to a partial automatic check.
+    children = tuple(ChildTextRule(s.assignee, s.title, s.artifacts) for s in case.expected.subtasks
+                     if s.final_state == "succeeded" and s.artifacts and not s.absent_artifacts)
+    return policy_for_task(live, constraints=case.constraints, root_artifacts=case.expected.artifacts,
+                           child_rules=children)
+
+
 def _drive_live(case, session, live):
     """Live DeepSeek scheduler run. Unvalidated: no live call has been made yet."""
     members = LIVE_AGENTS
     chat = session.workflow.create_chat("group", [HUMAN, *members])
     root = session.workflow.create_task(chat, HUMAN, "coordinator", case.goal)
     scheduler = build_live_scheduler(session.workflow, session.files, root, human=HUMAN, live=live,
-        policy=policy_for_task(live, constraints=case.constraints, root_artifacts=case.expected.artifacts))
+        policy=_case_policy(case, live))
     return root, scheduler.run()
 
 
@@ -251,7 +261,7 @@ class Evaluator:
         if live is not None:
             for case in self.cases.values():
                 if case.driver == "live_scheduler":
-                    policy_for_task(live, constraints=case.constraints, root_artifacts=case.expected.artifacts)
+                    _case_policy(case, live)
         self.output_root = Path(output_root)
         self.live, self.memory = live, memory
 
