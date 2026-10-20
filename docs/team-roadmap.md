@@ -200,14 +200,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Verify delegated work and resume parents**
 
-- **Stage / status:** M2 / In progress
+- **Stage / status:** M2 / In review
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** A02 and C01; the final live check needs A01.
 - **Scope:** Task acceptance policy and runner/scheduler integration; coordinate evaluation interfaces.
 - **Acceptance:** Supported children have independent checks, unsupported proposals request explicit trusted review, and a parent resumes only with valid evidence. Failed checks return concrete feedback within budget.
-- **Base revision / branch / PR / evidence:** Scope baseline 91ef064; planned branch feat/A04-child-acceptance. Main claim published before implementation; checks/PR pending.
-- **Reviewer:** —
-- **Progress / review changes / outcome:** 2026-10-21: owner-authorized continuation; no overlapping remote claim/open PR observed. Implement trusted exact-text child acceptance and bounded feedback/restart checks without changing model-provider or tool boundaries. Unknown proposals still require independent review. Offline integration can proceed; final live acceptance remains pending A01 and issued access.
+- **Base revision / branch / PR / evidence:** Scope baseline 91ef064; main claim ae710d1; branch feat/A04-child-acceptance. Offline integration implemented and checked; PR/merge pending. Python 3.14.7: 251 discovered, 229 passed, 22 skipped (13 Docker, 9 optional UI); seven new synthetic integration checks passed. Raw evidence: ignored runs/review-20261021-a04/. No live calls or Actions result.
+- **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing authorization; no independent peer review claimed.
+- **Progress / review changes / outcome:** 2026-10-21: owner-authorized continuation; no overlapping remote claim/open PR observed. Implement trusted exact-text child acceptance and bounded feedback/restart checks without changing model-provider or tool boundaries. Unknown proposals still require independent review. Offline integration now checks wrong-text feedback/repair, restart, verified child-to-parent handoff, budget exhaustion, missing/ambiguous child selectors, immutable policy and shared UI/evaluator wiring. Version-1 policies keep their existing IDs; version 2 stores trusted child criteria. Unsupported absence/failure criteria retain review and post-run checks. Review hardened malformed persisted policy handling. Final live acceptance remains pending A01 and issued access; this card is not Done.
 
 ### B01
 
