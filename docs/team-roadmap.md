@@ -200,14 +200,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Verify delegated work and resume parents**
 
-- **Stage / status:** M2 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M2 / In progress
+- **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** A02 and C01; the final live check needs A01.
 - **Scope:** Task acceptance policy and runner/scheduler integration; coordinate evaluation interfaces.
 - **Acceptance:** Supported children have independent checks, unsupported proposals request explicit trusted review, and a parent resumes only with valid evidence. Failed checks return concrete feedback within budget.
-- **Base revision / branch / PR / evidence:** —
+- **Base revision / branch / PR / evidence:** Scope baseline 91ef064; planned branch feat/A04-child-acceptance. Main claim published before implementation; checks/PR pending.
 - **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Progress / review changes / outcome:** 2026-10-21: owner-authorized continuation; no overlapping remote claim/open PR observed. Implement trusted exact-text child acceptance and bounded feedback/restart checks without changing model-provider or tool boundaries. Unknown proposals still require independent review. Offline integration can proceed; final live acceptance remains pending A01 and issued access.
 
 ### B01
 
