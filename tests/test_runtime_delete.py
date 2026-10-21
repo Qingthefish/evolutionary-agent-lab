@@ -43,15 +43,18 @@ class RuntimeDeletionTests(unittest.TestCase):
         self.addCleanup(center.close)
         return center
 
-    def task(self, center):
-        chat = center.create_conversation('private', ['writer'])
+    def task(self, center, *, other_human=False):
+        if other_human:
+            center.call(lambda b: b.workflow.register_actor('other-human', 'human'))
+        chat = center.create_conversation('group' if other_human else 'private',
+            ['writer', 'other-human'] if other_human else ['writer'])
         task = center.create_task(chat, 'writer', 'Remove obsolete.txt after approval',
             root_criteria=(ArtifactRule('obsolete.txt', 'absent'),))['task']
         return chat, task
 
-    def begin_deletion(self):
+    def begin_deletion(self, *, other_human=False):
         center = self.center()
-        chat, task = self.task(center)
+        chat, task = self.task(center, other_human=other_human)
         script = Script([
             response([tool('create_text', {'path':'obsolete.txt', 'content':CONTENT}, 'create')]),
             response([tool('read_text', {'path':'obsolete.txt'}, 'read')]),
@@ -189,10 +192,11 @@ class RuntimeDeletionTests(unittest.TestCase):
         self.assertFalse(any(e['kind']=='file_deleted' for e in center.task_detail(task)['events']))
 
     def test_other_task_and_unaddressed_human_cannot_use_the_request(self):
-        center, chat, task, request, _ = self.begin_deletion()
-        center.call(lambda b: b.workflow.register_actor('outsider', 'human'))
-        with self.assertRaises(WorkflowError):
-            center.call(lambda b: b.workflow.respond(request, 'outsider', approve=True))
+        center, chat, task, request, _ = self.begin_deletion(other_human=True)
+        # A real human MEMBER reaches the addressed-responder check, rather
+        # than being rejected earlier as an outsider to the conversation.
+        with self.assertRaisesRegex(WorkflowError, 'addressed human'):
+            center.call(lambda b: b.workflow.respond(request, 'other-human', approve=True))
         center.decide(request, True)
         other = center.create_task(chat, 'writer', 'Unrelated cleanup')['task']
         center.call(lambda b: b.workflow.start_task(other, 'writer'))
