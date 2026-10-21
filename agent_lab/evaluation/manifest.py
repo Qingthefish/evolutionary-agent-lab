@@ -45,6 +45,8 @@ def build_manifest(cases, live, memory):
                                     "python_image": live.python_image,
                                     "docker_endpoint_sha256": digest(live.docker_host) if live.docker_host else None,
                                     "repositories_sha256": digest([asdict(r) for r in live.repositories]) if live.repositories else None}}
+        if live.enable_delete:
+            runtime["capabilities"]["delete"] = "task-local-exact-version-human-release-v1"
     manifest = {"schema_version": 1, "cases": definitions, "runtime": runtime,
                 "code_sha256": digest(sources), "prompt_sha256": digest(_PROMPT),
                 "tools_sha256": digest(_SPECS),
