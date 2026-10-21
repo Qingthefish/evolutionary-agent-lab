@@ -167,27 +167,31 @@ class Workflow:
         )]
 
     def create_task(self, chat, actor, assignee, title, *, parent=None):
+        with self._transaction():
+            return self._create_task(chat, actor, assignee, title, parent=parent)
+
+    def _create_task(self, chat, actor, assignee, title, *, parent=None):
+        """Internal: caller holds the workflow transaction."""
         if not isinstance(title, str) or not title.strip():
             raise WorkflowError("A task needs a description")
-        with self._transaction():
-            self._member(chat, actor)
-            self._member(chat, assignee)
-            if self._row("actors", assignee)["kind"] != "agent":
-                raise WorkflowError("Tasks must be assigned to an agent")
-            if parent:
-                source = self._task(parent, actor, assigned=True)
-                if source["state"] != "running" or source["chat"] != chat:
-                    raise WorkflowError("Delegate only from a running task in the same conversation")
-                from .budget import check
-                check(self, parent, reserve="child")
-            elif self._row("actors", actor)["kind"] != "human":
-                raise WorkflowError("An agent needs a parent task to delegate work")
-            identifier = uuid4().hex
-            self.db.execute(
-                "INSERT INTO tasks(id,chat,parent,assignee,title,state,created) VALUES(?,?,?,?,?,'pending',?)",
-                (identifier, chat, parent, assignee, title, self.clock()),
-            )
-            self._event(identifier, actor, "delegated" if parent else "created", {"assignee": assignee})
+        self._member(chat, actor)
+        self._member(chat, assignee)
+        if self._row("actors", assignee)["kind"] != "agent":
+            raise WorkflowError("Tasks must be assigned to an agent")
+        if parent:
+            source = self._task(parent, actor, assigned=True)
+            if source["state"] != "running" or source["chat"] != chat:
+                raise WorkflowError("Delegate only from a running task in the same conversation")
+            from .budget import check
+            check(self, parent, reserve="child")
+        elif self._row("actors", actor)["kind"] != "human":
+            raise WorkflowError("An agent needs a parent task to delegate work")
+        identifier = uuid4().hex
+        self.db.execute(
+            "INSERT INTO tasks(id,chat,parent,assignee,title,state,created) VALUES(?,?,?,?,?,'pending',?)",
+            (identifier, chat, parent, assignee, title, self.clock()),
+        )
+        self._event(identifier, actor, "delegated" if parent else "created", {"assignee": assignee})
         return identifier
 
     def task(self, identifier, actor):
@@ -304,8 +308,8 @@ class Workflow:
                     failed = [str(key) for key, value in checks.items() if value is not True] if isinstance(checks, dict) else []
                     raise WorkflowError("Artifact verification failed" +
                                         (": " + ", ".join(failed)[:1024] if failed else "") + "; task remains running")
-            children = self.db.execute("SELECT state FROM tasks WHERE parent=?", (identifier,)).fetchall()
-            if success and any(c["state"] != "succeeded" for c in children):
+            from .recovery import children_complete
+            if success and not children_complete(self, identifier):
                 raise WorkflowError("A parent cannot succeed while delegated work is incomplete or failed")
             if success and self.db.execute(
                 "SELECT 1 FROM requests WHERE task=? AND approved=1 AND consumed=0 AND resume_revision=?",

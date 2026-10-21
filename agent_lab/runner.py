@@ -72,6 +72,10 @@ class TaskRunner:
         while root["parent"]:
             root = self.workflow._row("tasks", root["parent"])
         context = {"global_goal": root["title"], "current_assignment": task["title"], "constraints": constraints}
+        from .recovery import retry_context
+        retry = retry_context(self.workflow, self.task)
+        if retry is not None:
+            context["retry"] = retry
         if role is not None:
             if (not isinstance(role, dict) or set(role) != {"agent", "instructions", "eligible_agents"}
                     or role["agent"] != self.actor or not isinstance(role["instructions"], str)

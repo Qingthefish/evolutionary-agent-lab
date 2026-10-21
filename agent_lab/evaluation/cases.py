@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 import re
 
+from ..acceptance import parse_rules
 from ..core import WorkflowError
 from ..files import _parts
 from ..protocol import strict_json
@@ -31,6 +32,7 @@ class SubtaskExpected:
     final_state: str
     artifacts: dict = field(default_factory=dict)
     absent_artifacts: tuple = ()
+    criteria: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -51,6 +53,7 @@ class Expected:
     remote_branch_verified: bool = False
     subtasks: tuple = ()                    # exact assignee/title selectors; each must match one descendant
     human_requests: tuple = ()              # exact counts of persisted requests in this task tree
+    criteria: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -116,6 +119,10 @@ def _artifact_checks(data):
             raise CaseError("Expected artifacts need safe task-relative POSIX paths") from None
     if len(set(absent)) != len(absent) or set(artifacts) & set(absent):
         raise CaseError("Expected artifact paths must be distinct and cannot be both present and absent")
+    rules=parse_rules(data.get("criteria", []))
+    if (set(artifacts) & {r.path for r in rules if r.kind=="absent"}
+            or set(absent) & {r.path for r in rules if r.kind!="absent"}):
+        raise CaseError("Artifact criteria conflict with present/absent expectations")
     return dict(artifacts), tuple(absent)
 
 
@@ -139,7 +146,7 @@ def parse_case(data, *, source=""):
     approval = _choice(data.get("approval"), {None, "approve", "reject"}, "approval")
     responses = tuple(_text(v, "human_responses") for v in _array(data.get("human_responses", []), "human_responses"))
     expected = _object(data["expected"], {"final_state", "artifacts", "absent_artifacts", "min_tasks",
-                       "max_seconds", "remote_branch_verified", "subtasks", "human_requests"},
+                       "max_seconds", "remote_branch_verified", "subtasks", "human_requests", "criteria"},
                        {"final_state"}, "expected")
     final_state = _choice(expected["final_state"], STATES, "expected.final_state")
     artifacts, absent = _artifact_checks(expected)
@@ -156,11 +163,11 @@ def parse_case(data, *, source=""):
         raise CaseError("remote_branch_verified must be a boolean")
     subtasks = []
     for item in _array(expected.get("subtasks", []), "subtasks"):
-        _object(item, {"assignee", "title", "final_state", "artifacts", "absent_artifacts"},
+        _object(item, {"assignee", "title", "final_state", "artifacts", "absent_artifacts", "criteria"},
                 {"assignee", "title", "final_state"}, "subtask")
         files, missing = _artifact_checks(item)
         subtasks.append(SubtaskExpected(_text(item["assignee"], "subtask.assignee"),
-            _text(item["title"], "subtask.title"), _choice(item["final_state"], STATES, "subtask.final_state"), files, missing))
+            _text(item["title"], "subtask.title"), _choice(item["final_state"], STATES, "subtask.final_state"), files, missing, parse_rules(item.get("criteria", []))))
     if len({(s.assignee, s.title) for s in subtasks}) != len(subtasks):
         raise CaseError("Duplicate subtask selector")
     humans = []
@@ -175,7 +182,7 @@ def parse_case(data, *, source=""):
         raise CaseError("Duplicate human-request expectation")
     return EvalCase(identifier, title, goal, driver, split, control, responses, approval,
                     Expected(final_state, artifacts, absent, min_tasks, float(seconds), remote,
-                             tuple(subtasks), tuple(humans)), source, constraints)
+                             tuple(subtasks), tuple(humans), parse_rules(expected.get("criteria", []))), source, constraints)
 
 
 def load_cases(directory):

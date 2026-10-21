@@ -1,0 +1,57 @@
+[
+  {
+    "id": "live-checked-note",
+    "title": "Model-selected specialist and checked handoff",
+    "driver": "live_scheduler",
+    "goal": "Delegate a child to writer with the exact title Draft checked note. Have writer create note.txt containing exactly Hello followed by a newline, offer it to the parent, and propose completion. As coordinator accept the checked snapshot as note.txt and propose completion. Preserve all constraints.",
+    "constraints": [
+      "Only Markdown/TXT documents; do not request external side effects."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Hello\n"
+      },
+      "min_tasks": 2,
+      "max_seconds": 600,
+      "subtasks": [
+        {
+          "assignee": "writer",
+          "title": "Draft checked note",
+          "final_state": "succeeded",
+          "artifacts": {
+            "note.txt": "Hello\n"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "live-structured-data",
+    "title": "Structural acceptance independent of model self-report",
+    "driver": "live_scheduler",
+    "goal": "Deliver data.json with the JSON object {\"count\":3,\"items\":[\"a\",\"b\",\"c\"]} and report.md containing the sections ## Result and ## Limitations. The JSON is an internal structured data artifact. The report must explain that formatting checks alone do not prove arbitrary code correctness. No code execution or external side effects are requested.",
+    "expected": {
+      "final_state": "succeeded",
+      "max_seconds": 600,
+      "criteria": [
+        {
+          "path": "data.json",
+          "kind": "json_equals",
+          "expected": "{\"count\":3,\"items\":[\"a\",\"b\",\"c\"]}"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Result",
+          "min_bytes": 60
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Limitations"
+        }
+      ]
+    }
+  }
+]

@@ -207,7 +207,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Acceptance:** Supported children have independent checks, unsupported proposals request explicit trusted review, and a parent resumes only with valid evidence. Failed checks return concrete feedback within budget.
 - **Base revision / branch / PR / evidence:** Scope baseline 91ef064; main claim ae710d1; branch feat/A04-child-acceptance. Offline implementation 1eb10c9; synchronized branch 111e58b; [PR #16](https://github.com/Qingthefish/evolutionary-agent-lab/pull/16), merged 2026-10-21 in fee6843. Merged tree matches the checked feature tree. Python 3.14.7: 251 discovered, 229 passed, 22 skipped (13 Docker, 9 optional UI); seven new synthetic integration checks passed. Raw evidence: ignored runs/review-20261021-a04/. No live calls or Actions result.
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing authorization; no independent peer review claimed.
-- **Progress / review changes / outcome:** 2026-10-21: owner-authorized continuation; no overlapping remote claim/open PR observed. Implement trusted exact-text child acceptance and bounded feedback/restart checks without changing model-provider or tool boundaries. Unknown proposals still require independent review. Offline integration now checks wrong-text feedback/repair, restart, verified child-to-parent handoff, budget exhaustion, missing/ambiguous child selectors, immutable policy and shared UI/evaluator wiring. Version-1 policies keep their existing IDs; version 2 stores trusted child criteria. Unsupported absence/failure criteria retain review and post-run checks. Review hardened malformed persisted policy handling. Offline slice accepted via PR #16; final live acceptance remains blocked on A01 and issued access. Next action: after approved model/key/budget arrive, run real child rejection/repair/handoff and retain model/time/usage evidence; fix observed integration failures before closing A04. This card is not Done, and other independent cards can proceed.
+- **Progress / review changes / outcome:** 2026-10-21: owner-authorized continuation; no overlapping remote claim/open PR observed. Implement trusted exact-text child acceptance and bounded feedback/restart checks without changing model-provider or tool boundaries. Unknown proposals still require independent review. Offline integration now checks wrong-text feedback/repair, restart, verified child-to-parent handoff, budget exhaustion, missing/ambiguous child selectors, immutable policy and shared UI/evaluator wiring. Version-1 policies keep their existing IDs; version 2 stores trusted child criteria. Unsupported absence/failure criteria retain review and post-run checks. Review hardened malformed persisted policy handling. Offline slice accepted via PR #16; final live acceptance remains blocked on A01 and issued access. 2026-10-21 follow-up: A06 extends trusted acceptance with structural/absence criteria and bounded failed-attempt replacement; the final live gate remains. Next action: after approved model/key/budget arrive, run real child rejection/repair/handoff and retain model/time/usage evidence; fix observed integration failures before closing A04. This card is not Done, and other independent cards can proceed.
 
 ### B01
 
@@ -382,27 +382,27 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Check isolation and bounded recovery**
 
-- **Stage / status:** M3 / Unclaimed
-- **Owner:** —
-- **Dependencies / configuration:** A candidate covering the M3 capabilities.
+- **Stage / status:** M3 / In progress
+- **Owner:** Qingthefish (owner-requested continuous batch, 2026-10-21)
+- **Dependencies / configuration:** Existing M3 capabilities; final live checks await A01 and relevant tools.
 - **Scope:** Task/role/tool isolation and recovery checks; create separate small repair cards for larger findings.
 - **Acceptance:** Cross-agent access, path escapes, unsafe execution, exhausted budgets and unknown effects are rejected or reported correctly. Fixes follow observed failures rather than an unrelated redesign.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Baseline 304ea4d; branch feat/bounded-recovery-and-acceptance. Full checks and raw evidence: ignored runs/review-20261021-recovery/. PR/accepted revision recorded after review.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate approval claimed.
+- **Progress / review changes / outcome:** 2026-10-21: owner requested another substantial batch without per-card stops; remote showed no overlapping open PR/new teammate branch. Added opt-in shared-limit child replacement preserving failed rows, identical assignments/criteria, budgets and fresh file/approval boundaries. Denied/unreleased/unknown effects prevent replacement. Extended independent root/child acceptance with bounded data-only properties and retained failure metrics. Review corrected legacy-resume configuration poisoning, preserved a parent's human wait, blocked unknown provider usage, and kept failed attempts visible in evaluator denominators. General DAG replanning/reassignment and live behavior remain unvalidated; no model calls or official performance claim. Final live boundary/recovery checks remain before closing this card.
 
 ### D04
 
 **Verify clean-environment setup**
 
-- **Stage / status:** M4 / Unclaimed
-- **Owner:** —
-- **Dependencies / configuration:** M3.
+- **Stage / status:** M4 / In progress
+- **Owner:** Qingthefish (owner-requested continuous batch, 2026-10-21)
+- **Dependencies / configuration:** M3; final real-model/tool setup awaits issued access and relevant backends.
 - **Scope:** Installation/run instructions and one minimal reproducible demo; coordinate shared README edits.
 - **Acceptance:** Another member can install and run from the guide, use the actual supported capabilities and identify missing configuration. Core use works without optional Textual dependencies; setup does not expose credentials.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Baseline 304ea4d; shared branch/evidence in A06. Versioned evaluation/development-plan.json and two development connection cases; README updated in place.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate reproduction claimed.
+- **Progress / review changes / outcome:** 2026-10-21: static inspection needs no model/key/network/engine and lists actual missing model configuration. Explicit execution requires the inspected content fingerprint and permission, uses declared budgets and real human pauses, and snapshots conditions with results. Inspection rejects hidden fields, unsupported memory/official labels and missing cases; HKGAI has no fallback. Initial cases cover connection/handoff and structured artifacts only. This is preparation for live setup, not a release freeze, full requirement benchmark, learning comparison or official adapter. Another member's clean setup and actual configured live/tool reproduction remain before closing D04.
 
 ### C06
 

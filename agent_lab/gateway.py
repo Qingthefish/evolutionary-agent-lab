@@ -34,6 +34,9 @@ _SPECS = {
         "path": _PATH, "expected_sha256": _HASH}),
     "ask_human": ("Ask the configured human for missing information; pauses task", {
         "prompt": _text("Concrete clarification question")}),
+    "retry_failed_task": ("Replace a failed direct child with a fresh attempt at the identical assignment; no inherited files or approvals", {
+        "failed_task": _text("Failed direct child identifier", maximum=128),
+        "reason": _text("Concrete change in approach based on failure evidence", maximum=2048)}),
     "delegate_task": ("Delegate child work to an eligible agent in this conversation", {
         "assignee": _text("Agent identifier", maximum=128), "title": _text("Deliverable and constraints")}),
     "delegate_with_inputs": ("Delegate and offer hash-matched input snapshots before the parent waits; child must accept them", {
@@ -325,6 +328,9 @@ class ToolGateway:
             return getattr(self.files, name)(self.task, self.actor, **args)
         if name == "ask_human":
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}
+        if name == "retry_failed_task":
+            from .recovery import replace_failed
+            return replace_failed(self.workflow, self.task, self.actor, args["failed_task"], args["reason"])
         if name == "delegate_task":
             return {"task_id": self.workflow.create_task(self.chat, self.actor, parent=self.task, **args)}
         if name == "delegate_with_inputs":

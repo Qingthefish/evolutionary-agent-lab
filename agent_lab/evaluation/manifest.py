@@ -39,6 +39,7 @@ def build_manifest(cases, live, memory):
                    "max_output_tokens": live.max_output_tokens, "socket_timeout": live.socket_timeout,
                    "roles": {a: asdict(r) for a, r in live_roles(live_members(live), live).items()},
                    "tree_limits": asdict(live.tree_limits), "constraints": list(live.constraints),
+                   "child_retries": live.child_retries,
                    "capabilities": {"web": live.enable_web, "memory": live.enable_memory,
                                     "memory_namespace": live.memory_namespace if live.enable_memory else None,
                                     "python_image": live.python_image,

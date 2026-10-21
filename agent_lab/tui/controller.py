@@ -327,10 +327,10 @@ class ControlCenter:
     def post_message(self, chat, body):
         return self._action(f"Posted message to {chat[:8]}", lambda b: b.workflow.post_message(chat, b.human, body))
 
-    def create_task(self, chat, assignee, title, *, constraints=(), expected_artifacts=(), child_rules=()):
+    def create_task(self, chat, assignee, title, *, constraints=(), expected_artifacts=(), child_rules=(), root_criteria=()):
         """Create a real task. Posting a message never creates or runs a task."""
         policy = policy_for_task(self.live, constraints=constraints, root_artifacts=expected_artifacts,
-                                 child_rules=child_rules)
+                                 child_rules=child_rules, root_criteria=root_criteria)
         def create(b):
             task = b.workflow.create_task(chat, b.human, assignee, title)
             bind_task_policy(b.workflow, task, b.human, policy)
@@ -338,7 +338,7 @@ class ControlCenter:
                 return {"task": task, "execution": "not_started",
                         "explanation": "Offline mode has no model; the task stays pending. Run a scripted scenario to exercise execution."}
             members = {m["id"] for c in b.queries.conversations(b.human) if c["id"] == chat for m in c["members"]}
-            if assignee not in live_roles(members):
+            if assignee not in live_roles(members, self.live):
                 return {"task": task, "execution": "not_started",
                         "explanation": "Assignee has no configured live role; the task stays pending."}
             with b.workflow._transaction():
