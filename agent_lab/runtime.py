@@ -425,7 +425,7 @@ def live_config_from_args(args):
         if (args.model or args.api_key_env or args.constraint or args.provider != "deepseek"
                 or args.max_output_tokens != 2048 or args.task_attempts != 8 or args.tree_attempts != 48
                 or args.enable_web or args.enable_memory or args.memory_namespace != "runtime-development"
-                or args.docker_host or args.python_image or args.git_config or args.child_retries):
+                or args.docker_host or args.python_image or args.child_retries):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
         return None
     if not args.model or not args.api_key_env:
