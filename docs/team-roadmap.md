@@ -27,7 +27,7 @@ Deliver a runnable general multi-agent platform and an evaluation entry point: a
 | M0 — coordinate | Common baseline, visible claims and agreed boundaries | Register ready; individual claims recorded below |
 | M1 — foundation integration | Existing platform plus #7/#8/#9 reviewed and integrated with honest evidence labels | Done; I01–I03 record that integration |
 | M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Pending live access and integration cards |
-| M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Pending remaining tool, learning and interaction work |
+| M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Public retrieval and combined tool engineering checked; live model, runtime GitHub and learning evidence pending |
 | M4 — stabilize/evaluate | Reproducible setup, pinned configuration, development comparisons/failure analysis and official adapter | Pending prerequisites |
 | M5 — official delivery | Issued test protocol/results and required submission materials | Await official set and actual deadlines |
 
@@ -213,40 +213,40 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Add real internet search**
 
-- **Stage / status:** M3 / In review
+- **Stage / status:** M3 / Done
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** A02 tool contract; approved search access/configuration if needed.
 - **Scope:** A retrieval backend and its tests; any gateway registration is a coordinated edit.
 - **Acceptance:** A real query returns bounded results with source URLs and retrieval evidence. Unsupported/local targets, oversized responses, timeouts and failed requests are handled explicitly.
 - **Base revision / branch / PR / evidence:** Scope baseline 2d373dc; batch branch feat/integrated-runtime-tools; implementation c95747c. Actual public search/retrieval and nine retrieval boundary tests; shared evidence/review in [A05](#a05).
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: owner-requested batch implementation, without per-card approval stops. Added explicit public HTTPS search/retrieval, checked/pinned DNS, redirect/size/type/deadline controls, query identity/site filtering, cited text artifacts and failure records. Actual Python documentation retrieved; public search availability/relevance remains a provider limitation. Review/merge pending.
+- **Progress / review changes / outcome:** 2026-10-21: owner-requested batch implementation, without per-card approval stops. Added explicit public HTTPS search/retrieval, checked/pinned DNS, redirect/size/type/deadline controls, query identity/site filtering, cited text artifacts and failure records. Actual Python documentation retrieved; public search availability/relevance remains a provider limitation. Accepted and merged via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) on 2026-10-21 in 8888060.
 
 ### B02
 
 **Retrieve and hand off cited text**
 
-- **Stage / status:** M3 / In review
+- **Stage / status:** M3 / Done
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** B01.
 - **Scope:** Retrieval result processing, bounded text artifacts and related tests.
 - **Acceptance:** A specialist hands another task useful cited text through the existing artifact path. Source content remains reference data and cannot grant tool permissions or discard user constraints.
 - **Base revision / branch / PR / evidence:** Batch implementation c95747c; shared fixture/test evidence in [A05](#a05).
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: a researcher retrieved cited text and explicitly handed it through task-owned artifacts to downstream work. Input delegation preflights hashes and offers snapshots before waiting; child metadata exposes only offered paths, not private transcripts/files. Partial offers retain child identity and clear uncertainty. Review removed duplicate child-result/input notifications. Review/merge pending.
+- **Progress / review changes / outcome:** 2026-10-21: a researcher retrieved cited text and explicitly handed it through task-owned artifacts to downstream work. Input delegation preflights hashes and offers snapshots before waiting; child metadata exposes only offered paths, not private transcripts/files. Partial offers retain child identity and clear uncertainty. Review removed duplicate child-result/input notifications. Accepted and merged via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) on 2026-10-21 in 8888060.
 
 ### B03
 
 **Connect a real GitHub push**
 
-- **Stage / status:** M3 / In review
+- **Stage / status:** M3 / Blocked
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** I02; explicitly authorized test repository/branch and narrow runtime credential scope.
 - **Scope:** Git credential provisioning and remote verification in git_tools.py; preserve existing approval/allowlist boundaries.
 - **Acceptance:** The runtime commits and pushes to the authorized GitHub branch after applicable approval; an independent remote lookup confirms the expected commit SHA. Local bare-remote success alone is insufficient.
 - **Base revision / branch / PR / evidence:** Credential implementation 8c4eb63; batch branch feat/integrated-runtime-tools. Three credential tests and actual anonymous HTTPS main-SHA lookup; full evidence in [A05](#a05).
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: explicit named-variable, repository-URL-scoped GitHub credential injection is implemented; no ambient developer credential is forwarded. Added strict configuration/permission parsing, disabled HTTP redirects and scrubbed credential diagnostics. Existing exact-approval/remote-SHA checks remain. Only a disposable local remote was pushed; actual GitHub runtime push acceptance still requires a designated test repository/branch and narrow credential. Offline slice review/merge pending; card not Done.
+- **Progress / review changes / outcome:** 2026-10-21: explicit named-variable, repository-URL-scoped GitHub credential injection is implemented; no ambient developer credential is forwarded. Added strict configuration/permission parsing, disabled HTTP redirects and scrubbed credential diagnostics. Existing exact-approval/remote-SHA checks remain. Only a disposable local remote was pushed; actual GitHub runtime push acceptance still requires a designated test repository/branch and narrow credential. Offline slice accepted via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) in 8888060. Next: provision the designated test remote/branch and narrow credential, execute an approved runtime push and verify its remote SHA before closing B03.
 
 ### B04
 
@@ -278,14 +278,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Close the experience-use loop**
 
-- **Stage / status:** M3 / In review
+- **Stage / status:** M3 / Blocked
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** A02 and existing per-agent memory APIs; final live use needs A01.
 - **Scope:** memory.py and scoped runtime hooks; do not duplicate orchestration.
 - **Acceptance:** Actual successes/failures produce condition/provenance-linked candidate experience that a later live task can retrieve and consider. Usage/outcomes are recorded; logging a lesson alone is not learning evidence.
 - **Base revision / branch / PR / evidence:** Batch implementation c95747c; shared runtime/combined fixture evidence in [A05](#a05).
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: runtime memory is opt-in. Models may stage bounded conditional hypotheses; actual terminal outcomes idempotently capture observations/candidates and assess selected-use outcomes. A later scripted task retrieved/selected scoped experience and retained actual success/failure provenance. Lessons remain candidates, not authorization or proven repairs. Live batch comparison still refuses memory labels pending a versioned cross-task/reset protocol. Real-model reuse/learning acceptance needs A01; offline slice review/merge pending, not Done.
+- **Progress / review changes / outcome:** 2026-10-21: runtime memory is opt-in. Models may stage bounded conditional hypotheses; actual terminal outcomes idempotently capture observations/candidates and assess selected-use outcomes. A later scripted task retrieved/selected scoped experience and retained actual success/failure provenance. Lessons remain candidates, not authorization or proven repairs. Live batch comparison still refuses memory labels pending a versioned cross-task/reset protocol. Real-model reuse/learning acceptance needs A01; offline slice accepted via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) in 8888060. Next: validate real later-task retrieval/consideration/outcome evidence with issued access and version the batch reset protocol; card not Done.
 
 ### C03
 
@@ -330,14 +330,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Submit real tasks through the interface**
 
-- **Stage / status:** M2 / In review
+- **Stage / status:** M2 / Blocked
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** I01 and A02; final live check needs A01.
 - **Scope:** tui/ controller/view integration using the common runtime API.
 - **Acceptance:** A human submits a real goal and sees actual progress/blockers. An offline unconfigured task remains pending; the UI creates neither a second scheduler nor fake completion.
 - **Base revision / branch / PR / evidence:** Batch implementation c95747c; two console contracts, existing UI checks and clean source-snapshot CLI checks; shared evidence in [A05](#a05).
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: added a standard-library console over the existing control-center service: real goal creation/status/advance, human answer/decision/release, messages and trusted review. Console/TUI/evaluator share explicitly configured runtime backends; runtime indicators reflect actual settings. Creating a task never calls the model implicitly; unconfigured tasks remain pending. Final live-goal acceptance still requires A01; offline slice review/merge pending.
+- **Progress / review changes / outcome:** 2026-10-21: added a standard-library console over the existing control-center service: real goal creation/status/advance, human answer/decision/release, messages and trusted review. Console/TUI/evaluator share explicitly configured runtime backends; runtime indicators reflect actual settings. Creating a task never calls the model implicitly; unconfigured tasks remain pending. Final live-goal acceptance still requires A01; offline slice accepted via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) in 8888060. Next: submit a bounded real goal through the shared interface with issued access, retain model/time/usage evidence and address observed failures before closing D01.
 
 ### D02
 
@@ -369,14 +369,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run the combined tool workflow**
 
-- **Stage / status:** M3 / In review
+- **Stage / status:** M3 / Blocked
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** A03, A04, B02, B03 and D02.
 - **Scope:** A focused integration fixture/live run across existing retrieval, file, sandbox, Git and human-control APIs.
 - **Acceptance:** A bounded live development task performs actual retrieval, code execution, checked handoff and authorized GitHub push. Failures/partial outcomes remain visible and all actual effects have evidence.
-- **Base revision / branch / PR / evidence:** Scope baseline 2d373dc; owner-requested batch branch feat/integrated-runtime-tools. Credential commit 8c4eb63, runtime/fixture commit c95747c, existing-doc update 694ce9a. Python 3.14.7 + Textual 8.2.8: 277 passed, zero skips/errors/failures, including 15 actual-container and nine UI checks. Public HTTPS smoke and combined web fixture retained in ignored runs/integrated-20261021-network/ and runs/integrated-20261021-combined-2/; final full evidence in runs/review-20261021-integrated/accepted-tests.log and accepted-validation.json. Three clean-snapshot CLI entry checks and 87 local Markdown links/anchors passed. PR/merge pending.
+- **Base revision / branch / PR / evidence:** Scope baseline 2d373dc; owner-requested batch branch feat/integrated-runtime-tools. Credential commit 8c4eb63, runtime/fixture commit c95747c, existing-doc update 694ce9a. Python 3.14.7 + Textual 8.2.8: 277 passed, zero skips/errors/failures, including 15 actual-container and nine UI checks. Public HTTPS smoke and combined web fixture retained in ignored runs/integrated-20261021-network/ and runs/integrated-20261021-combined-2/; final full evidence in runs/review-20261021-integrated/accepted-tests.log and accepted-validation.json. Three clean-snapshot CLI entry checks and 92 local Markdown links/anchors passed. [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17), merged 2026-10-21 in 8888060; synchronized feature a3d6afc. Merged tree matches the checked feature tree.
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: continuous owner-authorized integration covered retrieval/cited handoff, input-aware specialist delegation, scoped coordination messages, optional Docker/Git/memory services and a minimal console. A combined scripted-model fixture performed public retrieval, actual isolated Python execution, independent checks, exact scripted approval for a disposable local-remote push, restart and later scoped candidate selection. A negative actual-container case rejects wrong output before any push. Review fixed input-delivery ordering/duplicates, partial-offer reporting, malformed credential settings and verifier transaction nesting in the fixture. No real model calls, autonomous-collaboration score, causal learning gain, runtime GitHub push or Actions result is claimed. Final A05 live acceptance remains dependent on A01/A03/B03. Offline slice review/merge pending; no new Markdown tracker.
+- **Progress / review changes / outcome:** 2026-10-21: continuous owner-authorized integration covered retrieval/cited handoff, input-aware specialist delegation, scoped coordination messages, optional Docker/Git/memory services and a minimal console. A combined scripted-model fixture performed public retrieval, actual isolated Python execution, independent checks, exact scripted approval for a disposable local-remote push, restart and later scoped candidate selection. A negative actual-container case rejects wrong output before any push. Review fixed input-delivery ordering/duplicates, partial-offer reporting, malformed credential settings and verifier transaction nesting in the fixture. No real model calls, autonomous-collaboration score, causal learning gain, runtime GitHub push or Actions result is claimed. Final A05 live acceptance remains dependent on A01/A03/B03. Offline slice accepted via PR #17; no new Markdown tracker. Next: provision issued model/budget and the designated GitHub runtime remote/credential, run the bounded live combined workflow and retain failures and actual effects before closing A05.
 
 ### A06
 
