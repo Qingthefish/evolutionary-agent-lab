@@ -333,7 +333,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Dependencies / configuration:** Existing C02 candidate-memory runtime; actual learning effectiveness remains C02/C05.
 - **Scope:** Memory tests and narrowly justified reset/provenance fixes; preserve existing actor/conversation/namespace boundaries.
 - **Acceptance:** Agents/conversations/namespaces remain separate; contradictory evidence and selected-use outcomes stay visible; fresh/reset memory works. An old lesson cannot authorize a new action.
-- **Base revision / branch / PR / evidence:** Baseline b3e9689; branch feat/frozen-memory-protocol; implementation 2d8ff6d. Python 3.14.7 + Textual 8.2.8: 334 passed, zero skips/errors/failures, including 15 actual-container and nine UI checks. Clean committed-source snapshot on Python 3.12.14: 310 passed, 24 explicit Docker/UI skips; six CLI/suite checks passed. 136 local Markdown links/anchors and seven evaluation JSON files checked. Raw full/fixture/inspection/clean-snapshot evidence in ignored runs/review-20261021-memory/. Final PR/revision recorded after review.
+- **Base revision / branch / PR / evidence:** Baseline b3e9689; branch feat/frozen-memory-protocol; implementation 2d8ff6d; [PR #19](https://github.com/Qingthefish/evolutionary-agent-lab/pull/19). Python 3.14.7 + Textual 8.2.8: 334 passed, zero skips/errors/failures, including 15 actual-container and nine UI checks. Clean committed-source snapshot on Python 3.12.14: 310 passed, 24 explicit Docker/UI skips; six CLI/suite checks passed. 136 local Markdown links/anchors and seven evaluation JSON files checked. Raw full/fixture/inspection/clean-snapshot evidence in ignored runs/review-20261021-memory/. Merged revision recorded after acceptance.
 - **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate approval claimed.
 - **Progress / review changes / outcome:** 2026-10-21: frozen, integrity-checked training provenance forks into fresh per-probe databases/files. Original source binding is unchanged; old files/transcripts/messages and approvals are not available to probe tools. A persisted current-message boundary allows new coordination messages. Contradictory source outcomes, retirement and failed selected-use outcomes remain visible; each later probe resets to the seed. Review fixed explicit SQLite connection closure, checked source evidence against actual terminal tasks, and kept unknown usage/unreleased actions from seeding probes. New synthetic/mocked-transport checks establish engineering behavior only; final acceptance/merge pending.
 
@@ -395,7 +395,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **Stage / status:** M3 / Unclaimed
 - **Owner:** —
-- **Dependencies / configuration:** D01 and the relevant runtime/tool contracts.
+- **Dependencies / configuration:** Accepted D01 engineering slice and the relevant runtime/tool contracts allow offline reproduction now; final live behavior needs A01/D01 live acceptance.
 - **Scope:** Minimal conversation, clarification and approval controls plus tests.
 - **Acceptance:** Private/group messages, clarification and restart, approval versus release versus verified effect, denial and unresolved effects are usable and correctly distinguished.
 - **Base revision / branch / PR / evidence:** —
