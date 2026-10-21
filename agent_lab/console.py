@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .core import WorkflowError
 from .protocol import strict_json
-from .runtime import ChildTextRule, add_live_arguments, live_config_from_args, live_members
+from .runtime import policy_from_spec, add_live_arguments, live_config_from_args, live_members
 from .tui.controller import ControlCenter
 
 
@@ -42,11 +42,9 @@ def main(argv=None):
             data={}
             if args.policy:
                 data=strict_json(Path(args.policy).read_text())
-                if not isinstance(data,dict) or not data.keys()<={'artifacts','child_rules'}:
-                    raise WorkflowError('Policy accepts artifacts and child_rules only')
-            children=tuple(ChildTextRule(**r) for r in data.get('child_rules',[]))
+            policy=policy_from_spec(data,live)
             chat=args.chat or center.create_conversation('group',list(live_members(live)))
-            result=center.create_task(chat,'coordinator',args.goal,expected_artifacts=data.get('artifacts',{}),child_rules=children)
+            result=center.create_task(chat,'coordinator',args.goal,constraints=tuple(data.get('constraints',())),expected_artifacts=policy.root_artifacts,child_rules=policy.child_rules,root_criteria=policy.root_criteria)
             result['chat']=chat
         elif args.command=='status':
             result=center.task_detail(args.task) if args.task else {'runtimes':center.runtimes(),'tasks':center.tasks(),'requests':center.requests()}

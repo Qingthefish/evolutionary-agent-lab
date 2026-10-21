@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from agent_lab.acceptance import ArtifactRule
 from agent_lab.core import Workflow, WorkflowError
 from agent_lab.deepseek import DeepSeekClient, DeepSeekHTTP
 from agent_lab.evaluation import parse_case
@@ -151,9 +152,10 @@ class ChildAcceptanceTests(unittest.TestCase):
 
     def test_ui_api_and_evaluator_share_supported_rules_without_weakening_other_checks(self):
         child = {"assignee": "writer", "title": self.rule.title, "final_state": "succeeded", "artifacts": {"note.txt": "Hello\n"}}
-        unsupported = child | {"title": "Check absence", "absent_artifacts": ["secret.txt"]}
+        absence = child | {"title": "Check absence", "absent_artifacts": ["secret.txt"]}
+        unsupported = child | {"title": "Failed work", "final_state": "failed"}
         case = parse_case({"id": "child-check", "title": "Child integration", "goal": "Deliver note.txt", "driver": "live_scheduler",
-                           "expected": {"final_state": "succeeded", "artifacts": {"note.txt": "Hello\n"}, "subtasks": [child, unsupported]}})
+                           "expected": {"final_state": "succeeded", "artifacts": {"note.txt": "Hello\n"}, "subtasks": [child, absence, unsupported]}})
         path = self.path / "evaluation"
         path.mkdir()
         session = _Session(path, "child-check")
@@ -164,11 +166,12 @@ class ChildAcceptanceTests(unittest.TestCase):
             root, _ = _drive_live(case, session, live)
             http.assert_not_called()
         saved = bind_task_policy(session.workflow, root, HUMAN)
-        self.assertEqual(saved.child_rules, (self.rule,))
+        self.assertEqual(saved.child_rules, (ChildTextRule("writer", "Check absence", {"note.txt": "Hello\n"},
+            (ArtifactRule("secret.txt", "absent"),)), self.rule))
         center = ControlCenter(self.path / "ui", live=live)
         self.addCleanup(center.close)
         chat = center.create_conversation("group", ["coordinator", "writer"])
-        root = center.create_task(chat, "coordinator", "Deliver note.txt", expected_artifacts={"note.txt": "Hello\n"}, child_rules=[self.rule])["task"]
+        root = center.create_task(chat, "coordinator", "Deliver note.txt", expected_artifacts={"note.txt": "Hello\n"}, child_rules=saved.child_rules)["task"]
         ui = center.call(lambda b: bind_task_policy(b.workflow, root, b.human))
         self.assertEqual(ui, saved)
 

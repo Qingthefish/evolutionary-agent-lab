@@ -14,6 +14,8 @@ The instructor's announcement is the primary scope authority. Build a general mu
 
 2026-10-21: optional runtime services now connect public HTTPS search/retrieval, private candidate experience, isolated Python and trusted Git repositories to the shared scheduler. Specialists can delegate with input snapshots and read scoped coordination messages. A combined engineering fixture has exercised public retrieval, actual Docker execution, verified local-remote push, restart and later scoped memory selection. All model decisions in that fixture are scripted; live-model validation, actual GitHub runtime pushing and learning gains remain unestablished.
 
+2026-10-21: opt-in failed-child replacement now retains failed history, original assignment/criteria and shared budgets. Denials, unreleased approvals and unknown effects cannot be bypassed with a retry. Independent data-only artifact criteria cover existence/absence, size, required text, JSON equality and SHA-256. Versioned development plans inspect cases/budgets without a key and require the reviewed fingerprint plus explicit authorization before model calls. These changes do not establish general replanning, arbitrary code/report correctness, live learning or official performance.
+
 ## First 10 minutes / 新成员从这里开始
 
 1. Clone this repository and open **the repository root** in Codex. This makes the project `AGENTS.md` available to the coding assistant. Accept the collaborator invitation before pushing changes.
@@ -118,7 +120,7 @@ The harness loads development cases from `evaluation/dev/*.json`, runs each in a
 
 Cases can also require uniquely identified descendant tasks, their states and actual artifacts, plus exact counts of persisted clarification/approval outcomes within the goal's task tree. Negative controls exercise wrong child results and missing/wrong human evidence even when the root output matches. Invalid/unknown criteria are rejected before execution; driver crashes do not count as detected controls. Full expected criteria and matched task/request evidence are retained in `results.json`. See the [case contract](docs/architecture.md#evaluation-harness-foundation) and [development definitions](evaluation/dev/).
 
-For `live_scheduler` cases, optional `constraints` are combined with the CLI's original constraints and persisted in the shared task policy. Scripted fixtures reject custom constraints because they do not interpret arbitrary requests. Trusted root and supported child exact-text expectations use the same verifier factory in the UI API and evaluator. Child criteria select an exact assignee/title and must be independently supplied before execution; the evaluator enables automatic acceptance only for success criteria with nonempty text expectations and no unsupported absence criteria. Unknown, ambiguous or unsupported child proposals require trusted review. A root with configured child rules cannot pass by producing its own file while skipping required children. Optional runtime backends now require explicit flags and matching session-owned services. Without those settings, their tools stay disabled. Live batch evaluation can use configured web/Python/Git tools, but memory-enabled batch evaluation still refuses to run until its cross-task/reset protocol is versioned. Actual live model/tool behavior and learning gains remain unvalidated.
+For `live_scheduler` cases, optional `constraints` are combined with the CLI's original constraints and persisted in the shared task policy. Scripted fixtures reject custom constraints because they do not interpret arbitrary requests. Trusted root and supported child exact-text/structural/absence expectations use the same verifier factory in the UI API and evaluator. Child criteria select an exact assignee/title and must be independently supplied before execution. A success selector follows the active replacement attempt; every original failure remains in metrics/history. Expected failures and unsupported criteria retain review. Unknown, ambiguous or unsupported child proposals require trusted review. A root with configured child rules cannot pass by producing its own file while skipping required children. Optional runtime backends now require explicit flags and matching session-owned services. Without those settings, their tools stay disabled. Live batch evaluation can use configured web/Python/Git tools, but memory-enabled batch evaluation still refuses to run until its cross-task/reset protocol is versioned. Actual live model/tool behavior and learning gains remain unvalidated.
 
 Reports distinguish **contract acceptance** (including correct rejection behavior) from verified **goal completion** and **subtask completion**. They show expected/executed/blocked/unconfigured cases, missing evidence, task states, assignment-to-final-status time, unfinished elapsed time and cumulative per-task human waits. Failed/cancelled times remain visible; waits are not subtracted. The legacy JSON `completion_rate` remains the acceptance fraction for compatibility; use `goal_completion_rate` and `subtask_completion_rate` for task outcomes. Offline fractions remain fixture results.
 
@@ -141,10 +143,11 @@ python3 -m agent_lab.console --live --model ISSUED_MODEL --api-key-env AGENT_LAB
 python3 -m agent_lab.console --live --model ISSUED_MODEL --api-key-env AGENT_LAB_MODEL_KEY --enable-web --enable-memory advance TASK_ID
 ```
 
-Use `answer REQUEST_ID 'clarification'`, `decide REQUEST_ID approve|deny`, `release REQUEST_ID`, and `review TASK_ID accept|reject --feedback 'concrete evidence'`. Answering/approving only records the human response; releasing executes an exact approved action. Without supported independent criteria a final proposal waits for review. A trusted `new --policy policy.json` may supply `artifacts` and `child_rules`; the model cannot edit them. This is a trusted local interface, not a multi-user authentication service.
+Use `answer REQUEST_ID 'clarification'`, `decide REQUEST_ID approve|deny`, `release REQUEST_ID`, and `review TASK_ID accept|reject --feedback 'concrete evidence'`. Answering/approving only records the human response; releasing executes an exact approved action. Without supported independent criteria a final proposal waits for review. A trusted `new --policy policy.json` may supply `constraints`, exact-text `artifacts`, data-only `criteria` and `child_rules`; the model cannot edit them. This is a trusted local interface, not a multi-user authentication service.
 
 Optional live capabilities share the console, TUI and evaluator configuration:
 
+- `--child-retries N`: permit up to N explicit failed-child replacements across the entire root (default 0, maximum 8). Each replacement preserves the assignment and acceptance, receives failure feedback, and consumes the original shared budgets. Fresh parent-owned inputs can be explicitly offered in the retry request after hash checks; old private files and approvals are not inherited. Opt-in roles can revise their own files through the same version-checked tool. This is bounded retry, not a general dependency planner.
 - `--enable-web`: bounded public HTTPS search and cited `.md`/`.txt` retrieval. Search availability/relevance depends on the public endpoint; empty/challenge/failure results are retained. JavaScript, login pages and proprietary documents are unsupported.
 - `--enable-memory --memory-namespace NAME`: private candidate retrieval/selection, staged model hypotheses and terminal outcome capture. A later task must share the same agent, conversation and namespace to retrieve a lesson. A selected lesson does not authorize an action or prove improvement.
 - `--docker-host unix:///EXPLICIT_SOCKET --python-image python@sha256:PINNED_DIGEST`: use the existing Docker backend. No VM startup, image pull or host execution fallback occurs in the application.
@@ -159,6 +162,30 @@ A trusted repository configuration contains references and permissions, never th
 Provision a token limited to that test repository outside the project files. The application disables redirects and ambient Git credentials, binds approval to the exact commit/remote/branch and independently reads the remote SHA after a push. A local fixture push is not GitHub evidence.
 
 See [shared runtime setup](docs/architecture.md#shared-runtime-setup) and [Git boundaries](docs/architecture.md#restricted-git-tools). New capabilities are opt-in; changing an existing task's roles/tools/policy does not silently reinterpret its persisted configuration.
+
+## Inspect a development run before model access arrives
+
+```bash
+python3 -m agent_lab.evaluation plan --config evaluation/development-plan.json
+```
+
+This reads two independently specified **live connection checks**: a delegated note/handoff and structured-file acceptance. It makes no model/network/engine request, creates no run state and needs no key. The checked-in plan intentionally leaves `model` null. Configure the teacher-issued provider/model and the named credential variable when issued, inspect again, then explicitly authorize the reported conditions:
+
+```bash
+python3 -m agent_lab.evaluation execute --config evaluation/development-plan.json --allow-model-calls --plan-sha256 REVIEWED_SHA256
+```
+
+The plan fixes task/tree limits, selected cases and tools; the fingerprint covers case/policy/role/code content. Execution refuses stale fingerprints, missing access, fixture/held-out substitution, unknown fields and unsupported memory-on labels. Limits bound reserved attempts and reported usage, **not exact billing**. HKGAI remains blocked until its issued interface is implemented; there is no provider fallback. Human pauses stay real. A fresh empty database is used per case, and blocked/failed outcomes remain in the evaluation report. The inspected plan is saved with each actual run.
+
+These two cases test initial wiring only. Their automatic checks establish declared file properties. They do not validate arbitrary program behavior, report accuracy, learning improvement, real GitHub pushes, all required tools or the instructor's unseen dataset. Optional Docker/Git/web settings still require working backends and actual validation. Formal memory comparisons and the official adapter/reset protocol remain separate work.
+
+Example trusted structural policy (these expectations must be authored independently of the candidate):
+
+```json
+{"criteria":[{"path":"report.md","kind":"contains","expected":"## Sources","min_bytes":100},{"path":"scratch.txt","kind":"absent"}],"child_rules":[{"assignee":"writer","title":"Write structured result","criteria":[{"path":"data.json","kind":"json_equals","expected":"{\"count\":3}"}]}]}
+```
+
+Supported kinds are `exists`, `absent`, `contains`, `json_equals` and `sha256`, with bounded `min_bytes`/`max_bytes`. JSON criteria are for internal structured data, not complex document formats. Unsupported/unknown task acceptance still needs trusted review; candidate-produced “tests passed” text is never enough to satisfy missing criteria.
 
 ## Run the combined actual-tool fixture
 

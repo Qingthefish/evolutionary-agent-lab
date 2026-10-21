@@ -14,6 +14,7 @@ from pathlib import Path
 import time
 from uuid import uuid4
 
+from ..acceptance import ArtifactRule, verify_rules
 from ..core import Workflow, WorkflowError
 from ..files import FileTools
 from ..inspection import ArtifactInspector, ArtifactMissingError
@@ -98,18 +99,19 @@ def _drive_offline(case, session):
 
 
 def _case_policy(case, live):
-    # Only the already-defined exact-text success contract has a runtime checker.
-    # Other child criteria are still checked by the evaluator and require review
-    # at runtime; never silently weaken them to a partial automatic check.
-    children = tuple(ChildTextRule(s.assignee, s.title, s.artifacts) for s in case.expected.subtasks
-                     if s.final_state == "succeeded" and s.artifacts and not s.absent_artifacts)
+    children = tuple(ChildTextRule(s.assignee, s.title, s.artifacts,
+        (*s.criteria, *(ArtifactRule(p,"absent") for p in s.absent_artifacts))) for s in case.expected.subtasks
+        if s.final_state == "succeeded" and (s.artifacts or s.criteria or s.absent_artifacts))
     return policy_for_task(live, constraints=case.constraints, root_artifacts=case.expected.artifacts,
-                           child_rules=children)
+        child_rules=children, root_criteria=(*case.expected.criteria,
+            *(ArtifactRule(p,"absent") for p in case.expected.absent_artifacts)) if case.expected.final_state == "succeeded" else ())
 
 
 def _drive_live(case, session, live):
     """Live DeepSeek scheduler run. Unvalidated: no live call has been made yet."""
     members = live_members(live)
+    for agent in members:
+        session.workflow.register_actor(agent, "agent")
     if session.services is None:
         session.services = RuntimeServices(session.workflow, session.files, live)
     chat = session.workflow.create_chat("group", [HUMAN, *members])
@@ -135,6 +137,8 @@ def _artifact_checks(session, task, expected, prefix=""):
         except WorkflowError:
             # Denied/unsafe/unreadable is not proof of absence.
             checks[prefix + "absent:" + path] = False
+    actor = session.workflow.task(task, HUMAN)["assignee"]
+    checks.update({prefix+k:v for k,v in verify_rules(session.workflow,session.files,task,actor,expected.criteria).items()})
     return checks
 
 
@@ -162,10 +166,14 @@ def _checks(case, session, root, duration):
               "task_count": len(tree) >= case.expected.min_tasks,
               "within_time": duration <= case.expected.max_seconds}
     checks.update(_artifact_checks(session, root, case.expected))
+    from ..recovery import active_tasks, links
+    active = active_tasks(workflow, tree)
+    retry_links = links(workflow)
     subtask_records = []
     for index, expected in enumerate(case.expected.subtasks):
         prefix = f"subtask:{index}:"
-        matches = [row for row in tree if row["id"] != root and row["assignee"] == expected.assignee
+        selected_tree = active if expected.final_state == "succeeded" else tree
+        matches = [row for row in selected_tree if row["id"] != root and row["assignee"] == expected.assignee
                    and row["title"] == expected.title]
         checks[prefix + "unique_match"] = len(matches) == 1
         checks[prefix + "final_state"] = len(matches) == 1 and matches[0]["state"] == expected.final_state
@@ -176,6 +184,7 @@ def _checks(case, session, root, duration):
         else:
             checks.update({prefix + "artifact:" + p: False for p in expected.artifacts})
             checks.update({prefix + "absent:" + p: False for p in expected.absent_artifacts})
+            checks.update({prefix+f"criterion:{i}:{r.path}:{r.kind}":False for i,r in enumerate(expected.criteria)})
     ids = [row["id"] for row in tree]
     marks = ",".join("?" * len(ids))
     requests = workflow.db.execute(f"""SELECT r.*,t.assignee FROM requests r JOIN tasks t ON t.id=r.task
@@ -217,6 +226,7 @@ def _checks(case, session, root, duration):
                        for name, v in checks.items() if name.startswith(f"subtask:{index}:")]
         task_records.append({"task_id": row["id"], "parent": row["parent"], "assignee": row["assignee"],
                              "state": row["state"], "verified_success": trusted_success and all(independent),
+                             "replacement_task": retry_links.get(row["id"]),
                              "elapsed_seconds": elapsed, "final_duration_seconds": elapsed if row["ended"] is not None else None,
                              "human_wait_seconds": waited})
     observed_models = []

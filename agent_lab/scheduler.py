@@ -9,10 +9,11 @@ from dataclasses import asdict, dataclass
 import json
 from uuid import uuid4
 
-from . import budget
+from . import budget, recovery
 from .deepseek import DeepSeekClient, DeepSeekHTTP
 from .gateway import ToolGateway, _SPECS
 from .runner import Limits, RunnerError, TaskRunner
+from .core import WorkflowError
 
 
 @dataclass(frozen=True)
@@ -39,7 +40,7 @@ class Role:
 class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
-                 memory=None, executor=None, git=None, retrieval=None, capture_memory=False):
+                 memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
@@ -48,6 +49,7 @@ class MultiAgentScheduler:
         self.retrieval, self.capture_memory = retrieval, capture_memory
         if type(capture_memory) is not bool or (capture_memory and memory is None):
             raise RunnerError("Outcome capture requires an explicit memory backend")
+        self.child_retries = child_retries
         self.owner = uuid4().hex
         task = workflow.task(root, human)
         if (task["parent"] or not self.roles or len(self.roles) > 16
@@ -99,11 +101,17 @@ class MultiAgentScheduler:
             settings["retrieval"] = retrieval.configuration()
         if capture_memory:
             settings["capture_memory"] = "terminal-observation-and-candidate-v1"
+        if child_retries:
+            settings["child_retries"] = child_retries
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
             root TEXT PRIMARY KEY REFERENCES tasks(id), config TEXT NOT NULL, owner TEXT
         )""")
+        previous = workflow.db.execute("SELECT * FROM scheduler_runs WHERE root=?", (root,)).fetchone()
+        if previous and previous["config"] != config:
+            raise RunnerError("Persisted scheduler roles, constraints, model, tools, or acceptance policy differ")
+        recovery.configure(workflow, root, child_retries)
         with workflow._transaction():
             previous = workflow.db.execute("SELECT * FROM scheduler_runs WHERE root=?", (root,)).fetchone()
             if previous and previous["config"] != config:
@@ -174,7 +182,14 @@ class MultiAgentScheduler:
                      for key, row in sessions.items() if row["status"] in {"calling", "processing", "stopping"}]
         if uncertain:
             return self.status() | {"state": "blocked", "needs": uncertain}
-        for task in tasks:
+        active = recovery.active_tasks(self.workflow, tasks)
+        for task in active:
+            if task["state"] == "failed" and self.child_retries:
+                try:
+                    recovery.availability(self.workflow, task["parent"], task["id"], require_running=False)
+                except WorkflowError as error:
+                    return self._fail(str(error))
+                continue
             if task["state"] in {"failed", "cancelled"}:
                 return self._fail("Delegated task " + task["id"] + " ended " + task["state"] + "; inspect its evidence before a new plan")
             if task["state"] in {"succeeded", "failed", "cancelled"}:
@@ -185,7 +200,7 @@ class MultiAgentScheduler:
             if self.workflow.clock() - task["created"] >= self.roles[task["assignee"]].limits.duration_seconds:
                 return self._fail("Assigned task duration exhausted; partial artifacts retained")
         needs = []
-        for task in tasks:
+        for task in active:
             if task["state"] in {"succeeded", "failed", "cancelled"}:
                 continue
             if task["state"].startswith("waiting_"):
@@ -194,7 +209,7 @@ class MultiAgentScheduler:
                     (task["id"],))]
                 needs.append({"task": task["id"], "kind": task["state"], "requests": requests})
                 continue
-            if any(child["parent"] == task["id"] and child["state"] != "succeeded" for child in tasks):
+            if any(child["parent"] == task["id"] and child["state"] not in {"succeeded", "failed"} for child in active):
                 continue
             if task["id"] in sessions and sessions[task["id"]]["status"] == "awaiting_verification":
                 needs.append({"task": task["id"], "kind": "independent_verification"})

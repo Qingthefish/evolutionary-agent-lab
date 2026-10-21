@@ -10,6 +10,7 @@ import json
 import math
 import os
 
+from .acceptance import normalize_rules, parse_rules, verify_rules
 from .budget import TreeLimits
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP
@@ -52,6 +53,7 @@ class LiveConfig:
     docker_host: str | None = None
     python_image: str | None = None
     repositories: tuple = ()
+    child_retries: int = 0
 
     def __post_init__(self):
         if self.provider != "deepseek":
@@ -68,6 +70,8 @@ class LiveConfig:
         if (not isinstance(self.role_limits, Limits) or not isinstance(self.tree_limits, TreeLimits)
                 or type(self.tool_calls) is not int or not 1 <= self.tool_calls <= 1000):
             raise RuntimeSetupError("Supply validated task/tree limits and a bounded per-task tool-call limit")
+        if type(self.child_retries) is not int or not 0 <= self.child_retries <= 8:
+            raise RuntimeSetupError("Child replacement limit must be an integer from 0 to 8")
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
         if (type(self.enable_web) is not bool or type(self.enable_memory) is not bool
                 or not isinstance(self.memory_namespace, str) or not self.memory_namespace.strip()
@@ -132,18 +136,25 @@ class ChildTextRule:
     """Human/application-supplied criterion, never derived from a model proposal."""
     assignee: str
     title: str
-    artifacts: tuple
+    artifacts: tuple = ()
+    criteria: tuple = ()
 
     def __post_init__(self):
         if any(not isinstance(s, str) or not s.strip() or len(s) > limit
                for s, limit in ((self.assignee, 128), (self.title, 4096))):
             raise RuntimeSetupError("Child acceptance requires an exact assignee and task title")
         object.__setattr__(self, "artifacts", _text_expectations(self.artifacts))
-        if not self.artifacts:
-            raise RuntimeSetupError("Child text acceptance requires at least one independent expected artifact")
+        object.__setattr__(self, "criteria", normalize_rules(self.criteria))
+        if not self.artifacts and not self.criteria:
+            raise RuntimeSetupError("Child acceptance requires at least one independent expected artifact or criterion")
+        if set(p for p, _ in self.artifacts) & {r.path for r in self.criteria if r.kind == "absent"}:
+            raise RuntimeSetupError("Artifact cannot be required present and absent")
 
     def record(self):
-        return {"assignee": self.assignee, "title": self.title, "artifacts": dict(self.artifacts)}
+        record = {"assignee": self.assignee, "title": self.title, "artifacts": dict(self.artifacts)}
+        if self.criteria:
+            record["criteria"] = [r.record() for r in self.criteria]
+        return record
 
 
 @dataclass(frozen=True)
@@ -152,6 +163,7 @@ class TaskPolicy:
     constraints: tuple = ()
     root_artifacts: tuple = ()
     child_rules: tuple = ()
+    root_criteria: tuple = ()
 
     def __post_init__(self):
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
@@ -163,11 +175,17 @@ class TaskPolicy:
         if len({(r.assignee, r.title) for r in rules}) != len(rules):
             raise RuntimeSetupError("Duplicate child acceptance selector")
         object.__setattr__(self, "child_rules", rules)
+        object.__setattr__(self, "root_criteria", normalize_rules(self.root_criteria))
+        if set(p for p, _ in self.root_artifacts) & {r.path for r in self.root_criteria if r.kind == "absent"}:
+            raise RuntimeSetupError("Artifact cannot be required present and absent")
 
     def record(self):
         record = {"version": 1, "constraints": list(self.constraints), "root_artifacts": dict(self.root_artifacts)}
         if self.child_rules:
             record.update(version=2, child_rules=[r.record() for r in self.child_rules])
+        if self.root_criteria or any(r.criteria for r in self.child_rules):
+            record.update(version=3, child_rules=[r.record() for r in self.child_rules],
+                          root_criteria=[r.record() for r in self.root_criteria])
         return record
 
     @property
@@ -180,10 +198,25 @@ def _encode(value):
     return json.dumps(value, sort_keys=True, allow_nan=False, ensure_ascii=True)
 
 
-def policy_for_task(live=None, *, constraints=(), root_artifacts=(), child_rules=()):
+def policy_for_task(live=None, *, constraints=(), root_artifacts=(), child_rules=(), root_criteria=()):
     if live is not None and not isinstance(live, LiveConfig):
         raise RuntimeSetupError("Use the shared LiveConfig")
-    return TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)), root_artifacts, child_rules)
+    return TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)), root_artifacts, child_rules, root_criteria)
+
+
+def policy_from_spec(data, live=None):
+    """Trusted console/config input only; no model tool may set acceptance."""
+    if not isinstance(data, dict) or not data.keys() <= {"artifacts", "child_rules", "criteria", "constraints"}:
+        raise RuntimeSetupError("Policy accepts artifacts, criteria, child_rules and constraints only")
+    records = data.get("child_rules", [])
+    if not isinstance(records, list):
+        raise RuntimeSetupError("Child rules must be an array")
+    try:
+        children = tuple(ChildTextRule(**{**r, "criteria": parse_rules(r.get("criteria", []))}) for r in records)
+    except (TypeError, AttributeError):
+        raise RuntimeSetupError("Invalid child acceptance rule") from None
+    return policy_for_task(live, constraints=data.get("constraints", ()), root_artifacts=data.get("artifacts", ()),
+                           child_rules=children, root_criteria=parse_rules(data.get("criteria", [])))
 
 
 def bind_task_policy(workflow, root, human, policy=None, *, default=None):
@@ -201,18 +234,21 @@ def bind_task_policy(workflow, root, human, policy=None, *, default=None):
         if row:
             try:
                 data = strict_json(row["policy"])
-                if (not isinstance(data, dict) or type(data.get("version")) is not int or data["version"] not in (1, 2)
-                        or set(data) != ({"version", "constraints", "root_artifacts"} |
-                                        ({"child_rules"} if data["version"] == 2 else set()))
-                        or not isinstance(data["root_artifacts"], dict)):
+                version = data.get("version") if isinstance(data, dict) else None
+                fields = {"version", "constraints", "root_artifacts"}
+                if type(version) is not int or version not in (1, 2, 3):
                     raise ValueError()
-                records = data.get("child_rules", [])
-                if (not isinstance(records, list) or (data["version"] == 2 and not records)
-                        or any(not isinstance(r, dict) or set(r) != {"assignee", "title", "artifacts"}
-                               or not isinstance(r["artifacts"], dict) for r in records)):
+                if version >= 2:
+                    fields.add("child_rules")
+                if version == 3:
+                    fields.add("root_criteria")
+                if set(data) != fields or not isinstance(data["root_artifacts"], dict):
                     raise ValueError()
-                stored = TaskPolicy(data["constraints"], data["root_artifacts"],
-                                    tuple(ChildTextRule(**r) for r in records))
+                stored = policy_from_spec({"constraints": data["constraints"], "artifacts": data["root_artifacts"],
+                    "child_rules": data.get("child_rules", []), "criteria": data.get("root_criteria", [])})
+                if stored.record() != data:
+                    raise ValueError()
+
             except (ValueError, TypeError, KeyError, WorkflowError):
                 raise RuntimeSetupError("Persisted task policy is invalid; preserve state and reconcile") from None
             if policy is not None and stored != policy:
@@ -264,6 +300,9 @@ def live_roles(members, config=None):
         if expanded:
             tools = tuple(dict.fromkeys((*tools, "delegate_task", "delegate_with_inputs", "post_message", "read_messages")))
             instructions += " Negotiate scope using conversation messages and delegate to eligible specialists when needed; do not discard the global constraints."
+        if config and config.child_retries:
+            tools = tuple(dict.fromkeys((*tools, "retry_failed_task", "update_text")))
+            instructions += " On child failure inspect its evidence; a bounded retry must preserve the identical assignment and acceptance, with a concrete repair reason. Denials and unknown effects cannot be retried."
         delegates = tuple(a for a in present if a != agent) if "delegate_task" in tools else ()
         if "delegate_task" in tools and not delegates:
             tools = tuple(t for t in tools if t not in {"delegate_task", "delegate_with_inputs"})
@@ -276,19 +315,21 @@ def live_roles(members, config=None):
 def text_acceptance_factory(workflow, files, root, policy):
     """One trusted policy for live wiring and explicitly labelled offline checks."""
     def matches(rule):
-        return [t for t in workflow.db.execute("""WITH RECURSIVE tree(id) AS (
+        from .recovery import active_tasks
+        return [t for t in active_tasks(workflow, workflow.db.execute("""WITH RECURSIVE tree(id) AS (
             SELECT ? UNION ALL SELECT t.id FROM tasks t JOIN tree ON t.parent=tree.id
-        ) SELECT t.* FROM tasks t JOIN tree ON tree.id=t.id WHERE t.id!=?""", (root, root))
+        ) SELECT t.* FROM tasks t JOIN tree ON tree.id=t.id WHERE t.id!=?""", (root, root)))
                 if t["assignee"] == rule.assignee and t["title"] == rule.title]
 
     def factory(candidate):
         if candidate["id"] == root:
-            if not policy.root_artifacts:
+            if not policy.root_artifacts and not policy.root_criteria:
                 return None
-            text = files.text_verifier(root, candidate["assignee"], dict(policy.root_artifacts))
+            text = files.text_verifier(root, candidate["assignee"], dict(policy.root_artifacts)) if policy.root_artifacts else lambda: {}
 
             def verify_root():
                 checks = text()
+                checks.update(verify_rules(workflow, files, root, candidate["assignee"], policy.root_criteria))
                 for i, rule in enumerate(policy.child_rules):
                     selected = matches(rule)
                     evidence = json.loads(selected[0]["evidence"]) if len(selected) == 1 and selected[0]["evidence"] else {}
@@ -302,11 +343,12 @@ def text_acceptance_factory(workflow, files, root, policy):
                      (candidate["assignee"], candidate["title"])), None)
         if rule is None or len(matches(rule)) != 1:
             return None  # Unknown or ambiguous proposals need explicit trusted review.
-        text = files.text_verifier(candidate["id"], candidate["assignee"], dict(rule.artifacts))
+        text = files.text_verifier(candidate["id"], candidate["assignee"], dict(rule.artifacts)) if rule.artifacts else lambda: {}
 
         def verify_child():
             try:
                 checks = text()
+                checks.update(verify_rules(workflow, files, candidate["id"], candidate["assignee"], rule.criteria))
             except WorkflowError as error:
                 paths = ", ".join(p for p, _ in rule.artifacts)[:1024]
                 raise RuntimeSetupError("Required child text unreadable; inspect " + paths) from error
@@ -345,7 +387,7 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
         # Direct API callers cannot accidentally omit the launcher's constraints.
         # UI/evaluation already supply this prefix; do not append it twice.
         policy = policy_for_task(live, constraints=policy.constraints, root_artifacts=policy.root_artifacts,
-                                 child_rules=policy.child_rules)
+                                 child_rules=policy.child_rules, root_criteria=policy.root_criteria)
     policy = bind_task_policy(workflow, root, human, TaskPolicy() if legacy else policy,
                               default=TaskPolicy(live.constraints))
     acceptance_id = "tui-live-human-review-v1" if legacy else policy.acceptance_id
@@ -357,7 +399,7 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
         verifier_factory=text_acceptance_factory(workflow, files, root, policy),
         limits=live.tree_limits, memory=services.memory if services else None,
         executor=services.executor if services else None, git=services.git if services else None,
-        retrieval=services.retrieval if services else None, capture_memory=live.enable_memory)
+        retrieval=services.retrieval if services else None, capture_memory=live.enable_memory, child_retries=live.child_retries)
 
 
 def add_live_arguments(parser):
@@ -369,6 +411,7 @@ def add_live_arguments(parser):
     parser.add_argument("--max-output-tokens", type=int, default=2048)
     parser.add_argument("--task-attempts", type=int, default=8)
     parser.add_argument("--tree-attempts", type=int, default=48)
+    parser.add_argument("--child-retries", type=int, default=0, help="Shared maximum of explicit failed-child replacements (0 disables; at most 8)")
     parser.add_argument("--enable-web", action="store_true", help="Permit bounded public HTTPS search/retrieval in live mode")
     parser.add_argument("--enable-memory", action="store_true", help="Enable private candidate experience retrieval and outcome capture")
     parser.add_argument("--memory-namespace", default="runtime-development")
@@ -382,7 +425,7 @@ def live_config_from_args(args):
         if (args.model or args.api_key_env or args.constraint or args.provider != "deepseek"
                 or args.max_output_tokens != 2048 or args.task_attempts != 8 or args.tree_attempts != 48
                 or args.enable_web or args.enable_memory or args.memory_namespace != "runtime-development"
-                or args.docker_host or args.python_image):
+                or args.docker_host or args.python_image or args.child_retries):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
         return None
     if not args.model or not args.api_key_env:
@@ -396,4 +439,4 @@ def live_config_from_args(args):
         tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts), enable_web=args.enable_web,
         enable_memory=args.enable_memory, memory_namespace=args.memory_namespace,
         docker_host=args.docker_host, python_image=args.python_image,
-        repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else ())
+        repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else (), child_retries=args.child_retries)
