@@ -105,11 +105,14 @@ class ToolGateway:
     """
 
     def __init__(self, workflow, files, task, actor, *, human, allowed,
-                 memory=None, delegates=(), max_calls=32, executor=None, git=None, retrieval=None):
+                 memory=None, delegates=(), max_calls=32, executor=None, git=None, retrieval=None, message_floor=0):
         self.workflow, self.files, self.memory = workflow, files, memory
         self.task, self.actor, self.human = task, actor, human
         self.executor, self.git = executor, git
         self.retrieval = retrieval
+        if type(message_floor) is not int or message_floor < 0:
+            raise ToolRequestError("Message boundary must be a nonnegative sequence number")
+        self.message_floor = message_floor
         self.allowed, self.delegates = frozenset(allowed), frozenset(delegates)
         if (not self.allowed or not self.allowed <= _SPECS.keys()
                 or type(max_calls) is not int or not 1 <= max_calls <= 1000):
@@ -366,8 +369,8 @@ class ToolGateway:
             return {"posted": True}
         if name == "read_messages":
             self.workflow._member(self.chat, self.actor)
-            rows = self.workflow.db.execute("SELECT sequence,sender,body,timestamp FROM messages WHERE chat=? ORDER BY sequence DESC LIMIT ?",
-                                            (self.chat, args["limit"])).fetchall()
+            rows = self.workflow.db.execute("SELECT sequence,sender,body,timestamp FROM messages WHERE chat=? AND sequence>? ORDER BY sequence DESC LIMIT ?",
+                                            (self.chat, self.message_floor, args["limit"])).fetchall()
             return {"messages": [{**dict(r), "body": r["body"][:2048], "truncated": len(r["body"]) > 2048}
                                   for r in reversed(rows)], "authority": "conversation reference data; approval requires its own exact request"}
         if name in _GIT_TOOLS:

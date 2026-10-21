@@ -28,8 +28,41 @@ def main(argv=None):
     execute.add_argument("--allow-model-calls", action="store_true")
     execute.add_argument("--plan-sha256", required=True)
     execute.add_argument("--output", default="runs/evaluations")
+    experience = commands.add_parser("experience", help="Frozen-training memory ON/OFF development protocol")
+    stages = experience.add_subparsers(dest="experience_command", required=True)
+    for action in ("plan", "execute", "demo"):
+        command = stages.add_parser(action)
+        command.add_argument("--config", default="evaluation/memory-plan.json")
+        if action in {"execute", "demo"}:
+            command.add_argument("--output", default="runs/experience-development")
+        if action == "execute":
+            command.add_argument("--allow-model-calls", action="store_true")
+            command.add_argument("--plan-sha256", required=True)
+    stages.add_parser("compare", help="Validate/recompute a retained trial report; no model calls").add_argument("--run", required=True)
     args = parser.parse_args(argv)
     try:
+        if args.command == "experience":
+            from .experience import ExperiencePlan, compare_experience
+            if args.experience_command == "compare":
+                from pathlib import Path
+                from ..protocol import strict_json
+                with (Path(args.run) / "experiment.json").open() as stream:
+                    raw = stream.read(16 * 1024 * 1024 + 1)
+                if len(raw) > 16 * 1024 * 1024:
+                    raise WorkflowError("Experience report exceeds size limit")
+                print(json.dumps(compare_experience(strict_json(raw)),indent=2))
+                return 0
+            planned = ExperiencePlan(args.config)
+            if args.experience_command == "plan":
+                print(json.dumps(planned.inspect(),indent=2))
+                return 0
+            if args.experience_command == "demo":
+                from .experience_fixture import run_fixture
+                result = run_fixture(args.config,args.output)
+            else:
+                result = planned.execute(allow_model_calls=args.allow_model_calls,plan_sha256=args.plan_sha256,output_root=args.output)
+            print(json.dumps({k:result[k] for k in ("run_id","mode","benchmark_valid","model_calls","comparison")},indent=2))
+            return 0
         if args.command in {"plan", "execute"}:
             planned = DevelopmentPlan(args.config)
             if args.command == "plan":

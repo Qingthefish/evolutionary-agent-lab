@@ -40,7 +40,7 @@ class Role:
 class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
-                 memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0):
+                 memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
@@ -50,6 +50,9 @@ class MultiAgentScheduler:
         if type(capture_memory) is not bool or (capture_memory and memory is None):
             raise RunnerError("Outcome capture requires an explicit memory backend")
         self.child_retries = child_retries
+        if type(message_floor) is not int or message_floor < 0:
+            raise RunnerError("Message boundary must be a nonnegative sequence number")
+        self.message_floor = message_floor
         self.owner = uuid4().hex
         task = workflow.task(root, human)
         if (task["parent"] or not self.roles or len(self.roles) > 16
@@ -103,6 +106,8 @@ class MultiAgentScheduler:
             settings["capture_memory"] = "terminal-observation-and-candidate-v1"
         if child_retries:
             settings["child_retries"] = child_retries
+        if message_floor:
+            settings["message_floor"] = message_floor
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
@@ -130,7 +135,7 @@ class MultiAgentScheduler:
         role = self.roles[actor]
         gateway = ToolGateway(self.workflow, self.files, task_id, actor, human=self.human,
             allowed=role.tools, delegates=role.delegates, memory=self.memory,
-            executor=self.executor, max_calls=role.tool_calls, git=self.git, retrieval=self.retrieval)
+            executor=self.executor, max_calls=role.tool_calls, git=self.git, retrieval=self.retrieval, message_floor=self.message_floor)
         acceptance = self.verifier_factory(dict(task))
         if acceptance is None:
             verifier, version = None, None

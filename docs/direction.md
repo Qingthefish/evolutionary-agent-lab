@@ -58,7 +58,7 @@ The complete acceptance target still includes private/group human interaction, i
 
 2026-10-21: extend trusted acceptance with bounded, data-only artifact properties in addition to exact text. Criteria and original constraints are immutable and never editable through model tools. Structural checks prove only their stated properties; factual report quality and arbitrary code behavior still need independent sandbox tests or review. Preserve older policy IDs when these new criteria are absent.
 
-Use a versioned development plan to inspect selected live cases, budgets, roles and acceptance before credentials arrive. Actual execution requires explicit authorization and the inspected content fingerprint. The initial checked-in plan covers connection/handoff and structured artifacts only; it is not a full benchmark or the official evaluation adapter. Memory-on batch comparisons still await their cross-task/reset protocol. No model access, paid experiment or alternative provider is inferred from a successful static check.
+Use a versioned development plan to inspect selected live cases, budgets, roles and acceptance before credentials arrive. Actual execution requires explicit authorization and the inspected content fingerprint. The initial checked-in plan covers connection/handoff and structured artifacts only; it is not a full benchmark or the official evaluation adapter. A separate frozen-experience development protocol now versions common training and isolated ON/OFF probes; ordinary batch memory labels remain refused, and live evidence is pending. No model access, paid experiment or alternative provider is inferred from a successful static check.
 
 ## Delivery gates
 
@@ -80,3 +80,7 @@ ARIN 5203 evidence-audit work and the ARIN 5305 AttnCompress reading may inform 
 - Exact deadlines and the announcement's conflicting three weeks versus 3/1 weeks test-release wording.
 - Evaluation rules for human waiting, repeated runs, and memory persistence.
 - Allowed provider endpoint/model/quota and required sandbox boundary.
+
+## Frozen experience comparison decision
+
+2026-10-21: compare access to the same frozen observed experience instead of allowing two arms to silently accumulate different histories. Use fresh training per replicate, then a separate copy per probe with empty files and a persisted chat-message floor. Do not copy training files or inherit approval authority. Preserve every source success/failure and retirement status; selected-use outcome is an observation, not causal validation. Prompts, roles and budgets match across ON/OFF except for search/selection tools; probe experience cannot update future probes. Report common training cost separately, retain unfinished/missing trials, and stop rather than script a human reply or replay uncertain effects. Mutable Git repositories and automatic experiment resume remain unsupported in this protocol. This is a development evidence method, not an instructor-issued reset rule or a replacement for general runtime capabilities.

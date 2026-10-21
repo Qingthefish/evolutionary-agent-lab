@@ -1,0 +1,70 @@
+[
+  {
+    "id": "memory-train-a",
+    "title": "UTF-8 note with required newline",
+    "driver": "live_scheduler",
+    "goal": "Create note.txt containing exactly Alpha followed by one newline. Preserve this newline before proposing completion.",
+    "constraints": [
+      "Use only Markdown/TXT document artifacts.",
+      "Preserve the exact required trailing newline."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Alpha\n"
+      },
+      "max_seconds": 600
+    }
+  },
+  {
+    "id": "memory-train-b",
+    "title": "UTF-8 note with required newline",
+    "driver": "live_scheduler",
+    "goal": "Create note.txt containing exactly Beta followed by one newline. Preserve this newline before proposing completion.",
+    "constraints": [
+      "Use only Markdown/TXT document artifacts.",
+      "Preserve the exact required trailing newline."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Beta\n"
+      },
+      "max_seconds": 600
+    }
+  },
+  {
+    "id": "memory-probe-a",
+    "title": "UTF-8 note with required newline",
+    "driver": "live_scheduler",
+    "goal": "Create note.txt containing exactly Gamma followed by one newline. Preserve this newline before proposing completion.",
+    "constraints": [
+      "Use only Markdown/TXT document artifacts.",
+      "Preserve the exact required trailing newline."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Gamma\n"
+      },
+      "max_seconds": 600
+    }
+  },
+  {
+    "id": "memory-probe-b",
+    "title": "UTF-8 note with required newline",
+    "driver": "live_scheduler",
+    "goal": "Create note.txt containing exactly Delta followed by one newline. Preserve this newline before proposing completion.",
+    "constraints": [
+      "Use only Markdown/TXT document artifacts.",
+      "Preserve the exact required trailing newline."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "artifacts": {
+        "note.txt": "Delta\n"
+      },
+      "max_seconds": 600
+    }
+  }
+]

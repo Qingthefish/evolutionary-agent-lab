@@ -91,6 +91,10 @@ class TaskRunner:
                         "execution": gateway.execution_configuration(),
                         "human": gateway.human, "verifier_id": verifier_id,
                         "prompt_sha256": hashlib.sha256(_PROMPT.encode()).hexdigest()})
+        if gateway.message_floor:
+            settings = json.loads(config)
+            settings["message_floor"] = gateway.message_floor
+            config = _json(settings)
         if gateway.retrieval is not None:
             settings = json.loads(config)
             settings["retrieval"] = gateway.retrieval.configuration()
