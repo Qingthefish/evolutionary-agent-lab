@@ -182,6 +182,7 @@ class ControlCenter:
                 "sandbox": "isolated Python configured; checked on use" if self.live and self.live.docker_host else "not configured",
                 "search": "public HTTPS configured" if self.live and self.live.enable_web else "disabled",
                 "memory": "private candidate lifecycle enabled" if self.live and self.live.enable_memory else "fixture/API only",
+                "deletion": "exact-version requests; human approval and release required" if self.live and self.live.enable_delete else "disabled for live tasks",
                 "git": f"{len(self.live.repositories)} trusted runtime repo(s)" if self.live and self.live.repositories
                        else ("disabled for live tasks; " if self.live else "") + f"{1 + len(self._repositories)} local fixture repo(s)"}
 

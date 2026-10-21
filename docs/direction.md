@@ -60,6 +60,10 @@ The complete acceptance target still includes private/group human interaction, i
 
 Use a versioned development plan to inspect selected live cases, budgets, roles and acceptance before credentials arrive. Actual execution requires explicit authorization and the inspected content fingerprint. The initial checked-in plan covers connection/handoff and structured artifacts only; it is not a full benchmark or the official evaluation adapter. A separate frozen-experience development protocol now versions common training and isolated ON/OFF probes; ordinary batch memory labels remain refused, and live evidence is pending. No model access, paid experiment or alternative provider is inferred from a successful static check.
 
+## Controlled deletion capability
+
+2026-10-21: expose existing approval-bound file deletion through an explicit `enable_delete` / `--enable-delete` runtime choice. Keep it disabled for older/default configurations; use the same task/version/human-release checks rather than a second deletion implementation. Changing capabilities must not silently resume an old task with new authority. Version-1 run-plan formats remain unchanged and disabled for deletion. This closes a wiring gap in support of R07; actual model use remains a later live check.
+
 ## Delivery gates
 
 The [Roadmap](team-roadmap.md#finish-line-and-milestones) holds the delivery stages, card dependencies and live task records. This document records design choices only. First demonstrate the live slice, then cover the announcement, stabilize/evaluate, and apply the official protocol when issued. Private/group interaction, all required tools, per-agent learning and genuine contribution evidence remain part of the finish line.

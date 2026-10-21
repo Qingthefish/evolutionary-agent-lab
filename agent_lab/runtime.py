@@ -54,6 +54,7 @@ class LiveConfig:
     python_image: str | None = None
     repositories: tuple = ()
     child_retries: int = 0
+    enable_delete: bool = False
 
     def __post_init__(self):
         if self.provider != "deepseek":
@@ -74,12 +75,13 @@ class LiveConfig:
             raise RuntimeSetupError("Child replacement limit must be an integer from 0 to 8")
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
         if (type(self.enable_web) is not bool or type(self.enable_memory) is not bool
+                or type(self.enable_delete) is not bool
                 or not isinstance(self.memory_namespace, str) or not self.memory_namespace.strip()
                 or len(self.memory_namespace) > 64
                 or bool(self.docker_host) != bool(self.python_image)
                 or any(v is not None and (not isinstance(v, str) or not v.strip()) for v in (self.docker_host, self.python_image))
                 or not isinstance(self.repositories, tuple) or any(not isinstance(r, TrustedRepository) for r in self.repositories)):
-            raise RuntimeSetupError("Use explicit web/memory settings, paired Docker socket/image and trusted repository records")
+            raise RuntimeSetupError("Use explicit web/memory/deletion settings, paired Docker socket/image and trusted repository records")
 
 
 class RuntimeServices:
@@ -306,6 +308,9 @@ def live_roles(members, config=None):
         if config and config.child_retries:
             tools = tuple(dict.fromkeys((*tools, "retry_failed_task", "update_text")))
             instructions += " On child failure inspect its evidence; a bounded retry must preserve the identical assignment and acceptance, with a concrete repair reason. Denials and unknown effects cannot be retried."
+        if config and config.enable_delete:
+            tools = (*tools, "delete_text")
+            instructions += " Delete only an exact version of your own task-local text through delete_text; read its current SHA-256 first. This requests human approval and pauses; approval release belongs to the trusted human controller, never to you."
         delegates = tuple(a for a in present if a != agent) if "delegate_task" in tools else ()
         if "delegate_task" in tools and not delegates:
             tools = tuple(t for t in tools if t not in {"delegate_task", "delegate_with_inputs"})
@@ -417,6 +422,7 @@ def add_live_arguments(parser):
     parser.add_argument("--child-retries", type=int, default=0, help="Shared maximum of explicit failed-child replacements (0 disables; at most 8)")
     parser.add_argument("--enable-web", action="store_true", help="Permit bounded public HTTPS search/retrieval in live mode")
     parser.add_argument("--enable-memory", action="store_true", help="Enable private candidate experience retrieval and outcome capture")
+    parser.add_argument("--enable-delete", action="store_true", help="Permit task-local exact-version deletion requests; human approval and release are still required")
     parser.add_argument("--memory-namespace", default="runtime-development")
     parser.add_argument("--docker-host", help="Explicit local Docker Unix socket; never starts the engine")
     parser.add_argument("--python-image", help="Official Python image pinned by SHA-256 digest; never pulled automatically")
@@ -427,7 +433,7 @@ def live_config_from_args(args):
     if not args.live:
         if (args.model or args.api_key_env or args.constraint or args.provider != "deepseek"
                 or args.max_output_tokens != 2048 or args.task_attempts != 8 or args.tree_attempts != 48
-                or args.enable_web or args.enable_memory or args.memory_namespace != "runtime-development"
+                or args.enable_web or args.enable_memory or args.enable_delete or args.memory_namespace != "runtime-development"
                 or args.docker_host or args.python_image or args.child_retries):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
         return None
@@ -442,4 +448,5 @@ def live_config_from_args(args):
         tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts), enable_web=args.enable_web,
         enable_memory=args.enable_memory, memory_namespace=args.memory_namespace,
         docker_host=args.docker_host, python_image=args.python_image,
-        repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else (), child_retries=args.child_retries)
+        repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else (), child_retries=args.child_retries,
+        enable_delete=args.enable_delete)
