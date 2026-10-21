@@ -64,8 +64,30 @@ These merged contributions are starting material to reuse, not new tasks to repr
 | [#8](https://github.com/Qingthefish/evolutionary-agent-lab/pull/8) | Restricted Git/local remote validation | HelloWorld2333666 |
 | [#9](https://github.com/Qingthefish/evolutionary-agent-lab/pull/9) | Development evaluation; review corrections recorded in I03 | HelloWorld2333666; corrections by Qingthefish, Codex-assisted |
 | [#10](https://github.com/Qingthefish/evolutionary-agent-lab/pull/10) | Initial collaboration roadmap | Qingthefish, Codex-assisted |
+| [#11](https://github.com/Qingthefish/evolutionary-agent-lab/pull/11), [#12](https://github.com/Qingthefish/evolutionary-agent-lab/pull/12) | Single-register task cards, progress interpretation and contributor onboarding | Qingthefish, Codex-assisted |
+| [#13](https://github.com/Qingthefish/evolutionary-agent-lab/pull/13) | Independent descendant/human-evidence acceptance (C01) | Qingthefish, Codex-assisted |
+| [#14](https://github.com/Qingthefish/evolutionary-agent-lab/pull/14) | Common runtime configuration and persisted task policy (A02) | Qingthefish, Codex-assisted |
+| [#15](https://github.com/Qingthefish/evolutionary-agent-lab/pull/15) | Separate goal/subtask metrics and matched-condition reporting (C04) | Qingthefish, Codex-assisted |
+| [#16](https://github.com/Qingthefish/evolutionary-agent-lab/pull/16) | Independent child criteria, concrete repair feedback and checked handoff (A04 offline slice) | Qingthefish, Codex-assisted |
+| [#17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) | Combined retrieval, private experience, isolated execution and local-remote Git engineering | Qingthefish, Codex-assisted |
+| [#18](https://github.com/Qingthefish/evolutionary-agent-lab/pull/18) | Bounded failed-child replacement, structural artifact criteria and inspectable run plans | Qingthefish, Codex-assisted |
 
-The reviewed combined runtime passed 214 checks on 2026-10-17, including real Docker/UI checks. Its model responses were scripted: no live-model or official-test-set performance is established. #8 does not close real GitHub runtime pushing; #9 does not close live memory learning/comparison. Those remain explicit cards below.
+The reviewed combined runtime passed 214 checks on 2026-10-17, including real Docker/UI checks; #18 later passed 308 with no skips. These engineering checks use scripted/mocked model responses: no live-model or official-test-set performance is established. #8 does not close real GitHub runtime pushing; #9 does not close live memory learning/comparison. Later accepted partial slices retain their live dependencies in the cards below.
+
+## Re-entry and next claims
+
+Completed cards stay as reusable implementation/history records. Read their acceptance, linked PRs and actual limitations; do not rebuild completed modules just to start contributing. Earlier accepted slices inside a Blocked card also remain valid work. A new finding receives a follow-up card, not deletion or renumbering of the old record. The original 27 IDs remain; B05/C07 are additive findings/preparation, so card counts still do not measure percentage complete.
+
+For a returning/new member: pull current main; read README, [announcement/evidence audit](requirements.md#implementation-evidence-audit-2026-10-21), this register and the relevant architecture section; ask Codex for a **read-only** summary of requirements, existing capabilities/evidence, missing acceptance and likely files. Check that summary yourself. Then discuss one bounded claim in WeChat and have the coordinator record it on main before coding. Private chat history is not transferred by Git.
+
+| Candidate starting point | Concrete next result | Starting boundary |
+| --- | --- | --- |
+| [B05](#b05) | Complete live access to approval-bound deletion | Runtime configuration/gateway integration and tests; one active editor for shared runtime files |
+| [C07](#c07) | Version a fair single/multi-agent development comparison | Evaluation configuration/baseline and tests; reuse the scheduler/scorer, coordinate shared interfaces |
+| [D02](#d02) | Reproduce private/group interaction and approval/restart scenarios; fix observed usability gaps | Minimal interface and focused integration checks; offline slice can start before key, final live gate remains |
+| [D04](#d04) | Independently install/run from the guide and fix actual setup problems | Clean environment, README and only necessary setup/CLI fixes; existing preparation is retained |
+
+These are available/proposed claim scopes, not assignments. Review card status at the time of claiming. B03 needs a separately scoped runtime GitHub credential; A01/A03 and final live gates need issued model access and a defined budget. Official work waits for the instructor's dataset/protocol. UI styling or speculative redesign is not a replacement for required coverage. See the requirements audit for the distinction between engineering checks and unvalidated model performance.
 
 ## Card index
 
@@ -85,11 +107,13 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 | [B02](#b02) | Retrieve and hand off cited text |
 | [B03](#b03) | Connect a real GitHub push |
 | [B04](#b04) | Validate remote failures and uncertainty |
+| [B05](#b05) | Expose controlled deletion in live roles |
 | [C01](#c01) | Define independent development cases |
 | [C02](#c02) | Close the experience-use loop |
 | [C03](#c03) | Verify memory boundaries and reset rules |
 | [C04](#c04) | Make evaluation results comparable |
 | [C05](#c05) | Run controlled development comparisons |
+| [C07](#c07) | Prepare a matched single/multi-agent baseline |
 | [D01](#d01) | Submit real tasks through the interface |
 | [D02](#d02) | Exercise human interaction end to end |
 | [D03](#d03) | Expose trustworthy execution evidence |
@@ -261,6 +285,19 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Reviewer:** —
 - **Progress / review changes / outcome:** —
 
+### B05
+
+**Expose controlled deletion in live roles**
+
+- **Stage / status:** M3 / Unclaimed
+- **Owner:** —
+- **Dependencies / configuration:** A02 and existing exact-action delete/release path; engineering work does not require a model key.
+- **Scope:** Deliberate live-role/configuration wiring and focused tests; coordinate runtime.py/gateway.py edits. Reuse the existing deletion implementation.
+- **Acceptance:** An explicitly configured live agent can request deletion only for its own exact file version, pause before effects, then delete only after the addressed human approves and releases that action. Denial, changed hash, stale/wrong-task grant and restart remain safe. Preserve existing persisted runtime configurations rather than silently changing old roles. Document the supported flag/policy choice and add no host-file deletion fallback. Final model-driven smoke joins A05/D02 after A01.
+- **Base revision / branch / PR / evidence:** —
+- **Reviewer:** —
+- **Progress / review changes / outcome:** 2026-10-21 announcement audit found that FileTools/gateway support deletion but live_roles exposes no delete_text capability. Added as a concrete R07 follow-up; earlier completed file/gateway cards remain intact. No person assigned.
+
 ### C01
 
 **Define independent development cases**
@@ -285,20 +322,20 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Acceptance:** Actual successes/failures produce condition/provenance-linked candidate experience that a later live task can retrieve and consider. Usage/outcomes are recorded; logging a lesson alone is not learning evidence.
 - **Base revision / branch / PR / evidence:** Batch implementation c95747c; shared runtime/combined fixture evidence in [A05](#a05).
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: runtime memory is opt-in. Models may stage bounded conditional hypotheses; actual terminal outcomes idempotently capture observations/candidates and assess selected-use outcomes. A later scripted task retrieved/selected scoped experience and retained actual success/failure provenance. Lessons remain candidates, not authorization or proven repairs. Live batch comparison still refuses memory labels pending a versioned cross-task/reset protocol. Real-model reuse/learning acceptance needs A01; offline slice accepted via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) in 8888060. Next: validate real later-task retrieval/consideration/outcome evidence with issued access and version the batch reset protocol; card not Done.
+- **Progress / review changes / outcome:** 2026-10-21: runtime memory is opt-in. Models may stage bounded conditional hypotheses; actual terminal outcomes idempotently capture observations/candidates and assess selected-use outcomes. A later scripted task retrieved/selected scoped experience and retained actual success/failure provenance. Lessons remain candidates, not authorization or proven repairs. At that acceptance, live batch comparison refused memory labels pending a versioned cross-task/reset protocol. Real-model reuse/learning acceptance needs A01; offline slice accepted via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) in 8888060. 2026-10-21 follow-up: the frozen-experience development protocol now versions training/reset conditions; C03 records boundary checks and C05 records experiment preparation. Next: validate real later-task retrieval/consideration/outcome evidence with issued access; card not Done.
 
 ### C03
 
 **Verify memory boundaries and reset rules**
 
-- **Stage / status:** M3 / Unclaimed
-- **Owner:** —
-- **Dependencies / configuration:** C02.
-- **Scope:** Memory tests and narrowly justified fixes.
+- **Stage / status:** M3 / In review
+- **Owner:** Qingthefish (owner-authorized continuation, Codex-assisted)
+- **Dependencies / configuration:** Existing C02 candidate-memory runtime; actual learning effectiveness remains C02/C05.
+- **Scope:** Memory tests and narrowly justified reset/provenance fixes; preserve existing actor/conversation/namespace boundaries.
 - **Acceptance:** Agents/conversations/namespaces remain separate; contradictory evidence and selected-use outcomes stay visible; fresh/reset memory works. An old lesson cannot authorize a new action.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Baseline b3e9689; branch feat/frozen-memory-protocol; implementation 2d8ff6d; [PR #19](https://github.com/Qingthefish/evolutionary-agent-lab/pull/19). Python 3.14.7 + Textual 8.2.8: 334 passed, zero skips/errors/failures, including 15 actual-container and nine UI checks. Clean committed-source snapshot on Python 3.12.14: 310 passed, 24 explicit Docker/UI skips; six CLI/suite checks passed. 136 local Markdown links/anchors and seven evaluation JSON files checked. Raw full/fixture/inspection/clean-snapshot evidence in ignored runs/review-20261021-memory/. Merged revision recorded after acceptance.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate approval claimed.
+- **Progress / review changes / outcome:** 2026-10-21: frozen, integrity-checked training provenance forks into fresh per-probe databases/files. Original source binding is unchanged; old files/transcripts/messages and approvals are not available to probe tools. A persisted current-message boundary allows new coordination messages. Contradictory source outcomes, retirement and failed selected-use outcomes remain visible; each later probe resets to the seed. Review fixed explicit SQLite connection closure, checked source evidence against actual terminal tasks, and kept unknown usage/unreleased actions from seeding probes. New synthetic/mocked-transport checks establish engineering behavior only; final acceptance/merge pending.
 
 ### C04
 
@@ -317,14 +354,27 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run controlled development comparisons**
 
-- **Stage / status:** M4 / Unclaimed
-- **Owner:** —
-- **Dependencies / configuration:** M3, C03, C04 and an authorized live-model budget.
+- **Stage / status:** M4 / Blocked
+- **Owner:** Qingthefish (accepted preparation may be handed off through WeChat)
+- **Dependencies / configuration:** M3, C03/C04, [C07](#c07) for single/multi controls, issued allowed-model access and an authorized live budget.
 - **Scope:** Versioned development run configurations, raw evidence and Markdown analysis; no held-out-data reuse.
 - **Acceptance:** Run memory ON/OFF and single/multi-agent comparisons under matched conditions. Preserve failures, time and supplementary call/token cost; report actual gains/regressions. These comparison layouts are our evidence method, not an extra instructor rubric.
+- **Base revision / branch / PR / evidence:** Shared branch/evidence in C03. evaluation/memory-plan.json references explicit cases/limits; no live model call.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate approval claimed.
+- **Progress / review changes / outcome:** 2026-10-21: implemented a frozen-training ON/OFF development entry, read-only preflight, explicit fingerprint/budget authorization, counterbalanced order, planned-slot checkpoints and validated comparison. Shared training cost/failures are separate; probe failures/unrun slots stay in denominators. Probe prompts/non-memory tools/limits match; probe tools cannot read training chat/files or reuse old approvals, and probes cannot teach later probes. Source observations remain in the private snapshot for provenance. Scripted fixture and mocked HTTP prove plumbing only; their answers are not learned. Normal batch memory-on labels remain refused; use the versioned experience entry. Blocker: actual live trials/analysis need issued access and budget; single/multi setup remains C07. Do not mark this card Done from synthetic results.
+
+### C07
+
+**Prepare a matched single/multi-agent baseline**
+
+- **Stage / status:** M4 / Unclaimed
+- **Owner:** —
+- **Dependencies / configuration:** C04 and current C05 protocol contracts; no key is needed for engineering preparation.
+- **Scope:** Evaluation baseline/configuration and focused checks; reuse existing scheduler, acceptance and result summaries. Coordinate shared runtime/role edits. This splits the remaining preparation from C05 without erasing its memory-protocol work.
+- **Acceptance:** Same allowed model, task/oracle content, comparable aggregate tools/budgets and declared initial memory/intervention conditions. Reject multi-only required-decomposition cases for an invalid single-agent control. Record topology as the intended difference, actual usage/failures and condition fingerprints. Offline output is engineering evidence only; actual comparison remains C05 after access/budget.
 - **Base revision / branch / PR / evidence:** —
 - **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Progress / review changes / outcome:** Added from the 2026-10-21 audit. Supporting experiment agreed with the owner, not an additional instructor requirement. No person assigned.
 
 ### D01
 
@@ -345,7 +395,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **Stage / status:** M3 / Unclaimed
 - **Owner:** —
-- **Dependencies / configuration:** D01 and the relevant runtime/tool contracts.
+- **Dependencies / configuration:** Accepted D01 engineering slice and the relevant runtime/tool contracts allow offline reproduction now; final live behavior needs A01/D01 live acceptance.
 - **Scope:** Minimal conversation, clarification and approval controls plus tests.
 - **Acceptance:** Private/group messages, clarification and restart, approval versus release versus verified effect, denial and unresolved effects are usable and correctly distinguished.
 - **Base revision / branch / PR / evidence:** —
@@ -395,14 +445,16 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Verify clean-environment setup**
 
-- **Stage / status:** M4 / In progress
-- **Owner:** Qingthefish (owner-requested continuous batch, 2026-10-21)
+- **Stage / status:** M4 / Unclaimed
+- **Owner:** — (available for agreed teammate claim; prior Qingthefish preparation retained below)
 - **Dependencies / configuration:** M3; final real-model/tool setup awaits issued access and relevant backends.
 - **Scope:** Installation/run instructions and one minimal reproducible demo; coordinate shared README edits.
 - **Acceptance:** Another member can install and run from the guide, use the actual supported capabilities and identify missing configuration. Core use works without optional Textual dependencies; setup does not expose credentials.
 - **Base revision / branch / PR / evidence:** Baseline 304ea4d; shared branch/evidence in A06. Versioned evaluation/development-plan.json and two development connection cases; README updated in place. Clean source-snapshot Python 3.12 CLI and offline-suite checks are retained in ignored runs/review-20261021-recovery/clean-snapshot-checks.json (24 explicit skips for unavailable Docker/UI). No teammate reproduction is implied.
 - **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate reproduction claimed.
 - **Progress / review changes / outcome:** 2026-10-21: static inspection needs no model/key/network/engine and lists actual missing model configuration. Explicit execution requires the inspected content fingerprint and permission, uses declared budgets and real human pauses, and snapshots conditions with results. Inspection rejects hidden fields, unsupported memory/official labels and missing cases; HKGAI has no fallback. Initial cases cover connection/handoff and structured artifacts only. This is preparation for live setup, not a release freeze, full requirement benchmark, learning comparison or official adapter. Engineering preparation accepted via PR #18; another member's clean setup and actual configured live/tool reproduction remain before closing D04.
+
+- **Next claim scope:** Independently reproduce setup/CLI and supported tool configuration from current main; report actual failures and necessary fixes. No need to rewrite the existing implementation. Final live reproduction awaits access.
 
 ### C06
 

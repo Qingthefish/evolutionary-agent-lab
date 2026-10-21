@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "purpose": "development-memory-comparison",
+  "protocol": "frozen-experience-isolated-probes-v1",
+  "runtime_plan": "memory/runtime.json",
+  "training_cases": [
+    "memory-train-a",
+    "memory-train-b"
+  ],
+  "probe_cases": [
+    "memory-probe-a",
+    "memory-probe-b"
+  ],
+  "replicates": 2
+}
