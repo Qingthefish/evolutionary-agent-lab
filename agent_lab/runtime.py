@@ -301,7 +301,7 @@ def live_roles(members, config=None):
             tools = tuple(dict.fromkeys((*tools, "delegate_task", "delegate_with_inputs", "post_message", "read_messages")))
             instructions += " Negotiate scope using conversation messages and delegate to eligible specialists when needed; do not discard the global constraints."
         if config and config.child_retries:
-            tools = (*tools, "retry_failed_task")
+            tools = tuple(dict.fromkeys((*tools, "retry_failed_task", "update_text")))
             instructions += " On child failure inspect its evidence; a bounded retry must preserve the identical assignment and acceptance, with a concrete repair reason. Denials and unknown effects cannot be retried."
         delegates = tuple(a for a in present if a != agent) if "delegate_task" in tools else ()
         if "delegate_task" in tools and not delegates:

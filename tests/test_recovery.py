@@ -58,7 +58,7 @@ class RecoveryTests(unittest.TestCase):
         scheduler=self.scheduler()
         failed=self.failed()
         def retry():
-            return response([tool('retry_failed_task',{'failed_task':failed,'reason':'Use the required newline'},'retry')])
+            return response([tool('retry_failed_task',{'failed_task':failed,'reason':'Use the required newline','input_files':{}},'retry')])
         def accept():
             artifact=self.w.db.execute('SELECT id FROM artifacts WHERE target_task=?',(self.root,)).fetchone()[0]
             return response([tool('accept_artifact',{'artifact_id':artifact,'path':'note.txt'},'accept')])
@@ -202,12 +202,44 @@ class RecoveryTests(unittest.TestCase):
     def test_new_attempt_has_no_fresh_root_call_budget(self):
         self.scheduler(limits=TreeLimits(model_attempts=1)); failed=self.failed()
         self.scripts['coordinator']=Script([response([tool('retry_failed_task',
-            {'failed_task':failed,'reason':'Use failure evidence'},'retry')])])
+            {'failed_task':failed,'reason':'Use failure evidence','input_files':{}},'retry')])])
         self.scripts['writer']=Script([response()])
         result=self.scheduler(limits=TreeLimits(model_attempts=1)).run()
         self.assertEqual(result['task_state'],'failed')
         self.assertEqual(result['budget']['attempts'],1)
         self.assertEqual(len(self.scripts['writer'].requests),0)
+
+    def test_retry_transfers_only_explicit_parent_inputs_before_child_scheduling(self):
+        self.scheduler(); failed=self.failed()
+        receipt=self.f.create_text(self.root,'coordinator','input.txt','Fresh authorized input')
+        gateway=self.scheduler().runner(self.root).gateway
+        result=json.loads(gateway.dispatch(tool('retry_failed_task',{'failed_task':failed,'reason':'Use corrected input',
+            'input_files':{'input.txt':receipt['sha256']}},'retry-input'))['content'])
+        self.assertTrue(result['ok'])
+        offered=result['result']['input_offers']
+        child=result['result']['task_id']
+        self.assertEqual(len(offered),1)
+        self.w.start_task(child,'writer')
+        accepted=self.f.accept_artifact(child,'writer',offered[0]['artifact_id'],'input.txt')
+        self.assertEqual(accepted['sha256'],receipt['sha256'])
+        with self.assertRaises(WorkflowError): self.f.read_text(child,'writer','note.txt')
+
+    def test_changed_retry_input_creates_no_replacement(self):
+        self.scheduler(); failed=self.failed()
+        self.f.create_text(self.root,'coordinator','input.txt','Changed')
+        gateway=self.scheduler().runner(self.root).gateway
+        result=json.loads(gateway.dispatch(tool('retry_failed_task',{'failed_task':failed,'reason':'Use input',
+            'input_files':{'input.txt':'0'*64}},'changed-input'))['content'])
+        self.assertFalse(result['ok'])
+        self.assertEqual(recovery.links(self.w),{})
+
+    def test_opt_in_roles_can_repair_own_files_without_changing_default_roles(self):
+        from agent_lab.runtime import LiveConfig, live_roles, LIVE_AGENTS
+        normal=live_roles(LIVE_AGENTS,LiveConfig('explicit-model','unused-key'))
+        repair=live_roles(LIVE_AGENTS,LiveConfig('explicit-model','unused-key',child_retries=2))
+        self.assertNotIn('retry_failed_task',normal['coordinator'].tools)
+        self.assertIn('retry_failed_task',repair['coordinator'].tools)
+        self.assertIn('update_text',repair['coordinator'].tools)
 
 
 if __name__=='__main__': unittest.main()

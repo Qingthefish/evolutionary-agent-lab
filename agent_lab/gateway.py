@@ -36,7 +36,9 @@ _SPECS = {
         "prompt": _text("Concrete clarification question")}),
     "retry_failed_task": ("Replace a failed direct child with a fresh attempt at the identical assignment; no inherited files or approvals", {
         "failed_task": _text("Failed direct child identifier", maximum=128),
-        "reason": _text("Concrete change in approach based on failure evidence", maximum=2048)}),
+        "reason": _text("Concrete change in approach based on failure evidence", maximum=2048),
+        "input_files": {"type": "object", "minProperties": 0, "maxProperties": 20,
+                        "propertyNames": _PATH, "additionalProperties": _HASH}}),
     "delegate_task": ("Delegate child work to an eligible agent in this conversation", {
         "assignee": _text("Agent identifier", maximum=128), "title": _text("Deliverable and constraints")}),
     "delegate_with_inputs": ("Delegate and offer hash-matched input snapshots before the parent waits; child must accept them", {
@@ -330,7 +332,19 @@ class ToolGateway:
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}
         if name == "retry_failed_task":
             from .recovery import replace_failed
-            return replace_failed(self.workflow, self.task, self.actor, args["failed_task"], args["reason"])
+            for path, expected in args["input_files"].items():
+                if self.files.read_text(self.task, self.actor, path)["sha256"] != expected:
+                    raise ToolRequestError("Retry input changed; no replacement created")
+            result = replace_failed(self.workflow, self.task, self.actor, args["failed_task"], args["reason"])
+            offers = []
+            try:
+                for path, expected in args["input_files"].items():
+                    receipt = self.files.offer_artifact(self.task, self.actor, path, result["task_id"], expected_sha256=expected)
+                    offers.append({"source_path": path, **receipt})
+            except (WorkflowError, OSError):
+                return {**result, "input_offers": offers, "status": "partial",
+                        "error": "Replacement exists but an input offer failed; preserve state and clarify missing inputs"}
+            return {**result, "inputs": "only explicitly offered fresh snapshots", "input_offers": offers, "status": "replaced"}
         if name == "delegate_task":
             return {"task_id": self.workflow.create_task(self.chat, self.actor, parent=self.task, **args)}
         if name == "delegate_with_inputs":
