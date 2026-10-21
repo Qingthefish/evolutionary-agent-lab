@@ -359,9 +359,18 @@ def main():
     sandbox_command.add_argument("--state-dir", help="New directory; existing paths are never overwritten")
     sandbox_command.add_argument("--docker-host", required=True, help="Explicit local Unix socket; no implicit Docker context")
     sandbox_command.add_argument("--image", required=True, help="Already-pulled official Python image pinned by sha256 digest")
+    integrated = subcommands.add_parser("integrated-demo", help="Synthetic agents with actual Docker, scoped memory and a disposable local Git remote")
+    integrated.add_argument("--state-dir", help="New directory; never overwrites previous evidence")
+    integrated.add_argument("--docker-host", required=True)
+    integrated.add_argument("--image", required=True)
+    integrated.add_argument("--with-web", action="store_true", help="Also perform free public search and retrieve official Python text; no model calls")
     args = parser.parse_args()
     try:
-        if args.command == "sandbox-demo":
+        if args.command == "integrated-demo":
+            from .integration_fixture import run_integrated
+            report = run_integrated(new_run_directory(args.state_dir, "integrated-"),
+                                    docker_host=args.docker_host, image=args.image, with_web=args.with_web)
+        elif args.command == "sandbox-demo":
             report = sandbox_demo(args.state_dir, docker_host=args.docker_host, image=args.image)
         elif args.command == "scheduler-demo":
             from .scheduler_fixture import run_fixture
@@ -371,7 +380,7 @@ def main():
                       "protocol-demo": protocol_demo, "runner-demo": runner_demo}[args.command](args.state_dir)
     except FileExistsError:
         parser.error("State directory already exists; choose a new path to preserve previous evidence")
-    except SandboxError as error:
+    except WorkflowError as error:
         parser.error(str(error))
     print(json.dumps(report, indent=2))
     if report.get("demo_passed") is False:

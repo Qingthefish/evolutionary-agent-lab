@@ -1,8 +1,8 @@
 """Public experiment conditions for reproducibility; never serialize credentials.
 
 Fingerprints detect accidental condition changes, not forged experimental data.
-Memory-on execution is still unavailable; C02 must use this fresh-state contract
-or explicitly version its replacement before claiming comparable trials.
+Memory-on batch comparison is still unavailable; interactive runtime experience
+is separate. C02 must version cross-task/reset conditions before comparable trials.
 """
 
 from dataclasses import asdict
@@ -15,7 +15,7 @@ import re
 from ..deepseek import DeepSeekHTTP
 from ..gateway import _SPECS
 from ..runner import _PROMPT
-from ..runtime import LIVE_AGENTS, live_roles
+from ..runtime import LIVE_AGENTS, live_members, live_roles
 
 
 def digest(value):
@@ -37,8 +37,13 @@ def build_manifest(cases, live, memory):
         # Deliberate whitelist: asdict(live) would include its private API key.
         runtime = {"provider": live.provider, "model": live.model, "endpoint": DeepSeekHTTP.endpoint,
                    "max_output_tokens": live.max_output_tokens, "socket_timeout": live.socket_timeout,
-                   "roles": {a: asdict(r) for a, r in live_roles(LIVE_AGENTS, live).items()},
-                   "tree_limits": asdict(live.tree_limits), "constraints": list(live.constraints)}
+                   "roles": {a: asdict(r) for a, r in live_roles(live_members(live), live).items()},
+                   "tree_limits": asdict(live.tree_limits), "constraints": list(live.constraints),
+                   "capabilities": {"web": live.enable_web, "memory": live.enable_memory,
+                                    "memory_namespace": live.memory_namespace if live.enable_memory else None,
+                                    "python_image": live.python_image,
+                                    "docker_endpoint_sha256": digest(live.docker_host) if live.docker_host else None,
+                                    "repositories_sha256": digest([asdict(r) for r in live.repositories]) if live.repositories else None}}
     manifest = {"schema_version": 1, "cases": definitions, "runtime": runtime,
                 "code_sha256": digest(sources), "prompt_sha256": digest(_PROMPT),
                 "tools_sha256": digest(_SPECS),

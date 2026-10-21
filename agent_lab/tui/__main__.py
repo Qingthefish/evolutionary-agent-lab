@@ -20,7 +20,6 @@ def main(argv=None):
                         help="Persistent session directory (reused across restarts; ignored by Git)")
     parser.add_argument("--human", default="operator", help="Local human operator identifier (trusted local setup)")
     add_live_arguments(parser)
-    parser.add_argument("--git-config", help="JSON file listing additional trusted repositories (local remotes only by default)")
     parser.add_argument("--refresh-seconds", type=float, default=5.0, help="Automatic status refresh interval; 0 disables")
     args = parser.parse_args(argv)
     try:

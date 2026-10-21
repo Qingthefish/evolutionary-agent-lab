@@ -11,6 +11,7 @@ disabled or rejected.
 """
 
 from dataclasses import asdict, dataclass, field
+import base64
 import json
 import os
 from pathlib import Path
@@ -23,8 +24,10 @@ import subprocess
 import tempfile
 import time
 from uuid import uuid4
+from urllib.parse import urlsplit
 
 from .core import WorkflowError
+from .protocol import strict_json
 
 
 class GitToolError(WorkflowError):
@@ -117,8 +120,14 @@ class TrustedRepository:
     remotes: tuple = ()          # ((name, url), ...)
     allow_network: bool = False  # HTTPS remotes stay disabled until credentials are provisioned
     committer: tuple = ("Agent Lab", "agent-lab@localhost.invalid")
+    credential_env: str | None = None
 
     def __post_init__(self):
+        if type(self.allow_network) is not bool:
+            raise GitToolError("Network permission must be an explicit boolean")
+        if self.credential_env is not None and (not self.allow_network or not isinstance(self.credential_env, str)
+                                                or re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,127}',self.credential_env) is None):
+            raise GitToolError("Credential access requires explicit network permission and one named environment variable")
         if not isinstance(self.name, str) or not _NAME.fullmatch(self.name):
             raise GitToolError("Repository names are short identifiers")
         if not isinstance(self.path, str) or not os.path.isabs(self.path):
@@ -135,6 +144,12 @@ class TrustedRepository:
                 raise GitToolError("Remotes are (name, url) pairs")
             if not (url.startswith("/") or (self.allow_network and url.startswith("https://"))):
                 raise GitToolError("Only local bare-repository remotes are enabled; HTTPS needs explicit network approval")
+            if url.startswith('https://'):
+                parsed=urlsplit(url)
+                if parsed.username or parsed.password or parsed.query or parsed.fragment or parsed.port not in (None,443):
+                    raise GitToolError("HTTPS repository URLs cannot contain credentials, query strings or custom ports")
+                if self.credential_env and (parsed.hostname!='github.com' or re.fullmatch(r'/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?',parsed.path) is None):
+                    raise GitToolError("Credential forwarding is limited to an explicit github.com repository URL")
 
     def remote_url(self, remote):
         for name, url in self.remotes:
@@ -145,14 +160,24 @@ class TrustedRepository:
 
 def load_trusted_repositories(path):
     """Read trusted repositories from a JSON file chosen by the operator."""
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    text=Path(path).read_text(encoding="utf-8")
+    if len(text)>1024*1024:raise GitToolError('Trusted repository configuration exceeds its size limit')
+    data = strict_json(text)
+    if (not isinstance(data,dict) or set(data)!={'repositories'} or not isinstance(data['repositories'],list)
+            or len(data['repositories'])>20):
+        raise GitToolError('Supply a repositories array with at most 20 trusted entries')
     result = []
     for item in data.get("repositories", []):
+        if (not isinstance(item,dict) or not {'name','path','writable_branches','writable_paths'}<=item.keys()
+                or not item.keys()<={'name','path','writable_branches','writable_paths','remotes','allow_network','credential_env'}
+                or not isinstance(item.get('remotes',{}),dict)
+                or not isinstance(item['writable_branches'],list) or not isinstance(item['writable_paths'],list)):
+            raise GitToolError('Malformed trusted repository entry; literal credentials are not accepted')
         result.append(TrustedRepository(
             name=item["name"], path=item["path"], writable_branches=tuple(item["writable_branches"]),
             writable_paths=tuple(item["writable_paths"]),
             remotes=tuple((name, url) for name, url in item.get("remotes", {}).items()),
-            allow_network=bool(item.get("allow_network", False))))
+            allow_network=item.get("allow_network", False), credential_env=item.get('credential_env')))
     return result
 
 
@@ -161,10 +186,16 @@ class GitTools:
                  max_file_bytes=1024 * 1024):
         self.workflow = workflow
         self.repositories = {}
+        self._credentials = {}
         for repository in repositories:
             if not isinstance(repository, TrustedRepository) or repository.name in self.repositories:
                 raise GitToolError("Configure distinct TrustedRepository records")
             self.repositories[repository.name] = repository
+            if repository.credential_env:
+                token=os.environ.get(repository.credential_env)
+                if not token or any(c.isspace() for c in token):
+                    raise GitToolError("Configured runtime GitHub credential variable is missing or invalid")
+                self._credentials[repository.name]=token
         binary = git_binary or shutil.which("git", path="/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin")
         if not binary or not os.path.isabs(binary):
             raise GitToolError("No absolute Git executable is available")
@@ -187,7 +218,10 @@ class GitTools:
         shutil.rmtree(self._home, ignore_errors=True)
 
     def configuration(self):
-        return {"repositories": {name: asdict(repo) for name, repo in sorted(self.repositories.items())},
+        records={name:asdict(repo) for name,repo in sorted(self.repositories.items())}
+        for record in records.values():
+            if record['credential_env'] is None:record.pop('credential_env')  # Preserve existing task configurations.
+        return {"repositories": records,
                 "git": "restricted-cli-v1"}
 
     # ---- process boundary ----------------------------------------------------
@@ -210,11 +244,29 @@ class GitTools:
         return code, out, err, None
 
     def _remote_git(self, arguments, *, seconds=None):
-        argv = [self.binary, *_SAFE, *arguments]
-        return self._exec(argv, self._env(), seconds or self.timeout)
+        url=next((a for a in arguments if isinstance(a,str) and a.startswith('https://')),None)
+        extra,env=self._remote_access(url)
+        argv = [self.binary, *_SAFE, *extra, *arguments]
+        return self._exec(argv, env, seconds or self.timeout)
+
+    def _remote_access(self,url):
+        env=self._env()
+        if not url or not url.startswith('https://'):return [],env
+        repositories=[r for r in self.repositories.values() if r.allow_network and any(u==url for _,u in r.remotes)]
+        if len(repositories)!=1:raise GitToolError('HTTPS target is not one uniquely configured trusted remote')
+        repo=repositories[0]
+        if repo.credential_env:
+            encoded=base64.b64encode(('x-access-token:'+self._credentials[repo.name]).encode()).decode()
+            env.update(GIT_CONFIG_COUNT='1',GIT_CONFIG_KEY_0='http.'+url+'.extraHeader',
+                       GIT_CONFIG_VALUE_0='AUTHORIZATION: basic '+encoded)
+        return ['-c','protocol.https.allow=always','-c','http.followRedirects=false'],env
 
     def _exec(self, argv, env, seconds):
-        return _run(argv, env, seconds=seconds, output_bytes=self.output_bytes)
+        code,out,err,interrupted=_run(argv, env, seconds=seconds, output_bytes=self.output_bytes)
+        for token in self._credentials.values():
+            for secret in (token.encode(),base64.b64encode(('x-access-token:'+token).encode())):
+                out=out.replace(secret,b'[redacted]');err=err.replace(secret,b'[redacted]')
+        return code,out,err,interrupted
 
     # ---- trust checks ----------------------------------------------------------
     def _owned_directory(self, path, description):
@@ -549,10 +601,11 @@ class GitTools:
         record = self._record(repository.name, "push", binding | {"request_id": request_id}, actor=actor, task=task)
         refspec = f"{binding['commit']}:refs/heads/{binding['branch']}"
         try:
+            extra,env=self._remote_access(binding['remote_url'])
             code, out, err, interrupted = self._exec(
                 [self.binary, "--git-dir", os.path.join(repository.path, ".git"), *_SAFE,
-                 "push", "--porcelain", "--no-verify", binding["remote_url"], refspec],
-                self._env(), self.timeout)
+                 *extra, "push", "--porcelain", "--no-verify", binding["remote_url"], refspec],
+                env, self.timeout)
         except GitToolError as error:
             interrupted, code, err = "start_failed", None, str(error).encode()
         actual, remote_known = None, True

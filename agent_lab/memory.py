@@ -64,7 +64,75 @@ class ExperienceMemory:
                 outcome TEXT, observation TEXT, selected REAL NOT NULL,
                 PRIMARY KEY(lesson,task)
             );
+            CREATE TABLE IF NOT EXISTS lesson_proposals (
+                id TEXT PRIMARY KEY, task TEXT NOT NULL REFERENCES tasks(id), actor TEXT NOT NULL,
+                namespace TEXT NOT NULL, lesson TEXT NOT NULL, tags TEXT NOT NULL,
+                fingerprint TEXT NOT NULL, captured TEXT,
+                UNIQUE(task,namespace,fingerprint)
+            );
+            CREATE TABLE IF NOT EXISTS memory_outcomes (
+                task TEXT NOT NULL REFERENCES tasks(id), namespace TEXT NOT NULL,
+                result TEXT NOT NULL, PRIMARY KEY(task,namespace)
+            );
         """)
+
+    def propose(self, task, actor, *, lesson, tags):
+        """Stage a model hypothesis; no fabricated observation or self-verification."""
+        lesson = _text(lesson, "candidate lesson", 4096)
+        if not isinstance(tags, list) or not 1 <= len(tags) <= 16:
+            raise WorkflowError("Provide one to sixteen condition tags")
+        tags = sorted({_text(t, "tag", 64).casefold() for t in tags})
+        fingerprint = _digest(_json({"lesson": lesson, "tags": tags}))
+        with self.workflow._transaction():
+            self._context(task, actor)
+            existing = self.workflow.db.execute("SELECT id FROM lesson_proposals WHERE task=? AND namespace=? AND fingerprint=?",
+                (task, self.namespace, fingerprint)).fetchone()
+            if existing:
+                return existing[0]
+            if self.workflow.db.execute("SELECT count(*) FROM lesson_proposals WHERE task=? AND namespace=?",
+                                        (task, self.namespace)).fetchone()[0] >= 8:
+                raise WorkflowError("Task candidate-proposal limit exhausted")
+            identifier = uuid4().hex
+            self.workflow.db.execute("INSERT INTO lesson_proposals VALUES(?,?,?,?,?,?,?,NULL)",
+                (identifier, task, actor, self.namespace, lesson, _json(tags), fingerprint))
+            self.workflow._event(task, actor, "lesson_proposed", {"proposal_id": identifier, "status": "pending_actual_outcome"})
+            return identifier
+
+    def observe_terminal(self, task, actor):
+        """Idempotently attach actual outcome/selected-use evidence after execution.
+
+        A proposal remains a hypothesis even when its source task succeeds.
+        A capture failure is explicit and cannot change a task into success.
+        """
+        row = self._context(task, actor, running=False)
+        if row["state"] not in {"succeeded", "failed", "cancelled"}:
+            return {"status": "not_terminal"}
+        previous = self.workflow.db.execute("SELECT result FROM memory_outcomes WHERE task=? AND namespace=?",
+                                            (task, self.namespace)).fetchone()
+        if previous:
+            return json.loads(previous[0])
+        try:
+            assessed = self.assess_selected(task, actor)
+            lessons = []
+            if row["state"] in {"succeeded", "failed"}:
+                from .queries import redact
+                summary = redact(_json({"assignment": row["title"], "outcome": row["state"],
+                                        "evidence": json.loads(row["evidence"])}), limit=3000)
+                lessons.append(self.capture(task, actor, lesson="Observed execution (check applicability; not a proven recipe): " + summary,
+                                            tags=["observed-outcome", row["state"], *(t[:64] for t in sorted(_terms(row["title"])))][:16]))
+                for proposal in self.workflow.db.execute("SELECT * FROM lesson_proposals WHERE task=? AND namespace=? ORDER BY rowid",
+                                                          (task, self.namespace)).fetchall():
+                    identifier = self.capture(task, actor, lesson=proposal["lesson"], tags=json.loads(proposal["tags"]))
+                    self.workflow.db.execute("UPDATE lesson_proposals SET captured=? WHERE id=?", (identifier, proposal["id"]))
+                    lessons.append(identifier)
+            result = {"status": "recorded", "lesson_ids": lessons, "assessed_uses": assessed,
+                      "learning_improvement_established": False}
+        except WorkflowError as error:
+            result = {"status": "capture_failed", "error": str(error), "learning_improvement_established": False}
+        with self.workflow._transaction():
+            self.workflow.db.execute("INSERT OR IGNORE INTO memory_outcomes VALUES(?,?,?)", (task, self.namespace, _json(result)))
+            self.workflow._event(task, actor, "memory_outcome_recorded", {"namespace": self.namespace, **result})
+        return result
 
     def _context(self, task, actor, *, running=True):
         row = self.workflow._task(task, actor, assigned=True)

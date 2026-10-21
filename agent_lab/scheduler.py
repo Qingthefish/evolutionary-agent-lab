@@ -39,12 +39,15 @@ class Role:
 class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
-                 memory=None, executor=None, git=None):
+                 memory=None, executor=None, git=None, retrieval=None, capture_memory=False):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
         self.memory, self.executor, self.git = memory, executor, git
+        self.retrieval, self.capture_memory = retrieval, capture_memory
+        if type(capture_memory) is not bool or (capture_memory and memory is None):
+            raise RunnerError("Outcome capture requires an explicit memory backend")
         self.owner = uuid4().hex
         task = workflow.task(root, human)
         if (task["parent"] or not self.roles or len(self.roles) > 16
@@ -59,7 +62,8 @@ class MultiAgentScheduler:
             raise RunnerError("Configure matching file tools and a human conversation member")
         if ((memory is not None and memory.workflow is not workflow)
                 or (executor is not None and (executor.workflow is not workflow or executor.files is not files))
-                or (git is not None and git.workflow is not workflow)):
+                or (git is not None and git.workflow is not workflow)
+                or (retrieval is not None and (retrieval.workflow is not workflow or retrieval.files is not files))):
             raise RunnerError("Scheduler backends must belong to the same workflow and files")
         self.constraints = list(constraints)
         models = set()
@@ -67,9 +71,10 @@ class MultiAgentScheduler:
             workflow._member(task["chat"], agent)
             if (workflow._row("actors", agent)["kind"] != "agent" or not isinstance(role, Role)
                     or not set(role.delegates) <= self.roles.keys()
-                    or bool(role.delegates) != ("delegate_task" in role.tools)
+                    or bool(role.delegates) != bool(set(role.tools) & {"delegate_task", "delegate_with_inputs"})
                     or not set(role.tools) <= _SPECS.keys()
-                    or (set(role.tools) & {"search_memory", "select_memory"} and memory is None)
+                    or (set(role.tools) & {"search_memory", "select_memory", "record_lesson"} and memory is None)
+                    or (set(role.tools) & {"search_web", "retrieve_text"} and retrieval is None)
                     or ("run_python" in role.tools and executor is None)
                     or (any(name.startswith("git_") for name in role.tools) and git is None)
                     or not isinstance(self.clients[agent], DeepSeekClient)):
@@ -90,6 +95,10 @@ class MultiAgentScheduler:
             "executor": executor.configuration() if executor is not None else None}
         if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
             settings["git"] = git.configuration()
+        if retrieval is not None:
+            settings["retrieval"] = retrieval.configuration()
+        if capture_memory:
+            settings["capture_memory"] = "terminal-observation-and-candidate-v1"
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
@@ -113,7 +122,7 @@ class MultiAgentScheduler:
         role = self.roles[actor]
         gateway = ToolGateway(self.workflow, self.files, task_id, actor, human=self.human,
             allowed=role.tools, delegates=role.delegates, memory=self.memory,
-            executor=self.executor, max_calls=role.tool_calls, git=self.git)
+            executor=self.executor, max_calls=role.tool_calls, git=self.git, retrieval=self.retrieval)
         acceptance = self.verifier_factory(dict(task))
         if acceptance is None:
             verifier, version = None, None
@@ -215,6 +224,10 @@ class MultiAgentScheduler:
         finally:
             with self.workflow._transaction():
                 self.workflow.db.execute("UPDATE scheduler_runs SET owner=NULL WHERE root=? AND owner=?", (self.root, self.owner))
+            if self.capture_memory:
+                for task in budget.descendants(self.workflow, self.root):
+                    if task["state"] in {"succeeded", "failed", "cancelled"}:
+                        self.memory.observe_terminal(task["id"], task["assignee"])
 
     def recover_controller(self):
         """Trusted operator only, after confirming the previous worker stopped.

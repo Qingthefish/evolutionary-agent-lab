@@ -50,6 +50,9 @@ class FileTools:
             if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o077:
                 raise FileToolError("File root must be owned by the current user and private (mode 0700)")
             workflow.db.executescript("""
+                CREATE TABLE IF NOT EXISTS artifact_labels (
+                    artifact TEXT PRIMARY KEY, path TEXT NOT NULL
+                );
                 CREATE TABLE IF NOT EXISTS file_root (
                     singleton INTEGER PRIMARY KEY CHECK(singleton=1), device INTEGER, inode INTEGER
                 );
@@ -225,6 +228,7 @@ class FileTools:
             self.workflow.db.execute("INSERT INTO artifacts VALUES(?,?,?,?,?,?,0)", (
                 identifier, task, target_task, target["assignee"], _sha(data), len(data),
             ))
+            self.workflow.db.execute("INSERT INTO artifact_labels VALUES(?,?)", (identifier, path))
             self.workflow._event(task, actor, "artifact_offered", {
                 "artifact_id": identifier, "target_task": target_task, "sha256": _sha(data),
             })
