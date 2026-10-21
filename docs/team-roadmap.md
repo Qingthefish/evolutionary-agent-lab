@@ -290,14 +290,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Expose controlled deletion in live roles**
 
-- **Stage / status:** M3 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M3 / Claimed
+- **Owner:** Qingthefish (owner-requested workflow example, Codex-assisted)
 - **Dependencies / configuration:** A02 and existing exact-action delete/release path; engineering work does not require a model key.
 - **Scope:** Deliberate live-role/configuration wiring and focused tests; coordinate runtime.py/gateway.py edits. Reuse the existing deletion implementation.
 - **Acceptance:** An explicitly configured live agent can request deletion only for its own exact file version, pause before effects, then delete only after the addressed human approves and releases that action. Denial, changed hash, stale/wrong-task grant and restart remain safe. Preserve existing persisted runtime configurations rather than silently changing old roles. Document the supported flag/policy choice and add no host-file deletion fallback. Final model-driven smoke joins A05/D02 after A01.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** 2026-10-21 announcement audit found that FileTools/gateway support deletion but live_roles exposes no delete_text capability. Added as a concrete R07 follow-up; earlier completed file/gateway cards remain intact. No person assigned.
+- **Base revision / branch / PR / evidence:** Starting main 1acb56c; planned branch feat/B05-controlled-delete. Claim published on main before feature coding; PR/checks recorded as they occur.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted review, no independent teammate approval claimed.
+- **Progress / review changes / outcome:** 2026-10-21 announcement audit found that FileTools/gateway support deletion but live_roles exposes no delete_text capability. Earlier completed file/gateway cards remain intact. The owner explicitly requested this workflow example; no overlapping open PR/remote claim was observed. A WeChat announcement was drafted for the owner to send; no group message or teammate confirmation is claimed. Next: add an explicit opt-in capability using the existing approval/release implementation, preserve old disabled configurations and verify the acceptance paths. Final real-model smoke remains A05/D02 after A01.
 
 ### C01
 
