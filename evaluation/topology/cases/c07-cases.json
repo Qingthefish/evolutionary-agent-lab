@@ -1,0 +1,102 @@
+[
+  {
+    "id": "c07-structured-release",
+    "title": "Structured release record from a written specification",
+    "driver": "live_scheduler",
+    "goal": "Create release.json, a JSON object for release 2.1.0 with exactly three keys: \"version\" set to the string \"2.1.0\", \"breaking\" set to false, and \"changes\" set to an array of the change titles Add CSV export, Fix login timeout and Update install guide, in that order. Also create release-notes.md with a level-two heading ## Changes followed by one bullet per change title.",
+    "constraints": [
+      "Use only Markdown/TXT documents; JSON is allowed only as a structured data artifact.",
+      "Do not request external side effects or code execution."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "max_seconds": 600,
+      "criteria": [
+        {
+          "path": "release.json",
+          "kind": "json_equals",
+          "expected": "{\"version\": \"2.1.0\", \"breaking\": false, \"changes\": [\"Add CSV export\", \"Fix login timeout\", \"Update install guide\"]}"
+        },
+        {
+          "path": "release-notes.md",
+          "kind": "contains",
+          "expected": "## Changes"
+        },
+        {
+          "path": "release-notes.md",
+          "kind": "contains",
+          "expected": "Fix login timeout"
+        }
+      ]
+    }
+  },
+  {
+    "id": "c07-text-word-counts",
+    "title": "Word-frequency processing of supplied text",
+    "driver": "live_scheduler",
+    "goal": "Count word frequencies in this text, treating words case-insensitively and ignoring punctuation: \"The cat saw the dog. The dog ran; a cat ran too.\" Write counts.json as a JSON object mapping each lowercase word to its count, and write summary.md with a level-two heading ## Most frequent that names the most frequent word.",
+    "constraints": [
+      "Use only Markdown/TXT documents; JSON is allowed only as a structured data artifact.",
+      "Do not request external side effects or code execution."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "max_seconds": 600,
+      "criteria": [
+        {
+          "path": "counts.json",
+          "kind": "json_equals",
+          "expected": "{\"a\": 1, \"cat\": 2, \"dog\": 2, \"ran\": 2, \"saw\": 1, \"the\": 3, \"too\": 1}"
+        },
+        {
+          "path": "summary.md",
+          "kind": "contains",
+          "expected": "## Most frequent"
+        }
+      ]
+    }
+  },
+  {
+    "id": "c07-python-slugify",
+    "title": "Small Python function with declared example outputs",
+    "driver": "live_scheduler",
+    "goal": "Write slugify.py defining a function slugify(text) that lowercases the text, replaces every run of characters other than a-z and 0-9 with a single hyphen, and strips leading and trailing hyphens. Also write examples.json, a JSON object mapping each of these inputs to the output slugify should return: \"Hello, World!\", \"  Multi   Agent  \", \"C07 -- Baseline\", \"already-slugged\".",
+    "constraints": [
+      "Source code and a JSON data artifact are allowed; documents stay Markdown/TXT.",
+      "Do not request external side effects or code execution."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "max_seconds": 600,
+      "criteria": [
+        {
+          "path": "slugify.py",
+          "kind": "contains",
+          "expected": "def slugify("
+        },
+        {
+          "path": "examples.json",
+          "kind": "json_equals",
+          "expected": "{\"Hello, World!\": \"hello-world\", \"  Multi   Agent  \": \"multi-agent\", \"C07 -- Baseline\": \"c07-baseline\", \"already-slugged\": \"already-slugged\"}"
+        }
+      ]
+    }
+  },
+  {
+    "id": "c07-correction-total",
+    "title": "Exact-text result that exposes a verifiable formatting failure",
+    "driver": "live_scheduler",
+    "goal": "Create total.txt containing only the sum of 17, 25, 8 and 50 written in digits, followed by exactly one newline character.",
+    "constraints": [
+      "Use only Markdown/TXT documents; JSON is allowed only as a structured data artifact.",
+      "Do not request external side effects or code execution."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "max_seconds": 600,
+      "artifacts": {
+        "total.txt": "100\n"
+      }
+    }
+  }
+]

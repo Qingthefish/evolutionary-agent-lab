@@ -1,0 +1,120 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-text-word-counts.multi_agent.nominal",
+  "case_id": "c07-text-word-counts",
+  "topology": "multi_agent",
+  "description": "Coordinator first hits an ineligible-assignee error for reviewer, then delegates to researcher, which has no update_text and so writes the correct files first time.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "coordinator": [
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "reviewer",
+              "title": "Write counts.json and summary.md for word frequencies"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "researcher",
+              "title": "Write counts.json and summary.md for word frequencies"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "counts.json"
+              },
+              "path": "counts.json"
+            }
+          },
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "summary.md"
+              },
+              "path": "summary.md"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Accepted counts.json and summary.md from the researcher."
+      }
+    ],
+    "researcher": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "counts.json",
+              "content": "{\"a\": 1, \"cat\": 2, \"dog\": 2, \"ran\": 2, \"saw\": 1, \"the\": 3, \"too\": 1}\n"
+            }
+          },
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "summary.md",
+              "content": "## Most frequent\n\nThe most frequent word is \"the\", with 3 occurrences.\n"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "counts.json",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "counts.json"
+              }
+            }
+          },
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "summary.md",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "summary.md"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote counts.json and summary.md and offered both to the coordinator."
+      }
+    ]
+  }
+}

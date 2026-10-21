@@ -1,0 +1,39 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-structured-release.single_agent.nominal",
+  "case_id": "c07-structured-release",
+  "topology": "single_agent",
+  "description": "Correct on the first attempt; both files pass verification.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "solo": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "release.json",
+              "content": "{\"version\": \"2.1.0\", \"breaking\": false, \"changes\": [\"Add CSV export\", \"Fix login timeout\", \"Update install guide\"]}\n"
+            }
+          },
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "release-notes.md",
+              "content": "## Changes\n\n- Add CSV export\n- Fix login timeout\n- Update install guide\n"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Created release.json for 2.1.0 and release-notes.md listing the three changes."
+      }
+    ]
+  }
+}

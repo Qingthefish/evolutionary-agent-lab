@@ -1,0 +1,28 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-text-word-counts.single_agent.adverse",
+  "case_id": "c07-text-word-counts",
+  "topology": "single_agent",
+  "description": "Agent pauses on ask_human before writing any file. No answer is scripted, so the script ends here.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "solo": [
+      {
+        "tool_calls": [
+          {
+            "name": "ask_human",
+            "arguments": {
+              "prompt": "For the word counts, should the single-letter word 'a' count as a word in the frequency table, or be skipped as too short? Please reply yes or no."
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

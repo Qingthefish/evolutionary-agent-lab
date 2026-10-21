@@ -1,0 +1,67 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-text-word-counts.single_agent.nominal",
+  "case_id": "c07-text-word-counts",
+  "topology": "single_agent",
+  "description": "First counts.json has the wrong count for the; verifier fails, agent reads the file and fixes it with update_text.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "solo": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "counts.json",
+              "content": "{\"a\": 1, \"cat\": 2, \"dog\": 2, \"ran\": 2, \"saw\": 1, \"the\": 2, \"too\": 1}\n"
+            }
+          },
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "summary.md",
+              "content": "## Most frequent\n\nThe most frequent word is \"the\", with 3 occurrences.\n"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote counts.json and summary.md."
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "read_text",
+            "arguments": {
+              "path": "counts.json"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "update_text",
+            "arguments": {
+              "path": "counts.json",
+              "content": "{\"a\": 1, \"cat\": 2, \"dog\": 2, \"ran\": 2, \"saw\": 1, \"the\": 3, \"too\": 1}\n",
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "counts.json"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Corrected the count for \"the\" to 3. The total is 12 words, and both files are written."
+      }
+    ]
+  }
+}

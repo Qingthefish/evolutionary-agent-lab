@@ -61,6 +61,7 @@ Use these entry points to inspect the current implementation; a module's presenc
 | Controlled files, public text retrieval and private candidate memory | [files.py](agent_lab/files.py), [retrieval.py](agent_lab/retrieval.py), [memory.py](agent_lab/memory.py) |
 | Python sandbox and restricted Git operations | [sandbox.py](agent_lab/sandbox.py), [git_tools.py](agent_lab/git_tools.py) |
 | Frozen experience trials and reset/provenance boundaries | [experience.py](agent_lab/evaluation/experience.py), [memory_protocol.py](agent_lab/evaluation/memory_protocol.py) |
+| Matched single/multi-agent conditions, fairness checks and replay | [topology.py](agent_lab/evaluation/topology.py), [topology_plan.py](agent_lab/evaluation/topology_plan.py), [topology_report.py](agent_lab/evaluation/topology_report.py), [topology_fixture.py](agent_lab/evaluation/topology_fixture.py) |
 | Terminal interface and development evaluator | [tui/](agent_lab/tui/), [evaluation/](agent_lab/evaluation/) |
 | Checks and development cases | [tests/](tests/), [evaluation/dev/](evaluation/dev/) |
 
@@ -214,6 +215,21 @@ Each replicate starts fresh training. A checked, frozen SQLite seed retains orig
 Training costs are reported separately. Failed, paused, interrupted and unrun planned cases remain in the report/denominator. Human boundaries stop that trial without a scripted answer; incomplete/unknown training effects prevent dependent probes. This first protocol does not resume interrupted trials automatically. Preserve their state and start an explicitly authorized new run after inspecting the failure. Mutable Git repositories are rejected until a repository-reset protocol exists. Normal interactive runtime memory/Git/HITL remain available separately.
 
 Reports and seeds stay in ignored `runs/`. `compare` rechecks conditions, candidate identity, reset boundaries, role/tool/budget matching, observed model IDs and result evidence; edited headline summaries are ignored. Fingerprints detect changes, not forged results. No official scoring/reset rule is assumed, and no single/multi-agent baseline is supplied by this memory protocol.
+
+## Inspect or exercise the single/multi-agent baseline (C07 preparation)
+
+```bash
+python3 -m agent_lab.evaluation topology plan
+python3 -m agent_lab.evaluation topology plan --config evaluation/topology/negative-control-plan.json   # must be rejected
+python3 -m agent_lab.evaluation topology demo --fixtures evaluation/topology/fixtures/adverse-set.json
+python3 -m agent_lab.evaluation topology compare --run runs/topology-development/RUN_ID
+```
+
+[evaluation/topology-plan.json](evaluation/topology-plan.json) wraps a normal development runtime plan and adds two topologies. The single agent `solo` receives the team's task tools without delegation or hand-off tools. The team is the existing `live_roles` set under the same `MultiAgentScheduler`. Loading the manifest checks model, cases, acceptance, aggregate budgets, tool capabilities, memory and human policy, and fails closed with structured reasons. Cases that prescribe a decomposition are rejected as single-agent controls. Topology-specific differences such as role prompts and coordination tools are recorded as confounds.
+
+Delegated children have no independent content oracle, so the default `c07-structural-handoff-v1` policy releases a child only after it has offered a snapshot to its parent. Only the root is judged by the case criteria, and each recorded task states its acceptance basis. Reports also show how many team runs actually delegated. With `trusted-review`, unattended team runs stop for human review instead.
+
+`demo` replays scripted model turns through the real scheduler, gateway, budgets and acceptance. The fixtures are development simulations drafted with an AI assistant outside the runtime and normalized by hand. Each fixture records its provenance. Their reports are `engineering_validation` with zero model calls and synthetic usage placeholders. They are not model results. Live pilot execution needs an issued model, the named key variable, `--allow-model-calls` and the inspected `--plan-sha256`, and stays within the manifest's `pilot_budget`. A live result is `pilot_compared` only when every pair is complete and every run has an observed model identity and known usage. Otherwise it is `pilot_incomplete`, with the gaps listed. [evaluation/topology/smoke-plan.json](evaluation/topology/smoke-plan.json) is a separate first live check with one case, one run per topology and at most 16 model attempts. Its result is `smoke_only` and is never a comparison. Each run uses a fresh state directory, and alternating order is recorded. Unrun, interrupted and failed runs stay in denominators, unknown usage is never shown as zero and monetary cost is reported as unavailable.
 
 ## Run the combined actual-tool fixture
 

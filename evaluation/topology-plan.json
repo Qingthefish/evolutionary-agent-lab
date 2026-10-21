@@ -1,0 +1,63 @@
+{
+  "schema": "c07-single-multi-topology",
+  "version": 1,
+  "experiment_id": "c07-dev-topology-baseline",
+  "purpose": "Development comparison of one agent versus the existing coordinator team on matched cases, budgets, tools, memory and human policy. Supporting evidence only; not the instructor's evaluation.",
+  "evidence_class": "pilot_model",
+  "runtime_plan": "topology/runtime.json",
+  "case_annotations": {
+    "c07-structured-release": {
+      "category": "structured_generation",
+      "oracle_scope": "structured_json",
+      "note": "release.json is compared as canonical JSON; the notes file is checked only for a heading and one title."
+    },
+    "c07-text-word-counts": {
+      "category": "text_processing",
+      "oracle_scope": "structured_json",
+      "note": "counts.json is compared as canonical JSON against hand-computed counts; summary.md is checked only for its heading."
+    },
+    "c07-python-slugify": {
+      "category": "python_implementation",
+      "oracle_scope": "artifact_properties_only",
+      "note": "Checks that the source declares slugify and that examples.json matches hand-computed outputs. The code is never executed, so program correctness is not established."
+    },
+    "c07-correction-total": {
+      "category": "correction_after_failure",
+      "oracle_scope": "exact_text",
+      "note": "Exact bytes including the single trailing newline; a wrong first proposal receives trusted verification feedback and can be repaired."
+    }
+  },
+  "topologies": {
+    "single_agent": {
+      "agent": "solo",
+      "instructions": "c07-single-agent-v1",
+      "task_limits": {
+        "model_attempts": 24,
+        "reported_tokens": 64000,
+        "duration_seconds": 300,
+        "repeated_outcomes": 3,
+        "tool_calls": 64
+      }
+    },
+    "multi_agent": {
+      "roles": "runtime-live-roles-v1",
+      "root": "coordinator",
+      "child_release": "c07-structural-handoff-v1"
+    }
+  },
+  "memory": {
+    "mode": "disabled",
+    "initial_state": "fresh-empty-per-run"
+  },
+  "human": {
+    "policy": "boundary-stops-run-v1"
+  },
+  "procedure": {
+    "replicates": 2,
+    "order": "alternating-by-replicate-and-case-v1",
+    "isolation": "fresh-state-directory-per-run-v1"
+  },
+  "pilot_budget": {
+    "max_total_model_attempts": 384
+  }
+}

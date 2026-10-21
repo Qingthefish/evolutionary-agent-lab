@@ -1,0 +1,39 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-python-slugify.single_agent.nominal",
+  "case_id": "c07-python-slugify",
+  "topology": "single_agent",
+  "description": "Correct on the first attempt.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "solo": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "slugify.py",
+              "content": "import re\n\n\ndef slugify(text):\n    lowered = text.lower()\n    slug = re.sub(r\"[^a-z0-9]+\", \"-\", lowered)\n    return slug.strip(\"-\")\n"
+            }
+          },
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "examples.json",
+              "content": "{\"Hello, World!\": \"hello-world\", \"  Multi   Agent  \": \"multi-agent\", \"C07 -- Baseline\": \"c07-baseline\", \"already-slugged\": \"already-slugged\"}\n"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote slugify.py and examples.json with the four example outputs."
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "c07-replay-fixture-set",
+  "version": 1,
+  "set_id": "c07-nominal-simulation-v1",
+  "description": "Mostly successful runs with natural mistakes and repairs.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "See each fixture's provenance for per-fixture edits.",
+    "model_evidence": false
+  },
+  "entries": {
+    "c07-structured-release": {
+      "single_agent": "c07-structured-release.single_agent.nominal.json",
+      "multi_agent": "c07-structured-release.multi_agent.nominal.json"
+    },
+    "c07-text-word-counts": {
+      "single_agent": "c07-text-word-counts.single_agent.nominal.json",
+      "multi_agent": "c07-text-word-counts.multi_agent.nominal.json"
+    },
+    "c07-python-slugify": {
+      "single_agent": "c07-python-slugify.single_agent.nominal.json",
+      "multi_agent": "c07-python-slugify.multi_agent.nominal.json"
+    },
+    "c07-correction-total": {
+      "single_agent": "c07-correction-total.single_agent.nominal.json",
+      "multi_agent": "c07-correction-total.multi_agent.nominal.json"
+    }
+  }
+}

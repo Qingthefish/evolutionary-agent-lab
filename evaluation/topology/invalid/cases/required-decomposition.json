@@ -1,0 +1,30 @@
+[
+  {
+    "id": "c07-invalid-required-decomposition",
+    "title": "Negative control: a case that prescribes delegation",
+    "driver": "live_scheduler",
+    "goal": "Produce note.txt containing exactly Hello followed by one newline.",
+    "constraints": [
+      "Use only Markdown/TXT documents; JSON is allowed only as a structured data artifact.",
+      "Do not request external side effects or code execution."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "max_seconds": 600,
+      "min_tasks": 2,
+      "artifacts": {
+        "note.txt": "Hello\n"
+      },
+      "subtasks": [
+        {
+          "assignee": "writer",
+          "title": "Draft checked note",
+          "final_state": "succeeded",
+          "artifacts": {
+            "note.txt": "Hello\n"
+          }
+        }
+      ]
+    }
+  }
+]
