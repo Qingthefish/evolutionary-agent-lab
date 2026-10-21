@@ -83,7 +83,7 @@ For a returning/new member: pull current main; read README, [announcement/eviden
 
 | Candidate starting point | Concrete next result | Starting boundary |
 | --- | --- | --- |
-| [B05](#b05) | Complete live access to approval-bound deletion | Runtime configuration/gateway integration and tests; one active editor for shared runtime files |
+| [B05](#b05) | Claimed workflow example: approval-bound deletion | Read its claim/results before proposing further work; coordinate shared runtime edits |
 | [C07](#c07) | Version a fair single/multi-agent development comparison | Evaluation configuration/baseline and tests; reuse the scheduler/scorer, coordinate shared interfaces |
 | [D02](#d02) | Reproduce private/group interaction and approval/restart scenarios; fix observed usability gaps | Minimal interface and focused integration checks; offline slice can start before key, final live gate remains |
 | [D04](#d04) | Independently install/run from the guide and fix actual setup problems | Clean environment, README and only necessary setup/CLI fixes; existing preparation is retained |
@@ -290,14 +290,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Expose controlled deletion in live roles**
 
-- **Stage / status:** M3 / Claimed
+- **Stage / status:** M3 / In progress
 - **Owner:** Qingthefish (owner-requested workflow example, Codex-assisted)
 - **Dependencies / configuration:** A02 and existing exact-action delete/release path; engineering work does not require a model key.
 - **Scope:** Deliberate live-role/configuration wiring and focused tests; coordinate runtime.py/gateway.py edits. Reuse the existing deletion implementation.
 - **Acceptance:** An explicitly configured live agent can request deletion only for its own exact file version, pause before effects, then delete only after the addressed human approves and releases that action. Denial, changed hash, stale/wrong-task grant and restart remain safe. Preserve existing persisted runtime configurations rather than silently changing old roles. Document the supported flag/policy choice and add no host-file deletion fallback. Final model-driven smoke joins A05/D02 after A01.
-- **Base revision / branch / PR / evidence:** Starting main 1acb56c; planned branch feat/B05-controlled-delete. Claim published on main before feature coding; PR/checks recorded as they occur.
+- **Base revision / branch / PR / evidence:** Starting main 1acb56c; claim published on main in a4fbc10 before feature coding; branch feat/B05-controlled-delete; implementation ef5667f. Python 3.14.7 + Textual 8.2.8: 347 discovered, 332 passed, 15 actual-container checks explicitly skipped (engine not started), zero errors/failures; includes nine UI checks and 13 B05 checks. Clean committed-source Python 3.12.14 snapshot: all 13 B05 checks and seven suite/CLI/legacy checks passed. A task actually created using a4fbc10 resumes with unchanged configuration; enabling deletion on it is rejected without poisoning the stored record. 138 local Markdown links/anchors and two README JSON examples checked. Raw evidence: ignored runs/review-20261021-b05/. PR/acceptance recorded after review.
 - **Reviewer:** Qingthefish coordinates; Codex-assisted review, no independent teammate approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21 announcement audit found that FileTools/gateway support deletion but live_roles exposes no delete_text capability. Earlier completed file/gateway cards remain intact. The owner explicitly requested this workflow example; no overlapping open PR/remote claim was observed. A WeChat announcement was drafted for the owner to send; no group message or teammate confirmation is claimed. Next: add an explicit opt-in capability using the existing approval/release implementation, preserve old disabled configurations and verify the acceptance paths. Final real-model smoke remains A05/D02 after A01.
+- **Progress / review changes / outcome:** 2026-10-21 announcement audit found the missing role capability; earlier file/gateway work is retained. The owner requested this workflow example; no overlapping remote claim/open PR was observed. A WeChat announcement was drafted for the owner to send; no group message or teammate confirmation is claimed. Implemented opt-in enable_delete / --enable-delete using the existing gateway and separate human release. Real files exercise pending approval, restart before/after approval, exactly-once release, independently checked absence, denial, changed file versions, wrong-task/human grants, stale revisions and released-but-unverified effects. Default roles stay unchanged; persisted runs reject capability changes. Runtime views/manifests expose the capability; version-1 plan JSON deliberately remains unchanged/disabled. Review corrected two test setup/status-name assumptions without changing production authorization rules. All provider responses were mocked; no model calls, live performance or Actions success claimed. Engineering implementation is ready for PR review; final real-model smoke remains A05/D02 after A01.
 
 ### C01
 
