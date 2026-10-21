@@ -27,7 +27,7 @@ Deliver a runnable general multi-agent platform and an evaluation entry point: a
 | M0 — coordinate | Common baseline, visible claims and agreed boundaries | Register ready; individual claims recorded below |
 | M1 — foundation integration | Existing platform plus #7/#8/#9 reviewed and integrated with honest evidence labels | Done; I01–I03 record that integration |
 | M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Pending live access and integration cards |
-| M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Public retrieval and combined tool engineering checked; live model, runtime GitHub and learning evidence pending |
+| M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Public retrieval, combined tools and memory-reset engineering checked; live Delete wiring, model behavior, runtime GitHub and learning evidence pending |
 | M4 — stabilize/evaluate | Reproducible setup, pinned configuration, development comparisons/failure analysis and official adapter | Pending prerequisites |
 | M5 — official delivery | Issued test protocol/results and required submission materials | Await official set and actual deadlines |
 
@@ -71,8 +71,9 @@ These merged contributions are starting material to reuse, not new tasks to repr
 | [#16](https://github.com/Qingthefish/evolutionary-agent-lab/pull/16) | Independent child criteria, concrete repair feedback and checked handoff (A04 offline slice) | Qingthefish, Codex-assisted |
 | [#17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) | Combined retrieval, private experience, isolated execution and local-remote Git engineering | Qingthefish, Codex-assisted |
 | [#18](https://github.com/Qingthefish/evolutionary-agent-lab/pull/18) | Bounded failed-child replacement, structural artifact criteria and inspectable run plans | Qingthefish, Codex-assisted |
+| [#19](https://github.com/Qingthefish/evolutionary-agent-lab/pull/19) | Frozen candidate-memory reset/boundary protocol, ON/OFF trial preparation and announcement/handoff audit | Qingthefish, Codex-assisted |
 
-The reviewed combined runtime passed 214 checks on 2026-10-17, including real Docker/UI checks; #18 later passed 308 with no skips. These engineering checks use scripted/mocked model responses: no live-model or official-test-set performance is established. #8 does not close real GitHub runtime pushing; #9 does not close live memory learning/comparison. Later accepted partial slices retain their live dependencies in the cards below.
+The reviewed combined runtime passed 214 checks on 2026-10-17, including real Docker/UI checks; #18 later passed 308 and #19 passed 334 with no skips. These engineering checks use scripted/mocked model responses: no live-model or official-test-set performance is established. #8 does not close real GitHub runtime pushing; #9 does not close live memory learning/comparison. Later accepted partial slices retain their live dependencies in the cards below.
 
 ## Re-entry and next claims
 
@@ -328,14 +329,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Verify memory boundaries and reset rules**
 
-- **Stage / status:** M3 / In review
+- **Stage / status:** M3 / Done
 - **Owner:** Qingthefish (owner-authorized continuation, Codex-assisted)
 - **Dependencies / configuration:** Existing C02 candidate-memory runtime; actual learning effectiveness remains C02/C05.
 - **Scope:** Memory tests and narrowly justified reset/provenance fixes; preserve existing actor/conversation/namespace boundaries.
 - **Acceptance:** Agents/conversations/namespaces remain separate; contradictory evidence and selected-use outcomes stay visible; fresh/reset memory works. An old lesson cannot authorize a new action.
-- **Base revision / branch / PR / evidence:** Baseline b3e9689; branch feat/frozen-memory-protocol; implementation 2d8ff6d; [PR #19](https://github.com/Qingthefish/evolutionary-agent-lab/pull/19). Python 3.14.7 + Textual 8.2.8: 334 passed, zero skips/errors/failures, including 15 actual-container and nine UI checks. Clean committed-source snapshot on Python 3.12.14: 310 passed, 24 explicit Docker/UI skips; six CLI/suite checks passed. 136 local Markdown links/anchors and seven evaluation JSON files checked. Raw full/fixture/inspection/clean-snapshot evidence in ignored runs/review-20261021-memory/. Merged revision recorded after acceptance.
+- **Base revision / branch / PR / evidence:** Baseline b3e9689; branch feat/frozen-memory-protocol; implementation 2d8ff6d; [PR #19](https://github.com/Qingthefish/evolutionary-agent-lab/pull/19), merged 2026-10-21 in cb05507. Merged tree matches reviewed feature 399a379. Python 3.14.7 + Textual 8.2.8: 334 passed, zero skips/errors/failures, including 15 actual-container and nine UI checks. Clean committed-source snapshot on Python 3.12.14: 310 passed, 24 explicit Docker/UI skips; six CLI/suite checks passed. 136 local Markdown links/anchors and seven evaluation JSON files checked. Raw full/fixture/inspection/clean-snapshot evidence in ignored runs/review-20261021-memory/.
 - **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate approval claimed.
-- **Progress / review changes / outcome:** 2026-10-21: frozen, integrity-checked training provenance forks into fresh per-probe databases/files. Original source binding is unchanged; old files/transcripts/messages and approvals are not available to probe tools. A persisted current-message boundary allows new coordination messages. Contradictory source outcomes, retirement and failed selected-use outcomes remain visible; each later probe resets to the seed. Review fixed explicit SQLite connection closure, checked source evidence against actual terminal tasks, and kept unknown usage/unreleased actions from seeding probes. New synthetic/mocked-transport checks establish engineering behavior only; final acceptance/merge pending.
+- **Progress / review changes / outcome:** 2026-10-21: frozen, integrity-checked training provenance forks into fresh per-probe databases/files. Original source binding is unchanged; old files/transcripts/messages and approvals are not available to probe tools. A persisted current-message boundary allows new coordination messages. Contradictory source outcomes, retirement and failed selected-use outcomes remain visible; each later probe resets to the seed. Review fixed explicit SQLite connection closure, checked source evidence against actual terminal tasks, and kept unknown usage/unreleased actions from seeding probes. Accepted via PR #19 for boundary/reset engineering only. Synthetic/mocked-transport checks establish no live learning gain; C02/C05 remain open for that evidence, and official reset rules remain C06.
 
 ### C04
 
@@ -359,7 +360,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Dependencies / configuration:** M3, C03/C04, [C07](#c07) for single/multi controls, issued allowed-model access and an authorized live budget.
 - **Scope:** Versioned development run configurations, raw evidence and Markdown analysis; no held-out-data reuse.
 - **Acceptance:** Run memory ON/OFF and single/multi-agent comparisons under matched conditions. Preserve failures, time and supplementary call/token cost; report actual gains/regressions. These comparison layouts are our evidence method, not an extra instructor rubric.
-- **Base revision / branch / PR / evidence:** Shared branch/evidence in C03. evaluation/memory-plan.json references explicit cases/limits; no live model call.
+- **Base revision / branch / PR / evidence:** Shared branch/evidence in C03; engineering preparation accepted via PR #19 in cb05507. evaluation/memory-plan.json references explicit cases/limits; no live model call.
 - **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate approval claimed.
 - **Progress / review changes / outcome:** 2026-10-21: implemented a frozen-training ON/OFF development entry, read-only preflight, explicit fingerprint/budget authorization, counterbalanced order, planned-slot checkpoints and validated comparison. Shared training cost/failures are separate; probe failures/unrun slots stay in denominators. Probe prompts/non-memory tools/limits match; probe tools cannot read training chat/files or reuse old approvals, and probes cannot teach later probes. Source observations remain in the private snapshot for provenance. Scripted fixture and mocked HTTP prove plumbing only; their answers are not learned. Normal batch memory-on labels remain refused; use the versioned experience entry. Blocker: actual live trials/analysis need issued access and budget; single/multi setup remains C07. Do not mark this card Done from synthetic results.
 
