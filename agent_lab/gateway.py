@@ -438,6 +438,6 @@ class ToolGateway:
                 raise ToolRequestError("Approval released but push did not verify: " + str(error)) from None
         self.workflow.consume_approval(request_id, self.actor, action)
         try:
-            return self.files.delete_text(self.task, self.actor, **args)
+            return self.files.delete_text(self.task, self.actor, **args, request_id=request_id)
         except (WorkflowError, OSError):
             raise ToolRequestError("Approval released but deletion failed; reconcile before a new approval") from None

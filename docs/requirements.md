@@ -44,6 +44,8 @@ Checked against the original announcement text supplied by the owner, the curren
 
 D02 console evidence refreshed on 2026-10-22; the instructor requirements and unresolved official rules are unchanged.
 
+D03 approval/effect evidence refreshed on 2026-10-23: exact request receipts replace time-order inference; raw history and instructor requirements remain unchanged.
+
 | Requirement | Evidence currently available | Remaining acceptance / Roadmap |
 | --- | --- | --- |
 | R01 — private/group human communication | Conversation membership, private/group creation, scoped messages, console chat/feed/agent assignment and minimal interface checks; scripted agent-to-human private messages verified | Verify actual live interactions and usability; [D02](team-roadmap.md#d02) |

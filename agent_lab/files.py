@@ -11,7 +11,7 @@ from pathlib import Path
 import stat
 from uuid import uuid4
 
-from .core import WorkflowError
+from .core import WorkflowError, canonical_action
 
 
 class FileToolError(WorkflowError):
@@ -177,9 +177,10 @@ class FileTools:
         if not isinstance(expected_sha256, str) or _sha(data) != expected_sha256:
             raise FileToolError("Content digest changed or did not match the expected version")
 
-    def _receipt(self, task, actor, operation, path, data):
+    def _receipt(self, task, actor, operation, path, data, *, request_id=None):
         result = {"path": path, "sha256": _sha(data), "bytes": len(data)}
-        self.workflow._event(task, actor, operation, result)
+        detail = result if request_id is None else {**result, "request_id": request_id}
+        self.workflow._event(task, actor, operation, detail)
         return result
 
     def read_text(self, task, actor, path):
@@ -208,12 +209,25 @@ class FileTools:
                     pass
             return self._receipt(task, actor, "file_updated", path, data)
 
-    def delete_text(self, task, actor, path, *, expected_sha256):
+    def delete_text(self, task, actor, path, *, expected_sha256, request_id=None):
         with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
+            if request_id is not None:
+                if not isinstance(request_id, str) or not request_id:
+                    raise FileToolError("Deletion receipt requires a request identifier")
+                request = self.workflow.request(request_id, actor)
+                encoded, digest = canonical_action({"tool": "delete_text", "arguments": {
+                    "path": path, "expected_sha256": expected_sha256}})
+                if (request["task"] != task or request["kind"] != "approval"
+                        or request["approved"] != 1 or request["consumed"] != 1
+                        or request["action"] != encoded or request["digest"] != digest
+                        or request["resume_revision"] != self.workflow.task(task, actor)["revision"]
+                        or self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='file_deleted' "
+                            "AND json_extract(detail,'$.request_id')=?", (task, request_id)).fetchone()):
+                    raise FileToolError("Deletion receipt requires the current consumed exact approval, once")
             data = self._read(parent, name)
             self._expected(data, expected_sha256)
             os.unlink(name, dir_fd=parent)
-            return self._receipt(task, actor, "file_deleted", path, data)
+            return self._receipt(task, actor, "file_deleted", path, data, request_id=request_id)
 
     def offer_artifact(self, task, actor, path, target_task, *, expected_sha256):
         with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
