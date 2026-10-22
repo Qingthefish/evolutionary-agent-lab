@@ -369,14 +369,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Prepare a matched single/multi-agent baseline**
 
-- **Stage / status:** M4 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M4 / In review
+- **Owner:** HelloWorld2333666
 - **Dependencies / configuration:** C04 and current C05 protocol contracts; no key is needed for engineering preparation.
 - **Scope:** Evaluation baseline/configuration and focused checks; reuse existing scheduler, acceptance and result summaries. Coordinate shared runtime/role edits. This splits the remaining preparation from C05 without erasing its memory-protocol work.
 - **Acceptance:** Same allowed model, task/oracle content, comparable aggregate tools/budgets and declared initial memory/intervention conditions. Reject multi-only required-decomposition cases for an invalid single-agent control. Record topology as the intended difference, actual usage/failures and condition fingerprints. Offline output is engineering evidence only; actual comparison remains C05 after access/budget.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** Added from the 2026-10-21 audit. Supporting experiment agreed with the owner, not an additional instructor requirement. No person assigned.
+- **Base revision / branch / PR / evidence:** Baseline ff0f1bd; branch feat/C07-single-multi-baseline; implementation cc84203. Python 3.12.15: 394 tests run, 370 passed, 24 skipped and zero failures. The committed 30-file diff matches the reviewed `C07_reviewed_vs_ff0f1bd.patch` byte-for-byte (SHA-256 `fecd1868b6cde19d5b6bc5e4809c814d44ad82b6557ddc57152e2ce3591c9234`). No live model call or PR yet.
+- **Reviewer:** Engineering review supplied with the reviewed C07 handoff; repository PR review remains pending.
+- **Progress / review changes / outcome:** 2026-10-22: published the reviewed matched single/multi-agent baseline on the feature branch. It adds versioned topology plans, fairness validation, retained evidence/reporting, nominal/adverse replay fixtures, smoke configuration and focused regression/invariant tests. Review corrections cover incomplete live evidence, qualified derived counts, explicit child acceptance bases, expected-outcome validation, actual delegation/participation evidence, confound classification and test portability. Offline and replay results are engineering evidence only; the actual allowed-model comparison remains C05 after issued access and an authorized budget.
 
 ### D01
 
