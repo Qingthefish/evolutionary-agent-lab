@@ -1,6 +1,6 @@
 # Team roadmap and task register
 
-Updated: 2026-10-21 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. No coding tasks have been assigned by this document. The instructor's [requirements](requirements.md) remain the scope authority.
+Updated: 2026-10-22 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. The instructor's [requirements](requirements.md) remain the scope authority; agreed claims are recorded below.
 
 **How to read progress:** Use the accepted baseline and milestone exit evidence, not a ratio of Done cards to all cards. I01–I03 record the review/integration of PRs #7–#9; substantial earlier work in #1–#6 is recorded separately in [Accepted baseline](#accepted-baseline). The card index covers that integration and the remaining delivery work, rather than every historical task. Cards differ in size and may be split as evidence reveals more work. Those integration records alone do **not** measure the whole project; no overall percentage is established.
 
@@ -369,14 +369,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Prepare a matched single/multi-agent baseline**
 
-- **Stage / status:** M4 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M4 / In review
+- **Owner:** HelloWorld2333666
 - **Dependencies / configuration:** C04 and current C05 protocol contracts; no key is needed for engineering preparation.
 - **Scope:** Evaluation baseline/configuration and focused checks; reuse existing scheduler, acceptance and result summaries. Coordinate shared runtime/role edits. This splits the remaining preparation from C05 without erasing its memory-protocol work.
 - **Acceptance:** Same allowed model, task/oracle content, comparable aggregate tools/budgets and declared initial memory/intervention conditions. Reject multi-only required-decomposition cases for an invalid single-agent control. Record topology as the intended difference, actual usage/failures and condition fingerprints. Offline output is engineering evidence only; actual comparison remains C05 after access/budget.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** Added from the 2026-10-21 audit. Supporting experiment agreed with the owner, not an additional instructor requirement. No person assigned.
+- **Base revision / branch / PR / evidence:** Baseline ff0f1bd; remote branch feat/C07-single-multi-baseline; implementation cc84203, branch record 854a3b8. The contributor reports 394 discovered / 370 passed / 24 skips on Python 3.12.15; that report has not yet been independently accepted. No PR observed at this check.
+- **Reviewer:** Contributor's branch describes an earlier engineering handoff review; coordinator acceptance remains pending. Do not infer a completed repository review.
+- **Progress / review changes / outcome:** 2026-10-22: the owner supplied a WeChat claim screenshot; the matching remote branch records HelloWorld2333666 as owner and contains versioned single/multi plans, fairness validation, reporting and nominal/adverse scripted fixtures. Claim synchronized to main to avoid duplicate work. Preserve the contributor's commits; no merge, live comparison or independent full-code acceptance is implied. C05 still owns actual allowed-model trials after access/budget. D02 is reserved separately for console/human-flow work, without editing C07 evaluation modules or configurations.
 
 ### D01
 
@@ -395,14 +395,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Exercise human interaction end to end**
 
-- **Stage / status:** M3 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M3 / Claimed
+- **Owner:** Qingthefish (owner-authorized continuation, Codex-assisted)
 - **Dependencies / configuration:** Accepted D01 engineering slice and the relevant runtime/tool contracts allow offline reproduction now; final live behavior needs A01/D01 live acceptance.
-- **Scope:** Minimal conversation, clarification and approval controls plus tests.
+- **Scope:** Minimal console conversation/request controls and interaction checks; agent_lab/console.py and a dedicated test file. Reuse ControlCenter/workflow/scheduler. Leave C07 evaluation modules, shared runtime policies and its feature branch unchanged. Coordinator documentation edits stay in the existing documents.
 - **Acceptance:** Private/group messages, clarification and restart, approval versus release versus verified effect, denial and unresolved effects are usable and correctly distinguished.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Baseline ff0f1bd; claim published on main before coding; planned branch feat/D02-console-human-flow. Evidence/PR recorded after actual checks.
+- **Reviewer:** Qingthefish coordinates, Codex-assisted self-review; no independent teammate approval claimed.
+- **Progress / review changes / outcome:** 2026-10-22: owner requested a non-overlapping round after C07's claim. Inspection found no console route to create/read private conversations and a fixed coordinator assignee, despite existing backend support. Add minimal routes using existing membership checks; exercise clarification, exact approval/release and restart through CLI invocations. No model call is authorized by this claim. Final live-model behavior still needs A01/D01 live acceptance; do not close that gate with scripted checks.
 
 ### D03
 
