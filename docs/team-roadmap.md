@@ -1,6 +1,6 @@
 # Team roadmap and task register
 
-Updated: 2026-10-22 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. The instructor's [requirements](requirements.md) remain the scope authority; agreed claims are recorded below.
+Updated: 2026-10-23 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. The instructor's [requirements](requirements.md) remain the scope authority; agreed claims are recorded below.
 
 **How to read progress:** Use the accepted baseline and milestone exit evidence, not a ratio of Done cards to all cards. I01–I03 record the review/integration of PRs #7–#9; substantial earlier work in #1–#6 is recorded separately in [Accepted baseline](#accepted-baseline). The card index covers that integration and the remaining delivery work, rather than every historical task. Cards differ in size and may be split as evidence reveals more work. Those integration records alone do **not** measure the whole project; no overall percentage is established.
 
@@ -409,14 +409,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Expose trustworthy execution evidence**
 
-- **Stage / status:** M3 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M3 / Claimed
+- **Owner:** Qingthefish (owner-authorized continuation, Codex-assisted)
 - **Dependencies / configuration:** D01 and C04 result contract.
-- **Scope:** tui/, queries.py and inspection.py; coordinate any shared schema changes.
+- **Scope:** Read-only request/effect evidence in queries.py plus narrowly justified gateway/file receipt binding and focused tests. No table/schema rewrite or C07 evaluation/runtime-policy change. Existing interface views consume the same query result.
 - **Acceptance:** Show actual task/tool/artifact/evaluation evidence, respect private boundaries and redact credentials. Display the evaluator's results without adding another scoring formula or expanding UI styling scope.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Baseline b0978db; claim published on main before feature coding; planned branch feat/D03-bound-action-evidence. Actual reproduction retained during review.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted self-review, no independent teammate approval claimed.
+- **Progress / review changes / outcome:** 2026-10-23: owner requested another non-overlapping round. Reproduced an evidence error: a consumed deletion that failed could acquire a later successful deletion's event from the same task. Add explicit per-request receipts and verify Git's existing operation/request binding; unbound or mismatched historical evidence stays unconfirmed without rewriting raw events. Preserve existing membership, approval/release and runtime policies. C07 branch remains reserved to HelloWorld2333666; no live-model call is authorized by this claim.
 
 ### A05
 
