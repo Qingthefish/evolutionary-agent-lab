@@ -42,6 +42,8 @@ Source: instructor announcement supplied by the user, “Final Project Specifica
 
 Checked against the original announcement text supplied by the owner, the current runtime/tool allowlists, task policies, tests, evaluation entry points and submission files. This is an evidence map, not an instructor-issued score or a second task register. Source files and passing fixtures do not prove live model ability; Roadmap cards retain owners, history and acceptance.
 
+D02 console evidence refreshed on 2026-10-22; the instructor requirements and unresolved official rules are unchanged.
+
 | Requirement | Evidence currently available | Remaining acceptance / Roadmap |
 | --- | --- | --- |
 | R01 — private/group human communication | Conversation membership, private/group creation, scoped messages, console chat/feed/agent assignment and minimal interface checks; scripted agent-to-human private messages verified | Verify actual live interactions and usability; [D02](team-roadmap.md#d02) |
