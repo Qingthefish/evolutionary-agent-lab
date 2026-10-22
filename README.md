@@ -141,7 +141,21 @@ python3 -m agent_lab.console status
 python3 -m agent_lab.console status --task TASK_ID
 ```
 
-After the issued model/key and run budget are available, supply the same live flags when creating or advancing a live task. Set the named model-key variable outside the repository; never paste its value into a command argument or committed file.
+For a private conversation or a task addressed to a particular agent:
+
+```bash
+python3 -m agent_lab.console chat new --kind private --participant writer
+python3 -m agent_lab.console chat list
+python3 -m agent_lab.console new --chat CHAT_ID --assignee writer --goal 'Prepare a Markdown note'
+python3 -m agent_lab.console message CHAT_ID 'Please clarify missing information before proceeding'
+python3 -m agent_lab.console chat feed CHAT_ID
+python3 -m agent_lab.console requests --pending
+python3 -m agent_lab.console requests --request REQUEST_ID
+```
+
+Use `chat new --kind group` with repeated `--participant` values for a group; participants must already be registered actors, and the current human is added automatically. A private conversation contains exactly one human and one agent. `new --assignee` must name an agent member; omitting it retains the coordinator default. Conversations/messages do not execute tasks or answer requests. `requests --pending` lists unanswered requests addressed to the current human; approved requests awaiting release remain visible through `requests` or `requests --request ID`. Read views reuse conversation membership checks. `--human` selects a trusted local operator identity, not a login/authentication mechanism.
+
+After the issued model/key and run budget are available, supply the same live flags when creating/advancing a live task or releasing/reviewing its actions. Set the named model-key variable outside the repository; never paste its value into a command argument or committed file.
 
 ```bash
 python3 -m agent_lab.console --live --model ISSUED_MODEL --api-key-env AGENT_LAB_MODEL_KEY --enable-web --enable-memory new --goal 'Prepare a cited Markdown explanation'

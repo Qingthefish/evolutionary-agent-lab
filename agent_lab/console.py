@@ -25,6 +25,18 @@ def main(argv=None):
     new.add_argument('--goal',required=True)
     new.add_argument('--policy',help='Trusted JSON with artifacts and optional child_rules; no model-generated criteria')
     new.add_argument('--chat',help='Existing conversation ID; omit to create a group')
+    new.add_argument('--assignee',default='coordinator',help='Agent member to receive the task (default: coordinator)')
+    chat=commands.add_parser('chat',help='Create or inspect conversations; messages do not execute tasks')
+    chats=chat.add_subparsers(dest='chat_command',required=True)
+    create_chat=chats.add_parser('new')
+    create_chat.add_argument('--kind',choices=('private','group'),required=True)
+    create_chat.add_argument('--participant',action='append',required=True,help='Registered actor ID (repeatable); the current human is added automatically')
+    chats.add_parser('list')
+    chats.add_parser('feed').add_argument('chat')
+    requests=commands.add_parser('requests',help='Inspect clarification/approval requests and recorded effects')
+    request_filter=requests.add_mutually_exclusive_group()
+    request_filter.add_argument('--request',help='Inspect one request and its recorded outcome')
+    request_filter.add_argument('--pending',action='store_true',help='Show only unanswered requests addressed to the current human')
     commands.add_parser('status',help='Read task, request and runtime state').add_argument('--task')
     commands.add_parser('advance',help='Run until paused, blocked or terminal').add_argument('task')
     answer=commands.add_parser('answer');answer.add_argument('request');answer.add_argument('text')
@@ -43,9 +55,18 @@ def main(argv=None):
             if args.policy:
                 data=strict_json(Path(args.policy).read_text())
             policy=policy_from_spec(data,live)
+            if not args.chat and args.assignee not in live_members(live):
+                raise WorkflowError('Assignee is not an agent in the default group; select a configured agent or an existing conversation')
             chat=args.chat or center.create_conversation('group',list(live_members(live)))
-            result=center.create_task(chat,'coordinator',args.goal,constraints=tuple(data.get('constraints',())),expected_artifacts=policy.root_artifacts,child_rules=policy.child_rules,root_criteria=policy.root_criteria)
+            result=center.create_task(chat,args.assignee,args.goal,constraints=tuple(data.get('constraints',())),expected_artifacts=policy.root_artifacts,child_rules=policy.child_rules,root_criteria=policy.root_criteria)
             result['chat']=chat
+        elif args.command=='chat':
+            if args.chat_command=='new':
+                result={'chat':center.create_conversation(args.kind,args.participant),'kind':args.kind}
+            elif args.chat_command=='list':result=center.conversations()
+            elif args.chat_command=='feed':result=center.feed(args.chat)
+        elif args.command=='requests':
+            result=center.request_detail(args.request) if args.request else center.requests(pending_only=args.pending)
         elif args.command=='status':
             result=center.task_detail(args.task) if args.task else {'runtimes':center.runtimes(),'tasks':center.tasks(),'requests':center.requests()}
         elif args.command=='advance':result=center.advance(args.task)
