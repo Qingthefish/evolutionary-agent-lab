@@ -164,6 +164,8 @@ python3 -m agent_lab.console --live --model ISSUED_MODEL --api-key-env AGENT_LAB
 
 Use `answer REQUEST_ID 'clarification'`, `decide REQUEST_ID approve|deny`, `release REQUEST_ID`, and `review TASK_ID accept|reject --feedback 'concrete evidence'`. Answering/approving only records the human response; releasing executes an exact approved action. Without supported independent criteria a final proposal waits for review. A trusted `new --policy policy.json` may supply `constraints`, exact-text `artifacts`, data-only `criteria` and `child_rules`; the model cannot edit them. This is a trusted local interface, not a multi-user authentication service.
 
+Request outcomes require a receipt bound to that exact approval, file version or Git operation. `released` alone is not verified success. An old unbound event or a later operation cannot confirm the request; it stays `unrecorded` while original task history is preserved. Inspect the evidence before any further action; views never retry operations or rewrite old records. Displayed task/request content is redacted separately from persisted evidence.
+
 Optional live capabilities share the console, TUI and evaluator configuration:
 
 - `--child-retries N`: permit up to N explicit failed-child replacements across the entire root (default 0, maximum 8). Each replacement preserves the assignment and acceptance, receives failure feedback, and consumes the original shared budgets. Fresh parent-owned inputs can be explicitly offered in the retry request after hash checks; old private files and approvals are not inherited. Opt-in roles can revise their own files through the same version-checked tool. This is bounded retry, not a general dependency planner.

@@ -10,7 +10,7 @@ import hashlib
 import json
 import re
 
-from .core import WorkflowError
+from .core import WorkflowError, canonical_action
 
 TERMINAL = frozenset({"succeeded", "failed", "cancelled"})
 WAITING = frozenset({"waiting_input", "waiting_approval"})
@@ -99,9 +99,9 @@ class WorkflowQueries:
         elapsed = max(0, (row["ended"] if row["ended"] is not None else now) - row["created"])
         waiting = row["wait_seconds"] + (max(0, now - row["wait_started"]) if row["wait_started"] is not None else 0)
         return {"id": row["id"], "chat": row["chat"], "parent": row["parent"], "assignee": row["assignee"],
-                "title": row["title"], "state": row["state"], "created": row["created"], "ended": row["ended"],
+                "title": redact(row["title"]), "state": row["state"], "created": row["created"], "ended": row["ended"],
                 "elapsed_seconds": elapsed, "human_wait_seconds": waiting,
-                "waiting_on_human": row["state"] in WAITING, "evidence": _loads(row["evidence"])}
+                "waiting_on_human": row["state"] in WAITING, "evidence": redact(_loads(row["evidence"]))}
 
     def tasks(self, actor, *, chat=None):
         """All tasks in conversations the actor belongs to (optionally one chat)."""
@@ -174,6 +174,77 @@ class WorkflowQueries:
                 "runner": runner, "artifacts": artifacts,
                 "children": [c["id"] for c in self.db.execute("SELECT id FROM tasks WHERE parent=? ORDER BY rowid", (task,))]}
 
+    def _bound_effect(self, row, action):
+        """Confirm one request's durable receipt; chronology alone proves nothing.
+
+        Legacy unbound file events stay in task history but cannot certify a
+        particular approval. Git's existing operation record supplies that link.
+        This reads evidence only; it never reconciles or replays an action.
+        """
+        try:
+            if row["kind"] != "approval" or row["approved"] != 1 or not row["consumed"]:
+                return None
+            if canonical_action(action)[1] != row["digest"]:
+                return None
+            consumed = []
+            for event in self.db.execute("SELECT * FROM events WHERE task=? AND kind='approval_consumed'", (row["task"],)):
+                detail = _loads(event["detail"], {})
+                if isinstance(detail, dict) and detail.get("request") == row["id"]:
+                    consumed.append(event)
+            if len(consumed) != 1:
+                return None
+            released = consumed[0]
+            if released["actor"] != row["assignee"] or _loads(released["detail"]).get("digest") != row["digest"]:
+                return None
+            candidates = []
+            for event in self.db.execute("SELECT * FROM events WHERE task=? AND kind IN "
+                    "('file_deleted','git_push_verified','git_push_failed','git_push_uncertain')", (row["task"],)):
+                detail = _loads(event["detail"], {})
+                if not isinstance(detail, dict):
+                    continue
+                tool = action.get("tool")
+                if tool == "delete_text" and event["kind"] == "file_deleted" and detail.get("request_id") == row["id"]:
+                    args = action["arguments"]
+                    if (set(action) != {"tool", "arguments"} or set(args) != {"path", "expected_sha256"}
+                            or detail.get("path") != args["path"] or detail.get("sha256") != args["expected_sha256"]
+                            or type(detail.get("bytes")) is not int or detail["bytes"] < 0):
+                        return None
+                elif tool == "git_push" and event["kind"].startswith("git_push_") and self._table("git_operations"):
+                    if not isinstance(detail.get("operation_id"), str):
+                        continue
+                    operation = self.db.execute("SELECT * FROM git_operations WHERE id=?", (detail["operation_id"],)).fetchone()
+                    if operation is None:
+                        continue
+                    arguments, result = _loads(operation["arguments"], {}), _loads(operation["result"])
+                    if not isinstance(arguments, dict) or arguments.get("request_id") != row["id"]:
+                        continue
+                    binding, args = action["binding"], action["arguments"]
+                    if (set(action) != {"tool", "arguments", "binding"}
+                            or set(args) != {"repository", "remote", "branch"}
+                            or any(binding.get(k) != args[k] for k in args)
+                            or arguments != {**binding, "request_id": row["id"]}
+                            or operation["task"] != row["task"] or operation["actor"] != row["assignee"]
+                            or operation["repository"] != binding["repository"]
+                            or operation["operation"] != "push" or operation["status"] != event["kind"].removeprefix("git_push_")
+                            or not isinstance(result, dict) or detail != {"operation_id": operation["id"], **result}):
+                        return None
+                    if (any(result.get(k) != binding[k] for k in ("repository", "branch", "commit", "remote"))
+                            or (operation["status"] == "verified" and (result.get("remote_observed") is not True
+                                or result.get("observed_remote") != binding["commit"]
+                                or type(result.get("exit_code")) is not int or result["exit_code"] != 0
+                                or result.get("interrupted") is not None))):
+                        return None
+                else:
+                    continue
+                if event["sequence"] <= released["sequence"] or event["actor"] != row["assignee"]:
+                    return None
+                candidates.append(event)
+            if len(candidates) == 1:
+                return candidates[0]
+        except (KeyError, TypeError, ValueError, AttributeError):
+            return None
+        return None
+
     def _request_record(self, row):
         action = _loads(row["action"])
         # A granted approval is distinct from a released (consumed) action, and
@@ -192,20 +263,14 @@ class WorkflowQueries:
             status = "granted_stale"
         outcome = None
         if row["consumed"]:
-            effect = self.db.execute("""
-                SELECT kind,detail,timestamp FROM events WHERE task=? AND sequence > (
-                    SELECT sequence FROM events WHERE task=? AND kind='approval_consumed'
-                    AND json_extract(detail,'$.request')=?) AND kind IN
-                    ('file_deleted','git_push_verified','git_push_failed','git_push_uncertain')
-                ORDER BY sequence LIMIT 1
-            """, (row["task"], row["task"], row["id"])).fetchone()
+            effect = self._bound_effect(row, action)
             outcome = ({"kind": effect["kind"], "detail": redact(_loads(effect["detail"], {})),
                         "timestamp": effect["timestamp"]} if effect else
-                       {"kind": "unrecorded", "detail": "Released; no execution result is recorded. Reconcile before any retry."})
+                       {"kind": "unrecorded", "detail": "Released; no uniquely bound execution result is confirmed. Inspect evidence and reconcile before any retry."})
         return {"id": row["id"], "task": row["task"], "kind": row["kind"], "responder": row["responder"],
-                "prompt": row["prompt"], "action": redact(action) if action else None, "digest": row["digest"],
-                "response": row["response"], "status": status, "outcome": outcome,
-                "task_state": row["task_state"], "assignee": row["assignee"], "title": row["title"],
+                "prompt": redact(row["prompt"]), "action": redact(action) if action else None, "digest": row["digest"],
+                "response": redact(row["response"]), "status": status, "outcome": outcome,
+                "task_state": row["task_state"], "assignee": row["assignee"], "title": redact(row["title"]),
                 "chat": row["chat"]}
 
     def requests(self, actor, *, pending_only=False):
