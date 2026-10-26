@@ -83,7 +83,7 @@ ARIN 5203 evidence-audit work and the ARIN 5305 AttnCompress reading may inform 
 - Repository: `Qingthefish/evolutionary-agent-lab`; public visibility was explicitly confirmed by the owner on 2026-10-15.
 - Exact deadlines and the announcement's conflicting three weeks versus 3/1 weeks test-release wording.
 - Evaluation rules for human waiting, repeated runs, and memory persistence.
-- Allowed provider endpoint/model/quota and required sandbox boundary.
+- HKGAI address/model/key are issued and the small A01 tool cycle is verified. Quota, provider latency/limits, official intervention/reset rules and required sandbox interpretation still need confirmation. Two larger A03 requests failed at transport before a completion; they establish neither a cause nor autonomous-model performance.
 
 ## Frozen experience comparison decision
 
