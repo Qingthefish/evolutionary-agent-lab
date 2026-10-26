@@ -20,7 +20,7 @@ The instructor's announcement is the primary scope authority. Build a general mu
 
 2026-10-21: opt-in `--enable-delete` now exposes the existing exact-version deletion request to configured live roles. Human approval and separate release remain mandatory. Checks cover actual file effects, refusal paths, restart and unchanged disabled configurations using mocked provider responses; the real-model smoke test remains pending.
 
-2026-10-26: the instructor released HKGAI connection information. Explicit `--provider hkgai` now selects the issued service for shared console/TUI, scheduler and experience/evaluation setup. A separate four-attempt, 512-output-token connection plan checks one actual tool/result cycle before larger trials. Adapter checks use mocked responses; live acceptance and quota confirmation remain pending. No credential is included in the repository.
+2026-10-26: the instructor released HKGAI connection information. Explicit `--provider hkgai` selects the issued service for shared console/TUI, scheduler and experience/evaluation setup. An owner-authorized real connection check used three requests: `create_text`, `read_text`, then a final proposal. Independent file checks passed with the issued model identity and actual usage/time retained. The plan capped four attempts and 512 output tokens per request; no fourth request or automatic retry was used. This establishes one provider/tool cycle, not live multi-agent collaboration, learning gains or official-test performance. Quota confirmation and subsequent run budgets remain separate. No credential is included in the repository.
 
 ## First 10 minutes / 新成员从这里开始
 
