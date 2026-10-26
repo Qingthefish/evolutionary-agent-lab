@@ -173,7 +173,7 @@ class RuntimeTests(unittest.TestCase):
                 bind_task_policy(session.workflow, root, actor, TaskPolicy())
 
     def test_live_settings_reject_unsupported_or_invalid_setup(self):
-        for change in ({"provider": "hkgai"}, {"provider": "openai"}, {"max_output_tokens": True},
+        for change in ({"provider": "unknown"}, {"provider": []}, {"provider": "openai"}, {"max_output_tokens": True},
                        {"max_output_tokens": 0}, {"allow_network": 1}, {"socket_timeout": float("inf")},
                        {"tool_calls": 0}, {"constraints": "not-an-array"}, {"role_limits": {}}, {"tree_limits": {}}):
             with self.subTest(change=change), self.assertRaises(WorkflowError):

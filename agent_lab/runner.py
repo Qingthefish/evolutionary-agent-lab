@@ -7,6 +7,7 @@ import math
 
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError
+from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolBudgetError, ToolRequestError
 from . import budget
 
@@ -58,9 +59,11 @@ class TaskRunner:
             raise RunnerError("Use explicit limits and the supported provider client")
         if mode not in {"offline_fixture", "live"}:
             raise RunnerError("Explicitly label offline fixture or live mode")
-        is_http = type(client.transport) is DeepSeekHTTP
+        is_http = type(client.transport) in (DeepSeekHTTP, HKGAIHTTP)
         if (mode == "offline_fixture" and is_http) or (mode == "live" and not is_http):
             raise RunnerError("Live and synthetic transports cannot be interchanged")
+        if mode == "live" and type(client) is not (HKGAIClient if type(client.transport) is HKGAIHTTP else DeepSeekClient):
+            raise RunnerError("Live client protocol must match its selected provider")
         if ((verifier is not None and (not callable(verifier) or not isinstance(verifier_id, str) or not verifier_id.strip()))
                 or (verifier is None and verifier_id is not None)):
             raise RunnerError("A trusted verifier needs an explicit stable version identifier")
@@ -86,11 +89,14 @@ class TaskRunner:
                            for value in role["eligible_agents"].values())):
                 raise RunnerError("Role context must match the trusted agent and eligible delegates")
             context.update({"role": role, "task_id": self.task, "parent_task_id": task["parent"], "root_task_id": root["id"]})
-        config = _json({"mode": mode, "model": client.model, "max_output_tokens": client.max_tokens,
+        settings = {"mode": mode, "model": client.model, "max_output_tokens": client.max_tokens,
                         "limits": asdict(limits), "context": context, "tools": gateway.tools(),
                         "execution": gateway.execution_configuration(),
                         "human": gateway.human, "verifier_id": verifier_id,
-                        "prompt_sha256": hashlib.sha256(_PROMPT.encode()).hexdigest()})
+                        "prompt_sha256": hashlib.sha256(_PROMPT.encode()).hexdigest()}
+        if type(client.transport) is HKGAIHTTP:
+            settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
+        config = _json(settings)
         if gateway.message_floor:
             settings = json.loads(config)
             settings["message_floor"] = gateway.message_floor

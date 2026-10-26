@@ -28,14 +28,14 @@ Source: instructor announcement supplied by the user, “Final Project Specifica
 - Final test set: one paragraph says exactly three weeks before final submission.
 - Report paragraph instead refers to mid/final test sets released in the last “3/1 weeks”. Clarify the schedule.
 - Final report is due after week 13; exact due date is not supplied.
-- Dedicated model API keys will be distributed per team later in the semester.
+- The original announcement said dedicated model keys would be distributed later. On 2026-10-26 the instructor's [API announcement](https://canvas.ust.hk/courses/73253/announcements/651390) directed students to the restricted [API Information page](https://canvas.ust.hk/courses/73253/pages/api-information), which now gives the HKGAI address, model and a credential. Do not copy its credential into project documentation. The inspected page does not state quota, pricing or reset policy.
 
 ## Questions affecting design
 
 - Minimum accepted sandbox boundary and meaning of heterogeneous agents under one provider.
 - Human participation during standardized evaluation, and whether waiting time counts toward execution time. Until clarified, record both total wall time and human-wait time separately without excluding either from reports silently.
 - Whether memory persists between final test tasks and whether repeat runs are allowed.
-- Model identity, quota, tool-call support, endpoint, and available search access.
+- HKGAI address/model are supplied; actual credential validity, quota, tool-call compatibility and available search access still need confirmation and bounded validation.
 - Development AI-tool policy and reuse/disclosure rules across courses.
 
 ## Implementation evidence audit (2026-10-21)
@@ -45,6 +45,8 @@ Checked against the original announcement text supplied by the owner, the curren
 D02 console evidence refreshed on 2026-10-22; the instructor requirements and unresolved official rules are unchanged.
 
 D03 approval/effect evidence refreshed on 2026-10-23: exact request receipts replace time-order inference; raw history and instructor requirements remain unchanged.
+
+A01 evidence refreshed on 2026-10-26 following the instructor's API release. An owner-authorized HKGAI smoke used three real requests (create/read/final), retained the issued model, actual usage/time and passed independent file verification. This validates a connection/tool cycle; multi-agent behavior, human interaction, learning and official task performance retain their separate acceptance.
 
 | Requirement | Evidence currently available | Remaining acceptance / Roadmap |
 | --- | --- | --- |
@@ -59,7 +61,7 @@ D03 approval/effect evidence refreshed on 2026-10-23: exact request receipts rep
 | R09 — commit/push to GitHub | Approved local-remote push, scoped credential injection and remote-SHA checks | Runtime push to a designated GitHub test branch with a narrow credential, then actual remote verification; developer pushes are different evidence; [B03](team-roadmap.md#b03), [B04](team-roadmap.md#b04) |
 | R10 — MD/TXT documents | Plain-text document tooling and Markdown reports; JSON/SQLite are internal configuration/state | Maintain this boundary in future tools and official mapping; no PDF/DOCX/PPT parser project |
 | R11 — minimal functional UI | Standard-library console and optional Textual controls over common backend | Teammate clean setup and live task/human round trip; [D01](team-roadmap.md#d01), [D02](team-roadmap.md#d02), [D04](team-roadmap.md#d04) |
-| R12 — allowed model backbone | Explicit DeepSeek HTTP adapter; no alternate provider fallback | Configure issued provider/model/key/quota and verify one real tool cycle; HKGAI adapter depends on its issued specification; [A01](team-roadmap.md#a01) |
+| R12 — allowed model backbone | Explicit DeepSeek and issued HKGAI HTTP adapters; fixed separate hosts and shared setup with no provider fallback. Real HKGAI create/read/final cycle passed independent file checks with observed model/usage/time | Confirm quota and authorize subsequent live trials; connection acceptance in [A01](team-roadmap.md#a01) does not establish the other required model behaviors |
 | R13 — automatic completion/time | Separate goal/subtask outcomes, failures/missing evidence, assignment-to-final-status/observed time and waits | Align official final-output timing, intervention and scoring semantics when issued; [C06](team-roadmap.md#c06). No course performance established |
 | R14 — standardized test set | General development case loader and retained manifests | Actual official format/protocol adapter and full prescribed run; [C06](team-roadmap.md#c06), [S01](team-roadmap.md#s01) |
 | R15 — continuous collaborative history/screenshots | Public repository and preserved actual commits/PRs; audit observed two contributor accounts | Every member's significant ongoing code contribution and final commit-history screenshots; collaborator access alone is insufficient; [S02](team-roadmap.md#s02) |

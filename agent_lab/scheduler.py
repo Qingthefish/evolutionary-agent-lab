@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from . import budget, recovery
 from .deepseek import DeepSeekClient, DeepSeekHTTP
+from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolGateway, _SPECS
 from .runner import Limits, RunnerError, TaskRunner
 from .core import WorkflowError
@@ -86,10 +87,15 @@ class MultiAgentScheduler:
                 raise RunnerError("Roles must match trusted capabilities, agents, delegates, and provider clients")
             models.add(self.clients[agent].model)
             # Validate transport mode before persisting a schedulable run.
-            if (mode == "live") != (type(self.clients[agent].transport) is DeepSeekHTTP):
+            if (mode == "live") != (type(self.clients[agent].transport) in (DeepSeekHTTP, HKGAIHTTP)):
                 raise RunnerError("Live and synthetic scheduler transports cannot be interchanged")
+            if mode == "live" and type(self.clients[agent]) is not (
+                    HKGAIClient if type(self.clients[agent].transport) is HKGAIHTTP else DeepSeekClient):
+                raise RunnerError("Live client protocol must match its selected provider")
         if len(models) != 1:
             raise RunnerError("Use the same explicit allowed-model identifier for every role")
+        if mode == "live" and len({type(c.transport) for c in self.clients.values()}) != 1:
+            raise RunnerError("Use the same explicit allowed provider for every role")
         # The acceptance callable itself remains trusted application code, never
         # a tool argument. Its stable ID must change if its behavior changes.
         settings = {"human": human, "roles": {key: asdict(value) for key, value in self.roles.items()},
@@ -98,6 +104,8 @@ class MultiAgentScheduler:
             "mode": mode, "constraints": constraints, "acceptance_id": acceptance_id,
             "memory_namespace": memory.namespace if memory is not None else None,
             "executor": executor.configuration() if executor is not None else None}
+        if mode == "live" and type(next(iter(self.clients.values())).transport) is HKGAIHTTP:
+            settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
         if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
             settings["git"] = git.configuration()
         if retrieval is not None:

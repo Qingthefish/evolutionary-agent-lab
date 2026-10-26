@@ -69,8 +69,8 @@ class DevelopmentPlanTests(unittest.TestCase):
             path=self.plan_file(root,tree_limits=data['tree_limits'],provider='hkgai',model='issued-hkgai')
             planned=DevelopmentPlan(path)
             self.assertNotEqual(original.sha256,planned.sha256)
-            self.assertTrue(any('HKGAI' in b for b in planned.inspect()['blockers']))
-            with patch.dict('os.environ',{'COURSE_DEEPSEEK_API_KEY':'unused'},clear=True),self.assertRaises(WorkflowError):
+            self.assertEqual(planned.settings['provider'], 'hkgai')
+            with patch.dict('os.environ',{},clear=True),self.assertRaises(WorkflowError):
                 planned.execute(allow_model_calls=True,plan_sha256=planned.sha256,output_root=root/'runs')
 
     def test_unknown_secret_field_empty_selection_and_memory_label_are_rejected(self):

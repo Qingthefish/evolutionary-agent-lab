@@ -80,7 +80,7 @@ class DevelopmentPlan:
             raise WorkflowError('Plan must pin an official Python image by digest')
         if caps['docker_host'] is not None and (not isinstance(caps['docker_host'],str) or not caps['docker_host'].startswith('unix:///')):
             raise WorkflowError('Plan requires an explicit local Docker Unix socket')
-        self.settings=dict(model=data['model'] or 'pending-course-model',provider='deepseek',
+        self.settings=dict(model=data['model'] or 'pending-course-model',provider=data['provider'],
             max_output_tokens=data['max_output_tokens'],role_limits=task_limits,tree_limits=tree_limits,
             tool_calls=data['tool_calls'],enable_web=caps['web'],enable_memory=False,
             child_retries=caps['child_retries'],docker_host=caps['docker_host'],python_image=caps['python_image'],
@@ -100,7 +100,6 @@ class DevelopmentPlan:
 
     def inspect(self):
         blockers=[]
-        if self.data['provider']=='hkgai': blockers.append('HKGAI adapter awaits the issued interface specification')
         if self.data['model'] is None: blockers.append('Course-approved model identifier has not been configured')
         key=os.environ.get(self.data['api_key_env'])
         if not key or any(c.isspace() for c in key): blockers.append('Named model credential variable is missing or invalid')

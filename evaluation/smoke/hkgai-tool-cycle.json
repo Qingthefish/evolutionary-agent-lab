@@ -1,0 +1,13 @@
+{
+  "id": "live-hkgai-tool-smoke",
+  "title": "Bounded provider tool round trip",
+  "driver": "live_scheduler",
+  "goal": "For this small connection check, do the task yourself without delegation: use create_text to write probe.txt containing exactly hkgai-live-ok followed by one newline. After reading the actual tool result, propose completion. This tests only the provider/tool connection, not multi-agent ability.",
+  "constraints": ["Only create the requested task-local plain-text file. No external actions or human simulation."],
+  "expected": {
+    "final_state": "succeeded",
+    "artifacts": {"probe.txt": "hkgai-live-ok\n"},
+    "min_tasks": 1,
+    "max_seconds": 240
+  }
+}

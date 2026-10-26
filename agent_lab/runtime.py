@@ -14,6 +14,7 @@ from .acceptance import normalize_rules, parse_rules, verify_rules
 from .budget import TreeLimits
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP
+from .hkgai import HKGAIClient, HKGAIHTTP
 from .files import _parts
 from .git_tools import GitTools, TrustedRepository, load_trusted_repositories
 from .memory import ExperienceMemory
@@ -57,8 +58,8 @@ class LiveConfig:
     enable_delete: bool = False
 
     def __post_init__(self):
-        if self.provider != "deepseek":
-            raise RuntimeSetupError("Only DeepSeek is implemented; HKGAI awaits its official interface; no provider fallback")
+        if not isinstance(self.provider, str) or self.provider not in {"deepseek", "hkgai"}:
+            raise RuntimeSetupError("Use only DeepSeek or the issued HKGAI service; no provider fallback")
         if not isinstance(self.model, str) or not self.model.strip() or len(self.model) > 128:
             raise RuntimeSetupError("Supply an explicit course-approved model identifier")
         if not isinstance(self.api_key, str) or not self.api_key or any(c.isspace() for c in self.api_key):
@@ -82,6 +83,24 @@ class LiveConfig:
                 or any(v is not None and (not isinstance(v, str) or not v.strip()) for v in (self.docker_host, self.python_image))
                 or not isinstance(self.repositories, tuple) or any(not isinstance(r, TrustedRepository) for r in self.repositories)):
             raise RuntimeSetupError("Use explicit web/memory/deletion settings, paired Docker socket/image and trusted repository records")
+
+
+def provider_endpoint(provider):
+    if provider == "deepseek":
+        return DeepSeekHTTP.endpoint
+    if provider == "hkgai":
+        return HKGAIHTTP.endpoint
+    raise RuntimeSetupError("Unsupported model provider; no fallback")
+
+
+def live_clients(live, roles):
+    """One explicit provider selection for console, scheduler and experience runs."""
+    if not isinstance(live, LiveConfig):
+        raise RuntimeSetupError("Provider clients require LiveConfig")
+    http, client = ((DeepSeekHTTP, DeepSeekClient) if live.provider == "deepseek"
+                    else (HKGAIHTTP, HKGAIClient))
+    transport = http(live.api_key, allow_network=live.allow_network, timeout=live.socket_timeout)
+    return {a: client(live.model, transport, max_tokens=live.max_output_tokens) for a in roles}
 
 
 class RuntimeServices:
@@ -400,9 +419,8 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
                               default=TaskPolicy(live.constraints))
     acceptance_id = "tui-live-human-review-v1" if legacy else policy.acceptance_id
 
-    transport = DeepSeekHTTP(live.api_key, allow_network=live.allow_network, timeout=live.socket_timeout)
     return MultiAgentScheduler(workflow, files, root, human=human, roles=roles,
-        clients={a: DeepSeekClient(live.model, transport, max_tokens=live.max_output_tokens) for a in roles},
+        clients=live_clients(live, roles),
         mode="live", constraints=list(policy.constraints), acceptance_id=acceptance_id,
         verifier_factory=text_acceptance_factory(workflow, files, root, policy),
         limits=live.tree_limits, memory=services.memory if services else None,
@@ -411,7 +429,7 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
 
 
 def add_live_arguments(parser):
-    parser.add_argument("--live", action="store_true", help="Explicitly enable DeepSeek network calls; requires model and key variable")
+    parser.add_argument("--live", action="store_true", help="Explicitly enable the selected DeepSeek/HKGAI service; requires model and key variable")
     parser.add_argument("--provider", default="deepseek", choices=("deepseek", "hkgai"))
     parser.add_argument("--model", help="Explicit course-approved model identifier")
     parser.add_argument("--api-key-env", help="Name of the environment variable holding the issued key")

@@ -12,10 +12,9 @@ import math
 from pathlib import Path
 import re
 
-from ..deepseek import DeepSeekHTTP
 from ..gateway import _SPECS
 from ..runner import _PROMPT
-from ..runtime import LIVE_AGENTS, live_members, live_roles
+from ..runtime import LIVE_AGENTS, live_members, live_roles, provider_endpoint
 
 
 def digest(value):
@@ -35,7 +34,7 @@ def build_manifest(cases, live, memory):
     runtime = {"provider": None, "model": None, "roles": None, "tree_limits": None}
     if live is not None:
         # Deliberate whitelist: asdict(live) would include its private API key.
-        runtime = {"provider": live.provider, "model": live.model, "endpoint": DeepSeekHTTP.endpoint,
+        runtime = {"provider": live.provider, "model": live.model, "endpoint": provider_endpoint(live.provider),
                    "max_output_tokens": live.max_output_tokens, "socket_timeout": live.socket_timeout,
                    "roles": {a: asdict(r) for a, r in live_roles(live_members(live), live).items()},
                    "tree_limits": asdict(live.tree_limits), "constraints": list(live.constraints),
