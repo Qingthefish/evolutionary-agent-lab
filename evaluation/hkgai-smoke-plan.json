@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "purpose": "development",
+  "provider": "hkgai",
+  "model": "t2_hkgai-v3_fp8_1m_e7",
+  "api_key_env": "COURSE_HKGAI_API_KEY",
+  "cases": "smoke",
+  "case_ids": ["live-hkgai-tool-smoke"],
+  "max_output_tokens": 512,
+  "task_limits": {"model_attempts": 4, "reported_tokens": 16000, "duration_seconds": 240, "repeated_outcomes": 2},
+  "tree_limits": {"tasks": 4, "depth": 2, "model_attempts": 4, "reported_tokens": 16000, "tool_calls": 8, "duration_seconds": 240},
+  "tool_calls": 8,
+  "capabilities": {"web": false, "memory": false, "child_retries": 0, "docker_host": null, "python_image": null, "git_config": null}
+}

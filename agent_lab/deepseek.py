@@ -82,6 +82,8 @@ class DeepSeekClient:
     A final assistant message is a proposal, not trusted completion evidence.
     """
 
+    request_options = {"thinking": {"type": "disabled"}}
+
     def __init__(self, model, transport, *, max_tokens=2048):
         if not isinstance(model, str) or not model.strip() or len(model) > 128:
             raise ProviderError("An explicit course-approved model identifier is required")
@@ -95,7 +97,7 @@ class DeepSeekClient:
         if not isinstance(messages, list) or not messages:
             raise ProviderError("Supply a nonempty trusted conversation")
         payload = {"model": self.model, "messages": messages, "stream": False,
-                   "max_tokens": self.max_tokens, "thinking": {"type": "disabled"}}
+                   "max_tokens": self.max_tokens, **self.request_options}
         if tools:
             payload.update(tools=list(tools), tool_choice="auto")
         try:

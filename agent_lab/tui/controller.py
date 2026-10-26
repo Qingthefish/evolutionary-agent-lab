@@ -178,7 +178,7 @@ class ControlCenter:
         return self.call(collect)
 
     def runtimes(self):
-        return {"model": ("DeepSeek configured; network " + ("enabled" if self.live.allow_network else "disabled")) if self.live else "offline fixtures only",
+        return {"model": (self.live.provider + " configured; network " + ("enabled" if self.live.allow_network else "disabled")) if self.live else "offline fixtures only",
                 "sandbox": "isolated Python configured; checked on use" if self.live and self.live.docker_host else "not configured",
                 "search": "public HTTPS configured" if self.live and self.live.enable_web else "disabled",
                 "memory": "private candidate lifecycle enabled" if self.live and self.live.enable_memory else "fixture/API only",

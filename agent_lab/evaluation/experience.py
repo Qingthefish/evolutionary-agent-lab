@@ -15,10 +15,9 @@ from uuid import uuid4
 
 from .. import budget
 from ..core import WorkflowError
-from ..deepseek import DeepSeekClient, DeepSeekHTTP
 from ..protocol import strict_json
 from ..runtime import (LiveConfig, MEMORY_GUIDANCE, RuntimeServices, live_members,
-                       live_roles, text_acceptance_factory)
+                       live_roles, live_clients, text_acceptance_factory)
 from ..scheduler import MultiAgentScheduler
 from .harness import HUMAN, _Session, _case_policy, _checks, _classify
 from .manifest import digest
@@ -124,8 +123,7 @@ class LiveExperienceDriver:
 
     def clients(self, roles, stage):
         config = self.config(stage['phase'])
-        http = DeepSeekHTTP(config.api_key, allow_network=config.allow_network, timeout=config.socket_timeout)
-        return {a:DeepSeekClient(config.model, http, max_tokens=config.max_output_tokens) for a in roles}
+        return live_clients(config, roles)
 
     def scheduler(self, session, root, case, stage, floor):
         config = self.config(stage['phase'])
