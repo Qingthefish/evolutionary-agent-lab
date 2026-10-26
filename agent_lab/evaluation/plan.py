@@ -38,15 +38,17 @@ class DevelopmentPlan:
             raise WorkflowError('Cannot read a bounded, unambiguous development plan') from None
         _object(data,{'version','purpose','provider','model','api_key_env','cases','case_ids',
                       'max_output_tokens','task_limits','tree_limits','tool_calls','capabilities'},'Plan')
-        if type(data['version']) is not int or data['version']!=1 or data['purpose']!='development':
-            raise WorkflowError('Only version-1 development plans are implemented; official protocol is separate')
+        if type(data['version']) is not int or data['version'] not in (1,2) or data['purpose']!='development':
+            raise WorkflowError('Use version-1/2 development plans; official protocol is separate')
         if data['provider'] not in ('deepseek','hkgai'):
             raise WorkflowError('Plan must use the instructor-allowed provider')
         if data['model'] is not None and (not isinstance(data['model'],str) or not data['model'].strip()):
             raise WorkflowError('Model must be null pending issue, or an explicit approved identifier')
         if not isinstance(data['api_key_env'],str) or not re.fullmatch('[A-Za-z_][A-Za-z0-9_]{0,127}',data['api_key_env']):
             raise WorkflowError('Plan takes a credential variable name, never a literal key')
-        _object(data['capabilities'],{'web','memory','child_retries','docker_host','python_image','git_config'},'Capabilities')
+        capability_keys={'web','memory','child_retries','docker_host','python_image','git_config'}
+        if data['version']==2: capability_keys.add('collaboration')
+        _object(data['capabilities'],capability_keys,'Capabilities')
         caps=data['capabilities']
         if caps['memory'] is not False:
             raise WorkflowError('Memory-enabled batch plans await a versioned cross-task/reset protocol')
@@ -85,6 +87,8 @@ class DevelopmentPlan:
             tool_calls=data['tool_calls'],enable_web=caps['web'],enable_memory=False,
             child_retries=caps['child_retries'],docker_host=caps['docker_host'],python_image=caps['python_image'],
             repositories=repositories)
+        if data['version']==2:
+            self.settings['enable_collaboration']=caps['collaboration']
         template=LiveConfig(api_key='not-used-for-plan-inspection',**self.settings)
         for case in self.cases: _case_policy(case,template)
         self.data=data
@@ -106,7 +110,7 @@ class DevelopmentPlan:
         for repository in self.settings['repositories']:
             if repository.credential_env and not os.environ.get(repository.credential_env):
                 blockers.append('A configured runtime Git credential variable is missing')
-        return {'purpose':'development','model_calls':0,'benchmark_valid':False,'plan_sha256':self.sha256,
+        report={'purpose':'development','model_calls':0,'benchmark_valid':False,'plan_sha256':self.sha256,
             'configured_to_attempt':not blockers,'blockers':blockers,
             'selected_cases':[c.id for c in self.cases],
             'maximum_model_attempts':len(self.cases)*self.settings['tree_limits'].model_attempts,
@@ -116,6 +120,11 @@ class DevelopmentPlan:
             'human_protocol':'Pause on real clarification/approval/review; no scripted human answers',
             'memory_protocol':'Fresh empty state per case; memory disabled; no learning comparison',
             'automatic_checks_scope':'Only declared file properties; report facts and arbitrary program correctness need independent tests/review'}
+        if self.settings.get('enable_collaboration'):
+            report['collaboration_protocol']='Model chooses roles/titles/order; scoped specialist delegation/messages enabled; no external backend added'
+            report['child_review_boundary']='Children without an exact predeclared criterion pause for actual trusted review; no automatic acceptance'
+            report['a03_acceptance']='Inspect actual decomposition, negotiation and specialist-to-specialist delegation separately; a successful root or minimum task count alone does not establish them'
+        return report
 
     def execute(self, *, allow_model_calls, plan_sha256, output_root):
         if allow_model_calls is not True or plan_sha256!=self.sha256:
