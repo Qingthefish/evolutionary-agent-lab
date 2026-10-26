@@ -78,10 +78,12 @@ class CollaborationCapabilityTests(unittest.TestCase):
     def test_cli_requires_live_explicit_key_and_strict_boolean(self):
         parser=argparse.ArgumentParser();add_live_arguments(parser)
         with self.assertRaises(WorkflowError):live_config_from_args(parser.parse_args(['--enable-collaboration']))
+        with self.assertRaises(WorkflowError):live_config_from_args(parser.parse_args(['--socket-timeout','90']))
         with patch.dict('os.environ',{'COLLAB_TEST_KEY':'not-persisted'},clear=True):
             config=live_config_from_args(parser.parse_args(['--live','--provider','hkgai','--model','m',
-                '--api-key-env','COLLAB_TEST_KEY','--enable-collaboration']))
+                '--api-key-env','COLLAB_TEST_KEY','--enable-collaboration','--socket-timeout','90']))
             self.assertTrue(config.enable_collaboration);self.assertFalse(config.enable_web or config.enable_memory)
+            self.assertEqual(config.socket_timeout,90)
         for value in (1,'true',None):
             with self.subTest(value=value),self.assertRaises(WorkflowError):
                 replace(config,enable_collaboration=value)
@@ -143,10 +145,23 @@ class CollaborationCapabilityTests(unittest.TestCase):
             plan=DevelopmentPlan(PLAN);record=plan.inspect()
             self.assertEqual(record['maximum_model_attempts'],24)
             self.assertEqual(plan.settings['max_output_tokens'],1024)
+            self.assertEqual(plan.settings['socket_timeout'],90)
+            self.assertEqual(record['provider_request_limits'],{'max_output_tokens':1024,'socket_timeout':90,'automatic_retries':0})
             self.assertEqual(plan.conditions['acceptance'][0].get('child_rules',[]),[])
             self.assertIn('actual trusted review',record['child_review_boundary'])
             self.assertIn('alone does not establish',record['a03_acceptance'])
             self.assertEqual(record['model_calls'],0);network.assert_not_called()
+
+    def test_plan_timeout_is_reviewed_bounded_and_does_not_enable_retry(self):
+        raw=json.loads(PLAN.read_text());raw['cases']=str(PLAN.parent/'collaboration')
+        path=self.root/'timeouts.json'
+        for timeout in (True,0,121,'90'):
+            path.write_text(json.dumps({**raw,'socket_timeout':timeout}))
+            with self.subTest(timeout=timeout),self.assertRaises(WorkflowError):DevelopmentPlan(path)
+        path.write_text(json.dumps({**raw,'socket_timeout':30}))
+        self.assertNotEqual(DevelopmentPlan(PLAN).sha256,DevelopmentPlan(path).sha256)
+        legacy=DevelopmentPlan(ROOT/'evaluation/hkgai-smoke-plan.json')
+        self.assertNotIn('socket_timeout',legacy.settings)
 
 
 if __name__=='__main__':unittest.main()

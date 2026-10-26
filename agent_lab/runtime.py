@@ -436,6 +436,7 @@ def add_live_arguments(parser):
     parser.add_argument("--api-key-env", help="Name of the environment variable holding the issued key")
     parser.add_argument("--constraint", action="append", default=[], help="Original task constraint (repeatable)")
     parser.add_argument("--max-output-tokens", type=int, default=2048)
+    parser.add_argument("--socket-timeout", type=float, default=30, help="Provider socket-operation timeout in seconds (at most 120); not a task deadline or retry policy")
     parser.add_argument("--task-attempts", type=int, default=8)
     parser.add_argument("--tree-attempts", type=int, default=48)
     parser.add_argument("--child-retries", type=int, default=0, help="Shared maximum of explicit failed-child replacements (0 disables; at most 8)")
@@ -452,7 +453,7 @@ def add_live_arguments(parser):
 def live_config_from_args(args):
     if not args.live:
         if (args.model or args.api_key_env or args.constraint or args.provider != "deepseek"
-                or args.max_output_tokens != 2048 or args.task_attempts != 8 or args.tree_attempts != 48
+                or args.max_output_tokens != 2048 or args.socket_timeout != 30 or args.task_attempts != 8 or args.tree_attempts != 48
                 or args.enable_web or args.enable_memory or args.enable_delete or args.enable_collaboration or args.memory_namespace != "runtime-development"
                 or args.docker_host or args.python_image or args.child_retries):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
@@ -463,7 +464,7 @@ def live_config_from_args(args):
     if not key:
         raise RuntimeSetupError("The explicitly named API-key environment variable is not set")
     return LiveConfig(model=args.model, api_key=key, provider=args.provider, allow_network=True,
-        constraints=tuple(args.constraint), max_output_tokens=args.max_output_tokens,
+        constraints=tuple(args.constraint), max_output_tokens=args.max_output_tokens, socket_timeout=args.socket_timeout,
         role_limits=replace(Limits(), model_attempts=args.task_attempts),
         tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts), enable_web=args.enable_web,
         enable_memory=args.enable_memory, memory_namespace=args.memory_namespace,

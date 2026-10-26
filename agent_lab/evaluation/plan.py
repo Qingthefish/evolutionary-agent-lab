@@ -36,8 +36,10 @@ class DevelopmentPlan:
             data=strict_json(raw.decode('utf-8'))
         except (OSError,ValueError,RecursionError):
             raise WorkflowError('Cannot read a bounded, unambiguous development plan') from None
-        _object(data,{'version','purpose','provider','model','api_key_env','cases','case_ids',
-                      'max_output_tokens','task_limits','tree_limits','tool_calls','capabilities'},'Plan')
+        plan_keys={'version','purpose','provider','model','api_key_env','cases','case_ids',
+                   'max_output_tokens','task_limits','tree_limits','tool_calls','capabilities'}
+        if isinstance(data,dict) and data.get('version')==2: plan_keys.add('socket_timeout')
+        _object(data,plan_keys,'Plan')
         if type(data['version']) is not int or data['version'] not in (1,2) or data['purpose']!='development':
             raise WorkflowError('Use version-1/2 development plans; official protocol is separate')
         if data['provider'] not in ('deepseek','hkgai'):
@@ -89,6 +91,7 @@ class DevelopmentPlan:
             repositories=repositories)
         if data['version']==2:
             self.settings['enable_collaboration']=caps['collaboration']
+            self.settings['socket_timeout']=data['socket_timeout']
         template=LiveConfig(api_key='not-used-for-plan-inspection',**self.settings)
         for case in self.cases: _case_policy(case,template)
         self.data=data
@@ -120,6 +123,9 @@ class DevelopmentPlan:
             'human_protocol':'Pause on real clarification/approval/review; no scripted human answers',
             'memory_protocol':'Fresh empty state per case; memory disabled; no learning comparison',
             'automatic_checks_scope':'Only declared file properties; report facts and arbitrary program correctness need independent tests/review'}
+        if self.data['version']==2:
+            report['provider_request_limits']={'max_output_tokens':self.settings['max_output_tokens'],
+                'socket_timeout':self.settings['socket_timeout'],'automatic_retries':0}
         if self.settings.get('enable_collaboration'):
             report['collaboration_protocol']='Model chooses roles/titles/order; scoped specialist delegation/messages enabled; no external backend added'
             report['child_review_boundary']='Children without an exact predeclared criterion pause for actual trusted review; no automatic acceptance'
