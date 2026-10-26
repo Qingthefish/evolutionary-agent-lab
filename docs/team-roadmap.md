@@ -1,6 +1,6 @@
 # Team roadmap and task register
 
-Updated: 2026-10-23 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. The instructor's [requirements](requirements.md) remain the scope authority; agreed claims are recorded below.
+Updated: 2026-10-26 (Asia/Hong_Kong). **Discuss in WeChat; record task claims, progress and acceptance here.** This is the single task register. The instructor's [requirements](requirements.md) remain the scope authority; agreed claims are recorded below.
 
 **How to read progress:** Use the accepted baseline and milestone exit evidence, not a ratio of Done cards to all cards. I01–I03 record the review/integration of PRs #7–#9; substantial earlier work in #1–#6 is recorded separately in [Accepted baseline](#accepted-baseline). The card index covers that integration and the remaining delivery work, rather than every historical task. Cards differ in size and may be split as evidence reveals more work. Those integration records alone do **not** measure the whole project; no overall percentage is established.
 
@@ -189,14 +189,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Validate the issued model connection**
 
-- **Stage / status:** M2 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M2 / In progress
+- **Owner:** Qingthefish (owner-authorized continuation, Codex-assisted)
 - **Dependencies / configuration:** Issued DeepSeek/HKGAI endpoint/model/key/quota and an authorized experiment budget.
 - **Scope:** Existing provider/protocol adapter and its live smoke-check entry point.
 - **Acceptance:** One real structured tool request/result cycle is recorded with model identity, attempts, usage, time and sanitized failure evidence; no fallback provider or credential in commits.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Baseline f57ca99; branch feat/A01-hkgai-provider; main claim recorded before feature coding. No live model evidence yet.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted self-review, no independent teammate approval claimed.
+- **Progress / review changes / outcome:** 2026-10-26: owner requested the course API email check and project continuation. The instructor's API announcement and restricted course API Information page now supply the HKGAI service address and model; credentials remain private. No overlapping open PR or new remote commit observed. Scope is the issued HKGAI adapter, shared live setup/evaluation wiring and bounded connection/tool-cycle evidence; preserve C07's claimed branch. Exact quota is absent from the inspected page; local credential storage and an initial maximum-four-request/512-output-token-per-request smoke budget await the owner's response. No model request is authorized by the announcement text alone.
 
 ### A02
 
