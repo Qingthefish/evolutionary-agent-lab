@@ -46,6 +46,8 @@ def build_manifest(cases, live, memory):
                                     "repositories_sha256": digest([asdict(r) for r in live.repositories]) if live.repositories else None}}
         if live.enable_delete:
             runtime["capabilities"]["delete"] = "task-local-exact-version-human-release-v1"
+        if live.enable_collaboration:
+            runtime["capabilities"]["collaboration"] = "scoped-specialist-delegation-messages-v1"
     manifest = {"schema_version": 1, "cases": definitions, "runtime": runtime,
                 "code_sha256": digest(sources), "prompt_sha256": digest(_PROMPT),
                 "tools_sha256": digest(_SPECS),

@@ -56,6 +56,7 @@ class LiveConfig:
     repositories: tuple = ()
     child_retries: int = 0
     enable_delete: bool = False
+    enable_collaboration: bool = False
 
     def __post_init__(self):
         if not isinstance(self.provider, str) or self.provider not in {"deepseek", "hkgai"}:
@@ -76,7 +77,7 @@ class LiveConfig:
             raise RuntimeSetupError("Child replacement limit must be an integer from 0 to 8")
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
         if (type(self.enable_web) is not bool or type(self.enable_memory) is not bool
-                or type(self.enable_delete) is not bool
+                or type(self.enable_delete) is not bool or type(self.enable_collaboration) is not bool
                 or not isinstance(self.memory_namespace, str) or not self.memory_namespace.strip()
                 or len(self.memory_namespace) > 64
                 or bool(self.docker_host) != bool(self.python_image)
@@ -313,7 +314,7 @@ def live_roles(members, config=None):
     roles = {}
     for agent in present:
         instructions, tools = specs[agent]
-        expanded = config and (config.enable_web or config.enable_memory or config.docker_host or config.repositories)
+        expanded = config and (config.enable_collaboration or config.enable_web or config.enable_memory or config.docker_host or config.repositories)
         if config and config.enable_web and agent in {"researcher", "coordinator"}:
             tools = (*tools, "search_web", "retrieve_text")
             if agent == "researcher":
@@ -435,12 +436,14 @@ def add_live_arguments(parser):
     parser.add_argument("--api-key-env", help="Name of the environment variable holding the issued key")
     parser.add_argument("--constraint", action="append", default=[], help="Original task constraint (repeatable)")
     parser.add_argument("--max-output-tokens", type=int, default=2048)
+    parser.add_argument("--socket-timeout", type=float, default=30, help="Provider socket-operation timeout in seconds (at most 120); not a task deadline or retry policy")
     parser.add_argument("--task-attempts", type=int, default=8)
     parser.add_argument("--tree-attempts", type=int, default=48)
     parser.add_argument("--child-retries", type=int, default=0, help="Shared maximum of explicit failed-child replacements (0 disables; at most 8)")
     parser.add_argument("--enable-web", action="store_true", help="Permit bounded public HTTPS search/retrieval in live mode")
     parser.add_argument("--enable-memory", action="store_true", help="Enable private candidate experience retrieval and outcome capture")
     parser.add_argument("--enable-delete", action="store_true", help="Permit task-local exact-version deletion requests; human approval and release are still required")
+    parser.add_argument("--enable-collaboration", action="store_true", help="Permit eligible specialists to delegate and read scoped coordination messages without enabling external tools")
     parser.add_argument("--memory-namespace", default="runtime-development")
     parser.add_argument("--docker-host", help="Explicit local Docker Unix socket; never starts the engine")
     parser.add_argument("--python-image", help="Official Python image pinned by SHA-256 digest; never pulled automatically")
@@ -450,8 +453,8 @@ def add_live_arguments(parser):
 def live_config_from_args(args):
     if not args.live:
         if (args.model or args.api_key_env or args.constraint or args.provider != "deepseek"
-                or args.max_output_tokens != 2048 or args.task_attempts != 8 or args.tree_attempts != 48
-                or args.enable_web or args.enable_memory or args.enable_delete or args.memory_namespace != "runtime-development"
+                or args.max_output_tokens != 2048 or args.socket_timeout != 30 or args.task_attempts != 8 or args.tree_attempts != 48
+                or args.enable_web or args.enable_memory or args.enable_delete or args.enable_collaboration or args.memory_namespace != "runtime-development"
                 or args.docker_host or args.python_image or args.child_retries):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
         return None
@@ -461,10 +464,10 @@ def live_config_from_args(args):
     if not key:
         raise RuntimeSetupError("The explicitly named API-key environment variable is not set")
     return LiveConfig(model=args.model, api_key=key, provider=args.provider, allow_network=True,
-        constraints=tuple(args.constraint), max_output_tokens=args.max_output_tokens,
+        constraints=tuple(args.constraint), max_output_tokens=args.max_output_tokens, socket_timeout=args.socket_timeout,
         role_limits=replace(Limits(), model_attempts=args.task_attempts),
         tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts), enable_web=args.enable_web,
         enable_memory=args.enable_memory, memory_namespace=args.memory_namespace,
         docker_host=args.docker_host, python_image=args.python_image,
         repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else (), child_retries=args.child_retries,
-        enable_delete=args.enable_delete)
+        enable_delete=args.enable_delete, enable_collaboration=args.enable_collaboration)

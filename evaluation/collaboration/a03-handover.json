@@ -1,0 +1,25 @@
+{
+  "id": "live-collaborative-handover",
+  "title": "Model-chosen work split and independently checked totals",
+  "driver": "live_scheduler",
+  "goal": "As a team, prepare report.md summarizing these self-contained orders: Alpha has quantity 2 at unit price 12; Beta has quantity 3 at unit price 8; Gamma has quantity 5 at unit price 6. Arrange collaborative drafting and an independent check with suitable specialists. Choose the roles, subtask titles, work split and order yourselves; coordinate scope and hand over actual artifacts. The final report must include every input row, the line amounts, and exact lines Total units: 10 and Total amount: 78, plus sections ## Checks and ## Limitations explaining what was checked and the limits of these data. No external facts are needed. This is a development collaboration probe, not the instructor's test set.",
+  "constraints": [
+    "Use Markdown/TXT documents only. Retain the original order quantities/prices and distinguish observations from assumptions.",
+    "Pass artifacts only through explicit offer/accept tools; conversation text is not proof of a file handoff or human authorization.",
+    "A delegated task without a predeclared independent criterion must stop for real trusted review; do not simulate a reviewer or human reply."
+  ],
+  "expected": {
+    "final_state": "succeeded",
+    "min_tasks": 3,
+    "max_seconds": 600,
+    "criteria": [
+      {"path":"report.md","kind":"contains","expected":"Total units: 10","min_bytes":120},
+      {"path":"report.md","kind":"contains","expected":"Total amount: 78"},
+      {"path":"report.md","kind":"contains","expected":"Alpha"},
+      {"path":"report.md","kind":"contains","expected":"Beta"},
+      {"path":"report.md","kind":"contains","expected":"Gamma"},
+      {"path":"report.md","kind":"contains","expected":"## Checks"},
+      {"path":"report.md","kind":"contains","expected":"## Limitations"}
+    ]
+  }
+}
