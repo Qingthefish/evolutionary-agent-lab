@@ -217,14 +217,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Demonstrate live autonomous delegation**
 
-- **Stage / status:** M2 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M2 / In progress
+- **Owner:** Qingthefish (owner-authorized continuation, Codex-assisted)
 - **Dependencies / configuration:** A01 and A02.
-- **Scope:** Role instructions/capability configuration and delegation integration checks; retain scheduler budgets.
+- **Scope:** Opt-in shared collaboration capability independent of web/memory/execution/Git; versioned development plan and focused checks. Retain scheduler budgets, exact child criteria and real human-review boundaries; no C07 edits or automatic approval of model-chosen tasks.
 - **Acceptance:** A live high-level goal produces model-chosen decomposition, role negotiation and specialist-to-specialist delegation, with constraints and outcomes recorded. Fixed scripted role choices do not meet acceptance.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Baseline e502074; branch feat/A03-collaboration-capability; main claim recorded before feature coding. No new live run yet.
+- **Reviewer:** Qingthefish coordinates; Codex-assisted self-review, no independent peer approval claimed.
+- **Progress / review changes / outcome:** 2026-10-26: owner requested a finish-line audit and continued development after A01. No new remote changes/open PR observed. Inspection found specialist delegation/read_messages depends on optional web/memory/Docker/Git enablement. Add a separate opt-in collaboration flag without enabling those backends or changing existing configurations. Prepare a bounded high-level text task whose roles and subtask titles are model chosen; unmatched children still require actual trusted review. The initial A01 authorization ended after three requests; this work does not reuse it for a new trial. Claim covers engineering preparation; final A03 acceptance still requires observed live decomposition, negotiation and specialist-to-specialist delegation.
 
 ### A04
 
