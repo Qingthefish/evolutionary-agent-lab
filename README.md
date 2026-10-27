@@ -98,6 +98,8 @@ Use `python3 -m agent_lab demo --state-dir runs/my-first-demo` to choose a **new
 
 The provider code uses an explicitly selected DeepSeek or course-issued HKGAI endpoint, requires an explicit model ID, and disables network use by default. No alternate provider, local model, or synthetic fallback is selected automatically. Live use needs the corresponding credential, an authorized experiment budget, and validation against the selected endpoint/model. The runner caps per-task attempts and observed token usage; its token threshold is checked after a response and is not a strict billing cap. See [provider and gateway boundaries](docs/architecture.md#provider-protocol-and-tool-gateway).
 
+Provider failures now retain a sanitized category and phase in a durable `provider_request_failed` event: timeout, DNS, TLS, connection or HTTP-protocol failure, response size or completion parsing. Raw exception reasons, URLs, headers and bodies are excluded. Actual localhost checks reproduce a malformed status line that previously escaped and left a task calling; it now records a terminal failure without retry. An error's request-processing flag remains conservative and never proves zero billing or permission to replay. Historical generic errors are preserved without inventing their missing cause.
+
 The offline checks have passed locally on Python 3.12 and 3.14. A [CI workflow template](docs/ci-workflow.yml) is provided for later installation as `.github/workflows/checks.yml`; it is **not enabled**, because the current Git push credential cannot add Actions workflows. No GitHub Actions result is claimed. Read [architecture and boundaries](docs/architecture.md) before connecting an executor or model.
 
 ## Run the terminal control center
