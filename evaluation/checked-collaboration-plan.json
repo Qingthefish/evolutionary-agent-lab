@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "purpose": "development",
+  "provider": "hkgai",
+  "model": "t2_hkgai-v3_fp8_1m_e7",
+  "api_key_env": "COURSE_HKGAI_API_KEY",
+  "cases": "collaboration",
+  "case_ids": [
+    "live-checked-order-handover"
+  ],
+  "max_output_tokens": 1024,
+  "socket_timeout": 90,
+  "task_limits": {
+    "model_attempts": 12,
+    "reported_tokens": 48000,
+    "duration_seconds": 900,
+    "repeated_outcomes": 2
+  },
+  "tree_limits": {
+    "tasks": 6,
+    "depth": 4,
+    "model_attempts": 24,
+    "reported_tokens": 96000,
+    "tool_calls": 80,
+    "duration_seconds": 900
+  },
+  "tool_calls": 32,
+  "capabilities": {
+    "collaboration": true,
+    "web": false,
+    "memory": false,
+    "child_retries": 0,
+    "docker_host": null,
+    "python_image": null,
+    "git_config": null
+  }
+}

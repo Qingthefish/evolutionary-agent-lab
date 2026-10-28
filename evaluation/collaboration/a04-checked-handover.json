@@ -1,0 +1,87 @@
+{
+  "id": "live-checked-order-handover",
+  "title": "Declared-criteria draft, independent recomputation and completed parent",
+  "driver": "live_scheduler",
+  "goal": "Prepare an independently checked order report as a team. Orders: Alpha quantity 2, unit price 12; Beta quantity 3, unit price 8; Gamma quantity 5, unit price 6. Produce report.md and totals.json in the coordinator's final workspace. totals.json must be an object with lines (an array in the input order, each with item, quantity, unit_price, amount), total_units and total_amount. report.md must retain every input quantity/price, show the line amounts, include exact lines Total units: 10 and Total amount: 78, and sections ## Checks and ## Limitations.\n\nFor this bounded example there are two supported work contracts: writer task titled exactly Draft order totals produces totals.json in the schema above; editor task titled exactly Check order totals independently recomputes the values from the original orders and inspects the delivered draft, then produces check.json with line_amounts (an object keyed Alpha, Beta, Gamma), total_units and total_amount. Use both contracts once. Choose the delegation sequence and coordination yourselves; specialists may delegate to one another. Communicate scope using group messages when useful. Pass real file snapshots through offer_artifact/accept_artifact; the checker must receive and read the actual draft, and the coordinator must receive the results needed for the final report. A tool call may require task IDs from persisted child results. You may inspect tool schemas and use tool feedback. Final text alone does not create files or finish unverified work. No web, code execution or Git operation is needed in this example.",
+  "constraints": [
+    "Use Markdown/TXT for documents; JSON here is internal structured numeric evidence, not a proprietary document format.",
+    "The original order rows are the source of truth. Recompute line amounts and totals; do not equate a self-written statement with independent correctness.",
+    "These exact role/title labels select independently supplied automatic checks for this example only. Unknown or ambiguous children still need actual human review; never invent a human reply.",
+    "Only explicit artifact offers grant cross-workspace access; messages and file names are not file transfers or action authorization.",
+    "This is a development wiring probe with predeclared work contracts, not the instructor test set or proof of open-ended decomposition/negotiation."
+  ],
+  "expected": {
+    "final_state": "succeeded",
+    "min_tasks": 3,
+    "max_seconds": 900,
+    "criteria": [
+      {
+        "path": "totals.json",
+        "kind": "json_equals",
+        "expected": "{\"lines\":[{\"amount\":24,\"item\":\"Alpha\",\"quantity\":2,\"unit_price\":12},{\"amount\":24,\"item\":\"Beta\",\"quantity\":3,\"unit_price\":8},{\"amount\":30,\"item\":\"Gamma\",\"quantity\":5,\"unit_price\":6}],\"total_amount\":78,\"total_units\":10}"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Total units: 10",
+        "min_bytes": 120
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Total amount: 78"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Alpha"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Beta"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Gamma"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "## Checks"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "## Limitations"
+      }
+    ],
+    "subtasks": [
+      {
+        "assignee": "writer",
+        "title": "Draft order totals",
+        "final_state": "succeeded",
+        "criteria": [
+          {
+            "path": "totals.json",
+            "kind": "json_equals",
+            "expected": "{\"lines\":[{\"amount\":24,\"item\":\"Alpha\",\"quantity\":2,\"unit_price\":12},{\"amount\":24,\"item\":\"Beta\",\"quantity\":3,\"unit_price\":8},{\"amount\":30,\"item\":\"Gamma\",\"quantity\":5,\"unit_price\":6}],\"total_amount\":78,\"total_units\":10}"
+          }
+        ]
+      },
+      {
+        "assignee": "editor",
+        "title": "Check order totals",
+        "final_state": "succeeded",
+        "criteria": [
+          {
+            "path": "check.json",
+            "kind": "json_equals",
+            "expected": "{\"line_amounts\":{\"Alpha\":24,\"Beta\":24,\"Gamma\":30},\"total_amount\":78,\"total_units\":10}"
+          }
+        ]
+      }
+    ]
+  }
+}
