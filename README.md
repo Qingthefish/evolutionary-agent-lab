@@ -62,7 +62,7 @@ Use these entry points to inspect the current implementation; a module's presenc
 | Model protocol and allowed tool dispatch | [protocol.py](agent_lab/protocol.py), [deepseek.py](agent_lab/deepseek.py), [gateway.py](agent_lab/gateway.py) |
 | Shared live configuration, task policies and CLI flags | [runtime.py](agent_lab/runtime.py) |
 | Task execution, delegation and shared limits | [runner.py](agent_lab/runner.py), [scheduler.py](agent_lab/scheduler.py), [budget.py](agent_lab/budget.py) |
-| Controlled files, public text retrieval and private candidate memory | [files.py](agent_lab/files.py), [retrieval.py](agent_lab/retrieval.py), [memory.py](agent_lab/memory.py) |
+| Controlled files, public text retrieval and private candidate memory | [files.py](agent_lab/files.py), [provenance.py](agent_lab/provenance.py), [retrieval.py](agent_lab/retrieval.py), [memory.py](agent_lab/memory.py) |
 | Python sandbox and restricted Git operations | [sandbox.py](agent_lab/sandbox.py), [git_tools.py](agent_lab/git_tools.py) |
 | Frozen experience trials and reset/provenance boundaries | [experience.py](agent_lab/evaluation/experience.py), [memory_protocol.py](agent_lab/evaluation/memory_protocol.py) |
 | Terminal interface and development evaluator | [tui/](agent_lab/tui/), [evaluation/](agent_lab/evaluation/) |
@@ -224,7 +224,7 @@ Example trusted structural policy (these expectations must be authored independe
 {"criteria":[{"path":"report.md","kind":"contains","expected":"## Sources","min_bytes":100},{"path":"scratch.txt","kind":"absent"}],"child_rules":[{"assignee":"writer","title":"Write structured result","criteria":[{"path":"data.json","kind":"json_equals","expected":"{\"count\":3}"}]}]}
 ```
 
-Supported kinds are `exists`, `absent`, `contains`, `json_equals` and `sha256`, with bounded `min_bytes`/`max_bytes`. JSON criteria are for internal structured data, not complex document formats. Unsupported/unknown task acceptance still needs trusted review; candidate-produced “tests passed” text is never enough to satisfy missing criteria.
+Supported kinds are `exists`, `absent`, `contains`, `json_equals`, `sha256` and `received_from`, with bounded `min_bytes`/`max_bytes`. JSON criteria are for internal structured data, not complex document formats. `received_from` takes an exact source assignee/title/path plus explicit `allow_relay` and `require_read` booleans; it checks identity-bound consumed receipts and ordered reads of the same file version. Identical recreated content alone does not prove delivery. Unsupported/unknown task acceptance still needs trusted review; candidate-produced “tests passed” text is never enough to satisfy missing criteria.
 
 ## Inspect or exercise the memory comparison protocol
 

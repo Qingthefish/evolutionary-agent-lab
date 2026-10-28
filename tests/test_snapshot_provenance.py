@@ -105,7 +105,7 @@ class SnapshotProvenanceTests(unittest.TestCase):
         self.workflow.db.execute('UPDATE events SET detail=? WHERE sequence=?', (json.dumps(detail), row['sequence']))
         self.assertTrue(self.check())  # Exact ID is already in the trusted successful gateway result.
         self.workflow.db.execute("UPDATE tool_calls SET result=? WHERE task=? AND call_id='accept'", (
-            json.dumps({'ok': True, 'result': {'path': 'input.txt', **self.original}}), self.editor))
+            json.dumps({'ok': True, 'result': {**self.original, 'path': 'input.txt'}}), self.editor))
         self.assertFalse(self.check())
 
     def test_conflicting_explicit_receipts_do_not_prove_delivery(self):
