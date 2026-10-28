@@ -26,6 +26,8 @@ _PATH = _text("Relative path inside this task's files", maximum=512)
 _HASH = {"type": "string", "pattern": "^[0-9a-f]{64}$"}
 _CONTENT = _text("UTF-8 text or source code", maximum=65536, empty=True)
 _SPECS = {
+    "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
+        "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
     "create_text": ("Create a new file without overwriting", {"path": _PATH, "content": _CONTENT}),
     "update_text": ("Replace the exact previously read version", {
@@ -351,6 +353,19 @@ class ToolGateway:
             return getattr(self.files, name)(self.task, self.actor, **args)
         if name == "ask_human":
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}
+        if name == "list_tasks":
+            root = self.workflow._task(self.task, self.actor, assigned=True)
+            while root["parent"]:
+                root = self.workflow._task(root["parent"], self.actor)
+            rows = self.workflow.db.execute("""WITH RECURSIVE tree(id) AS (
+                SELECT ? UNION ALL SELECT t.id FROM tasks t JOIN tree ON t.parent=tree.id
+            ) SELECT t.id,t.parent,t.assignee,t.title,t.state FROM tasks t JOIN tree ON tree.id=t.id
+              ORDER BY t.rowid LIMIT ?""", (root["id"], args["limit"] + 1)).fetchall()
+            for row in rows:
+                self.workflow._task(row["id"], self.actor)
+            return {"root_task_id": root["id"], "current_task_id": self.task,
+                    "tasks": [dict(row) for row in rows[:args["limit"]]], "truncated": len(rows) > args["limit"],
+                    "authority": "Task metadata only; no file access, approval or human response granted"}
         if name == "retry_failed_task":
             from .recovery import replace_failed
             for path, expected in args["input_files"].items():
