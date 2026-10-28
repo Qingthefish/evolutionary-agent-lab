@@ -298,6 +298,8 @@ class TaskRunner:
             with self.workflow._transaction():
                 self.workflow.db.execute("UPDATE runner_turns SET status='provider_error',error=?,ended=? WHERE task=? AND number=?",
                                          (str(error), self.workflow.clock(), self.task, number))
+                self.workflow._event(self.task, self.actor, "provider_request_failed",
+                    {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
                 if self._session()["status"] != "calling":
                     return self.status()
             return self._stop("Provider attempt failed; usage may be unknown; reconcile before retry")
