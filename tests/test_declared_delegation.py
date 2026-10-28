@@ -11,7 +11,7 @@ from agent_lab.deepseek import DeepSeekHTTP
 from agent_lab.evaluation.cases import load_cases, parse_case
 from agent_lab.evaluation.harness import _case_policy
 from agent_lab.gateway import ToolGateway
-from agent_lab.runtime import ChildTextRule, LiveConfig, TaskPolicy, bind_task_policy
+from agent_lab.runtime import ChildTextRule, LiveConfig, TaskPolicy, bind_task_policy, live_members, live_roles
 from agent_lab.tui.controller import ControlCenter
 from test_runner import Script, response, tool
 
@@ -106,6 +106,16 @@ class DeclaredDelegationTests(unittest.TestCase):
                 delegation_rules=(('editor', 'Check note'),))
             return [t['function']['name'] for t in gateway.tools()]
         self.assertEqual(self.runner_call(schemas), ['create_text'])
+
+    def test_directory_is_opt_in_and_does_not_expand_existing_comparison_roles(self):
+        legacy = live_roles(live_members(self.live), self.live)
+        self.assertTrue(all('list_tasks' not in role.tools for role in legacy.values()))
+        strict = self.runner_call(lambda r, b: {t['function']['name'] for t in r.gateway.tools()})
+        self.assertIn('list_tasks', strict)
+        other = self.center.create_task(self.chat, 'coordinator', 'Legacy open-ended task')['task']
+        self.center.call(lambda b: b.workflow.start_task(other, 'coordinator'))
+        names = self.center.call(lambda b: {t['function']['name'] for t in b.scheduler(other).runner(other).gateway.tools()})
+        self.assertNotIn('list_tasks', names)
 
     def test_malformed_trusted_rules_fail_without_releasing_a_tool(self):
         def construct(runner, backend, rules):

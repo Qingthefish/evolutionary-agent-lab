@@ -334,9 +334,8 @@ def live_roles(members, config=None):
             tools = (*tools, "search_memory", "select_memory", "record_lesson")
             instructions += MEMORY_GUIDANCE
         if expanded:
-            tools = tuple(dict.fromkeys((*tools, "delegate_task", "delegate_with_inputs", "post_message", "read_messages", "list_tasks")))
+            tools = tuple(dict.fromkeys((*tools, "delegate_task", "delegate_with_inputs", "post_message", "read_messages")))
             instructions += " Negotiate scope using conversation messages and delegate to eligible specialists when needed; do not discard the global constraints."
-            instructions += " Use list_tasks to inspect task IDs/states instead of asking the human for internal coordination data. If the required peer task does not exist, delegate it when eligible or offer your completed artifact to parent_task_id. Once your assigned deliverable is ready and offered, submit a final assistant response with no tool calls for independent verification. Parents continue after their children finish; do not poll chat waiting for a parent before finishing your own work."
         if config and config.child_retries:
             tools = tuple(dict.fromkeys((*tools, "retry_failed_task", "update_text")))
             instructions += " On child failure inspect its evidence; a bounded retry must preserve the identical assignment and acceptance, with a concrete repair reason. Denials and unknown effects cannot be retried."
@@ -432,6 +431,10 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
     policy = bind_task_policy(workflow, root, human, TaskPolicy() if legacy else policy,
                               default=TaskPolicy(live.constraints))
     acceptance_id = "tui-live-human-review-v1" if legacy else policy.acceptance_id
+    if policy.declared_subtasks_only:
+        guidance = " Use list_tasks to inspect task IDs/states instead of asking the human for internal coordination data. If the required peer task does not exist, delegate it when eligible or offer your completed artifact to parent_task_id. Once your assigned deliverable is ready and offered, submit a final assistant response with no tool calls for independent verification. Parents continue after their children finish; do not poll chat waiting for a parent before finishing your own work."
+        roles = {a: replace(r, tools=tuple(dict.fromkeys((*r.tools, "list_tasks"))),
+                            instructions=r.instructions + guidance) for a, r in roles.items()}
 
     return MultiAgentScheduler(workflow, files, root, human=human, roles=roles,
         clients=live_clients(live, roles),
