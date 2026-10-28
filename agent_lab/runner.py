@@ -152,7 +152,12 @@ class TaskRunner:
         uncertain = self.workflow.db.execute(
             "SELECT count(*) FROM runner_turns WHERE task=? AND response IS NULL", (self.task,),
         ).fetchone()[0]
-        return {"mode": self.mode, "runner_state": session["status"], "task_state": task["state"],
+        # A trusted review can finish a task without another scheduler turn.
+        # Derive the display state without rewriting historical session records.
+        state = session["status"]
+        if state == "awaiting_verification" and task["state"] in {"succeeded", "failed", "cancelled"}:
+            state = task["state"]
+        return {"mode": self.mode, "runner_state": state, "task_state": task["state"],
                 "protocol_attempts": session["attempts"],
                 "live_model_attempts": session["attempts"] if self.mode == "live" else 0,
                 "reported_tokens": session["tokens"], "unknown_usage_attempts": uncertain,
@@ -402,14 +407,22 @@ class TaskRunner:
             return self._finish_turn(number, [{"role": "user", "content": _json(feedback)}], feedback)
         return self._finish_turn(number, [], {"verified": True}, state="succeeded")
 
-    def review_failed(self, feedback):
+    def review_failed(self, feedback, *, reviewer=None):
         """Trusted evaluator only; resume from an independently rejected final answer."""
         if not isinstance(feedback, str) or not feedback.strip() or len(feedback) > 4096:
             raise RunnerError("Provide concrete bounded verification feedback")
         with self.workflow._transaction():
             session = self._session()
-            if session["status"] != "awaiting_verification":
+            task = self.workflow._task(self.task, self.actor, assigned=True)
+            if session["status"] != "awaiting_verification" or task["state"] != "running":
                 raise RunnerError("No proposal is awaiting independent verification")
+            if reviewer is not None:
+                self.workflow._task(self.task, reviewer)
+                if self.workflow._row("actors", reviewer)["kind"] != "human":
+                    raise RunnerError("Only a human supervisor may record a human review")
+                self.workflow._event(self.task, reviewer, "human_review_recorded", {
+                    "decision": "rejected", "feedback": feedback, "proposal_attempt": session["attempts"],
+                })
             transcript = json.loads(session["transcript"]) + [{"role": "user", "content": _json({
                 "kind": "trusted_verification_failure", "error": feedback,
             })}]

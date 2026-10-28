@@ -162,7 +162,12 @@ class WorkflowQueries:
                         "final_text": redact(response["message"].get("content"), limit=600)
                                       if response and response["finish_reason"] == "stop" else None,
                     })
-                runner = {"mode": config.get("mode"), "model": config.get("model"), "status": session["status"],
+                # Accepted/cancelled proposals need no subsequent model turn to
+                # stop appearing in review queues. Keep the stored history intact.
+                status = session["status"]
+                if status == "awaiting_verification" and row["state"] in TERMINAL:
+                    status = row["state"]
+                runner = {"mode": config.get("mode"), "model": config.get("model"), "status": status,
                           "attempts": session["attempts"], "reported_tokens": session["tokens"],
                           "stop_reason": session["stop_reason"], "verifier_id": config.get("verifier_id"),
                           "synthetic": config.get("mode") != "live", "turns": turns}
