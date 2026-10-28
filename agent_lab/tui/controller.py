@@ -381,7 +381,13 @@ class ControlCenter:
 
     def review(self, task, *, accept, feedback):
         """Trusted human review of a proposal awaiting independent verification."""
+        if type(accept) is not bool or not isinstance(feedback, str) or len(feedback) > 4096:
+            raise ControllerError("Provide a review decision and feedback of at most 4096 characters")
         def run(b):
+            require_human(b.queries, b.human)
+            task_record = b.workflow.task(task, b.human)
+            if task_record["state"] != "running":
+                raise ControllerError("No proposal from this task is awaiting review")
             scheduler = b.scheduler(b.root_of(task))
             if scheduler is None:
                 raise ControllerError("No scheduler owns this task")
@@ -389,12 +395,22 @@ class ControlCenter:
             if runner.status()["runner_state"] != "awaiting_verification":
                 raise ControllerError("No proposal from this task is awaiting review")
             if accept:
-                assignee = b.workflow.task(task, b.human)["assignee"]
-                b.workflow.finish_task(task, assignee, checks={"human_review_accepted": True})
+                assignee = task_record["assignee"]
+                def reviewed_checks():
+                    state = runner.status()
+                    if state["runner_state"] != "awaiting_verification":
+                        raise ControllerError("No proposal from this task is awaiting review")
+                    # This event commits with task success, or both roll back.
+                    b.workflow._event(task, b.human, "human_review_recorded", {
+                        "decision": "accepted", "feedback": feedback,
+                        "proposal_attempt": state["protocol_attempts"],
+                    })
+                    return {"human_review_accepted": True}
+                b.workflow.finish_task(task, assignee, verifier=reviewed_checks)
                 if b.services is not None and b.services.memory is not None:
                     b.services.memory.observe_terminal(task, assignee)
             else:
-                runner.review_failed(feedback)
+                runner.review_failed(feedback, reviewer=b.human)
         return self._action(f"{'Accepted' if accept else 'Rejected'} proposal for {task[:8]}", run)
 
     def recover_claim(self, task):

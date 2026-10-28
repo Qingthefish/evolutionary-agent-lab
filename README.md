@@ -22,6 +22,8 @@ The instructor's announcement is the primary scope authority. Build a general mu
 
 2026-10-26: the instructor released HKGAI connection information. Explicit `--provider hkgai` selects the issued service for shared console/TUI, scheduler and experience/evaluation setup. An owner-authorized real connection check used three requests: `create_text`, `read_text`, then a final proposal. Independent file checks passed with the issued model identity and actual usage/time retained. The plan capped four attempts and 512 output tokens per request; no fourth request or automatic retry was used. This establishes one provider/tool cycle, not live multi-agent collaboration, learning gains or official-test performance. Quota confirmation and subsequent run budgets remain separate. No credential is included in the repository.
 
+2026-10-28: provider faults now stop with bounded diagnostic evidence rather than leaving malformed-response tasks running. Human review records its actual actor/decision/feedback; completed proposals no longer appear awaiting review after restart. Read-only checks preserve historical records and do not fabricate past approvals. The real writer/editor trial remains partial; no new model requests are implied by these fixes.
+
 ## First 10 minutes / 新成员从这里开始
 
 1. Clone this repository and open **the repository root** in Codex. This makes the project `AGENTS.md` available to the coding assistant. Accept the collaborator invitation before pushing changes.
