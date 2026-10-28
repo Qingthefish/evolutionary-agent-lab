@@ -115,6 +115,22 @@ class SnapshotProvenanceTests(unittest.TestCase):
         self.workflow._event(self.editor, 'editor', 'artifact_received', json.loads(row['detail']))
         self.assertFalse(self.check())
 
+    def test_malformed_legacy_gateway_records_fail_closed_without_a_checker_crash(self):
+        offer = self.offer()
+        gateway = ToolGateway(self.workflow, self.files, self.editor, 'editor', human='human',
+                              allowed=('accept_artifact', 'read_text'))
+        gateway.dispatch(tool('accept_artifact', {'artifact_id': offer['artifact_id'], 'path': 'input.txt'}, 'accept'))
+        gateway.dispatch(tool('read_text', {'path': 'input.txt'}, 'read'))
+        row = self.workflow.db.execute("SELECT sequence,detail FROM events WHERE task=? AND kind='artifact_received'", (self.editor,)).fetchone()
+        detail = json.loads(row['detail']); detail.pop('artifact_id')
+        self.workflow.db.execute('UPDATE events SET detail=? WHERE sequence=?', (json.dumps(detail), row['sequence']))
+        call = dict(self.workflow.db.execute("SELECT * FROM tool_calls WHERE task=? AND call_id='accept'", (self.editor,)).fetchone())
+        for field, malformed in [('arguments', '[]'), ('result', '[]'), ('result', '{"ok":true,"result":[]}')]:
+            self.workflow.db.execute(f"UPDATE tool_calls SET {field}=? WHERE task=? AND call_id='accept'", (malformed, self.editor))
+            self.assertFalse(self.check())
+            self.workflow.db.execute(f"UPDATE tool_calls SET {field}=? WHERE task=? AND call_id='accept'", (call[field], self.editor))
+        self.assertTrue(self.check())
+
     def test_failed_source_cannot_certify_an_otherwise_valid_transfer(self):
         offer = self.offer(); self.accept(offer); self.files.read_text(self.editor, 'editor', 'input.txt')
         self.assertTrue(self.check())

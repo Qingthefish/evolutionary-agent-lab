@@ -3,8 +3,6 @@
 A matching value or conversational assertion cannot prove delivery. Historical
 gateway accept results already bind artifact IDs; unbound chronology does not.
 """
-import json
-
 from .budget import descendants
 from .core import WorkflowError
 from .files import _parts
@@ -80,6 +78,8 @@ def received_from(workflow, task, path, sha256, size, spec):
         for call in db.execute('SELECT * FROM tool_calls WHERE task=? AND name="accept_artifact" AND status="succeeded"', (target,)):
             try:
                 args = strict_json(call['arguments']); output = strict_json(call['result'])
+                if not isinstance(args, dict) or not isinstance(output, dict) or not isinstance(output.get('result'), dict):
+                    return None
                 result = output['result']
                 if (call['actor'] != actor or output.get('ok') is not True
                         or args.get('artifact_id') != artifact['id'] or result.get('artifact_id') != artifact['id']
