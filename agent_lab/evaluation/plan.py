@@ -13,7 +13,7 @@ from ..core import WorkflowError
 from ..git_tools import load_trusted_repositories
 from ..protocol import strict_json
 from ..runner import Limits
-from ..runtime import LiveConfig, live_members, live_roles
+from ..runtime import LiveConfig, live_members, live_roles, live_roles_for_policy
 from .cases import load_cases
 from .harness import Evaluator, _case_policy
 from .manifest import digest
@@ -103,6 +103,9 @@ class DevelopmentPlan:
             'acceptance':[ _case_policy(c,template).record() for c in self.cases],
             'roles':{a:asdict(r) for a,r in live_roles(live_members(template),template).items()},
             'repositories': [asdict(r) for r in repositories], 'code_sha256':digest(sources)}
+        if any(c.expected.declared_subtasks_only for c in self.cases):
+            self.conditions['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
+                live_members(template),template,_case_policy(c,template)).items()} for c in self.cases}
         self.sha256=digest(self.conditions)
 
     def inspect(self):
@@ -130,6 +133,10 @@ class DevelopmentPlan:
             report['collaboration_protocol']='Model chooses roles/titles/order; scoped specialist delegation/messages enabled; no external backend added'
             report['child_review_boundary']='Children without an exact predeclared criterion pause for actual trusted review; no automatic acceptance'
             report['a03_acceptance']='Inspect actual decomposition, negotiation and specialist-to-specialist delegation separately; a successful root or minimum task count alone does not establish them'
+        if 'case_roles' in self.conditions:
+            report['declared_child_contracts'] = {c.id: [{'assignee':s.assignee,'title':s.title}
+                for s in c.expected.subtasks] for c in self.cases if c.expected.declared_subtasks_only}
+            report['effective_roles']='Per-case case_roles includes opt-in task directory; roles is the base role set'
         return report
 
     def execute(self, *, allow_model_calls, plan_sha256, output_root):

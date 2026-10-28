@@ -103,7 +103,7 @@ def _case_policy(case, live):
         (*s.criteria, *(ArtifactRule(p,"absent") for p in s.absent_artifacts))) for s in case.expected.subtasks
         if s.final_state == "succeeded" and (s.artifacts or s.criteria or s.absent_artifacts))
     return policy_for_task(live, constraints=case.constraints, root_artifacts=case.expected.artifacts,
-        child_rules=children, root_criteria=(*case.expected.criteria,
+        child_rules=children, declared_subtasks_only=case.expected.declared_subtasks_only, root_criteria=(*case.expected.criteria,
             *(ArtifactRule(p,"absent") for p in case.expected.absent_artifacts)) if case.expected.final_state == "succeeded" else ())
 
 

@@ -26,6 +26,8 @@ _PATH = _text("Relative path inside this task's files", maximum=512)
 _HASH = {"type": "string", "pattern": "^[0-9a-f]{64}$"}
 _CONTENT = _text("UTF-8 text or source code", maximum=65536, empty=True)
 _SPECS = {
+    "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
+        "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
     "create_text": ("Create a new file without overwriting", {"path": _PATH, "content": _CONTENT}),
     "update_text": ("Replace the exact previously read version", {
@@ -105,7 +107,8 @@ class ToolGateway:
     """
 
     def __init__(self, workflow, files, task, actor, *, human, allowed,
-                 memory=None, delegates=(), max_calls=32, executor=None, git=None, retrieval=None, message_floor=0):
+                 memory=None, delegates=(), max_calls=32, executor=None, git=None, retrieval=None, message_floor=0,
+                 delegation_rules=None):
         self.workflow, self.files, self.memory = workflow, files, memory
         self.task, self.actor, self.human = task, actor, human
         self.executor, self.git = executor, git
@@ -114,6 +117,13 @@ class ToolGateway:
             raise ToolRequestError("Message boundary must be a nonnegative sequence number")
         self.message_floor = message_floor
         self.allowed, self.delegates = frozenset(allowed), frozenset(delegates)
+        if delegation_rules is not None and (not isinstance(delegation_rules, tuple) or not 1 <= len(delegation_rules) <= 100
+                or any(not isinstance(r, tuple) or len(r) != 2
+                       or any(not isinstance(v, str) or not v.strip() or len(v) > limit
+                              for v, limit in zip(r, (128, 4096))) for r in delegation_rules)
+                or len(set(delegation_rules)) != len(delegation_rules)):
+            raise ToolRequestError("Use distinct trusted assignee/title delegation rules")
+        self.delegation_rules = None if delegation_rules is None else frozenset(delegation_rules)
         if (not self.allowed or not self.allowed <= _SPECS.keys()
                 or type(max_calls) is not int or not 1 <= max_calls <= 1000):
             raise ToolRequestError("Invalid tool allowlist or call cap")
@@ -163,6 +173,12 @@ class ToolGateway:
             properties = json.loads(json.dumps(properties))
             if name in {"delegate_task", "delegate_with_inputs"}:
                 properties["assignee"]["enum"] = sorted(self.delegates)
+                if self.delegation_rules is not None:
+                    eligible = [(a, t) for a, t in self.delegation_rules if a in self.delegates]
+                    if not eligible:
+                        continue
+                    properties["assignee"]["enum"] = sorted({a for a, _ in eligible})
+                    properties["title"]["enum"] = sorted({t for _, t in eligible})
             if name in _GIT_TOOLS:
                 properties["repository"]["enum"] = sorted(self.git.repositories)
             result.append({"type": "function", "function": {"name": name, "description": description,
@@ -196,6 +212,10 @@ class ToolGateway:
             self._validate_value(arguments[key], spec)
         if name in {"delegate_task", "delegate_with_inputs"} and arguments["assignee"] not in self.delegates:
             raise ToolRequestError("Assignee is not an eligible delegate")
+        if (name in {"delegate_task", "delegate_with_inputs"} and self.delegation_rules is not None
+                and (arguments["assignee"], arguments["title"]) not in self.delegation_rules):
+            raise ToolRequestError("Unknown declared child work; use one of the trusted assignee/title pairs: " +
+                json.dumps(sorted((a, t) for a, t in self.delegation_rules if a in self.delegates))[:3000])
         if name in _GIT_TOOLS and arguments["repository"] not in self.git.repositories:
             raise ToolRequestError("Repository is not in the trusted allowlist")
         if name == "run_python":
@@ -333,6 +353,19 @@ class ToolGateway:
             return getattr(self.files, name)(self.task, self.actor, **args)
         if name == "ask_human":
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}
+        if name == "list_tasks":
+            root = self.workflow._task(self.task, self.actor, assigned=True)
+            while root["parent"]:
+                root = self.workflow._task(root["parent"], self.actor)
+            rows = self.workflow.db.execute("""WITH RECURSIVE tree(id) AS (
+                SELECT ? UNION ALL SELECT t.id FROM tasks t JOIN tree ON t.parent=tree.id
+            ) SELECT t.id,t.parent,t.assignee,t.title,t.state FROM tasks t JOIN tree ON tree.id=t.id
+              ORDER BY t.rowid LIMIT ?""", (root["id"], args["limit"] + 1)).fetchall()
+            for row in rows:
+                self.workflow._task(row["id"], self.actor)
+            return {"root_task_id": root["id"], "current_task_id": self.task,
+                    "tasks": [dict(row) for row in rows[:args["limit"]]], "truncated": len(rows) > args["limit"],
+                    "authority": "Task metadata only; no file access, approval or human response granted"}
         if name == "retry_failed_task":
             from .recovery import replace_failed
             for path, expected in args["input_files"].items():

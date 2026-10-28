@@ -328,10 +328,11 @@ class ControlCenter:
     def post_message(self, chat, body):
         return self._action(f"Posted message to {chat[:8]}", lambda b: b.workflow.post_message(chat, b.human, body))
 
-    def create_task(self, chat, assignee, title, *, constraints=(), expected_artifacts=(), child_rules=(), root_criteria=()):
+    def create_task(self, chat, assignee, title, *, constraints=(), expected_artifacts=(), child_rules=(), root_criteria=(), declared_subtasks_only=False):
         """Create a real task. Posting a message never creates or runs a task."""
         policy = policy_for_task(self.live, constraints=constraints, root_artifacts=expected_artifacts,
-                                 child_rules=child_rules, root_criteria=root_criteria)
+                                 child_rules=child_rules, root_criteria=root_criteria,
+                                 declared_subtasks_only=declared_subtasks_only)
         def create(b):
             task = b.workflow.create_task(chat, b.human, assignee, title)
             bind_task_policy(b.workflow, task, b.human, policy)
