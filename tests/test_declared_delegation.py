@@ -10,6 +10,8 @@ from agent_lab.core import WorkflowError
 from agent_lab.deepseek import DeepSeekHTTP
 from agent_lab.evaluation.cases import load_cases, parse_case
 from agent_lab.evaluation.harness import _case_policy
+from agent_lab.evaluation.plan import DevelopmentPlan
+from agent_lab.evaluation.manifest import build_manifest
 from agent_lab.gateway import ToolGateway
 from agent_lab.runtime import ChildTextRule, LiveConfig, TaskPolicy, bind_task_policy, live_members, live_roles
 from agent_lab.tui.controller import ControlCenter
@@ -148,6 +150,23 @@ class DeclaredDelegationTests(unittest.TestCase):
             with self.assertRaises(WorkflowError): parse_case(changed)
         data['expected']['subtasks'][0].pop('criteria')
         with self.assertRaisesRegex(WorkflowError, 'independently checked'): parse_case(data)
+
+    def test_inspected_and_reported_case_roles_match_actual_scheduler_roles(self):
+        plan = DevelopmentPlan(ROOT / 'evaluation/checked-collaboration-plan.json')
+        live = LiveConfig(api_key='unused-key', allow_network=True, **plan.settings)
+        center = ControlCenter(self.path / 'conditions', live=live)
+        try:
+            case = plan.cases[0]; policy = _case_policy(case, live)
+            chat = center.create_conversation('group', list(live_members(live)))
+            root = center.create_task(chat, 'coordinator', case.goal, constraints=case.constraints,
+                expected_artifacts=policy.root_artifacts, child_rules=policy.child_rules,
+                root_criteria=policy.root_criteria, declared_subtasks_only=True)['task']
+            actual = center.call(lambda b: json.loads(b.workflow.db.execute(
+                'SELECT config FROM scheduler_runs WHERE root=?', (root,)).fetchone()[0])['roles'])
+            normal = lambda value: json.loads(json.dumps(value))
+            self.assertEqual(actual, normal(plan.conditions['case_roles'][case.id]))
+            self.assertEqual(actual, build_manifest(plan.cases, live, 'off')['runtime']['case_roles'][case.id])
+        finally: center.close()
 
 
 if __name__ == '__main__': unittest.main()

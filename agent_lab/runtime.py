@@ -351,6 +351,16 @@ def live_roles(members, config=None):
     return roles
 
 
+def live_roles_for_policy(members, config, policy):
+    """Effective roles shared by launchers and evidence manifests."""
+    roles = live_roles(members, config)
+    if policy.declared_subtasks_only:
+        guidance = " Use list_tasks to inspect task IDs/states instead of asking the human for internal coordination data. If the required peer task does not exist, delegate it when eligible or offer your completed artifact to parent_task_id. Once your assigned deliverable is ready and offered, submit a final assistant response with no tool calls for independent verification. Parents continue after their children finish; do not poll chat waiting for a parent before finishing your own work."
+        roles = {a: replace(r, tools=tuple(dict.fromkeys((*r.tools, "list_tasks"))),
+                            instructions=r.instructions + guidance) for a, r in roles.items()}
+    return roles
+
+
 def text_acceptance_factory(workflow, files, root, policy):
     """One trusted policy for live wiring and explicitly labelled offline checks."""
     def matches(rule):
@@ -431,10 +441,7 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
     policy = bind_task_policy(workflow, root, human, TaskPolicy() if legacy else policy,
                               default=TaskPolicy(live.constraints))
     acceptance_id = "tui-live-human-review-v1" if legacy else policy.acceptance_id
-    if policy.declared_subtasks_only:
-        guidance = " Use list_tasks to inspect task IDs/states instead of asking the human for internal coordination data. If the required peer task does not exist, delegate it when eligible or offer your completed artifact to parent_task_id. Once your assigned deliverable is ready and offered, submit a final assistant response with no tool calls for independent verification. Parents continue after their children finish; do not poll chat waiting for a parent before finishing your own work."
-        roles = {a: replace(r, tools=tuple(dict.fromkeys((*r.tools, "list_tasks"))),
-                            instructions=r.instructions + guidance) for a, r in roles.items()}
+    roles = live_roles_for_policy(members, live, policy)
 
     return MultiAgentScheduler(workflow, files, root, human=human, roles=roles,
         clients=live_clients(live, roles),
