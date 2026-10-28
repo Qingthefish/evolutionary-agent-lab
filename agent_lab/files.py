@@ -177,9 +177,13 @@ class FileTools:
         if not isinstance(expected_sha256, str) or _sha(data) != expected_sha256:
             raise FileToolError("Content digest changed or did not match the expected version")
 
-    def _receipt(self, task, actor, operation, path, data, *, request_id=None):
+    def _receipt(self, task, actor, operation, path, data, *, request_id=None, artifact_id=None):
         result = {"path": path, "sha256": _sha(data), "bytes": len(data)}
-        detail = result if request_id is None else {**result, "request_id": request_id}
+        detail = dict(result)
+        if request_id is not None:
+            detail["request_id"] = request_id
+        if artifact_id is not None:
+            detail["artifact_id"] = artifact_id
         self.workflow._event(task, actor, operation, detail)
         return result
 
@@ -262,7 +266,7 @@ class FileTools:
             with self._parent(directory, path, create=True) as (parent, name):
                 self._create(parent, name, data)
             self.workflow.db.execute("UPDATE artifacts SET consumed=1 WHERE id=?", (artifact_id,))
-            result = self._receipt(task, actor, "artifact_received", path, data)
+            result = self._receipt(task, actor, "artifact_received", path, data, artifact_id=artifact_id)
             return {**result, "artifact_id": artifact_id}
 
     def text_verifier(self, task, actor, expected):

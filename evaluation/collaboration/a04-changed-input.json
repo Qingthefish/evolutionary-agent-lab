@@ -1,0 +1,96 @@
+{
+  "id": "live-checked-order-variation",
+  "title": "Different-input checked order handover",
+  "driver": "live_scheduler",
+  "goal": "Prepare an independently checked order report as a team. Orders: Delta quantity 4, unit price 7; Epsilon quantity 1, unit price 15; Zeta quantity 3, unit price 9. Produce report.md and totals.json in the coordinator's final workspace. totals.json must be an object with lines (an array in the input order, each with item, quantity, unit_price, amount), total_units and total_amount. report.md must retain every input quantity/price, show the line amounts, include exact lines Total units: 8 and Total amount: 70, and sections ## Checks and ## Limitations.\n\nFor this bounded example there are two supported work contracts: writer task titled exactly \"Draft order totals\" produces totals.json in the schema above; editor task titled exactly \"Check order totals\" independently recomputes the values from the original orders and inspects the delivered draft, then produces check.json with line_amounts (an object keyed Delta, Epsilon, Zeta), total_units and total_amount. Use both contracts once. Choose the delegation sequence and coordination yourselves; specialists may delegate to one another. Communicate scope using group messages when useful. Pass real file snapshots through offer_artifact/accept_artifact; the checker must receive and read the actual draft, and the coordinator must receive the results needed for the final report. A tool call may require task IDs from persisted child results. You may inspect tool schemas and use tool feedback. Final text alone does not create files or finish unverified work. No web, code execution or Git operation is needed in this example.",
+  "constraints": [
+    "Use Markdown/TXT for documents; JSON here is internal structured numeric evidence, not a proprietary document format.",
+    "The original order rows are the source of truth. Recompute line amounts and totals; do not equate a self-written statement with independent correctness.",
+    "These exact role/title labels select independently supplied automatic checks for this example only. Unknown or ambiguous children still need actual human review; never invent a human reply.",
+    "Only explicit artifact offers grant cross-workspace access; messages and file names are not file transfers or action authorization.",
+    "This is a development wiring probe with predeclared work contracts, not the instructor test set or proof of open-ended decomposition/negotiation.",
+    "Only the declared writer/editor contracts may be delegated in this bounded example. If a delegation is refused, use the exact assignee/title pair returned by the tool; do not invent a replacement acceptance rule.",
+    "When your assigned deliverable is ready and any necessary parent artifact offer has been made, submit a final assistant response with no tool calls. That proposes completion to the independent verifier; it does not bypass checks. A parent continues after its children finish, so do not repeatedly poll chat waiting for the parent to act before you finish your own child task.",
+    "The checker must accept the actual writer snapshot into totals.json and read that version before submitting its check. Arrange its input offer before it starts when using delegate_with_inputs; a chat statement or independently recreated matching file cannot certify delivery."
+  ],
+  "expected": {
+    "final_state": "succeeded",
+    "min_tasks": 3,
+    "max_seconds": 900,
+    "criteria": [
+      {
+        "path": "totals.json",
+        "kind": "json_equals",
+        "expected": "{\"lines\":[{\"amount\":28,\"item\":\"Delta\",\"quantity\":4,\"unit_price\":7},{\"amount\":15,\"item\":\"Epsilon\",\"quantity\":1,\"unit_price\":15},{\"amount\":27,\"item\":\"Zeta\",\"quantity\":3,\"unit_price\":9}],\"total_amount\":70,\"total_units\":8}"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Total units: 8",
+        "min_bytes": 120
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Total amount: 70"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Delta"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Epsilon"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "Zeta"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "## Checks"
+      },
+      {
+        "path": "report.md",
+        "kind": "contains",
+        "expected": "## Limitations"
+      }
+    ],
+    "subtasks": [
+      {
+        "assignee": "writer",
+        "title": "Draft order totals",
+        "final_state": "succeeded",
+        "criteria": [
+          {
+            "path": "totals.json",
+            "kind": "json_equals",
+            "expected": "{\"lines\":[{\"amount\":28,\"item\":\"Delta\",\"quantity\":4,\"unit_price\":7},{\"amount\":15,\"item\":\"Epsilon\",\"quantity\":1,\"unit_price\":15},{\"amount\":27,\"item\":\"Zeta\",\"quantity\":3,\"unit_price\":9}],\"total_amount\":70,\"total_units\":8}"
+          }
+        ]
+      },
+      {
+        "assignee": "editor",
+        "title": "Check order totals",
+        "final_state": "succeeded",
+        "criteria": [
+          {
+            "path": "check.json",
+            "kind": "json_equals",
+            "expected": "{\"line_amounts\":{\"Delta\":28,\"Epsilon\":15,\"Zeta\":27},\"total_amount\":70,\"total_units\":8}"
+          },
+          {
+            "path": "totals.json",
+            "kind": "received_from",
+            "expected": "{\"allow_relay\":true,\"assignee\":\"writer\",\"path\":\"totals.json\",\"require_read\":true,\"title\":\"Draft order totals\"}"
+          }
+        ]
+      }
+    ],
+    "declared_subtasks_only": true
+  }
+}
