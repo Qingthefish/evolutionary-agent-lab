@@ -186,6 +186,7 @@ class TaskPolicy:
     root_artifacts: tuple = ()
     child_rules: tuple = ()
     root_criteria: tuple = ()
+    declared_subtasks_only: bool = False
 
     def __post_init__(self):
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
@@ -197,6 +198,8 @@ class TaskPolicy:
         if len({(r.assignee, r.title) for r in rules}) != len(rules):
             raise RuntimeSetupError("Duplicate child acceptance selector")
         object.__setattr__(self, "child_rules", rules)
+        if type(self.declared_subtasks_only) is not bool or (self.declared_subtasks_only and not rules):
+            raise RuntimeSetupError("Declared-only delegation requires a boolean and nonempty trusted child rules")
         object.__setattr__(self, "root_criteria", normalize_rules(self.root_criteria))
         if set(p for p, _ in self.root_artifacts) & {r.path for r in self.root_criteria if r.kind == "absent"}:
             raise RuntimeSetupError("Artifact cannot be required present and absent")
@@ -207,6 +210,10 @@ class TaskPolicy:
             record.update(version=2, child_rules=[r.record() for r in self.child_rules])
         if self.root_criteria or any(r.criteria for r in self.child_rules):
             record.update(version=3, child_rules=[r.record() for r in self.child_rules],
+                          root_criteria=[r.record() for r in self.root_criteria])
+        if self.declared_subtasks_only:
+            record.update(version=4, declared_subtasks_only=True,
+                          child_rules=[r.record() for r in self.child_rules],
                           root_criteria=[r.record() for r in self.root_criteria])
         return record
 
@@ -220,16 +227,16 @@ def _encode(value):
     return json.dumps(value, sort_keys=True, allow_nan=False, ensure_ascii=True)
 
 
-def policy_for_task(live=None, *, constraints=(), root_artifacts=(), child_rules=(), root_criteria=()):
+def policy_for_task(live=None, *, constraints=(), root_artifacts=(), child_rules=(), root_criteria=(), declared_subtasks_only=False):
     if live is not None and not isinstance(live, LiveConfig):
         raise RuntimeSetupError("Use the shared LiveConfig")
-    return TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)), root_artifacts, child_rules, root_criteria)
+    return TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)), root_artifacts, child_rules, root_criteria, declared_subtasks_only)
 
 
 def policy_from_spec(data, live=None):
     """Trusted console/config input only; no model tool may set acceptance."""
-    if not isinstance(data, dict) or not data.keys() <= {"artifacts", "child_rules", "criteria", "constraints"}:
-        raise RuntimeSetupError("Policy accepts artifacts, criteria, child_rules and constraints only")
+    if not isinstance(data, dict) or not data.keys() <= {"artifacts", "child_rules", "criteria", "constraints", "declared_subtasks_only"}:
+        raise RuntimeSetupError("Policy accepts artifacts, criteria, child_rules, constraints and declared_subtasks_only only")
     records = data.get("child_rules", [])
     if not isinstance(records, list):
         raise RuntimeSetupError("Child rules must be an array")
@@ -238,7 +245,8 @@ def policy_from_spec(data, live=None):
     except (TypeError, AttributeError):
         raise RuntimeSetupError("Invalid child acceptance rule") from None
     return policy_for_task(live, constraints=data.get("constraints", ()), root_artifacts=data.get("artifacts", ()),
-                           child_rules=children, root_criteria=parse_rules(data.get("criteria", [])))
+                           child_rules=children, root_criteria=parse_rules(data.get("criteria", [])),
+                           declared_subtasks_only=data.get("declared_subtasks_only", False))
 
 
 def bind_task_policy(workflow, root, human, policy=None, *, default=None):
@@ -258,16 +266,19 @@ def bind_task_policy(workflow, root, human, policy=None, *, default=None):
                 data = strict_json(row["policy"])
                 version = data.get("version") if isinstance(data, dict) else None
                 fields = {"version", "constraints", "root_artifacts"}
-                if type(version) is not int or version not in (1, 2, 3):
+                if type(version) is not int or version not in (1, 2, 3, 4):
                     raise ValueError()
                 if version >= 2:
                     fields.add("child_rules")
-                if version == 3:
+                if version >= 3:
                     fields.add("root_criteria")
+                if version == 4:
+                    fields.add("declared_subtasks_only")
                 if set(data) != fields or not isinstance(data["root_artifacts"], dict):
                     raise ValueError()
                 stored = policy_from_spec({"constraints": data["constraints"], "artifacts": data["root_artifacts"],
-                    "child_rules": data.get("child_rules", []), "criteria": data.get("root_criteria", [])})
+                    "child_rules": data.get("child_rules", []), "criteria": data.get("root_criteria", []),
+                    "declared_subtasks_only": data.get("declared_subtasks_only", False)})
                 if stored.record() != data:
                     raise ValueError()
 
@@ -415,7 +426,8 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
         # Direct API callers cannot accidentally omit the launcher's constraints.
         # UI/evaluation already supply this prefix; do not append it twice.
         policy = policy_for_task(live, constraints=policy.constraints, root_artifacts=policy.root_artifacts,
-                                 child_rules=policy.child_rules, root_criteria=policy.root_criteria)
+                                 child_rules=policy.child_rules, root_criteria=policy.root_criteria,
+                                 declared_subtasks_only=policy.declared_subtasks_only)
     policy = bind_task_policy(workflow, root, human, TaskPolicy() if legacy else policy,
                               default=TaskPolicy(live.constraints))
     acceptance_id = "tui-live-human-review-v1" if legacy else policy.acceptance_id
@@ -426,7 +438,8 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
         verifier_factory=text_acceptance_factory(workflow, files, root, policy),
         limits=live.tree_limits, memory=services.memory if services else None,
         executor=services.executor if services else None, git=services.git if services else None,
-        retrieval=services.retrieval if services else None, capture_memory=live.enable_memory, child_retries=live.child_retries)
+        retrieval=services.retrieval if services else None, capture_memory=live.enable_memory, child_retries=live.child_retries,
+        delegation_rules=tuple((r.assignee, r.title) for r in policy.child_rules) if policy.declared_subtasks_only else None)
 
 
 def add_live_arguments(parser):

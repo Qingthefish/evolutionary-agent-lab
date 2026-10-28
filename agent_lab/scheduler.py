@@ -41,11 +41,13 @@ class Role:
 class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
-                 memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0):
+                 memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
+                 delegation_rules=None):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
+        self.delegation_rules = delegation_rules
         self.memory, self.executor, self.git = memory, executor, git
         self.retrieval, self.capture_memory = retrieval, capture_memory
         if type(capture_memory) is not bool or (capture_memory and memory is None):
@@ -116,6 +118,13 @@ class MultiAgentScheduler:
             settings["child_retries"] = child_retries
         if message_floor:
             settings["message_floor"] = message_floor
+        if delegation_rules is not None:
+            if (not isinstance(delegation_rules, tuple) or not 1 <= len(delegation_rules) <= 100
+                    or any(not isinstance(r, tuple) or len(r) != 2 or not isinstance(r[0], str) or r[0] not in self.roles
+                           or not isinstance(r[1], str) or not r[1].strip() or len(r[1]) > 4096 for r in delegation_rules)
+                    or len(set(delegation_rules)) != len(delegation_rules)):
+                raise RunnerError("Use distinct trusted delegation rules for configured roles")
+            settings["delegation_rules"] = sorted(delegation_rules)
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
@@ -143,7 +152,8 @@ class MultiAgentScheduler:
         role = self.roles[actor]
         gateway = ToolGateway(self.workflow, self.files, task_id, actor, human=self.human,
             allowed=role.tools, delegates=role.delegates, memory=self.memory,
-            executor=self.executor, max_calls=role.tool_calls, git=self.git, retrieval=self.retrieval, message_floor=self.message_floor)
+            executor=self.executor, max_calls=role.tool_calls, git=self.git, retrieval=self.retrieval, message_floor=self.message_floor,
+            delegation_rules=self.delegation_rules)
         acceptance = self.verifier_factory(dict(task))
         if acceptance is None:
             verifier, version = None, None

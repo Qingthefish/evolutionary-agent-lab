@@ -58,7 +58,7 @@ def main(argv=None):
             if not args.chat and args.assignee not in live_members(live):
                 raise WorkflowError('Assignee is not an agent in the default group; select a configured agent or an existing conversation')
             chat=args.chat or center.create_conversation('group',list(live_members(live)))
-            result=center.create_task(chat,args.assignee,args.goal,constraints=tuple(data.get('constraints',())),expected_artifacts=policy.root_artifacts,child_rules=policy.child_rules,root_criteria=policy.root_criteria)
+            result=center.create_task(chat,args.assignee,args.goal,constraints=tuple(data.get('constraints',())),expected_artifacts=policy.root_artifacts,child_rules=policy.child_rules,root_criteria=policy.root_criteria,declared_subtasks_only=policy.declared_subtasks_only)
             result['chat']=chat
         elif args.command=='chat':
             if args.chat_command=='new':
