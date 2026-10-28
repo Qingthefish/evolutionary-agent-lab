@@ -408,6 +408,12 @@ def text_acceptance_factory(workflow, files, root, policy):
     return factory
 
 
+def policy_delegation_inputs(policy):
+    """Trusted input prerequisites; absent for policies without received-source rules."""
+    return tuple((r.assignee, r.title, tuple(c for c in r.criteria if c.kind == 'received_from'))
+                 for r in policy.child_rules if any(c.kind == 'received_from' for c in r.criteria)) or None
+
+
 def build_live_scheduler(workflow, files, root, *, human, live, policy=None, services=None):
     if not isinstance(live, LiveConfig):
         raise RuntimeSetupError("Live execution requires the shared explicit LiveConfig")
@@ -450,7 +456,8 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
         limits=live.tree_limits, memory=services.memory if services else None,
         executor=services.executor if services else None, git=services.git if services else None,
         retrieval=services.retrieval if services else None, capture_memory=live.enable_memory, child_retries=live.child_retries,
-        delegation_rules=tuple((r.assignee, r.title) for r in policy.child_rules) if policy.declared_subtasks_only else None)
+        delegation_rules=tuple((r.assignee, r.title) for r in policy.child_rules) if policy.declared_subtasks_only else None,
+        delegation_inputs=policy_delegation_inputs(policy))
 
 
 def add_live_arguments(parser):

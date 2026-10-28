@@ -26,6 +26,21 @@ def source_spec(text):
         raise WorkflowError('received_from requires an exact bounded source selector/path and explicit relay/read booleans') from None
 
 
+def _goal_tasks(workflow, task):
+    root = workflow._row('tasks', task)
+    while root['parent']:
+        root = workflow._row('tasks', root['parent'])
+    return {t['id']: t for t in active_tasks(workflow, descendants(workflow, root['id']))
+            if t['state'] not in {'failed', 'cancelled'} and t['chat'] == root['chat']}
+
+
+def source_task(workflow, task, spec):
+    """Unique active source in this goal; identity alone grants no file access."""
+    tasks = _goal_tasks(workflow, task)
+    sources = [t for t in tasks.values() if t['assignee'] == spec['assignee'] and t['title'] == spec['title']]
+    return sources[0]['id'] if task in tasks and len(sources) == 1 else None
+
+
 def received_from(workflow, task, path, sha256, size, spec):
     """Prove a causal consumed-snapshot route and the requested target read.
 
@@ -35,15 +50,10 @@ def received_from(workflow, task, path, sha256, size, spec):
     if any(not db.execute('SELECT 1 FROM sqlite_master WHERE type="table" AND name=?', (name,)).fetchone()
            for name in ('artifacts', 'artifact_labels')):
         return False
-    root = workflow._row('tasks', task)
-    while root['parent']:
-        root = workflow._row('tasks', root['parent'])
-    tasks = {t['id']: t for t in active_tasks(workflow, descendants(workflow, root['id']))
-             if t['state'] not in {'failed', 'cancelled'} and t['chat'] == root['chat']}
-    sources = [t for t in tasks.values() if t['assignee'] == spec['assignee'] and t['title'] == spec['title']]
-    if task not in tasks or len(sources) != 1 or sources[0]['id'] == task:
+    tasks = _goal_tasks(workflow, task)
+    source = source_task(workflow, task, spec)
+    if source is None or source == task:
         return False
-    source = sources[0]['id']
     marks = ','.join('?' for _ in tasks)
     events = {}
     try:

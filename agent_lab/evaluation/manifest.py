@@ -14,7 +14,8 @@ import re
 
 from ..gateway import _SPECS
 from ..runner import _PROMPT
-from ..runtime import LIVE_AGENTS, live_members, live_roles, live_roles_for_policy, provider_endpoint
+from ..runtime import LIVE_AGENTS, live_members, live_roles, live_roles_for_policy, policy_delegation_inputs, provider_endpoint
+from ..delegation import input_records
 
 
 def digest(value):
@@ -48,10 +49,13 @@ def build_manifest(cases, live, memory):
             runtime["capabilities"]["delete"] = "task-local-exact-version-human-release-v1"
         if live.enable_collaboration:
             runtime["capabilities"]["collaboration"] = "scoped-specialist-delegation-messages-v1"
+        from .harness import _case_policy
         if any(c.expected.declared_subtasks_only for c in cases):
-            from .harness import _case_policy
             runtime['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
                 live_members(live),live,_case_policy(c,live)).items()} for c in cases}
+        prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, live)) or ()) for c in cases}
+        if any(prerequisites.values()):
+            runtime['case_delegation_inputs'] = prerequisites
     manifest = {"schema_version": 1, "cases": definitions, "runtime": runtime,
                 "code_sha256": digest(sources), "prompt_sha256": digest(_PROMPT),
                 "tools_sha256": digest(_SPECS),

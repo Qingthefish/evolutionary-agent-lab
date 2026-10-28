@@ -13,7 +13,8 @@ from ..core import WorkflowError
 from ..git_tools import load_trusted_repositories
 from ..protocol import strict_json
 from ..runner import Limits
-from ..runtime import LiveConfig, live_members, live_roles, live_roles_for_policy
+from ..runtime import LiveConfig, live_members, live_roles, live_roles_for_policy, policy_delegation_inputs
+from ..delegation import input_records
 from .cases import load_cases
 from .harness import Evaluator, _case_policy
 from .manifest import digest
@@ -106,6 +107,10 @@ class DevelopmentPlan:
         if any(c.expected.declared_subtasks_only for c in self.cases):
             self.conditions['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
                 live_members(template),template,_case_policy(c,template)).items()} for c in self.cases}
+        prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, template)) or ())
+                         for c in self.cases}
+        if any(prerequisites.values()):
+            self.conditions['case_delegation_inputs'] = prerequisites
         self.sha256=digest(self.conditions)
 
     def inspect(self):
@@ -137,6 +142,10 @@ class DevelopmentPlan:
             report['declared_child_contracts'] = {c.id: [{'assignee':s.assignee,'title':s.title}
                 for s in c.expected.subtasks] for c in self.cases if c.expected.declared_subtasks_only}
             report['effective_roles']='Per-case case_roles includes opt-in task directory; roles is the base role set'
+        if 'case_delegation_inputs' in self.conditions:
+            report['delegation_inputs'] = self.conditions['case_delegation_inputs']
+            report['input_preparation'] = ('Received-source child contracts require owned, hash-matched source snapshots '
+                'before delegation; the child must still accept/read and pass its independent checks')
         return report
 
     def execute(self, *, allow_model_calls, plan_sha256, output_root):

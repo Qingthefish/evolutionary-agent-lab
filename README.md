@@ -61,7 +61,7 @@ Use these entry points to inspect the current implementation; a module's presenc
 | Durable tasks, conversations and evidence views | [core.py](agent_lab/core.py), [queries.py](agent_lab/queries.py), [inspection.py](agent_lab/inspection.py) |
 | Model protocol and allowed tool dispatch | [protocol.py](agent_lab/protocol.py), [deepseek.py](agent_lab/deepseek.py), [gateway.py](agent_lab/gateway.py) |
 | Shared live configuration, task policies and CLI flags | [runtime.py](agent_lab/runtime.py) |
-| Task execution, delegation and shared limits | [runner.py](agent_lab/runner.py), [scheduler.py](agent_lab/scheduler.py), [budget.py](agent_lab/budget.py) |
+| Task execution, delegation and shared limits | [runner.py](agent_lab/runner.py), [scheduler.py](agent_lab/scheduler.py), [delegation.py](agent_lab/delegation.py), [budget.py](agent_lab/budget.py) |
 | Controlled files, public text retrieval and private candidate memory | [files.py](agent_lab/files.py), [provenance.py](agent_lab/provenance.py), [retrieval.py](agent_lab/retrieval.py), [memory.py](agent_lab/memory.py) |
 | Python sandbox and restricted Git operations | [sandbox.py](agent_lab/sandbox.py), [git_tools.py](agent_lab/git_tools.py) |
 | Frozen experience trials and reset/provenance boundaries | [experience.py](agent_lab/evaluation/experience.py), [memory_protocol.py](agent_lab/evaluation/memory_protocol.py) |

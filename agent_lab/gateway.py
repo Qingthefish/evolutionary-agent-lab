@@ -6,6 +6,7 @@ import re
 
 from .core import WorkflowError
 from .protocol import strict_json
+from .delegation import check_inputs, normalize_inputs
 from . import budget
 
 
@@ -108,7 +109,7 @@ class ToolGateway:
 
     def __init__(self, workflow, files, task, actor, *, human, allowed,
                  memory=None, delegates=(), max_calls=32, executor=None, git=None, retrieval=None, message_floor=0,
-                 delegation_rules=None):
+                 delegation_rules=None, delegation_inputs=None):
         self.workflow, self.files, self.memory = workflow, files, memory
         self.task, self.actor, self.human = task, actor, human
         self.executor, self.git = executor, git
@@ -124,6 +125,7 @@ class ToolGateway:
                 or len(set(delegation_rules)) != len(delegation_rules)):
             raise ToolRequestError("Use distinct trusted assignee/title delegation rules")
         self.delegation_rules = None if delegation_rules is None else frozenset(delegation_rules)
+        self.delegation_inputs = {(a, t): rules for a, t, rules in normalize_inputs(delegation_inputs)}
         if (not self.allowed or not self.allowed <= _SPECS.keys()
                 or type(max_calls) is not int or not 1 <= max_calls <= 1000):
             raise ToolRequestError("Invalid tool allowlist or call cap")
@@ -175,6 +177,8 @@ class ToolGateway:
                 properties["assignee"]["enum"] = sorted(self.delegates)
                 if self.delegation_rules is not None:
                     eligible = [(a, t) for a, t in self.delegation_rules if a in self.delegates]
+                    if name == "delegate_task":
+                        eligible = [pair for pair in eligible if pair not in self.delegation_inputs]
                     if not eligible:
                         continue
                     properties["assignee"]["enum"] = sorted({a for a, _ in eligible})
@@ -223,7 +227,25 @@ class ToolGateway:
                 self.executor.validate_job(**arguments)
             except WorkflowError as error:
                 raise ToolRequestError(str(error)) from None
+        if name in {"delegate_task", "delegate_with_inputs", "retry_failed_task"}:
+            self._check_delegation_inputs(name, arguments)
         return name, arguments
+
+    def _check_delegation_inputs(self, name, args):
+        if not self.delegation_inputs:
+            return
+        if name == "retry_failed_task":
+            from .recovery import availability
+            self.workflow._task(self.task, self.actor, assigned=True)
+            child = availability(self.workflow, self.task, args["failed_task"])
+            pair = child["assignee"], child["title"]
+        else:
+            pair = args["assignee"], args["title"]
+        try:
+            check_inputs(self.workflow, self.files, self.task, self.actor, pair,
+                         args.get("input_files"), self.delegation_inputs)
+        except WorkflowError as error:
+            raise ToolRequestError(str(error)) from None
 
     @classmethod
     def _validate_value(cls, value, spec):
@@ -334,6 +356,8 @@ class ToolGateway:
         return {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(output, allow_nan=False)}
 
     def _execute(self, name, args):
+        if name in {"delegate_task", "delegate_with_inputs", "retry_failed_task"}:
+            self._check_delegation_inputs(name, args)  # Recheck after reservation, before child creation.
         if name in {"search_web", "retrieve_text"}:
             return getattr(self.retrieval, name)(self.task, self.actor, **args)
         if name == "record_lesson":
