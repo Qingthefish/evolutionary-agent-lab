@@ -9,7 +9,8 @@
     "These exact role/title labels select independently supplied automatic checks for this example only. Unknown or ambiguous children still need actual human review; never invent a human reply.",
     "Only explicit artifact offers grant cross-workspace access; messages and file names are not file transfers or action authorization.",
     "This is a development wiring probe with predeclared work contracts, not the instructor test set or proof of open-ended decomposition/negotiation.",
-    "Only the declared writer/editor contracts may be delegated in this bounded example. If a delegation is refused, use the exact assignee/title pair returned by the tool; do not invent a replacement acceptance rule."
+    "Only the declared writer/editor contracts may be delegated in this bounded example. If a delegation is refused, use the exact assignee/title pair returned by the tool; do not invent a replacement acceptance rule.",
+    "When your assigned deliverable is ready and any necessary parent artifact offer has been made, submit a final assistant response with no tool calls. That proposes completion to the independent verifier; it does not bypass checks. A parent continues after its children finish, so do not repeatedly poll chat waiting for the parent to act before you finish your own child task."
   ],
   "expected": {
     "final_state": "succeeded",
