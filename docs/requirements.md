@@ -56,6 +56,8 @@ A04 evidence refreshed on 2026-10-29: declared-contract delegation checks, scope
 
 Complete-root audit refreshed on 2026-10-29: two fresh allowed-model development runs produced correct numeric/file outputs, but only the changed-input run also proves the required checker draft delivery/read and completed parent workflow. The first retains its original limited classification and fails the separate full-scope audit. Runtime received_from criteria now enforce that distinction using broker identities/causality; 431 full regression checks passed. The new criterion was checked against retained real traces and offline negative controls, not represented as a new paid-model rerun. These are bounded declared-contract probes with memory disabled, not open-ended planning, learning improvement or official-test performance.
 
+Input-preparation follow-up: trusted received-source child contracts now reject delegation/replacement before creating a child if the assigning task lacks an owned, hash-matched and permitted source snapshot. This prevents a known missing-input wait; child content, receipt and read checks remain mandatory. Full regression: 447 passed, including real container/UI checks; no additional HKGAI requests. This is an implementation check under R02/R05/R13, not a new instructor requirement or broader live capability claim.
+
 | Requirement | Evidence currently available | Remaining acceptance / Roadmap |
 | --- | --- | --- |
 | R01 — private/group human communication | Conversation membership, private/group creation, scoped messages, console chat/feed/agent assignment and minimal interface checks; scripted agent-to-human private messages verified | Verify actual live interactions and usability; [D02](team-roadmap.md#d02) |
