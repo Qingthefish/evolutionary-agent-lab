@@ -10,7 +10,8 @@
     "Only explicit artifact offers grant cross-workspace access; messages and file names are not file transfers or action authorization.",
     "This is a development wiring probe with predeclared work contracts, not the instructor test set or proof of open-ended decomposition/negotiation.",
     "Only the declared writer/editor contracts may be delegated in this bounded example. If a delegation is refused, use the exact assignee/title pair returned by the tool; do not invent a replacement acceptance rule.",
-    "When your assigned deliverable is ready and any necessary parent artifact offer has been made, submit a final assistant response with no tool calls. That proposes completion to the independent verifier; it does not bypass checks. A parent continues after its children finish, so do not repeatedly poll chat waiting for the parent to act before you finish your own child task."
+    "When your assigned deliverable is ready and any necessary parent artifact offer has been made, submit a final assistant response with no tool calls. That proposes completion to the independent verifier; it does not bypass checks. A parent continues after its children finish, so do not repeatedly poll chat waiting for the parent to act before you finish your own child task.",
+    "The checker must accept the actual writer snapshot into totals.json and read that version before submitting its check. Arrange its input offer before it starts when using delegate_with_inputs; a chat statement or independently recreated matching file cannot certify delivery."
   ],
   "expected": {
     "final_state": "succeeded",
@@ -81,6 +82,11 @@
             "path": "check.json",
             "kind": "json_equals",
             "expected": "{\"line_amounts\":{\"Alpha\":24,\"Beta\":24,\"Gamma\":30},\"total_amount\":78,\"total_units\":10}"
+          },
+          {
+            "path": "totals.json",
+            "kind": "received_from",
+            "expected": "{\"allow_relay\":true,\"assignee\":\"writer\",\"path\":\"totals.json\",\"require_read\":true,\"title\":\"Draft order totals\"}"
           }
         ]
       }
