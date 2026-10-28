@@ -15,6 +15,7 @@ from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolGateway, _SPECS
 from .runner import Limits, RunnerError, TaskRunner
 from .core import WorkflowError
+from .delegation import input_records, normalize_inputs
 
 
 @dataclass(frozen=True)
@@ -42,12 +43,15 @@ class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
-                 delegation_rules=None):
+                 delegation_rules=None, delegation_inputs=None):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
         self.delegation_rules = delegation_rules
+        self.delegation_inputs = normalize_inputs(delegation_inputs)
+        if any(a not in self.roles for a, _, _ in self.delegation_inputs):
+            raise RunnerError("Delegation input requirements must name configured roles")
         self.memory, self.executor, self.git = memory, executor, git
         self.retrieval, self.capture_memory = retrieval, capture_memory
         if type(capture_memory) is not bool or (capture_memory and memory is None):
@@ -125,6 +129,8 @@ class MultiAgentScheduler:
                     or len(set(delegation_rules)) != len(delegation_rules)):
                 raise RunnerError("Use distinct trusted delegation rules for configured roles")
             settings["delegation_rules"] = sorted(delegation_rules)
+        if self.delegation_inputs:
+            settings["delegation_inputs"] = input_records(self.delegation_inputs)
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
@@ -153,7 +159,7 @@ class MultiAgentScheduler:
         gateway = ToolGateway(self.workflow, self.files, task_id, actor, human=self.human,
             allowed=role.tools, delegates=role.delegates, memory=self.memory,
             executor=self.executor, max_calls=role.tool_calls, git=self.git, retrieval=self.retrieval, message_floor=self.message_floor,
-            delegation_rules=self.delegation_rules)
+            delegation_rules=self.delegation_rules, delegation_inputs=self.delegation_inputs or None)
         acceptance = self.verifier_factory(dict(task))
         if acceptance is None:
             verifier, version = None, None
