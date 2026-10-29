@@ -53,6 +53,8 @@ def build_manifest(cases, live, memory):
         if any(c.expected.declared_subtasks_only for c in cases):
             runtime['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
                 live_members(live),live,_case_policy(c,live)).items()} for c in cases}
+            runtime['case_budget_context'] = {c.id: 'local-reservations-v1' if c.expected.declared_subtasks_only else None
+                                             for c in cases}
         prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, live)) or ()) for c in cases}
         if any(prerequisites.values()):
             runtime['case_delegation_inputs'] = prerequisites
