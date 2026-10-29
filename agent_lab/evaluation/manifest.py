@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 
 from ..gateway import _SPECS
-from ..runner import _PROMPT
+from ..runner import _PROMPT, model_context_conditions
 from ..runtime import LIVE_AGENTS, live_members, live_roles, live_roles_for_policy, policy_delegation_inputs, provider_endpoint
 from ..delegation import input_records
 from .cases import input_records as case_input_records, INPUT_PROTOCOL
@@ -55,6 +55,8 @@ def build_manifest(cases, live, memory):
             runtime['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
                 live_members(live),live,_case_policy(c,live)).items()} for c in cases}
             runtime['case_budget_context'] = {c.id: 'local-reservations-v1' if c.expected.declared_subtasks_only else None
+                                             for c in cases}
+            runtime['case_model_context'] = {c.id: model_context_conditions(c.expected.declared_subtasks_only)
                                              for c in cases}
         prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, live)) or ()) for c in cases}
         if any(prerequisites.values()):

@@ -12,7 +12,7 @@ from ..budget import TreeLimits
 from ..core import WorkflowError
 from ..git_tools import load_trusted_repositories
 from ..protocol import strict_json
-from ..runner import Limits
+from ..runner import Limits, model_context_conditions
 from ..runtime import LiveConfig, live_members, live_roles, live_roles_for_policy, policy_delegation_inputs
 from ..delegation import input_records
 from .cases import load_cases, input_records as case_input_records, INPUT_PROTOCOL
@@ -109,6 +109,8 @@ class DevelopmentPlan:
                 live_members(template),template,_case_policy(c,template)).items()} for c in self.cases}
             self.conditions['case_budget_context'] = {c.id: 'local-reservations-v1' if c.expected.declared_subtasks_only else None
                                                      for c in self.cases}
+            self.conditions['case_model_context'] = {c.id: model_context_conditions(c.expected.declared_subtasks_only)
+                                                     for c in self.cases}
         prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, template)) or ())
                          for c in self.cases}
         if any(prerequisites.values()):
@@ -151,6 +153,7 @@ class DevelopmentPlan:
                 for s in c.expected.subtasks] for c in self.cases if c.expected.declared_subtasks_only}
             report['effective_roles']='Per-case case_roles includes opt-in task directory; roles is the base role set'
             report['budget_context'] = self.conditions['case_budget_context']
+            report['model_context'] = self.conditions['case_model_context']
         if 'case_delegation_inputs' in self.conditions:
             report['delegation_inputs'] = self.conditions['case_delegation_inputs']
         if 'case_inputs' in self.conditions:
