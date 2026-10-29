@@ -243,6 +243,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Verify delegated work and resume parents**
 
+- **2026-10-30 extended-batch maintenance claim:** Qingthefish, same owner-requested `evaluation/extended-acceptance` batch. The fresh 29-request JSONL round preserved a successful checked coder but an exhausted parent; ON repeatedly transcribed whitespace before a truncated response stopped the round, OFF unrun. Add an opt-in declared-role `submit_for_verification` proposal using the existing independent verifier/review path, with last-in-batch preflight, durable results, unchanged human/child/budget checks and conservative interruption recovery. The tool must never set success or supply its own criteria. Also add bounded human-provided pending-task input files to the broker and development cases so source data can be passed byte-for-byte rather than copied from a prompt. Preserve actor/provenance, exact file hashes, workspace isolation, old case definitions and recorded policies; expose actual input receipts in trusted context. Check adversarial/legacy/restart paths and a scripted combined execution/handoff fixture. No new HKGAI attempt after the stop; existing 29/48 ledger stays closed, no allowance reset. Final live acceptance remains open until separately observed.
+
 - **Stage / status:** M2 / In progress (accepted engineering; complete live child repair/root gate still open)
 - **Owner:** Qingthefish (Codex-assisted)
 - **Dependencies / configuration:** A02 and C01; the final live check needs A01.
