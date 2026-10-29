@@ -52,6 +52,29 @@ class WorkflowQueries:
     def _table(self, name):
         return self.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)).fetchone() is not None
 
+    def _proposal_text(self, task, turn, response):
+        if not response:
+            return None
+        if response['finish_reason'] == 'stop':
+            return response['message'].get('content')
+        calls = response['message'].get('tool_calls') or []
+        if not calls or calls[-1]['function']['name'] != 'submit_for_verification' or not self._table('tool_calls'):
+            return None
+        call = calls[-1]
+        record = self.db.execute('SELECT * FROM tool_calls WHERE task=? AND call_id=?', (task, call['id'])).fetchone()
+        floor = _loads(turn['request'], {}).get('event_floor')
+        if (record is None or record['status'] != 'succeeded' or record['name'] != 'submit_for_verification'
+                or type(floor) is not int or not self.db.execute(
+                    "SELECT 1 FROM events WHERE task=? AND sequence>? AND kind='tool_reserved' AND json_extract(detail,'$.call_id')=?",
+                    (task, floor, call['id'])).fetchone()):
+            return None
+        args = _loads(record['arguments'], {})
+        result = _loads(record['result'], {})
+        if (args != _loads(call['function']['arguments']) or result.get('ok') is not True
+                or result.get('result', {}).get('status') != 'verification_requested'):
+            return None
+        return args.get('summary')
+
     def _member_chats(self, actor):
         return [row[0] for row in self.db.execute("SELECT chat FROM members WHERE actor=?", (actor,))]
 
@@ -159,8 +182,7 @@ class WorkflowQueries:
                         "finish_reason": response["finish_reason"] if response else None,
                         "tool_names": [c["function"]["name"] for c in (response["message"].get("tool_calls") or [])]
                                       if response else [],
-                        "final_text": redact(response["message"].get("content"), limit=600)
-                                      if response and response["finish_reason"] == "stop" else None,
+                        "final_text": redact(self._proposal_text(task, turn, response), limit=600),
                     })
                 # Accepted/cancelled proposals need no subsequent model turn to
                 # stop appearing in review queues. Keep the stored history intact.

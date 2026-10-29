@@ -50,6 +50,64 @@ class DockerIntegrationTests(unittest.TestCase):
         self.workflow.start_task(task, actor)
         return task
 
+    def test_provided_input_rejected_result_repair_and_batched_submission_use_real_containers(self):
+        from agent_lab.budget import TreeLimits
+        from agent_lab.runtime import policy_delegation_inputs
+        from test_runner import Script, response, tool
+        root=self.workflow.create_task(self.chat,'user','reviewer','Deliver independently checked sum')
+        source=self.files.provide_text(root,'user','data.txt','1\n2\n\n')
+        child_title='Compute checked sum'
+        received=lambda agent,title,path: ArtifactRule(path,'received_from',json.dumps({
+            'assignee':agent,'title':title,'path':path,'allow_relay':False,'require_read':True}))
+        child_rules=(ArtifactRule('data.txt','sha256',source['sha256']),
+            received('reviewer','Deliver independently checked sum','data.txt'),
+            ArtifactRule('result.txt','sandbox_output',json.dumps({'entrypoint':'main.py','arguments':[],
+                'inputs':['data.txt','main.py']})))
+        policy=TaskPolicy(root_artifacts={'result.txt':'3\n','report.md':'Total: 3\n'},
+            child_rules=(ChildTextRule('coder',child_title,{'result.txt':'3\n'},criteria=child_rules),),
+            root_criteria=(received('coder',child_title,'result.txt'),),declared_subtasks_only=True)
+        bad="from pathlib import Path\nPath('result.txt').write_text('99\\n')\n"
+        fixed="from pathlib import Path\nvalues=[int(line) for line in Path('data.txt').read_text().splitlines() if line.strip()]\nPath('result.txt').write_text(str(sum(values))+'\\n')\n"
+        def child_id():return self.workflow.db.execute('SELECT id FROM tasks WHERE parent=?',(root,)).fetchone()[0]
+        def accept(target,path,identifier):
+            artifact=self.workflow.db.execute('SELECT id FROM artifacts WHERE target_task=? AND consumed=0',(target,)).fetchone()[0]
+            return tool('accept_artifact',{'artifact_id':artifact,'path':path},identifier)
+        job=lambda code,**extra: {'entrypoint':'main.py','arguments':[],'input_files':{'data.txt':source['sha256'],
+            'main.py':hashlib.sha256(code.encode()).hexdigest()},'outputs':['result.txt'],**extra}
+        submit=lambda identifier:tool('submit_for_verification',{'summary':'Ready for independent checks'},identifier)
+        scripts={}
+        def offer():
+            previous=scripts['coder'].requests[-1]['messages']
+            output=next(json.loads(m['content'])['result'] for m in reversed(previous) if m['role']=='tool')
+            receipt=output['artifacts'][0]
+            return response([tool('read_text',{'path':'result.txt'},'read-output'),
+                tool('offer_artifact',{'path':'result.txt','target_task':root,'expected_sha256':receipt['sha256']},'offer'),submit('finish-coder')])
+        scripts['reviewer']=Script([
+            response([tool('delegate_with_inputs',{'assignee':'coder','title':child_title,'input_files':{'data.txt':source['sha256']}},'delegate')]),
+            lambda:response([accept(root,'result.txt','receive-output'),tool('read_text',{'path':'result.txt'},'read-result')]),
+            response([tool('create_text',{'path':'report.md','content':'Total: 3\n'},'report'),submit('finish-root')])])
+        scripts['coder']=Script([lambda:response([accept(child_id(),'data.txt','receive-input')]),
+            response([tool('create_text',{'path':'main.py','content':bad},'bad-code')]),
+            response([tool('run_python',job(bad),'wrong-run'),submit('wrong-result')]),
+            response([tool('update_text',{'path':'main.py','content':fixed,'expected_sha256':hashlib.sha256(bad.encode()).hexdigest()},'repair')]),
+            response([tool('run_python',job(fixed,replace_outputs={'result.txt':hashlib.sha256(b'99\n').hexdigest()}),'fixed-run')]),offer])
+        roles={'reviewer':Role('Delegate and deliver checked output',('delegate_with_inputs','accept_artifact','read_text','create_text','submit_for_verification'),('coder',)),
+            'coder':Role('Implement and offer checked output',('accept_artifact','create_text','update_text','read_text','run_python','offer_artifact','submit_for_verification'))}
+        scheduler=MultiAgentScheduler(self.workflow,self.files,root,human='user',roles=roles,
+            clients={a:DeepSeekClient('synthetic-model',script) for a,script in scripts.items()},mode='offline_fixture',
+            constraints=['Keep exact input and actual execution evidence'],executor=self.executor,
+            verifier_factory=text_acceptance_factory(self.workflow,self.files,root,policy),acceptance_id=policy.acceptance_id,
+            limits=TreeLimits(model_attempts=12),delegation_rules=(('coder',child_title),),delegation_inputs=policy_delegation_inputs(policy))
+        state=scheduler.run();self.assertEqual(state['task_state'],'succeeded');self.assertEqual(state['model_calls'],0)
+        self.assertFalse(state['benchmark_valid']);self.assertEqual(state['budget']['attempts'],9)
+        runs=[json.loads(r[0]) for r in self.workflow.db.execute('SELECT result FROM sandbox_runs WHERE task=? ORDER BY rowid',(child_id(),))]
+        self.assertEqual(len(runs),2);self.assertTrue(all(r['execution']['exit_code']==0 and r['cleanup_confirmed'] for r in runs))
+        self.assertEqual(self.workflow.task(child_id(),'user')['state'],'succeeded')
+        transcript=json.loads(self.workflow.db.execute('SELECT transcript FROM runner_sessions WHERE task=?',(child_id(),)).fetchone()[0])
+        self.assertTrue(any(m['role']=='user' and 'trusted_verification_failure' in m['content'] for m in transcript))
+        self.assertEqual(self.workflow.db.execute("SELECT actor FROM events WHERE task=? AND kind='task_input_provided'",(root,)).fetchone()[0],'user')
+        self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM events WHERE kind='completion_proposed' AND task IN (?,?)",(root,child_id())).fetchone()[0],3)
+
     def run_code(self, code, *, outputs=(), extra_files=None, task=None, actor="coder", executor=None):
         task = task or self.task
         inputs = {}

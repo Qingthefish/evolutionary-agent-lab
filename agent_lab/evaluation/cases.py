@@ -6,19 +6,26 @@ self-assessment. These are development cases, not the instructor's held-out set.
 """
 
 from dataclasses import asdict, dataclass, field
+import hashlib
 import math
 from pathlib import Path
 import re
 
 from ..acceptance import parse_rules
 from ..core import WorkflowError
-from ..files import _parts
+from ..files import _parts, INPUT_PROTOCOL
 from ..protocol import strict_json
 from ..runtime import normalize_constraints
 
 DRIVERS = {"offline_delegation", "offline_approval", "offline_git", "live_scheduler"}
 STATES = {"succeeded", "failed", "cancelled"}
 _ID = re.compile(r"^[a-z0-9][a-z0-9-]{2,63}$")
+
+
+def input_records(cases):
+    return {case.id: [{'path': path, 'sha256': hashlib.sha256(content.encode('utf-8')).hexdigest(),
+                      'bytes': len(content.encode('utf-8'))} for path, content in sorted(case.inputs.items())]
+            for case in cases}
 
 
 class CaseError(WorkflowError):
@@ -70,12 +77,13 @@ class EvalCase:
     expected: Expected = field(default_factory=lambda: Expected("succeeded"))
     source: str = ""
     constraints: tuple = ()
+    inputs: dict = field(default_factory=dict)       # trusted human-provided root input files, never model outputs
 
     def summary(self):
         return {"id": self.id, "title": self.title, "goal": self.goal, "driver": self.driver, "split": self.split,
                 "control": self.control, "scripted_human": self.driver != "live_scheduler" and bool(self.human_responses or self.approval),
                 "expected_state": self.expected.final_state, "expected": asdict(self.expected), "source": self.source,
-                "constraints": list(self.constraints)}
+                "constraints": list(self.constraints), **({'inputs': dict(self.inputs)} if self.inputs else {})}
 
 
 def _object(value, allowed, required, label):
@@ -129,13 +137,26 @@ def _artifact_checks(data):
 
 def parse_case(data, *, source=""):
     """Validate the entire JSON contract before creating any runtime or run directory."""
-    _object(data, {"id", "title", "goal", "driver", "split", "control", "human_responses", "approval", "expected", "constraints"},
+    _object(data, {"id", "title", "goal", "driver", "split", "control", "human_responses", "approval", "expected", "constraints", "inputs"},
             {"id", "title", "goal", "driver", "expected"}, "case")
     identifier = _text(data["id"], "id")
     if not _ID.fullmatch(identifier):
         raise CaseError("Case id must contain 3–64 lowercase letters, digits or hyphens")
     title, goal = _text(data["title"], "title"), _text(data["goal"], "goal")
     driver = _choice(data["driver"], DRIVERS, "driver")
+    inputs = data.get('inputs', {})
+    try:
+        if (not isinstance(inputs, dict) or len(inputs) > 20 or (inputs and driver != 'live_scheduler')
+                or any(not isinstance(v, str) or len(v.encode('utf-8')) > 65536 for v in inputs.values())
+                or sum(len(v.encode('utf-8')) for v in inputs.values()) > 262144):
+            raise CaseError('Inputs require at most twenty bounded UTF-8 root files in a live case')
+        for path in inputs:
+            _parts(path)
+            path.encode('utf-8')
+            if len(path) > 512:
+                raise CaseError('Input path is too long')
+    except (UnicodeError, WorkflowError) as error:
+        raise CaseError('Invalid bounded task input files') from error
     try:
         constraints = normalize_constraints(_array(data.get("constraints", []), "constraints"))
     except WorkflowError as error:
@@ -188,7 +209,7 @@ def parse_case(data, *, source=""):
         raise CaseError("Duplicate human-request expectation")
     return EvalCase(identifier, title, goal, driver, split, control, responses, approval,
                     Expected(final_state, artifacts, absent, min_tasks, float(seconds), remote,
-                             tuple(subtasks), tuple(humans), parse_rules(expected.get("criteria", [])), declared_only), source, constraints)
+                             tuple(subtasks), tuple(humans), parse_rules(expected.get("criteria", [])), declared_only), source, constraints, dict(inputs))
 
 
 def load_cases(directory):

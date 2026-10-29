@@ -15,7 +15,7 @@ import os
 from .core import WorkflowError
 from .files import FileToolError, _parts
 
-_FILE_EVENTS = ("file_created", "file_updated", "file_deleted", "artifact_received", "file_read")
+_FILE_EVENTS = ("file_created", "file_updated", "file_deleted", "artifact_received", "file_read", "task_input_provided")
 LANGUAGES = {".py": "python", ".md": "markdown", ".txt": "text", ".json": "json", ".toml": "toml",
              ".yml": "yaml", ".yaml": "yaml", ".sh": "bash", ".js": "javascript", ".html": "html"}
 

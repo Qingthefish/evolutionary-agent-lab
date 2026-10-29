@@ -6,8 +6,8 @@
   "api_key_env": "COURSE_HKGAI_API_KEY",
   "cases": "cases",
   "case_ids": [
-    "jsonl-repair-training",
-    "jsonl-repair-probe"
+    "jsonl-provided-training",
+    "jsonl-provided-probe"
   ],
   "max_output_tokens": 1024,
   "socket_timeout": 90,

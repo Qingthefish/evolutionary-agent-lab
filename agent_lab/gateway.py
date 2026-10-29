@@ -27,6 +27,8 @@ _PATH = _text("Relative path inside this task's files", maximum=512)
 _HASH = {"type": "string", "pattern": "^[0-9a-f]{64}$"}
 _CONTENT = _text("UTF-8 text or source code", maximum=65536, empty=True)
 _SPECS = {
+    "submit_for_verification": ("Propose completion for independent checks after your deliverables and offers. Must be the last tool in a batch. This does not set success, approve actions or supply criteria", {
+        "summary": _text("Brief description of the deliverable submitted for independent verification", maximum=2000)}),
     "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
         "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
@@ -301,6 +303,9 @@ class ToolGateway:
             raise ToolRequestError("Supply between one and sixteen tool proposals")
         for call in calls:
             self._validate(call)
+        submissions = [i for i, call in enumerate(calls) if call['function']['name'] == 'submit_for_verification']
+        if submissions and submissions != [len(calls) - 1]:
+            raise ToolRequestError('Submit for verification exactly once as the last tool; no batch effects started')
         ids = [call["id"] for call in calls]
         if len(set(ids)) != len(ids):
             raise ToolRequestError("Duplicate tool call identifiers")
@@ -366,6 +371,9 @@ class ToolGateway:
         return {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(output, allow_nan=False)}
 
     def _execute(self, name, args):
+        if name == 'submit_for_verification':
+            # Only the runner can apply its separately configured verifier.
+            return {'status': 'verification_requested', 'summary': args['summary']}
         if name in {"delegate_task", "delegate_with_inputs", "retry_failed_task"}:
             self._check_delegation_inputs(name, args)  # Recheck after reservation, before child creation.
         if name in {"search_web", "retrieve_text"}:
