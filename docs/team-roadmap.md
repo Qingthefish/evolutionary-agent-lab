@@ -390,6 +390,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run controlled development comparisons**
 
+- **2026-10-30 continuation claim:** Qingthefish, owner-requested Codex-assisted continuation from 73ea983, branch `evaluation/C05-jsonl-repair`. Add a different bounded JSONL log-processing repair case with an explicitly supplied faulty starter and a changed-input frozen-memory ON/OFF pair. Keep independent output/input/execution/handoff checks and audit the actual failure/repair history separately. Exercise the versioned remaining-budget context without attributing causality from unlike tasks. This new work round uses the standing same-scope allowance: at most 48 cumulative HKGAI requests across three fresh roots, 16 per root, 1024 output tokens and a 90-second socket timeout; no automatic provider retry, new credentials, Git/web integration, fake human decision or acceptance weakening. Preserve all previous round counters and evidence, the incoming C07 branch and existing task ownership. Run no paid calls until the exact conditions and authorization ledger have been saved and offline-checked. The broader C05/A05/A03 gates remain open.
+
 - **Stage / status:** M4 / In progress (one matched real memory pair audited; broader comparisons remain)
 - **Owner:** Qingthefish (accepted preparation may be handed off through WeChat)
 - **Dependencies / configuration:** M3, C03/C04, [C07](#c07) for single/multi controls, issued allowed-model access and an authorized live budget.
