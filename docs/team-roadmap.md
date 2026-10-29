@@ -390,6 +390,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run controlled development comparisons**
 
+- **2026-10-30 extended acceptance claim:** Qingthefish, owner-requested longer continuous batch from `5b6752c`, branch `evaluation/extended-acceptance`. First exercise the accepted JSONL input/import fixes through a fresh supplied-bug training root and matched frozen ON/OFF roots. Keep the original cases/oracles and failed records. Use the existing aggregate allowance of 48 HKGAI requests / three roots / 1024 output tokens / 90-second socket timeout; per-root cap remains 16. Let each agent use at most that same 16-request shared cap instead of the earlier ten-request sublimit, to avoid failing with unused aggregate capacity. Both probe arms use identical new settings. Code/configuration changes mean this is not a causal comparison against the previous round. Save conditions, cumulative ledger and standing authorization before calls; no automatic retry, expanded web/Git credential scope or synthetic human reply. Continue with necessary fixes, offline checks and delivery preparation if live boundaries stop the run. This is a new explicitly requested round; prior counters are closed and unchanged.
+
 - **2026-10-30 continuation claim:** Qingthefish, owner-requested Codex-assisted continuation from 73ea983, branch `evaluation/C05-jsonl-repair`. Add a different bounded JSONL log-processing repair case with an explicitly supplied faulty starter and a changed-input frozen-memory ON/OFF pair. Keep independent output/input/execution/handoff checks and audit the actual failure/repair history separately. Exercise the versioned remaining-budget context without attributing causality from unlike tasks. This new work round uses the standing same-scope allowance: at most 48 cumulative HKGAI requests across three fresh roots, 16 per root, 1024 output tokens and a 90-second socket timeout; no automatic provider retry, new credentials, Git/web integration, fake human decision or acceptance weakening. Preserve all previous round counters and evidence, the incoming C07 branch and existing task ownership. Run no paid calls until the exact conditions and authorization ledger have been saved and offline-checked. The broader C05/A05/A03 gates remain open.
 
 - **2026-10-30 observed-failure maintenance claim:** The JSONL round stopped after 16 requests: the supplied starter genuinely failed and was repaired in the sandbox, but the training coder exhausted its own limit before completion, and the first ON coder response ended at the output limit. OFF remains unrun; no automatic retry or fresh trial is authorized by this maintenance. On the same branch, clarify entrypoint inclusion in isolated inputs, expose actual output-import receipt ownership at the gateway, and reduce declared-role chatter/receipt confusion. Preserve caps, checks, old evidence and actual human boundaries; add focused no-effect and delivery regressions. This is shared tool/runtime maintenance from the observed failures, separate from C07's unchanged topology work. Claims of completed roots, memory benefit or improved live planning require later real evidence.
@@ -513,6 +515,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Verify clean-environment setup**
 
+- **2026-10-30 scoped preparation claim:** Qingthefish, same owner-requested extended batch/branch. Reproduce documented core CLI, offline fixtures and plan inspection from a committed source snapshot on clean Python 3.12 without optional Textual, course credentials or external services. Record actual outputs/failures and fix necessary instructions; distinguish this automated setup check from another member's independent reproduction. Existing UI/tool checks are reused. Final D04 acceptance remains open until the stated contributor/live requirements have evidence.
+
 - **Stage / status:** M4 / Unclaimed
 - **Owner:** — (available for agreed teammate claim; prior Qingthefish preparation retained below)
 - **Dependencies / configuration:** M3; final real-model/tool setup awaits issued access and relevant backends.
@@ -566,6 +570,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 ### S02
 
 **Finish submission materials**
+
+- **2026-10-30 draft claim:** Qingthefish, same owner-requested extended batch/branch. Prepare the required Markdown report/presentation material using the actual accepted architecture, raw development evidence and clear official-result placeholders. Reuse the Roadmap as the only progress register; the report is a submission draft, not a new tracker. Preserve negative/unrun cases, known live-coverage gaps and genuine contributor attribution. Do not invent official tasks, scores, deadlines, learning gains, screenshots or member contributions; final S02 acceptance remains dependent on the official run and delivery evidence.
 
 - **Stage / status:** M5 / Unclaimed
 - **Owner:** —
