@@ -11,7 +11,8 @@
       "File offers are snapshots. The coordinator must accept and read the coder result; messages and copied values do not certify receipt.",
       "When your own deliverable is ready and necessary offers are made, propose completion with a final assistant response without tool calls. Do not poll a parent that waits for you to finish.",
       "For this integer-valued development case, serialize all JSON quantities, prices, amounts and totals as integer values (for example 63, not 63.0); canonical JSON criteria preserve numeric representation.",
-      "To replace an existing exported result after correcting code, first read its current hash, then pass replace_outputs for that exact path/hash to run_python. Other output paths remain create-only; never delete a file to bypass approval or overwrite an unexpected version."
+      "To replace an existing exported result after correcting code, first read its current hash, then pass replace_outputs for that exact path/hash to run_python. Other output paths remain create-only; never delete a file to bypass approval or overwrite an unexpected version.",
+      "totals.json schema is exactly: lines is an array of JSON objects (not CSV strings), each containing item as a string and quantity, unit_price, amount as integers, in input order. total_units and total_amount are integers at the top level. Do not append totals as additional line entries."
     ],
     "expected": {
       "final_state": "succeeded",
@@ -94,7 +95,8 @@
       "File offers are snapshots. The coordinator must accept and read the coder result; messages and copied values do not certify receipt.",
       "When your own deliverable is ready and necessary offers are made, propose completion with a final assistant response without tool calls. Do not poll a parent that waits for you to finish.",
       "For this integer-valued development case, serialize all JSON quantities, prices, amounts and totals as integer values (for example 63, not 63.0); canonical JSON criteria preserve numeric representation.",
-      "To replace an existing exported result after correcting code, first read its current hash, then pass replace_outputs for that exact path/hash to run_python. Other output paths remain create-only; never delete a file to bypass approval or overwrite an unexpected version."
+      "To replace an existing exported result after correcting code, first read its current hash, then pass replace_outputs for that exact path/hash to run_python. Other output paths remain create-only; never delete a file to bypass approval or overwrite an unexpected version.",
+      "totals.json schema is exactly: lines is an array of JSON objects (not CSV strings), each containing item as a string and quantity, unit_price, amount as integers, in input order. total_units and total_amount are integers at the top level. Do not append totals as additional line entries."
     ],
     "expected": {
       "final_state": "succeeded",
