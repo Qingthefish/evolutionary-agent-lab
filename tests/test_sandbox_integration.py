@@ -179,6 +179,18 @@ class DockerIntegrationTests(unittest.TestCase):
         self.assertEqual(self.files.read_text(self.task, 'coder', 'result.txt')['content'], '42\n')
         self.assertFalse(check())
 
+    def test_actual_reexecution_replaces_only_the_expected_output_version(self):
+        self.run_code("from pathlib import Path\nPath('result.txt').write_text('41\\n')\n",outputs=['result.txt'])
+        old=self.files.read_text(self.task,'coder','result.txt');code=self.files.read_text(self.task,'coder','main.py')
+        changed=self.files.update_text(self.task,'coder','main.py',"from pathlib import Path\nPath('result.txt').write_text('42\\n')\n",
+            expected_sha256=code['sha256'])
+        result=self.executor.run_python(self.task,'coder',entrypoint='main.py',input_files={'main.py':changed['sha256']},
+            arguments=[],outputs=['result.txt'],replace_outputs={'result.txt':old['sha256']})
+        self.assertEqual(result['execution']['exit_code'],0);self.assertTrue(result['cleanup_confirmed'])
+        self.assertEqual(self.files.read_text(self.task,'coder','result.txt')['content'],'42\n')
+        rule=ArtifactRule('result.txt','sandbox_output',json.dumps({'entrypoint':'main.py','arguments':[],'inputs':['main.py']}))
+        self.assertTrue(all(verify_rules(self.workflow,self.files,self.task,'coder',(rule,)).values()))
+
     def test_network_host_files_secrets_root_writes_and_supervisor_signals_are_blocked(self):
         canary = self.root / "host-only.txt"
         canary.write_text("synthetic host canary; no real private data")

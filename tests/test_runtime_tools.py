@@ -37,6 +37,22 @@ class RuntimeToolTests(unittest.TestCase):
     def tearDown(self):
         self.files.close(); self.workflow.close(); self.directory.cleanup()
 
+    def test_terminal_observation_preserves_real_verification_feedback_without_changing_source_schema(self):
+        from agent_lab.runner import TaskRunner, Limits
+        gateway=ToolGateway(self.workflow,self.files,self.root,'coordinator',human='human',allowed=('create_text',))
+        runner=TaskRunner(gateway,DeepSeekClient('synthetic',Script([response()])),mode='offline_fixture',
+            constraints=[],limits=Limits(model_attempts=1),verifier=self.files.text_verifier(self.root,'coordinator',{'note.txt':'Expected\n'}),
+            verifier_id='independent-note-v1')
+        runner.step();runner.step()
+        before=self.memory._outcome(self.root,'coordinator')[1]
+        self.assertEqual(before['outcome'],'failed')
+        result=self.memory.observe_terminal(self.root,'coordinator');self.assertEqual(result['status'],'recorded')
+        self.assertEqual(before,self.memory._outcome(self.root,'coordinator')[1])
+        observed=self.workflow.db.execute('SELECT lesson FROM lessons ORDER BY rowid LIMIT 1').fetchone()[0]
+        self.assertIn('verification_feedback',observed)
+        self.assertIn('Model attempt budget exhausted',observed)
+        self.assertEqual(self.memory.observe_terminal(self.root,'coordinator'),result)
+
     def test_candidate_is_staged_then_bound_to_real_failure_and_later_reuse_outcome(self):
         self.memory.propose(self.root,'coordinator',lesson='Under exact-text checks, preserve the newline; applicability must be checked.',tags=['newline','exact-text'])
         self.assertEqual(self.workflow.db.execute('SELECT count(*) FROM lessons').fetchone()[0],0)
