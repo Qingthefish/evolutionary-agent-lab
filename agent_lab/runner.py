@@ -55,6 +55,7 @@ class TaskRunner:
         self.gateway, self.client = gateway, client
         self.workflow, self.task, self.actor = gateway.workflow, gateway.task, gateway.actor
         self.limits, self.mode, self.verifier = limits, mode, verifier
+        self.budget_context = gateway.delegation_rules is not None
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
         if mode not in {"offline_fixture", "live"}:
@@ -94,6 +95,8 @@ class TaskRunner:
                         "execution": gateway.execution_configuration(),
                         "human": gateway.human, "verifier_id": verifier_id,
                         "prompt_sha256": hashlib.sha256(_PROMPT.encode()).hexdigest()}
+        if self.budget_context:
+            settings['budget_context'] = 'local-reservations-v1'
         if type(client.transport) is HKGAIHTTP:
             settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
         config = _json(settings)
@@ -190,6 +193,43 @@ class TaskRunner:
         task = self.workflow.task(self.task, self.actor)
         return self.workflow.clock() - task["created"] >= self.limits.duration_seconds
 
+    def _budget_context(self, transcript, session, number):
+        """Current local reservations, never account balance or action authority.
+
+        Called inside the existing reservation transaction; the current model
+        request has already consumed its shared attempt, but not a tool call.
+        Update the original trusted context so stale budgets do not accumulate.
+        """
+        now = self.workflow.clock()
+        task = self.workflow._task(self.task, self.actor, assigned=True)
+        maximum = self.workflow.db.execute('SELECT maximum FROM tool_budgets WHERE task=?', (self.task,)).fetchone()[0]
+        used = self.workflow.db.execute('SELECT count(*) FROM tool_calls WHERE task=?', (self.task,)).fetchone()[0]
+        data = {'version': 1, 'current_request_already_reserved': True,
+            'task': {'model_attempts_left_after_current': max(0, self.limits.model_attempts - number),
+                     'tool_calls_left': max(0, maximum - used), 'reported_tokens_observed': session['tokens'],
+                     'reported_token_stop_threshold': self.limits.reported_tokens,
+                     'seconds_left': max(0, self.limits.duration_seconds - (now - task['created']))},
+            'shared': None,
+            'instruction': 'Local execution limits only, not provider account balance or a billing guarantee. '
+                'Preserve all constraints and approval boundaries. If your required artifacts and offers are ready, '
+                'propose completion with a final response instead of adding optional messages. '
+                'A final response still needs independent verification.'}
+        scope = budget._scope(self.workflow, self.task)
+        if scope is not None:
+            shared = budget.status(self.workflow, scope['root'])
+            limits = shared['limits']
+            data['shared'] = {'model_attempts_left_after_current': max(0, limits['model_attempts'] - shared['attempts']),
+                'tool_calls_left': max(0, limits['tool_calls'] - shared['tool_calls']),
+                'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
+                'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
+                'seconds_left': max(0, limits['duration_seconds'] - (now - scope['created']))}
+        context = json.loads(transcript[1]['content'])
+        if not isinstance(context, dict) or transcript[1]['role'] != 'user':
+            raise RunnerError('Trusted task context is unavailable; no model call released')
+        context['execution_budget'] = data
+        transcript[1] = {**transcript[1], 'content': _json(context)}
+        return transcript
+
     def _append_human_responses(self, session):
         transcript = json.loads(session["transcript"])
         for request in self.workflow.db.execute("""
@@ -284,6 +324,8 @@ class TaskRunner:
             if reason is None:
                 transcript = self._append_input_offers(self._append_child_results(self._append_human_responses(session)))
                 number = session["attempts"] + 1
+                if self.budget_context:
+                    transcript = self._budget_context(transcript, session, number)
                 self.workflow.db.execute(
                     "INSERT INTO runner_turns(task,number,status,request,started) VALUES(?,?,'calling',?,?)",
                     (self.task, number, _json({"messages": transcript, "tools": self.gateway.tools(),

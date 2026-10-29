@@ -107,6 +107,8 @@ class DevelopmentPlan:
         if any(c.expected.declared_subtasks_only for c in self.cases):
             self.conditions['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
                 live_members(template),template,_case_policy(c,template)).items()} for c in self.cases}
+            self.conditions['case_budget_context'] = {c.id: 'local-reservations-v1' if c.expected.declared_subtasks_only else None
+                                                     for c in self.cases}
         prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, template)) or ())
                          for c in self.cases}
         if any(prerequisites.values()):
@@ -145,6 +147,7 @@ class DevelopmentPlan:
             report['declared_child_contracts'] = {c.id: [{'assignee':s.assignee,'title':s.title}
                 for s in c.expected.subtasks] for c in self.cases if c.expected.declared_subtasks_only}
             report['effective_roles']='Per-case case_roles includes opt-in task directory; roles is the base role set'
+            report['budget_context'] = self.conditions['case_budget_context']
         if 'case_delegation_inputs' in self.conditions:
             report['delegation_inputs'] = self.conditions['case_delegation_inputs']
             report['input_preparation'] = ('Received-source child contracts require owned, hash-matched source snapshots '
