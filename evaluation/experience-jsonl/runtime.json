@@ -12,7 +12,7 @@
   "max_output_tokens": 1024,
   "socket_timeout": 90,
   "task_limits": {
-    "model_attempts": 10,
+    "model_attempts": 16,
     "reported_tokens": 180000,
     "duration_seconds": 1800,
     "repeated_outcomes": 3
