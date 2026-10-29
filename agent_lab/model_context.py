@@ -4,13 +4,17 @@ Original sandbox records and own-role instructions remain intact. Legacy tasks
 retain their existing views. Private experience tools are not peer capabilities.
 """
 
-CONTEXT_POLICY = "declared-concise-actions-v1"
+CONTEXT_POLICY = "declared-concise-actions-v2"
 ACTION_GUIDANCE = """
 On action turns use tool_calls and null content. Spend the output budget on the
 actual tool arguments, not narrated plans or repeated evidence. Keep source writes
 small enough for one response. When the deliverable and handoff are ready, place
 submit_for_verification last in the batch; only independent checks decide success.
 Do not poll for a parent's response before submitting your completed child work.
+For quantitative results rely on actual sandbox output and independent checks,
+not repeated manual counting of escaped file strings. Investigate contradictions
+with source/execution evidence. File writes, offers and recorded lessons alone do
+not submit completion: include the verification proposal after the final actions.
 """
 
 

@@ -244,6 +244,18 @@ class TaskRunner:
                 'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
                 'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
                 'seconds_left': max(0, limits['duration_seconds'] - (now - scope['created']))}
+        if 'submit_for_verification' in self.gateway.allowed:
+            remaining = min(data['task']['model_attempts_left_after_current'],
+                            data['shared']['model_attempts_left_after_current'] if data['shared'] is not None
+                            else data['task']['model_attempts_left_after_current'])
+            data['completion_proposal'] = {
+                'requests_left_after_current': remaining,
+                'low_request_budget': remaining <= 2,
+                'instruction': 'When your deliverable and required handoff/lesson are ready, include submit_for_verification '
+                    'last in the SAME batch as final actions, or send a final response without tools. '
+                    'A file write or record_lesson alone is not a completion proposal. '
+                    'Do not spend the last response on optional narration/polling. '
+                    'Never skip required work or approval; the independent verifier still decides success.'}
         context = json.loads(transcript[1]['content'])
         if not isinstance(context, dict) or transcript[1]['role'] != 'user':
             raise RunnerError('Trusted task context is unavailable; no model call released')

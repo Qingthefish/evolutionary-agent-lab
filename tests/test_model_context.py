@@ -15,7 +15,7 @@ from agent_lab.model_context import CONTEXT_POLICY, peer_description
 from agent_lab.runner import effective_prompt, model_context_conditions
 from agent_lab.scheduler import MultiAgentScheduler, Role
 from agent_lab.sandbox import DockerPythonExecutor, ProcessResult
-from test_runner import Script, tool
+from test_runner import Script, response, tool
 from test_sandbox import FakeDocker, IMAGE
 
 
@@ -162,6 +162,26 @@ class ModelContextTests(unittest.TestCase):
         self.assertEqual(plan.conditions['case_model_context'], expected)
         self.assertEqual(plan.inspect()['model_context'], expected)
         self.assertEqual(build_manifest(plan.cases, live, 'off')['runtime']['case_model_context'], expected)
+
+    def test_last_request_notice_is_local_only_and_cannot_complete_missing_work(self):
+        from agent_lab.runner import TaskRunner, Limits
+        self.w.start_task(self.root, 'coordinator')
+        gateway = ToolGateway(self.w, self.f, self.root, 'coordinator', human='human',
+            allowed=('create_text', 'submit_for_verification'), delegation_rules=(('coder', 'Implement and test'),))
+        script = Script([response([tool('create_text', {'path': 'wrong.txt', 'content': 'partial'})])])
+        runner = TaskRunner(gateway, DeepSeekClient('synthetic', script), mode='offline_fixture', constraints=[],
+            limits=Limits(model_attempts=1), verifier=self.f.text_verifier(self.root, 'coordinator', {'required.txt': 'checked'}),
+            verifier_id='independent-missing-deliverable-v1')
+        runner.step()
+        context = json.loads(script.requests[0]['messages'][1]['content'])
+        notice = context['execution_budget']['completion_proposal']
+        self.assertEqual(notice['requests_left_after_current'], 0)
+        self.assertTrue(notice['low_request_budget'])
+        self.assertIn('independent verifier', notice['instruction'])
+        self.assertEqual(runner.status()['task_state'], 'running')
+        runner.step()
+        self.assertEqual(runner.status()['task_state'], 'failed')
+        self.assertEqual(len(script.requests), 1)
 
 
 if __name__ == '__main__':
