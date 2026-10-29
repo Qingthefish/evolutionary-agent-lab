@@ -113,7 +113,8 @@ def sandbox_output(workflow, files, task, actor, path, digest, size, spec):
                 return False
             start, start_detail = reserved[0]; imported, detail = imports[0]
             return (start['actor'] == actor and start_detail.get('inputs') == inputs
-                    and imported['actor'] == actor and detail.get('sha256') == digest and detail.get('bytes') == size
+                    and imported['actor'] == actor and detail.get('sha256') == digest
+                    and type(detail.get('bytes')) is int and detail['bytes'] == size
                     and any(e['actor'] == actor and start['sequence'] < e['sequence'] < imported['sequence'] for e, _ in stopped))
     except (WorkflowError, ValueError, TypeError, KeyError, UnicodeError, RecursionError):
         return False

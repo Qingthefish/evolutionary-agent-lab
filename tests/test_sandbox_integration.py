@@ -162,6 +162,12 @@ class DockerIntegrationTests(unittest.TestCase):
         self.assertEqual(self.workflow.task(child, "user")["state"], "failed")
         transcript = self.workflow.db.execute("SELECT transcript FROM runner_sessions WHERE task=?", (child,)).fetchone()[0]
         self.assertIn("sandbox_output", transcript)
+        # The misleading output exists, but no child artifact was accepted and
+        # no task was certified from the expected text alone.
+        results = list((self.root / "files/tasks").rglob("result.txt"))
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].read_text(), "-1,3\n")
+        self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM artifacts WHERE source_task=?", (child,)).fetchone()[0], 0)
 
     def test_shared_execution_criterion_rejects_changed_code_after_actual_success(self):
         result = self.run_code("from pathlib import Path\nPath('result.txt').write_text('42\\n')\n", outputs=['result.txt'])
@@ -172,12 +178,6 @@ class DockerIntegrationTests(unittest.TestCase):
         self.files.update_text(self.task, 'coder', 'main.py', 'raise SystemExit(9)\n', expected_sha256=before['sha256'])
         self.assertEqual(self.files.read_text(self.task, 'coder', 'result.txt')['content'], '42\n')
         self.assertFalse(check())
-        # The misleading output exists, but no child artifact was accepted and
-        # no task was certified from the expected text alone.
-        results = list((self.root / "files/tasks").rglob("result.txt"))
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].read_text(), "-1,3\n")
-        self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM artifacts WHERE source_task=?", (child,)).fetchone()[0], 0)
 
     def test_network_host_files_secrets_root_writes_and_supervisor_signals_are_blocked(self):
         canary = self.root / "host-only.txt"

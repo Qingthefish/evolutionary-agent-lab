@@ -117,6 +117,9 @@ class ExecutionProofTests(unittest.TestCase):
         for change in changes:
             original = self.alter_result(run, change); self.assertFalse(self.check()); self.restore(run, original)
         event = self.w.db.execute("SELECT * FROM events WHERE kind='sandbox_artifact_imported'").fetchone()
+        detail = json.loads(event['detail']); detail['bytes'] = True
+        self.w.db.execute('UPDATE events SET detail=? WHERE sequence=?', (json.dumps(detail), event['sequence']))
+        self.assertFalse(self.check())
         detail = json.loads(event['detail']); detail['run_id'] = 'different-run'
         self.w.db.execute('UPDATE events SET detail=? WHERE sequence=?', (json.dumps(detail), event['sequence']))
         self.assertFalse(self.check())
