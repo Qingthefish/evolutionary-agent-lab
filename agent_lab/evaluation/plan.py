@@ -115,6 +115,9 @@ class DevelopmentPlan:
 
     def inspect(self):
         blockers=[]
+        if not self.settings['docker_host'] and any(r.kind == 'sandbox_output' for c in self.cases
+                for r in (*c.expected.criteria, *(criterion for s in c.expected.subtasks for criterion in s.criteria))):
+            blockers.append('Sandbox output criteria require an explicitly configured isolated executor')
         if self.data['model'] is None: blockers.append('Course-approved model identifier has not been configured')
         key=os.environ.get(self.data['api_key_env'])
         if not key or any(c.isspace() for c in key): blockers.append('Named model credential variable is missing or invalid')

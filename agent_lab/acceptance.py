@@ -1,6 +1,6 @@
-"""Data-only independent artifact checks; never execute a candidate on the host.
+"""Independent artifact/execution-record checks; never execute a candidate on the host.
 
-These prove stated file properties, not factual accuracy or program correctness.
+These prove stated properties and recorded effects, not arbitrary correctness.
 Semantic/code acceptance still needs independent tests in a sandbox or review.
 """
 from dataclasses import asdict, dataclass
@@ -13,6 +13,7 @@ from .files import _parts
 from .inspection import ArtifactInspector
 from .protocol import strict_json
 from .provenance import received_from, source_spec
+from .execution_proof import execution_spec, sandbox_output
 
 
 @dataclass(frozen=True)
@@ -25,7 +26,7 @@ class ArtifactRule:
 
     def __post_init__(self):
         _parts(self.path)
-        if (not isinstance(self.kind,str) or self.kind not in {'exists','absent','contains','json_equals','sha256','received_from'}
+        if (not isinstance(self.kind,str) or self.kind not in {'exists','absent','contains','json_equals','sha256','received_from','sandbox_output'}
                 or type(self.min_bytes) is not int or type(self.max_bytes) is not int
                 or not 0 <= self.min_bytes <= self.max_bytes <= 65536):
             raise WorkflowError('Supply a supported artifact criterion with byte limits up to 65536')
@@ -43,6 +44,11 @@ class ArtifactRule:
                 raise WorkflowError('Expected JSON must be unambiguous and finite') from None
         if self.kind == 'received_from':
             object.__setattr__(self,'expected',_json(source_spec(self.expected)))
+        if self.kind == 'sandbox_output':
+            spec = execution_spec(self.expected)
+            if self.path in spec['inputs']:
+                raise WorkflowError('Sandbox output must be a new path, separate from input snapshots')
+            object.__setattr__(self,'expected',_json(spec))
 
     def record(self):
         return asdict(self)
@@ -97,6 +103,8 @@ def verify_rules(workflow, files, task, actor, rules):
                 passing=_json(strict_json(data.decode('utf-8')))==rule.expected
             elif passing and rule.kind=='received_from':
                 passing=received_from(workflow,task,rule.path,hashlib.sha256(data).hexdigest(),len(data),source_spec(rule.expected))
+            elif passing and rule.kind=='sandbox_output':
+                passing=sandbox_output(workflow,files,task,actor,rule.path,hashlib.sha256(data).hexdigest(),len(data),execution_spec(rule.expected))
             checks[label]=passing
         except (WorkflowError,UnicodeError,ValueError,RecursionError):
             # Unsafe symlinks and malformed JSON are failed checks, not absence.
