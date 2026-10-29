@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "purpose": "development",
+  "provider": "hkgai",
+  "model": "t2_hkgai-v3_fp8_1m_e7",
+  "api_key_env": "COURSE_HKGAI_API_KEY",
+  "cases": "cases",
+  "case_ids": [
+    "jsonl-repair-training",
+    "jsonl-repair-probe"
+  ],
+  "max_output_tokens": 1024,
+  "socket_timeout": 90,
+  "task_limits": {
+    "model_attempts": 10,
+    "reported_tokens": 180000,
+    "duration_seconds": 1800,
+    "repeated_outcomes": 3
+  },
+  "tree_limits": {
+    "tasks": 4,
+    "depth": 3,
+    "model_attempts": 16,
+    "reported_tokens": 180000,
+    "tool_calls": 80,
+    "duration_seconds": 1800
+  },
+  "tool_calls": 40,
+  "capabilities": {
+    "collaboration": true,
+    "web": false,
+    "memory": false,
+    "child_retries": 0,
+    "docker_host": null,
+    "python_image": null,
+    "git_config": null
+  }
+}

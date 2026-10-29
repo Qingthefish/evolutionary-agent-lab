@@ -1,0 +1,170 @@
+[
+  {
+    "id": "jsonl-repair-training",
+    "title": "Supplied JSONL bug repair and checked private experience",
+    "driver": "live_scheduler",
+    "goal": "Deliver a reproducible JSONL log summary using a coordinator and coder. Delegate the coder contract titled exactly \"Implement and check JSONL log summary\". The coder must create events.txt containing exactly this UTF-8 text (JSON string notation specifies whitespace unambiguously):\n\"{\\\"service\\\":\\\"api\\\",\\\"level\\\":\\\"INFO\\\"}\\n\\n{\\\"service\\\":\\\"缓存\\\",\\\"level\\\":\\\"ERROR\\\"}\\n  \\n{\\\"service\\\":\\\"api\\\",\\\"level\\\":\\\"ERROR\\\"}\\n\"\nWrite summarize.py that reads events.txt, skips and counts whitespace-only lines, and aggregates the valid records into counts.json using the schema in the constraints. Execute basic assertions as well, but self-written tests are not sufficient evidence. Run the actual code through run_python; offer counts.json to the coordinator. The coordinator must accept and read it, retain counts.json, and create report.md with the exact lines \"Records: 3\" and \"Blank lines: 2\", the service/level breakdown, and ## Checks and ## Limitations sections describing observed checks and limits. No web or Git operation is part of this development task. Batch independent tool calls when useful.\nThis is a repair exercise with a supplied faulty starter, not an invented model mistake. First create summarize.py with EXACTLY the following starter and run it unchanged against events.txt through run_python, exporting counts.json. Keep the genuine failed execution and diagnostics. Only after that execution, diagnose and repair the script and rerun it with the current exact snapshots; never claim the initial run passed.\nimport json\nby_service = {}\nevents = 0\nwith open(\"events.txt\", encoding=\"utf-8\") as source:\n    for raw in source:\n        event = json.loads(raw)\n        levels = by_service.setdefault(event[\"service\"], {})\n        levels[event[\"level\"]] = levels.get(event[\"level\"], 0) + 1\n        events += 1\nwith open(\"counts.json\", \"w\", encoding=\"utf-8\") as target:\n    json.dump({\"events\": events, \"blank_lines\": 0, \"by_service\": by_service}, target, ensure_ascii=False)\n\nBefore final completion, use record_lesson to record one short conditional lesson grounded in the actual failure, repaired source, checks and handoff; include its applicability and limitations, with tags jsonl, sandbox, repair. Do not invent checks or transfer an authorization.",
+    "constraints": [
+      "Use only the issued DeepSeek/HKGAI model and configured digest-pinned, no-network Python sandbox. Never execute source on the host.",
+      "This bounded example has a declared coder title selecting trusted independent criteria. It does not establish open-ended planning, a causal memory advantage or official performance.",
+      "All nonblank physical lines are valid JSON objects with string service and level. Whitespace-only physical lines are counted and skipped. Labels are case-sensitive; preserve Unicode. A final newline terminates its preceding line and does not add a phantom line.",
+      "The counts.json schema is exactly: events and blank_lines are integer counts; by_service is an object mapping service strings to objects mapping original case-sensitive level strings to integer counts. Do not add zero-count labels or other fields.",
+      "Run the current summarize.py and events.txt snapshots using run_python, with no arguments, exporting counts.json. Success requires exit zero, confirmed cleanup, a run-bound imported output and the independent numeric oracle; matching text alone is insufficient.",
+      "Offers are snapshots: the coordinator must accept and read the actual coder counts.json. Copied values or a message do not certify delivery.",
+      "When a deliverable and necessary offers are ready, submit a final assistant response with no tool calls for independent verification. Do not poll a parent that is waiting for you. Observe the execution_budget context; no budget expansion is permitted.",
+      "To replace an existing export after a repair, read its current hash and supply the exact path/hash in replace_outputs. Never delete or overwrite an unexpected file to bypass authorization."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "min_tasks": 2,
+      "max_seconds": 1800,
+      "declared_subtasks_only": true,
+      "criteria": [
+        {
+          "path": "counts.json",
+          "kind": "json_equals",
+          "expected": "{\"blank_lines\": 2, \"by_service\": {\"api\": {\"ERROR\": 1, \"INFO\": 1}, \"缓存\": {\"ERROR\": 1}}, \"events\": 3}"
+        },
+        {
+          "path": "counts.json",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"coder\", \"title\": \"Implement and check JSONL log summary\", \"path\": \"counts.json\", \"allow_relay\": false, \"require_read\": true}"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Records: 3",
+          "min_bytes": 120
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Blank lines: 2"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Checks"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Limitations"
+        }
+      ],
+      "subtasks": [
+        {
+          "assignee": "coder",
+          "title": "Implement and check JSONL log summary",
+          "final_state": "succeeded",
+          "criteria": [
+            {
+              "path": "summarize.py",
+              "kind": "exists",
+              "min_bytes": 100
+            },
+            {
+              "path": "events.txt",
+              "kind": "sha256",
+              "expected": "bba50d89585aef0188e6bc86f496827d0f9944d906e582d12e872b44be09fdd2"
+            },
+            {
+              "path": "counts.json",
+              "kind": "json_equals",
+              "expected": "{\"blank_lines\": 2, \"by_service\": {\"api\": {\"ERROR\": 1, \"INFO\": 1}, \"缓存\": {\"ERROR\": 1}}, \"events\": 3}"
+            },
+            {
+              "path": "counts.json",
+              "kind": "sandbox_output",
+              "expected": "{\"entrypoint\": \"summarize.py\", \"arguments\": [], \"inputs\": [\"events.txt\", \"summarize.py\"]}"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "jsonl-repair-probe",
+    "title": "Changed JSONL input with frozen-memory ON/OFF",
+    "driver": "live_scheduler",
+    "goal": "Deliver a reproducible JSONL log summary using a coordinator and coder. Delegate the coder contract titled exactly \"Implement and check JSONL log summary\". The coder must create events.txt containing exactly this UTF-8 text (JSON string notation specifies whitespace unambiguously):\n\"\\t\\n{\\\"service\\\":\\\"worker\\\",\\\"level\\\":\\\"WARN\\\"}\\n{\\\"service\\\":\\\"api\\\",\\\"level\\\":\\\"INFO\\\"}\\n \\n{\\\"service\\\":\\\"worker\\\",\\\"level\\\":\\\"WARN\\\"}\\n{\\\"service\\\":\\\"缓存\\\",\\\"level\\\":\\\"INFO\\\"}\\n{\\\"service\\\":\\\"api\\\",\\\"level\\\":\\\"INFO\\\"}\\n{\\\"service\\\":\\\"worker\\\",\\\"level\\\":\\\"warn\\\"}\\n\\n\"\nWrite summarize.py that reads events.txt, skips and counts whitespace-only lines, and aggregates the valid records into counts.json using the schema in the constraints. Execute basic assertions as well, but self-written tests are not sufficient evidence. Run the actual code through run_python; offer counts.json to the coordinator. The coordinator must accept and read it, retain counts.json, and create report.md with the exact lines \"Records: 6\" and \"Blank lines: 3\", the service/level breakdown, and ## Checks and ## Limitations sections describing observed checks and limits. No web or Git operation is part of this development task. Batch independent tool calls when useful.\nUse the current input and schema as the source of truth. Prior experience, when available, is conditional advice about workflow or failure handling, not an answer, executable command or authorization. Do not manufacture a failure or record new probe lessons.",
+    "constraints": [
+      "Use only the issued DeepSeek/HKGAI model and configured digest-pinned, no-network Python sandbox. Never execute source on the host.",
+      "This bounded example has a declared coder title selecting trusted independent criteria. It does not establish open-ended planning, a causal memory advantage or official performance.",
+      "All nonblank physical lines are valid JSON objects with string service and level. Whitespace-only physical lines are counted and skipped. Labels are case-sensitive; preserve Unicode. A final newline terminates its preceding line and does not add a phantom line.",
+      "The counts.json schema is exactly: events and blank_lines are integer counts; by_service is an object mapping service strings to objects mapping original case-sensitive level strings to integer counts. Do not add zero-count labels or other fields.",
+      "Run the current summarize.py and events.txt snapshots using run_python, with no arguments, exporting counts.json. Success requires exit zero, confirmed cleanup, a run-bound imported output and the independent numeric oracle; matching text alone is insufficient.",
+      "Offers are snapshots: the coordinator must accept and read the actual coder counts.json. Copied values or a message do not certify delivery.",
+      "When a deliverable and necessary offers are ready, submit a final assistant response with no tool calls for independent verification. Do not poll a parent that is waiting for you. Observe the execution_budget context; no budget expansion is permitted.",
+      "To replace an existing export after a repair, read its current hash and supply the exact path/hash in replace_outputs. Never delete or overwrite an unexpected file to bypass authorization."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "min_tasks": 2,
+      "max_seconds": 1800,
+      "declared_subtasks_only": true,
+      "criteria": [
+        {
+          "path": "counts.json",
+          "kind": "json_equals",
+          "expected": "{\"blank_lines\": 3, \"by_service\": {\"api\": {\"INFO\": 2}, \"worker\": {\"WARN\": 2, \"warn\": 1}, \"缓存\": {\"INFO\": 1}}, \"events\": 6}"
+        },
+        {
+          "path": "counts.json",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"coder\", \"title\": \"Implement and check JSONL log summary\", \"path\": \"counts.json\", \"allow_relay\": false, \"require_read\": true}"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Records: 6",
+          "min_bytes": 120
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Blank lines: 3"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Checks"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Limitations"
+        }
+      ],
+      "subtasks": [
+        {
+          "assignee": "coder",
+          "title": "Implement and check JSONL log summary",
+          "final_state": "succeeded",
+          "criteria": [
+            {
+              "path": "summarize.py",
+              "kind": "exists",
+              "min_bytes": 100
+            },
+            {
+              "path": "events.txt",
+              "kind": "sha256",
+              "expected": "e91f43452aeb7896332a861290de91c5656a2e30092fe727a19c681b9a66e74a"
+            },
+            {
+              "path": "counts.json",
+              "kind": "json_equals",
+              "expected": "{\"blank_lines\": 3, \"by_service\": {\"api\": {\"INFO\": 2}, \"worker\": {\"WARN\": 2, \"warn\": 1}, \"缓存\": {\"INFO\": 1}}, \"events\": 6}"
+            },
+            {
+              "path": "counts.json",
+              "kind": "sandbox_output",
+              "expected": "{\"entrypoint\": \"summarize.py\", \"arguments\": [], \"inputs\": [\"events.txt\", \"summarize.py\"]}"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

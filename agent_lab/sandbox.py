@@ -512,12 +512,14 @@ class DockerPythonExecutor:
     @staticmethod
     def validate_job(entrypoint, input_files, arguments, outputs, replace_outputs=None):
         if (not isinstance(input_files, dict) or not 1 <= len(input_files) <= 20
-                or not isinstance(entrypoint, str) or entrypoint not in input_files
+                or not isinstance(entrypoint, str)
                 or not isinstance(arguments, list) or len(arguments) > 16
                 or any(not isinstance(arg, str) or len(arg) > 1024 or "\0" in arg for arg in arguments)
                 or not isinstance(outputs, list) or len(outputs) > 8
                 or any(not isinstance(path, str) for path in outputs)):
             raise SandboxError("Invalid bounded Python execution job")
+        if entrypoint not in input_files:
+            raise SandboxError("Include the entrypoint script in input_files with its exact current SHA-256; no execution started")
         if len(set(outputs)) != len(outputs) or set(outputs) & input_files.keys():
             raise SandboxError("Outputs must be distinct new paths, separate from input snapshots")
         if replace_outputs is not None and (not isinstance(replace_outputs, dict) or len(replace_outputs) > 8

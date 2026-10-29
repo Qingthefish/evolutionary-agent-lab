@@ -35,6 +35,56 @@ class SandboxReplacementTests(unittest.TestCase):
         self.assertTrue(json.loads(gateway.dispatch(tool('run_python',self.job))['content'])['ok'])
         self.assertTrue(self.check())
 
+    def test_missing_entrypoint_gives_actionable_feedback_before_any_batch_effect(self):
+        data = self.f.create_text(self.task, 'coder', 'data.txt', 'Input\n')
+        args = {**self.job, 'input_files': {'data.txt': data['sha256']}}
+        gateway = self.gateway(); before = (self.w.db.total_changes, len(self.fake.commands))
+        with self.assertRaisesRegex(WorkflowError, 'Include the entrypoint script in input_files'):
+            gateway.validate_batch([tool('create_text', {'path': 'never.txt', 'content': 'No effect'}, 'first'),
+                                    tool('run_python', args, 'second')])
+        self.assertEqual(before, (self.w.db.total_changes, len(self.fake.commands)))
+        with self.assertRaisesRegex(WorkflowError, 'no execution started'):
+            self.executor.run_python(self.task, 'coder', **args)
+        self.assertEqual(before, (self.w.db.total_changes, len(self.fake.commands)))
+        self.assertEqual(self.w.db.execute('SELECT count(*) FROM sandbox_runs').fetchone()[0], 0)
+        self.assertEqual(self.w.db.execute('SELECT count(*) FROM tool_calls').fetchone()[0], 0)
+
+    def test_delivery_guidance_names_owned_imports_without_creating_an_offer(self):
+        gateway = self.gateway()
+        result = json.loads(gateway.dispatch(tool('run_python', self.job))['content'])['result']
+        self.assertEqual(result['output_delivery'], {'kind': 'current_task_import_receipts',
+            'task_id': self.task, 'requires_accept_artifact': False})
+        self.assertEqual([r['path'] for r in result['artifacts']], ['result.txt'])
+        self.assertEqual(result['artifacts'][0]['sha256'], self.f.read_text(self.task, 'coder', 'result.txt')['sha256'])
+        self.assertEqual(self.w.db.execute('SELECT count(*) FROM artifacts').fetchone()[0], 0)
+        stored = json.loads(self.w.db.execute('SELECT result FROM sandbox_runs WHERE id=?', (result['run_id'],)).fetchone()[0])
+        self.assertNotIn('output_delivery', stored)  # Guidance cannot become execution proof.
+        self.assertTrue(self.check())
+
+    def test_failed_execution_does_not_claim_output_delivery(self):
+        self.fake.execution = ProcessResult(9, b'', b'Actual failed check')
+        result = json.loads(self.gateway().dispatch(tool('run_python', self.job))['content'])['result']
+        self.assertEqual(result['execution']['exit_code'], 9)
+        self.assertEqual(result['artifacts'], [])
+        self.assertNotIn('output_delivery', result)
+        self.assertEqual(self.w.db.execute('SELECT count(*) FROM artifacts').fetchone()[0], 0)
+        self.assertFalse(self.check())
+
+    def test_partial_import_guidance_cannot_invent_receipts_for_missing_outputs(self):
+        self.fake.exports = {'result.txt': '42\n', 'other.txt': 'Other\n'}
+        original = self.f.create_text
+        def interrupted(task, actor, path, content):
+            if path == 'other.txt': raise OSError('Synthetic second import interruption')
+            return original(task, actor, path, content)
+        with patch.object(self.f, 'create_text', side_effect=interrupted):
+            result = json.loads(self.gateway().dispatch(tool('run_python', {
+                **self.job, 'outputs': ['result.txt', 'other.txt']}))['content'])['result']
+        self.assertIn('import failed', result['error'])
+        self.assertEqual([r['path'] for r in result['artifacts']], ['result.txt'])
+        self.assertEqual(result['output_delivery']['task_id'], self.task)
+        self.assertEqual(self.w.db.execute('SELECT count(*) FROM artifacts').fetchone()[0], 0)
+        with self.assertRaises(WorkflowError): self.f.read_text(self.task, 'coder', 'other.txt')
+
     def test_checked_repair_updates_exact_version_and_binds_a_new_run(self):
         first,old=self.prepare();gateway=self.gateway()
         args={**self.job,'replace_outputs':{'result.txt':old['sha256']}}
