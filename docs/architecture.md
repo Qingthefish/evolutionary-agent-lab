@@ -62,6 +62,18 @@ SQLite serializes cooperating broker operations and task transitions. Filesystem
 
 The legacy `FileTools.execute_code` entry point always refuses host execution. Actual isolated Python execution uses the separate explicitly configured `DockerPythonExecutor`/`run_python` path described below. No host subprocess fallback, network operation, model call, or Git operation is hidden behind it. File ownership checks are not evidence of satisfying the full sandbox requirement.
 
+### Original task inputs
+
+`FileTools.provide_text` is a trusted setup API, absent from model tools. Only the human who created a pending root may provide a bounded new UTF-8 file. It uses the same descriptor/no-follow/create-only boundary, records `task_input_provided` with the human actor and exact bytes/hash, and refuses overwrites, delegated tasks, noncreators, agents and started tasks. This adds no offer or approval. File/DB commits retain the broker's non-atomic boundary; a partial setup must be inspected rather than blindly replayed.
+
+The runner preserves original receipt metadata in context under `creator-human-pending-root-v1`; file contents remain reference data and are read through owned file tools. Children receive explicit offers and acceptance/read checks, not ambient access. Development cases may declare at most twenty raw input files, 64 KiB each and 256 KiB total. The normal and frozen-experience drivers supply only the current case's data before execution, with evaluator attribution, never as model-authored outputs or fabricated human decisions. Both probe arms get identical current inputs in fresh files; no training files are inherited. Plans/manifests expose the protocol and input hashes; old cases without inputs retain their summary shape.
+
+### Explicit verification proposals
+
+Declared roles additionally expose `submit_for_verification(summary)` under `independent-verification-proposal-v1`. Gateway dispatch only records a proposal receipt; it cannot set success or accept criteria. Batch preflight requires exactly one proposal, last, before any effects. After completed tool dispatch, the runner applies the same trusted verifier as a final assistant answer, or waits for actual independent review when no verifier exists. Actual checks, pending children, grants awaiting release, controller stops, time and budgets remain authoritative. Failed checks return concrete repair feedback with the full tool transcript.
+
+Recovery reconstructs completed tool receipts and skips unstarted operations, but never automatically re-issues an interrupted verification proposal; uncertain reservations still require reconciliation. Read-only proposal views require the actual successful tool record and a reservation after that turn's event boundary, so reused/rejected call IDs cannot display a new submission. Summaries remain agent assertions and use existing display redaction. Legacy roles retain their tool set; changed declared configurations are refused on resume rather than silently replacing recorded contracts.
+
 Behavior checks cover conversation access, delegation ownership, parent/child completion, restart/resume, wrong-user responses, exact-action approval, stale and duplicate release, concurrent release, denied/failed parent cancellation, and accounting. The fixture additionally checks that existing run directories are not overwritten.
 
 Additional checks cover controlled file CRUD, ownership and path escape attempts, symlink/hard-link/special-file rejection, stale digests, corrupted/duplicate/concurrent handoff, restart, mismatched completion artifacts, and refusal of unconfigured execution.
