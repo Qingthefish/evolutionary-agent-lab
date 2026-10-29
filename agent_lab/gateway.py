@@ -388,6 +388,9 @@ class ToolGateway:
                 result = {**result, "output_delivery": {
                     "kind": "current_task_import_receipts", "task_id": self.task,
                     "requires_accept_artifact": False}}
+            if self.delegation_rules is not None:
+                from .model_context import execution_view
+                return execution_view(result)
             return result
         if name == "delete_text":
             current = self.files.read_text(self.task, self.actor, args["path"])

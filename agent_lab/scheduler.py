@@ -16,6 +16,7 @@ from .gateway import ToolGateway, _SPECS
 from .runner import Limits, RunnerError, TaskRunner
 from .core import WorkflowError
 from .delegation import input_records, normalize_inputs
+from .model_context import CONTEXT_POLICY, peer_description
 
 
 @dataclass(frozen=True)
@@ -129,6 +130,7 @@ class MultiAgentScheduler:
                     or len(set(delegation_rules)) != len(delegation_rules)):
                 raise RunnerError("Use distinct trusted delegation rules for configured roles")
             settings["delegation_rules"] = sorted(delegation_rules)
+            settings["model_context"] = CONTEXT_POLICY
         if self.delegation_inputs:
             settings["delegation_inputs"] = input_records(self.delegation_inputs)
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
@@ -170,7 +172,8 @@ class MultiAgentScheduler:
         return TaskRunner(gateway, self.clients[actor], mode=self.mode, constraints=self.constraints,
             limits=role.limits, verifier=verifier, verifier_id=version, role={
                 "agent": actor, "instructions": role.instructions,
-                "eligible_agents": {key: self.roles[key].instructions for key in role.delegates},
+                "eligible_agents": {key: (peer_description(self.roles[key]) if self.delegation_rules is not None
+                                         else self.roles[key].instructions) for key in role.delegates},
             })
 
     def status(self):

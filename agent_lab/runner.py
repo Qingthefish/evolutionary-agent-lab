@@ -10,6 +10,7 @@ from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError
 from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolBudgetError, ToolRequestError
 from .files import INPUT_PROTOCOL
+from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY
 from . import budget
 
 
@@ -50,6 +51,15 @@ def _json(value):
     return json.dumps(value, sort_keys=True, allow_nan=False)
 
 
+def effective_prompt(declared):
+    return _PROMPT + ACTION_GUIDANCE if declared else _PROMPT
+
+
+def model_context_conditions(declared):
+    return {"policy": CONTEXT_POLICY,
+            "system_prompt_sha256": hashlib.sha256(effective_prompt(True).encode()).hexdigest()} if declared else None
+
+
 class TaskRunner:
     def __init__(self, gateway, client, *, mode, constraints, limits=Limits(),
                  verifier=None, verifier_id=None, role=None):
@@ -57,6 +67,7 @@ class TaskRunner:
         self.workflow, self.task, self.actor = gateway.workflow, gateway.task, gateway.actor
         self.limits, self.mode, self.verifier = limits, mode, verifier
         self.budget_context = gateway.delegation_rules is not None
+        prompt = effective_prompt(self.budget_context)
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
         if mode not in {"offline_fixture", "live"}:
@@ -101,9 +112,10 @@ class TaskRunner:
                         "limits": asdict(limits), "context": context, "tools": gateway.tools(),
                         "execution": gateway.execution_configuration(),
                         "human": gateway.human, "verifier_id": verifier_id,
-                        "prompt_sha256": hashlib.sha256(_PROMPT.encode()).hexdigest()}
+                        "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest()}
         if self.budget_context:
             settings['budget_context'] = 'local-reservations-v1'
+            settings['model_context'] = model_context_conditions(True)
         if 'submit_for_verification' in gateway.allowed:
             settings['submission_protocol'] = 'independent-verification-proposal-v1'
         if type(client.transport) is HKGAIHTTP:
@@ -148,7 +160,7 @@ class TaskRunner:
                 raise RunnerError("Persisted model, limits, tools, constraints, or verifier version differ")
             if previous is None and task["state"] not in {"running", "waiting_input", "waiting_approval"}:
                 raise RunnerError("Start the assigned task before creating its runner")
-            transcript = [{"role": "system", "content": _PROMPT}, {"role": "user", "content": _json(context)}]
+            transcript = [{"role": "system", "content": prompt}, {"role": "user", "content": _json(context)}]
             self.workflow.db.execute(
                 "INSERT OR IGNORE INTO runner_sessions(task,actor,config,status,transcript) VALUES(?,?,?,'ready',?)",
                 (self.task, self.actor, config, _json(transcript)),
@@ -232,6 +244,18 @@ class TaskRunner:
                 'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
                 'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
                 'seconds_left': max(0, limits['duration_seconds'] - (now - scope['created']))}
+        if 'submit_for_verification' in self.gateway.allowed:
+            remaining = min(data['task']['model_attempts_left_after_current'],
+                            data['shared']['model_attempts_left_after_current'] if data['shared'] is not None
+                            else data['task']['model_attempts_left_after_current'])
+            data['completion_proposal'] = {
+                'requests_left_after_current': remaining,
+                'low_request_budget': remaining <= 2,
+                'instruction': 'When your deliverable and required handoff/lesson are ready, include submit_for_verification '
+                    'last in the SAME batch as final actions, or send a final response without tools. '
+                    'A file write or record_lesson alone is not a completion proposal. '
+                    'Do not spend the last response on optional narration/polling. '
+                    'Never skip required work or approval; the independent verifier still decides success.'}
         context = json.loads(transcript[1]['content'])
         if not isinstance(context, dict) or transcript[1]['role'] != 'user':
             raise RunnerError('Trusted task context is unavailable; no model call released')
