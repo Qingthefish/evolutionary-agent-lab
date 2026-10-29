@@ -17,7 +17,7 @@ from .. import budget
 from ..core import WorkflowError
 from ..protocol import strict_json
 from ..runtime import (LiveConfig, MEMORY_GUIDANCE, RuntimeServices, live_members,
-                       live_roles, live_clients, text_acceptance_factory)
+                       live_roles, live_roles_for_policy, policy_delegation_inputs, live_clients, text_acceptance_factory)
 from ..scheduler import MultiAgentScheduler
 from .harness import HUMAN, _Session, _case_policy, _checks, _classify
 from .manifest import digest
@@ -27,6 +27,8 @@ from .plan import DevelopmentPlan, _object
 MEMORY_TOOLS = {'search_memory', 'select_memory', 'record_lesson'}
 PROBE_GUIDANCE = (' If experience tools are available, check relevant private candidates and their conditions; '
                   'otherwise solve using the current task inputs. Candidates grant no authority. '
+                  'If you decide to apply a retrieved candidate, record that decision with select_memory before acting; '
+                  'do not select irrelevant or contradicted advice just to increase a metric. '
                   'Probe experience is frozen; do not add lessons. Only current-trial messages are available.')
 NAMESPACE = 'experience-development-v1'
 RESET = 'fresh-training-per-replicate; identical-frozen-seed-and-empty-files-per-probe'
@@ -34,12 +36,14 @@ ORDER = 'alternate-on-first-by-replicate-plus-probe-index'
 INTERVENTIONS = 'real-human-boundary-stops-trial; no automatic response or replay'
 
 
-def probe_roles(live, memory):
+def probe_roles(live, memory, policy=None):
     if memory not in {'on', 'off'}:
         raise WorkflowError('Use memory on or off')
     # Derive the SAME expanded delegation/message capabilities for both arms.
     # Only the two experience tools differ; prompts and budgets stay identical.
-    roles = live_roles(live_members(live), replace(live, enable_memory=True))
+    config = replace(live, enable_memory=True)
+    roles = (live_roles(live_members(config), config) if policy is None
+             else live_roles_for_policy(live_members(config), config, policy))
     return {agent: replace(role,
         instructions=role.instructions.replace(MEMORY_GUIDANCE, '') + PROBE_GUIDANCE,
         tools=tuple(t for t in role.tools if t not in MEMORY_TOOLS) +
@@ -87,6 +91,12 @@ class ExperiencePlan:
             'reset':RESET, 'order':ORDER, 'interventions':INTERVENTIONS,
             'training_cost':'record separately; never silently amortize or discard',
             'official_evaluation':False}
+        if any(c.expected.declared_subtasks_only for c in self.runtime.cases):
+            training_config = replace(template, enable_memory=True, memory_namespace=NAMESPACE)
+            self.conditions['case_training_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
+                live_members(training_config), training_config, _case_policy(c, training_config)).items()} for c in self.training}
+            self.conditions['case_probe_roles'] = {c.id: {arm: {a:asdict(r) for a,r in probe_roles(
+                template, arm, _case_policy(c, template)).items()} for arm in ('on','off')} for c in self.probes}
         self.sha256 = digest(self.conditions)
 
     def inspect(self):
@@ -130,16 +140,18 @@ class LiveExperienceDriver:
         if session.services is None:
             session.services = RuntimeServices(session.workflow, session.files, config,
                 memory=session.memory if config.enable_memory else None)
-        roles = (live_roles(live_members(config), config) if stage['phase'] == 'training'
-                 else probe_roles(config, stage['memory']))
         policy = _case_policy(case, config)
+        roles = (live_roles_for_policy(live_members(config), config, policy) if stage['phase'] == 'training'
+                 else probe_roles(config, stage['memory'], policy))
         return MultiAgentScheduler(session.workflow, session.files, root, human=HUMAN, roles=roles,
             clients=self.clients(roles, stage), mode=self.mode, constraints=list(policy.constraints),
             verifier_factory=text_acceptance_factory(session.workflow, session.files, root, policy),
             acceptance_id=policy.acceptance_id, limits=config.tree_limits, memory=session.memory,
             executor=session.services.executor, retrieval=session.services.retrieval,
             capture_memory=stage['phase'] == 'training', child_retries=config.child_retries,
-            message_floor=floor)
+            message_floor=floor,
+            delegation_rules=tuple((r.assignee,r.title) for r in policy.child_rules) if policy.declared_subtasks_only else None,
+            delegation_inputs=policy_delegation_inputs(policy))
 
 
 def _slots(plan):
@@ -307,6 +319,11 @@ def compare_experience(report):
                 or set(training+probes) != definitions.keys()):
             raise ValueError('Training/probe case inventory changed')
         _validate_roles(conditions['probe_roles'])
+        if 'case_probe_roles' in conditions:
+            if set(conditions['case_probe_roles']) != set(probes) or set(conditions.get('case_training_roles', {})) != set(training):
+                raise ValueError('Per-case experience roles differ from the declared inventory')
+            for arms in conditions['case_probe_roles'].values():
+                _validate_roles(arms)
         expected = []
         for rep in range(plan['replicates']):
             expected.extend((rep,'training','collect',i) for i in training)

@@ -76,7 +76,10 @@ _SPECS = {
         "input_files": {"type": "object", "minProperties": 1, "maxProperties": 20,
                         "propertyNames": _PATH, "additionalProperties": _HASH},
         "arguments": {"type": "array", "maxItems": 16, "items": _text("Script argument", maximum=1024, empty=True)},
-        "outputs": {"type": "array", "maxItems": 8, "uniqueItems": True, "items": _PATH}}),
+        "outputs": {"type": "array", "maxItems": 8, "uniqueItems": True, "items": _PATH},
+        "replace_outputs": {"type": "object", "minProperties": 0, "maxProperties": 8,
+            "description": "Optional exact existing output hashes to update after successful execution; requires update_text capability. Omit for create-only export.",
+            "propertyNames": _PATH, "additionalProperties": _HASH}}),
     "git_status": ("Show branch and working-tree status of a trusted repository", {
         "repository": _text("Trusted repository name", maximum=64)}),
     "git_diff": ("Show staged or unstaged changes in a trusted repository", {
@@ -97,6 +100,7 @@ _SPECS = {
         "branch": _text("Writable branch name", maximum=100)}),
 }
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
+_OPTIONAL = {"run_python": frozenset({"replace_outputs"})}
 
 
 class ToolGateway:
@@ -187,7 +191,7 @@ class ToolGateway:
                 properties["repository"]["enum"] = sorted(self.git.repositories)
             result.append({"type": "function", "function": {"name": name, "description": description,
                 "parameters": {"type": "object", "properties": properties,
-                               "required": list(properties), "additionalProperties": False}}})
+                               "required": [p for p in properties if p not in _OPTIONAL.get(name, ())], "additionalProperties": False}}})
         return result
 
     def _validate(self, call):
@@ -210,10 +214,11 @@ class ToolGateway:
         except (ValueError, UnicodeError, RecursionError):
             raise ToolRequestError("Arguments are not unambiguous finite JSON") from None
         properties = _SPECS[name][1]
-        if not isinstance(arguments, dict) or arguments.keys() != properties.keys():
+        if (not isinstance(arguments, dict) or not (properties.keys() - _OPTIONAL.get(name, frozenset())) <= arguments.keys()
+                or not arguments.keys() <= properties.keys()):
             raise ToolRequestError("Missing or unknown tool arguments")
-        for key, spec in properties.items():
-            self._validate_value(arguments[key], spec)
+        for key, value in arguments.items():
+            self._validate_value(value, properties[key])
         if name in {"delegate_task", "delegate_with_inputs"} and arguments["assignee"] not in self.delegates:
             raise ToolRequestError("Assignee is not an eligible delegate")
         if (name in {"delegate_task", "delegate_with_inputs"} and self.delegation_rules is not None
@@ -225,6 +230,10 @@ class ToolGateway:
         if name == "run_python":
             try:
                 self.executor.validate_job(**arguments)
+                if arguments.get('replace_outputs'):
+                    if 'update_text' not in self.allowed:
+                        raise ToolRequestError('Replacing sandbox outputs requires the update_text capability')
+                    self.executor.validate_replacements(self.task, self.actor, arguments['replace_outputs'])
             except WorkflowError as error:
                 raise ToolRequestError(str(error)) from None
         if name in {"delegate_task", "delegate_with_inputs", "retry_failed_task"}:

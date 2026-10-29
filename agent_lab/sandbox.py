@@ -18,6 +18,7 @@ from uuid import uuid4
 from .core import WorkflowError
 from .files import _parts
 from .protocol import strict_json
+from .inspection import ArtifactInspector
 
 
 class SandboxError(WorkflowError):
@@ -355,8 +356,27 @@ class DockerPythonExecutor:
             valid = False
         if not valid:
             raise SandboxError("Export checkpoint integrity mismatch")
+        job = result.get('job', {})
+        if not isinstance(job, dict):
+            raise SandboxError('Invalid saved execution job')
+        replacements = job.get('replace_outputs', {})
+        if not isinstance(replacements, dict):
+            raise SandboxError('Invalid saved replacement binding')
+        if replacements:
+            try:
+                self.validate_job(job['entrypoint'], strict_json(row['inputs']), job['arguments'], job['outputs'],
+                                  replace_outputs=replacements)
+            except (KeyError, ValueError, TypeError):
+                raise SandboxError('Invalid saved replacement binding') from None
         receipts = []
         for path, text in exported.items():
+            if path in replacements:
+                current = self.files.read_text(row['task'], actor, path)
+                if current['sha256'] != result['export_sha256'][path]:
+                    current = self.files.update_text(row['task'], actor, path, text, expected_sha256=replacements[path])
+                self._record_import(run_id, row['task'], actor, current)
+                receipts.append({key: current[key] for key in ('path','sha256','bytes')})
+                continue
             try:
                 current = self.files.read_text(row["task"], actor, path)
             except WorkflowError:
@@ -368,8 +388,21 @@ class DockerPythonExecutor:
             receipts.append({key: current[key] for key in ("path", "sha256", "bytes")})
         return {"artifacts": receipts, "effects_replayed": False}
 
-    def run_python(self, task, actor, *, entrypoint, input_files, arguments, outputs):
-        self.validate_job(entrypoint, input_files, arguments, outputs)
+    def validate_replacements(self, task, actor, replacements):
+        row = self.workflow._task(task, actor, assigned=True)
+        if row['state'] != 'running':
+            raise SandboxError('Only an assigned running task may replace its outputs')
+        inspector = ArtifactInspector(self.workflow, self.files)
+        for path, digest in replacements.items():
+            data = inspector._read(task, path)
+            if data is None or hashlib.sha256(data).hexdigest() != digest:
+                raise SandboxError('Replacement output is missing or changed; no execution started')
+
+    def run_python(self, task, actor, *, entrypoint, input_files, arguments, outputs, replace_outputs=None):
+        self.validate_job(entrypoint, input_files, arguments, outputs, replace_outputs=replace_outputs)
+        replacements = dict(replace_outputs or {})
+        if replacements:
+            self.validate_replacements(task, actor, replacements)
         snapshots = {}
         for path, digest in input_files.items():
             file = self.files.read_text(task, actor, path)
@@ -405,6 +438,8 @@ class DockerPythonExecutor:
         result = {"run_id": identifier, "process_sandbox": False, "configuration": self.configuration(),
                   "job": {"entrypoint": entrypoint, "arguments": list(arguments), "outputs": list(outputs)},
                   "execution": None, "artifacts": [], "cleanup_confirmed": False}
+        if replacements:
+            result['job']['replace_outputs'] = replacements
         exported = None
         creation_requested = False
         try:
@@ -462,7 +497,8 @@ class DockerPythonExecutor:
             result["phase"] = "artifact_import"
             try:
                 for path, text in exported.items():
-                    receipt = self.files.create_text(task, actor, path, text)
+                    receipt = (self.files.update_text(task, actor, path, text, expected_sha256=replacements[path])
+                               if path in replacements else self.files.create_text(task, actor, path, text))
                     self._record_import(identifier, task, actor, receipt)
                     result["artifacts"].append(receipt)
             except (WorkflowError, OSError):
@@ -474,7 +510,7 @@ class DockerPythonExecutor:
         return result
 
     @staticmethod
-    def validate_job(entrypoint, input_files, arguments, outputs):
+    def validate_job(entrypoint, input_files, arguments, outputs, replace_outputs=None):
         if (not isinstance(input_files, dict) or not 1 <= len(input_files) <= 20
                 or not isinstance(entrypoint, str) or entrypoint not in input_files
                 or not isinstance(arguments, list) or len(arguments) > 16
@@ -484,6 +520,10 @@ class DockerPythonExecutor:
             raise SandboxError("Invalid bounded Python execution job")
         if len(set(outputs)) != len(outputs) or set(outputs) & input_files.keys():
             raise SandboxError("Outputs must be distinct new paths, separate from input snapshots")
+        if replace_outputs is not None and (not isinstance(replace_outputs, dict) or len(replace_outputs) > 8
+                or not replace_outputs.keys() <= set(outputs)
+                or any(not isinstance(v, str) or re.fullmatch('[0-9a-f]{64}',v) is None for v in replace_outputs.values())):
+            raise SandboxError('Replacement outputs require exact hashes for declared output paths')
         for path in [*input_files, *outputs]:
             _parts(path)
             if len(path) > 512:

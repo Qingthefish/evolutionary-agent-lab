@@ -56,7 +56,7 @@ def sandbox_output(workflow, files, task, actor, path, digest, size, spec):
             if not isinstance(result, dict) or not isinstance(inputs, dict) or not isinstance(result.get('job'), dict):
                 return False  # Historical unbound job evidence cannot certify this new rule.
             job = result['job']
-            if set(job) != {'entrypoint', 'arguments', 'outputs'}:
+            if not {'entrypoint', 'arguments', 'outputs'} <= job.keys() <= {'entrypoint', 'arguments', 'outputs', 'replace_outputs'}:
                 return False
             recorded = execution_spec(json.dumps({'entrypoint': job['entrypoint'], 'arguments': job['arguments'], 'inputs': list(inputs)}))
             if any(not isinstance(v, str) or not re.fullmatch('[0-9a-f]{64}', v) for v in inputs.values()):
@@ -90,6 +90,10 @@ def sandbox_output(workflow, files, task, actor, path, digest, size, spec):
                     or set(result['export_sha256']) != set(exported)):
                 return False
             SandboxLimits(**config['limits'])
+            replacements = job.get('replace_outputs', {})
+            if (not isinstance(replacements, dict) or not replacements.keys() <= set(job['outputs'])
+                    or any(not isinstance(v,str) or not re.fullmatch('[0-9a-f]{64}',v) for v in replacements.values())):
+                return False
             for output, text in exported.items():
                 _parts(output)
                 if (not isinstance(text, str) or len(text.encode('utf-8')) > 65536

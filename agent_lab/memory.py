@@ -116,8 +116,12 @@ class ExperienceMemory:
             lessons = []
             if row["state"] in {"succeeded", "failed"}:
                 from .queries import redact
-                summary = redact(_json({"assignment": row["title"], "outcome": row["state"],
-                                        "evidence": json.loads(row["evidence"])}), limit=3000)
+                observation = {"assignment": row["title"][:1024], "outcome": row["state"],
+                               "evidence": json.loads(row["evidence"])}
+                feedback = self._verification_feedback(task)
+                if feedback:
+                    observation['verification_feedback'] = feedback
+                summary = redact(_json(observation), limit=3000)
                 lessons.append(self.capture(task, actor, lesson="Observed execution (check applicability; not a proven recipe): " + summary,
                                             tags=["observed-outcome", row["state"], *(t[:64] for t in sorted(_terms(row["title"])))][:16]))
                 for proposal in self.workflow.db.execute("SELECT * FROM lesson_proposals WHERE task=? AND namespace=? ORDER BY rowid",
@@ -133,6 +137,33 @@ class ExperienceMemory:
             self.workflow.db.execute("INSERT OR IGNORE INTO memory_outcomes VALUES(?,?,?)", (task, self.namespace, _json(result)))
             self.workflow._event(task, actor, "memory_outcome_recorded", {"namespace": self.namespace, **result})
         return result
+
+    def _verification_feedback(self, task):
+        """Keep bounded program feedback in new observations, not old source records."""
+        if not self.workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='runner_sessions'").fetchone():
+            return []
+        row = self.workflow.db.execute('SELECT transcript FROM runner_sessions WHERE task=?', (task,)).fetchone()
+        if row is None:
+            return []
+        from .protocol import strict_json
+        try:
+            messages = strict_json(row['transcript'])
+            if not isinstance(messages, list):
+                return []
+            feedback = []
+            for message in messages:
+                if not isinstance(message, dict) or message.get('role') != 'user' or not isinstance(message.get('content'), str):
+                    continue
+                try:
+                    detail = strict_json(message['content'])
+                except (ValueError, TypeError, RecursionError):
+                    continue
+                if (isinstance(detail, dict) and detail.get('kind') == 'trusted_verification_failure'
+                        and isinstance(detail.get('error'), str)):
+                    feedback.append(detail['error'][:512])
+            return feedback[-3:]
+        except (ValueError, TypeError, RecursionError):
+            return []
 
     def _context(self, task, actor, *, running=True):
         row = self.workflow._task(task, actor, assigned=True)

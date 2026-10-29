@@ -1,0 +1,170 @@
+[
+  {
+    "id": "code-experience-training",
+    "title": "Real sandbox task and outcome-linked private experience",
+    "driver": "live_scheduler",
+    "goal": "Create a reproducible order summary using a coordinator and a coder. The coder contract is titled exactly \"Implement and run order summary\". In that task, create orders.txt with exactly the following UTF-8 text:\n\nitem,quantity,unit_price\nCedar,2,11\nMaple,3,7\nOak,4,5\n\nWrite summary.py to read orders.txt and compute totals.json with lines (input-order item, quantity, unit_price, amount), total_units and total_amount. Run summary.py through run_python with both files as exact input snapshots, no arguments, exporting totals.json. Include and execute basic assertions for the calculation; tests written by the coder alone do not establish general correctness. Offer the actual result to the coordinator, which must accept and read it before producing report.md. The coordinator must retain totals.json and write a Markdown report with every original row, exact lines Total units: 9 and Total amount: 63, and ## Checks / ## Limitations sections. A matching file created without successful isolated execution cannot satisfy the coder contract. Do not execute code on the host. No web or Git operation is part of this bounded development probe.\nBefore completing your own task, record one short conditional candidate lesson with record_lesson about the tools, checks and handoff you actually observed; include limitations and any actual failure. Use tags orders, sandbox, handoff. Do not invent a mistake or assume the lesson is universally correct. Batch independent tool requests when useful; do not keep polling messages.",
+    "constraints": [
+      "Use the issued DeepSeek/HKGAI model and the explicitly configured pinned Python sandbox. No host-code or synthetic-provider fallback.",
+      "The exact coder title selects trusted automatic criteria for this example; unknown children need actual human review. This is not proof of open-ended planning or the official evaluation.",
+      "Run the current summary.py and orders.txt versions with run_python; a later code/input change requires another matching successful run. Exit zero and cleanup are required, along with a run-bound output import and independent numeric checks.",
+      "File offers are snapshots. The coordinator must accept and read the coder result; messages and copied values do not certify receipt.",
+      "When your own deliverable is ready and necessary offers are made, propose completion with a final assistant response without tool calls. Do not poll a parent that waits for you to finish.",
+      "For this integer-valued development case, serialize all JSON quantities, prices, amounts and totals as integer values (for example 63, not 63.0); canonical JSON criteria preserve numeric representation.",
+      "To replace an existing exported result after correcting code, first read its current hash, then pass replace_outputs for that exact path/hash to run_python. Other output paths remain create-only; never delete a file to bypass approval or overwrite an unexpected version.",
+      "totals.json schema is exactly: lines is an array of JSON objects (not CSV strings), each containing item as a string and quantity, unit_price, amount as integers, in input order. total_units and total_amount are integers at the top level. Do not append totals as additional line entries."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "min_tasks": 2,
+      "max_seconds": 1800,
+      "declared_subtasks_only": true,
+      "criteria": [
+        {
+          "path": "totals.json",
+          "kind": "json_equals",
+          "expected": "{\"lines\": [{\"amount\": 22, \"item\": \"Cedar\", \"quantity\": 2, \"unit_price\": 11}, {\"amount\": 21, \"item\": \"Maple\", \"quantity\": 3, \"unit_price\": 7}, {\"amount\": 20, \"item\": \"Oak\", \"quantity\": 4, \"unit_price\": 5}], \"total_amount\": 63, \"total_units\": 9}"
+        },
+        {
+          "path": "totals.json",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"coder\", \"title\": \"Implement and run order summary\", \"path\": \"totals.json\", \"allow_relay\": false, \"require_read\": true}"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Total units: 9",
+          "min_bytes": 120
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Total amount: 63"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Checks"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Limitations"
+        }
+      ],
+      "subtasks": [
+        {
+          "assignee": "coder",
+          "title": "Implement and run order summary",
+          "final_state": "succeeded",
+          "criteria": [
+            {
+              "path": "summary.py",
+              "kind": "exists",
+              "min_bytes": 30
+            },
+            {
+              "path": "orders.txt",
+              "kind": "sha256",
+              "expected": "95fb168182a276c22330ccc05f58db3e873a769673be4910ef991b07a60fc4b5"
+            },
+            {
+              "path": "totals.json",
+              "kind": "json_equals",
+              "expected": "{\"lines\": [{\"amount\": 22, \"item\": \"Cedar\", \"quantity\": 2, \"unit_price\": 11}, {\"amount\": 21, \"item\": \"Maple\", \"quantity\": 3, \"unit_price\": 7}, {\"amount\": 20, \"item\": \"Oak\", \"quantity\": 4, \"unit_price\": 5}], \"total_amount\": 63, \"total_units\": 9}"
+            },
+            {
+              "path": "totals.json",
+              "kind": "sandbox_output",
+              "expected": "{\"entrypoint\": \"summary.py\", \"arguments\": [], \"inputs\": [\"orders.txt\", \"summary.py\"]}"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "code-experience-probe",
+    "title": "Different-input sandbox task under frozen memory ON/OFF",
+    "driver": "live_scheduler",
+    "goal": "Create a reproducible order summary using a coordinator and a coder. The coder contract is titled exactly \"Implement and run order summary\". In that task, create orders.txt with exactly the following UTF-8 text:\n\nitem,quantity,unit_price\nBirch,3,13\nAspen,4,9\nPine,1,5\n\nWrite summary.py to read orders.txt and compute totals.json with lines (input-order item, quantity, unit_price, amount), total_units and total_amount. Run summary.py through run_python with both files as exact input snapshots, no arguments, exporting totals.json. Include and execute basic assertions for the calculation; tests written by the coder alone do not establish general correctness. Offer the actual result to the coordinator, which must accept and read it before producing report.md. The coordinator must retain totals.json and write a Markdown report with every original row, exact lines Total units: 8 and Total amount: 80, and ## Checks / ## Limitations sections. A matching file created without successful isolated execution cannot satisfy the coder contract. Do not execute code on the host. No web or Git operation is part of this bounded development probe.\nUse the current rows as the source of truth. Prior experience, when available, is a conditional suggestion about the workflow, never an answer or action authorization. Batch independent tool requests when useful; do not keep polling messages.",
+    "constraints": [
+      "Use the issued DeepSeek/HKGAI model and the explicitly configured pinned Python sandbox. No host-code or synthetic-provider fallback.",
+      "The exact coder title selects trusted automatic criteria for this example; unknown children need actual human review. This is not proof of open-ended planning or the official evaluation.",
+      "Run the current summary.py and orders.txt versions with run_python; a later code/input change requires another matching successful run. Exit zero and cleanup are required, along with a run-bound output import and independent numeric checks.",
+      "File offers are snapshots. The coordinator must accept and read the coder result; messages and copied values do not certify receipt.",
+      "When your own deliverable is ready and necessary offers are made, propose completion with a final assistant response without tool calls. Do not poll a parent that waits for you to finish.",
+      "For this integer-valued development case, serialize all JSON quantities, prices, amounts and totals as integer values (for example 63, not 63.0); canonical JSON criteria preserve numeric representation.",
+      "To replace an existing exported result after correcting code, first read its current hash, then pass replace_outputs for that exact path/hash to run_python. Other output paths remain create-only; never delete a file to bypass approval or overwrite an unexpected version.",
+      "totals.json schema is exactly: lines is an array of JSON objects (not CSV strings), each containing item as a string and quantity, unit_price, amount as integers, in input order. total_units and total_amount are integers at the top level. Do not append totals as additional line entries."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "min_tasks": 2,
+      "max_seconds": 1800,
+      "declared_subtasks_only": true,
+      "criteria": [
+        {
+          "path": "totals.json",
+          "kind": "json_equals",
+          "expected": "{\"lines\": [{\"amount\": 39, \"item\": \"Birch\", \"quantity\": 3, \"unit_price\": 13}, {\"amount\": 36, \"item\": \"Aspen\", \"quantity\": 4, \"unit_price\": 9}, {\"amount\": 5, \"item\": \"Pine\", \"quantity\": 1, \"unit_price\": 5}], \"total_amount\": 80, \"total_units\": 8}"
+        },
+        {
+          "path": "totals.json",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"coder\", \"title\": \"Implement and run order summary\", \"path\": \"totals.json\", \"allow_relay\": false, \"require_read\": true}"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Total units: 8",
+          "min_bytes": 120
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Total amount: 80"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Checks"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Limitations"
+        }
+      ],
+      "subtasks": [
+        {
+          "assignee": "coder",
+          "title": "Implement and run order summary",
+          "final_state": "succeeded",
+          "criteria": [
+            {
+              "path": "summary.py",
+              "kind": "exists",
+              "min_bytes": 30
+            },
+            {
+              "path": "orders.txt",
+              "kind": "sha256",
+              "expected": "fede293df0f6dde18592b14eb0fc77c3e97f45daf516a61c7abb0ccd34589172"
+            },
+            {
+              "path": "totals.json",
+              "kind": "json_equals",
+              "expected": "{\"lines\": [{\"amount\": 39, \"item\": \"Birch\", \"quantity\": 3, \"unit_price\": 13}, {\"amount\": 36, \"item\": \"Aspen\", \"quantity\": 4, \"unit_price\": 9}, {\"amount\": 5, \"item\": \"Pine\", \"quantity\": 1, \"unit_price\": 5}], \"total_amount\": 80, \"total_units\": 8}"
+            },
+            {
+              "path": "totals.json",
+              "kind": "sandbox_output",
+              "expected": "{\"entrypoint\": \"summary.py\", \"arguments\": [], \"inputs\": [\"orders.txt\", \"summary.py\"]}"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]
