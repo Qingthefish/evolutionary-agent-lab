@@ -17,6 +17,8 @@ from agent_lab.sandbox import DockerPythonExecutor, SandboxLimits
 from agent_lab.deepseek import DeepSeekClient
 from agent_lab.runner import Limits
 from agent_lab.scheduler import MultiAgentScheduler, Role
+from agent_lab.acceptance import ArtifactRule, verify_rules
+from agent_lab.runtime import ChildTextRule, TaskPolicy, text_acceptance_factory
 
 
 HOST = os.environ.get("AGENT_LAB_DOCKER_HOST")
@@ -127,25 +129,15 @@ class DockerIntegrationTests(unittest.TestCase):
                         "expected_sha256": hashlib.sha256(expected.encode()).hexdigest()}, "offer")]
             return json.dumps(response(calls, text="Synthetic proposal: ready for independent checking")).encode()
 
-        def acceptance(task):
-            text_check = self.files.text_verifier(task["id"], task["assignee"], {"result.txt": expected})
-
-            def verify():
-                checks = text_check()
-                if task["assignee"] == "coder":
-                    row = self.workflow.db.execute("SELECT result FROM sandbox_runs WHERE task=? ORDER BY rowid DESC LIMIT 1",
-                                                   (task["id"],)).fetchone()
-                    runtime = json.loads(row[0]) if row and row[0] else {}
-                    checks["sandbox_exit_zero"] = (runtime.get("execution") or {}).get("exit_code") == 0
-                    checks["sandbox_cleanup"] = runtime.get("cleanup_confirmed") is True
-                    checks["actual_process_sandbox"] = runtime.get("process_sandbox") is True
-                return checks
-            return verify, "fixture-actual-execution-and-text-v1"
+        policy = TaskPolicy(root_artifacts={'result.txt': expected}, child_rules=(ChildTextRule('coder',
+            'Implement normalize, execute checks, and deliver result.txt', {'result.txt': expected},
+            (ArtifactRule('result.txt', 'sandbox_output', json.dumps({'entrypoint': 'main.py', 'arguments': [], 'inputs': ['main.py']})),)),))
 
         scheduler = MultiAgentScheduler(self.workflow, self.files, goal, human="user", roles=roles,
             clients={actor: DeepSeekClient("explicit-offline-fixture", transport, max_tokens=256) for actor in roles},
             mode="offline_fixture", constraints=["Actually execute checks; a matching file alone is insufficient"],
-            verifier_factory=acceptance, acceptance_id="fixture-delegated-execution-v1", executor=self.executor)
+            verifier_factory=text_acceptance_factory(self.workflow, self.files, goal, policy),
+            acceptance_id=policy.acceptance_id, executor=self.executor)
         state = scheduler.run()
         child = self.workflow.db.execute("SELECT id FROM tasks WHERE parent=?", (goal,)).fetchone()[0]
         runtime = json.loads(self.workflow.db.execute("SELECT result FROM sandbox_runs WHERE task=?", (child,)).fetchone()[0])
@@ -169,13 +161,23 @@ class DockerIntegrationTests(unittest.TestCase):
         self.assertEqual(state["task_state"], "failed")
         self.assertEqual(self.workflow.task(child, "user")["state"], "failed")
         transcript = self.workflow.db.execute("SELECT transcript FROM runner_sessions WHERE task=?", (child,)).fetchone()[0]
-        self.assertIn("sandbox_exit_zero", transcript)
+        self.assertIn("sandbox_output", transcript)
         # The misleading output exists, but no child artifact was accepted and
         # no task was certified from the expected text alone.
         results = list((self.root / "files/tasks").rglob("result.txt"))
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].read_text(), "-1,3\n")
         self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM artifacts WHERE source_task=?", (child,)).fetchone()[0], 0)
+
+    def test_shared_execution_criterion_rejects_changed_code_after_actual_success(self):
+        result = self.run_code("from pathlib import Path\nPath('result.txt').write_text('42\\n')\n", outputs=['result.txt'])
+        rule = ArtifactRule('result.txt', 'sandbox_output', json.dumps({'entrypoint': 'main.py', 'arguments': [], 'inputs': ['main.py']}))
+        check = lambda: all(verify_rules(self.workflow, self.files, self.task, 'coder', (rule,)).values())
+        self.assertTrue(check(), result)
+        before = self.files.read_text(self.task, 'coder', 'main.py')
+        self.files.update_text(self.task, 'coder', 'main.py', 'raise SystemExit(9)\n', expected_sha256=before['sha256'])
+        self.assertEqual(self.files.read_text(self.task, 'coder', 'result.txt')['content'], '42\n')
+        self.assertFalse(check())
 
     def test_network_host_files_secrets_root_writes_and_supervisor_signals_are_blocked(self):
         canary = self.root / "host-only.txt"

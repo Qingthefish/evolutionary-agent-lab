@@ -318,7 +318,23 @@ class DockerPythonExecutor:
             result["cleanup_confirmed"] = True
             self.workflow.db.execute("UPDATE sandbox_runs SET status='reconciled',ended=?,result=? WHERE id=?",
                                      (self.workflow.clock(), json.dumps(result), run_id))
+            self.workflow._event(row['task'], actor, 'sandbox_cleanup_reconciled', {'run_id': run_id, 'cleanup_confirmed': True})
         return {"cleanup_confirmed": True, "effects_replayed": False}
+
+    def _record_import(self, run_id, task, actor, receipt):
+        detail = {'run_id': run_id, **{key: receipt[key] for key in ('path', 'sha256', 'bytes')}}
+        with self.workflow._transaction():
+            existing = self.workflow.db.execute("SELECT actor,detail FROM events WHERE task=? AND kind='sandbox_artifact_imported' "
+                "AND json_extract(detail,'$.run_id')=? AND json_extract(detail,'$.path')=?", (task, run_id, receipt['path'])).fetchall()
+            if existing:
+                try:
+                    valid = len(existing) == 1 and existing[0]['actor'] == actor and strict_json(existing[0]['detail']) == detail
+                except (ValueError, TypeError, RecursionError):
+                    valid = False
+                if not valid:
+                    raise SandboxError('Conflicting sandbox import evidence; reconcile before continuing')
+                return
+            self.workflow._event(task, actor, 'sandbox_artifact_imported', detail)
 
     def recover_exports(self, run_id, actor):
         """Trusted recovery only: import durable text snapshots without code replay."""
@@ -348,6 +364,7 @@ class DockerPythonExecutor:
                 current = self.files.create_text(row["task"], actor, path, text)
             if current["sha256"] != result["export_sha256"][path]:
                 raise SandboxError("An imported artifact has changed; reconcile before recovery")
+            self._record_import(run_id, row['task'], actor, current)
             receipts.append({key: current[key] for key in ("path", "sha256", "bytes")})
         return {"artifacts": receipts, "effects_replayed": False}
 
@@ -386,6 +403,7 @@ class DockerPythonExecutor:
             return value
 
         result = {"run_id": identifier, "process_sandbox": False, "configuration": self.configuration(),
+                  "job": {"entrypoint": entrypoint, "arguments": list(arguments), "outputs": list(outputs)},
                   "execution": None, "artifacts": [], "cleanup_confirmed": False}
         exported = None
         creation_requested = False
@@ -444,7 +462,9 @@ class DockerPythonExecutor:
             result["phase"] = "artifact_import"
             try:
                 for path, text in exported.items():
-                    result["artifacts"].append(self.files.create_text(task, actor, path, text))
+                    receipt = self.files.create_text(task, actor, path, text)
+                    self._record_import(identifier, task, actor, receipt)
+                    result["artifacts"].append(receipt)
             except (WorkflowError, OSError):
                 result["error"] = "Artifact import failed; inspect partial receipts before retry"
         if "error" not in result:

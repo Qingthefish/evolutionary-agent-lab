@@ -446,6 +446,9 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
                                  declared_subtasks_only=policy.declared_subtasks_only)
     policy = bind_task_policy(workflow, root, human, TaskPolicy() if legacy else policy,
                               default=TaskPolicy(live.constraints))
+    if any(r.kind == 'sandbox_output' for r in (*policy.root_criteria, *(c for child in policy.child_rules for c in child.criteria))):
+        if services is None or services.executor is None:
+            raise RuntimeSetupError('Sandbox output criteria require an explicitly configured isolated executor')
     acceptance_id = "tui-live-human-review-v1" if legacy else policy.acceptance_id
     roles = live_roles_for_policy(members, live, policy)
 
