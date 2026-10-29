@@ -19,7 +19,7 @@ from ..protocol import strict_json
 from ..runtime import (LiveConfig, MEMORY_GUIDANCE, RuntimeServices, live_members,
                        live_roles, live_roles_for_policy, policy_delegation_inputs, live_clients, text_acceptance_factory)
 from ..scheduler import MultiAgentScheduler
-from .harness import HUMAN, _Session, _case_policy, _checks, _classify
+from .harness import HUMAN, _Session, _case_policy, _checks, _classify, _provide_inputs
 from .manifest import digest
 from .memory_protocol import MemorySeed, PROTOCOL, TERMINAL, memory_state, memory_use, tree_usage
 from .plan import DevelopmentPlan, _object
@@ -240,6 +240,7 @@ class ExperienceTrial:
             root = session.workflow.create_task(chat,HUMAN,'coordinator',case.goal)
             record['root'] = root
             self.save()
+            _provide_inputs(case, session, root)
             scheduler = self.driver.scheduler(session,root,case,record,floor)
             state = scheduler.run()
             if record['phase'] == 'probe':

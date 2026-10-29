@@ -1,0 +1,197 @@
+[
+  {
+    "id": "jsonl-provided-training",
+    "title": "Provided-file JSONL repair",
+    "driver": "live_scheduler",
+    "goal": "Deliver a checked JSONL log summary. Raw source files are already provided in your task workspace; their paths and original hashes are in provided_inputs. Delegate the coder contract titled exactly \"Implement and check JSONL log summary\" using delegate_with_inputs and the original snapshots. Never transcribe or change events.txt. The coder must accept the offered input files, implement summarize.py, and run the current summarize.py plus events.txt through the configured isolated run_python tool, with no arguments, exporting counts.json. The program must skip and count whitespace-only physical lines and aggregate valid records by case-sensitive service and level, preserving Unicode, using the schema in the constraints. Execute basic assertions; independent checks remain required. Offer the actual counts.json to the coordinator. The coordinator must accept and read it, retain that file and write report.md with Records: <computed count>, Blank lines: <computed count>, the service/level breakdown and ## Checks / ## Limitations sections. Use submit_for_verification last in a final file/offer batch when ready, or propose a final assistant response. Do not poll or message a parent instead of completing. No web or Git task is included. The supplied starter.py is deliberately faulty. Send both events.txt and starter.py to the coder. First execute starter.py unchanged with events.txt in the sandbox and preserve its genuine failure. Then create the repaired summarize.py as a separate file and execute it with events.txt; preserve the original starter.py and raw data. Before final completion, record a short conditional lesson grounded in the actual failure, checks, fix and handoff, with tags jsonl, sandbox, repair. Do not invent evidence.",
+    "constraints": [
+      "Use only the issued DeepSeek/HKGAI model and configured digest-pinned, no-network Python sandbox. Never execute source on the host.",
+      "This bounded example has a declared coder title selecting trusted independent criteria. It does not establish open-ended planning, a causal memory advantage or official performance.",
+      "All nonblank physical lines are valid JSON objects with string service and level. Whitespace-only physical lines are counted and skipped. Labels are case-sensitive; preserve Unicode. A final newline terminates its preceding line and does not add a phantom line.",
+      "The counts.json schema is exactly: events and blank_lines are integer counts; by_service is an object mapping service strings to objects mapping original case-sensitive level strings to integer counts. Do not add zero-count labels or other fields.",
+      "Run the current summarize.py and events.txt snapshots using run_python, with no arguments, exporting counts.json. Success requires exit zero, confirmed cleanup, a run-bound imported output and the independent numeric oracle; matching text alone is insufficient.",
+      "Offers are snapshots: the coordinator must accept and read the actual coder counts.json. Copied values or a message do not certify delivery.",
+      "To replace an existing export after a repair, read its current hash and supply the exact path/hash in replace_outputs. Never delete or overwrite an unexpected file to bypass authorization.",
+      "Provided raw input files are setup data, not model-authored output or an approval. Preserve their exact bytes and keep source artifacts explicit. Current-version runtime checks and independent acceptance are unchanged."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "min_tasks": 2,
+      "max_seconds": 1800,
+      "declared_subtasks_only": true,
+      "criteria": [
+        {
+          "path": "counts.json",
+          "kind": "json_equals",
+          "expected": "{\"blank_lines\": 2, \"by_service\": {\"api\": {\"ERROR\": 1, \"INFO\": 1}, \"缓存\": {\"ERROR\": 1}}, \"events\": 3}"
+        },
+        {
+          "path": "counts.json",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"coder\", \"title\": \"Implement and check JSONL log summary\", \"path\": \"counts.json\", \"allow_relay\": false, \"require_read\": true}"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Records: 3",
+          "min_bytes": 120
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Blank lines: 2"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Checks"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Limitations"
+        }
+      ],
+      "subtasks": [
+        {
+          "assignee": "coder",
+          "title": "Implement and check JSONL log summary",
+          "final_state": "succeeded",
+          "criteria": [
+            {
+              "path": "summarize.py",
+              "kind": "exists",
+              "min_bytes": 100
+            },
+            {
+              "path": "events.txt",
+              "kind": "sha256",
+              "expected": "bba50d89585aef0188e6bc86f496827d0f9944d906e582d12e872b44be09fdd2"
+            },
+            {
+              "path": "counts.json",
+              "kind": "json_equals",
+              "expected": "{\"blank_lines\": 2, \"by_service\": {\"api\": {\"ERROR\": 1, \"INFO\": 1}, \"缓存\": {\"ERROR\": 1}}, \"events\": 3}"
+            },
+            {
+              "path": "counts.json",
+              "kind": "sandbox_output",
+              "expected": "{\"entrypoint\": \"summarize.py\", \"arguments\": [], \"inputs\": [\"events.txt\", \"summarize.py\"]}"
+            },
+            {
+              "path": "events.txt",
+              "kind": "received_from",
+              "expected": "{\"assignee\": \"coordinator\", \"title\": \"Deliver a checked JSONL log summary. Raw source files are already provided in your task workspace; their paths and original hashes are in provided_inputs. Delegate the coder contract titled exactly \\\"Implement and check JSONL log summary\\\" using delegate_with_inputs and the original snapshots. Never transcribe or change events.txt. The coder must accept the offered input files, implement summarize.py, and run the current summarize.py plus events.txt through the configured isolated run_python tool, with no arguments, exporting counts.json. The program must skip and count whitespace-only physical lines and aggregate valid records by case-sensitive service and level, preserving Unicode, using the schema in the constraints. Execute basic assertions; independent checks remain required. Offer the actual counts.json to the coordinator. The coordinator must accept and read it, retain that file and write report.md with Records: <computed count>, Blank lines: <computed count>, the service/level breakdown and ## Checks / ## Limitations sections. Use submit_for_verification last in a final file/offer batch when ready, or propose a final assistant response. Do not poll or message a parent instead of completing. No web or Git task is included. The supplied starter.py is deliberately faulty. Send both events.txt and starter.py to the coder. First execute starter.py unchanged with events.txt in the sandbox and preserve its genuine failure. Then create the repaired summarize.py as a separate file and execute it with events.txt; preserve the original starter.py and raw data. Before final completion, record a short conditional lesson grounded in the actual failure, checks, fix and handoff, with tags jsonl, sandbox, repair. Do not invent evidence.\", \"path\": \"events.txt\", \"allow_relay\": false, \"require_read\": true}"
+            },
+            {
+              "path": "starter.py",
+              "kind": "received_from",
+              "expected": "{\"assignee\": \"coordinator\", \"title\": \"Deliver a checked JSONL log summary. Raw source files are already provided in your task workspace; their paths and original hashes are in provided_inputs. Delegate the coder contract titled exactly \\\"Implement and check JSONL log summary\\\" using delegate_with_inputs and the original snapshots. Never transcribe or change events.txt. The coder must accept the offered input files, implement summarize.py, and run the current summarize.py plus events.txt through the configured isolated run_python tool, with no arguments, exporting counts.json. The program must skip and count whitespace-only physical lines and aggregate valid records by case-sensitive service and level, preserving Unicode, using the schema in the constraints. Execute basic assertions; independent checks remain required. Offer the actual counts.json to the coordinator. The coordinator must accept and read it, retain that file and write report.md with Records: <computed count>, Blank lines: <computed count>, the service/level breakdown and ## Checks / ## Limitations sections. Use submit_for_verification last in a final file/offer batch when ready, or propose a final assistant response. Do not poll or message a parent instead of completing. No web or Git task is included. The supplied starter.py is deliberately faulty. Send both events.txt and starter.py to the coder. First execute starter.py unchanged with events.txt in the sandbox and preserve its genuine failure. Then create the repaired summarize.py as a separate file and execute it with events.txt; preserve the original starter.py and raw data. Before final completion, record a short conditional lesson grounded in the actual failure, checks, fix and handoff, with tags jsonl, sandbox, repair. Do not invent evidence.\", \"path\": \"starter.py\", \"allow_relay\": false, \"require_read\": true}"
+            },
+            {
+              "path": "starter.py",
+              "kind": "sha256",
+              "expected": "83b9fe6c8fee920530465a1cc61ba1ffbc37ed58d65123b79742df37a5c8235e"
+            }
+          ]
+        }
+      ]
+    },
+    "inputs": {
+      "events.txt": "{\"service\":\"api\",\"level\":\"INFO\"}\n\n{\"service\":\"缓存\",\"level\":\"ERROR\"}\n  \n{\"service\":\"api\",\"level\":\"ERROR\"}\n",
+      "starter.py": "import json\nby_service = {}\nevents = 0\nwith open(\"events.txt\", encoding=\"utf-8\") as source:\n    for raw in source:\n        event = json.loads(raw)\n        levels = by_service.setdefault(event[\"service\"], {})\n        levels[event[\"level\"]] = levels.get(event[\"level\"], 0) + 1\n        events += 1\nwith open(\"counts.json\", \"w\", encoding=\"utf-8\") as target:\n    json.dump({\"events\": events, \"blank_lines\": 0, \"by_service\": by_service}, target, ensure_ascii=False)\n"
+    }
+  },
+  {
+    "id": "jsonl-provided-probe",
+    "title": "Provided-file JSONL frozen-memory probe",
+    "driver": "live_scheduler",
+    "goal": "Deliver a checked JSONL log summary. Raw source files are already provided in your task workspace; their paths and original hashes are in provided_inputs. Delegate the coder contract titled exactly \"Implement and check JSONL log summary\" using delegate_with_inputs and the original snapshots. Never transcribe or change events.txt. The coder must accept the offered input files, implement summarize.py, and run the current summarize.py plus events.txt through the configured isolated run_python tool, with no arguments, exporting counts.json. The program must skip and count whitespace-only physical lines and aggregate valid records by case-sensitive service and level, preserving Unicode, using the schema in the constraints. Execute basic assertions; independent checks remain required. Offer the actual counts.json to the coordinator. The coordinator must accept and read it, retain that file and write report.md with Records: <computed count>, Blank lines: <computed count>, the service/level breakdown and ## Checks / ## Limitations sections. Use submit_for_verification last in a final file/offer batch when ready, or propose a final assistant response. Do not poll or message a parent instead of completing. No web or Git task is included. Send the supplied events.txt to the coder. Prior experience, if available, is conditional advice rather than an answer or authorization. Solve from current files; do not manufacture a failure or record probe lessons.",
+    "constraints": [
+      "Use only the issued DeepSeek/HKGAI model and configured digest-pinned, no-network Python sandbox. Never execute source on the host.",
+      "This bounded example has a declared coder title selecting trusted independent criteria. It does not establish open-ended planning, a causal memory advantage or official performance.",
+      "All nonblank physical lines are valid JSON objects with string service and level. Whitespace-only physical lines are counted and skipped. Labels are case-sensitive; preserve Unicode. A final newline terminates its preceding line and does not add a phantom line.",
+      "The counts.json schema is exactly: events and blank_lines are integer counts; by_service is an object mapping service strings to objects mapping original case-sensitive level strings to integer counts. Do not add zero-count labels or other fields.",
+      "Run the current summarize.py and events.txt snapshots using run_python, with no arguments, exporting counts.json. Success requires exit zero, confirmed cleanup, a run-bound imported output and the independent numeric oracle; matching text alone is insufficient.",
+      "Offers are snapshots: the coordinator must accept and read the actual coder counts.json. Copied values or a message do not certify delivery.",
+      "To replace an existing export after a repair, read its current hash and supply the exact path/hash in replace_outputs. Never delete or overwrite an unexpected file to bypass authorization.",
+      "Provided raw input files are setup data, not model-authored output or an approval. Preserve their exact bytes and keep source artifacts explicit. Current-version runtime checks and independent acceptance are unchanged."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "min_tasks": 2,
+      "max_seconds": 1800,
+      "declared_subtasks_only": true,
+      "criteria": [
+        {
+          "path": "counts.json",
+          "kind": "json_equals",
+          "expected": "{\"blank_lines\": 3, \"by_service\": {\"api\": {\"INFO\": 2}, \"worker\": {\"WARN\": 2, \"warn\": 1}, \"缓存\": {\"INFO\": 1}}, \"events\": 6}"
+        },
+        {
+          "path": "counts.json",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"coder\", \"title\": \"Implement and check JSONL log summary\", \"path\": \"counts.json\", \"allow_relay\": false, \"require_read\": true}"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Records: 6",
+          "min_bytes": 120
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "Blank lines: 3"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Checks"
+        },
+        {
+          "path": "report.md",
+          "kind": "contains",
+          "expected": "## Limitations"
+        }
+      ],
+      "subtasks": [
+        {
+          "assignee": "coder",
+          "title": "Implement and check JSONL log summary",
+          "final_state": "succeeded",
+          "criteria": [
+            {
+              "path": "summarize.py",
+              "kind": "exists",
+              "min_bytes": 100
+            },
+            {
+              "path": "events.txt",
+              "kind": "sha256",
+              "expected": "e91f43452aeb7896332a861290de91c5656a2e30092fe727a19c681b9a66e74a"
+            },
+            {
+              "path": "counts.json",
+              "kind": "json_equals",
+              "expected": "{\"blank_lines\": 3, \"by_service\": {\"api\": {\"INFO\": 2}, \"worker\": {\"WARN\": 2, \"warn\": 1}, \"缓存\": {\"INFO\": 1}}, \"events\": 6}"
+            },
+            {
+              "path": "counts.json",
+              "kind": "sandbox_output",
+              "expected": "{\"entrypoint\": \"summarize.py\", \"arguments\": [], \"inputs\": [\"events.txt\", \"summarize.py\"]}"
+            },
+            {
+              "path": "events.txt",
+              "kind": "received_from",
+              "expected": "{\"assignee\": \"coordinator\", \"title\": \"Deliver a checked JSONL log summary. Raw source files are already provided in your task workspace; their paths and original hashes are in provided_inputs. Delegate the coder contract titled exactly \\\"Implement and check JSONL log summary\\\" using delegate_with_inputs and the original snapshots. Never transcribe or change events.txt. The coder must accept the offered input files, implement summarize.py, and run the current summarize.py plus events.txt through the configured isolated run_python tool, with no arguments, exporting counts.json. The program must skip and count whitespace-only physical lines and aggregate valid records by case-sensitive service and level, preserving Unicode, using the schema in the constraints. Execute basic assertions; independent checks remain required. Offer the actual counts.json to the coordinator. The coordinator must accept and read it, retain that file and write report.md with Records: <computed count>, Blank lines: <computed count>, the service/level breakdown and ## Checks / ## Limitations sections. Use submit_for_verification last in a final file/offer batch when ready, or propose a final assistant response. Do not poll or message a parent instead of completing. No web or Git task is included. Send the supplied events.txt to the coder. Prior experience, if available, is conditional advice rather than an answer or authorization. Solve from current files; do not manufacture a failure or record probe lessons.\", \"path\": \"events.txt\", \"allow_relay\": false, \"require_read\": true}"
+            }
+          ]
+        }
+      ]
+    },
+    "inputs": {
+      "events.txt": "\t\n{\"service\":\"worker\",\"level\":\"WARN\"}\n{\"service\":\"api\",\"level\":\"INFO\"}\n \n{\"service\":\"worker\",\"level\":\"WARN\"}\n{\"service\":\"缓存\",\"level\":\"INFO\"}\n{\"service\":\"api\",\"level\":\"INFO\"}\n{\"service\":\"worker\",\"level\":\"warn\"}\n\n"
+    }
+  }
+]

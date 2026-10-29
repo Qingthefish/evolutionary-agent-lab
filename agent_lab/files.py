@@ -13,6 +13,8 @@ from uuid import uuid4
 
 from .core import WorkflowError, canonical_action
 
+INPUT_PROTOCOL = 'creator-human-pending-root-v1'
+
 
 class FileToolError(WorkflowError):
     """Rejected file request, invalid content, or unavailable execution boundary."""
@@ -197,6 +199,42 @@ class FileTools:
         with self._access(task, actor) as directory, self._parent(directory, path, create=True) as (parent, name):
             self._create(parent, name, data)
             return self._receipt(task, actor, "file_created", path, data)
+
+    def provide_text(self, task, human, path, content):
+        """The creating human may supply new input files before a root starts.
+
+        This is a trusted setup API, never a model tool. It creates no offer or
+        permission and never overwrites an existing path. File/DB commits have
+        the same non-atomic boundary as ordinary broker operations.
+        """
+        _parts(path)
+        if len(path) > 512:
+            raise FileToolError('Input path exceeds the bounded task-relative path limit')
+        try:
+            path.encode('utf-8')
+        except UnicodeError:
+            raise FileToolError('Input path must be UTF-8') from None
+        data = self._encode(content)
+        directory = None
+        try:
+            with self.workflow._transaction():
+                row = self.workflow._task(task, human)
+                creator = self.workflow.db.execute(
+                    "SELECT actor FROM events WHERE task=? AND kind='created' ORDER BY sequence LIMIT 1",
+                    (task,)).fetchone()
+                if (self.workflow._row('actors', human)['kind'] != 'human'
+                        or row['parent'] is not None or row['state'] != 'pending'
+                        or creator is None or creator['actor'] != human):
+                    raise FileToolError('Only the creating human may provide inputs to a pending root task')
+                directory = self._directory(self.tasks_fd, _sha(task.encode()), create=True)
+                with self._parent(directory, path, create=True) as (parent, name):
+                    self._create(parent, name, data)
+                return self._receipt(task, human, 'task_input_provided', path, data)
+        except (OSError, UnicodeError) as error:
+            raise FileToolError('Task input rejected; use a new safe task-relative UTF-8 file') from error
+        finally:
+            if directory is not None:
+                os.close(directory)
 
     def update_text(self, task, actor, path, content, *, expected_sha256):
         data = self._encode(content)

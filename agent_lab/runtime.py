@@ -355,9 +355,12 @@ def live_roles_for_policy(members, config, policy):
     """Effective roles shared by launchers and evidence manifests."""
     roles = live_roles(members, config)
     if policy.declared_subtasks_only:
-        guidance = " Use list_tasks to inspect task IDs/states instead of asking the human for internal coordination data. If the required peer task does not exist, delegate it when eligible or offer your completed artifact to parent_task_id. Once your assigned deliverable is ready and offered, submit a final assistant response with no tool calls for independent verification. Parents continue after their children finish; do not poll chat waiting for a parent before finishing your own work."
-        guidance += " Keep commentary brief and split large file writes across responses to fit the output limit. Reuse exact hashes from create/update receipts; a read only to rediscover that hash is unnecessary. Python export receipts already name your own task-local files: read or offer them, never accept_artifact for your own output."
-        roles = {a: replace(r, tools=tuple(dict.fromkeys((*r.tools, "list_tasks"))),
+        guidance = " Use list_tasks to inspect task IDs/states instead of asking the human for internal coordination data. If the required peer task does not exist, delegate it when eligible or offer your completed artifact to parent_task_id. Once your assigned deliverable is ready and offered, propose independent verification: put submit_for_verification last in the same batch as final file/offer actions, or send a final assistant response without tools. Never supply your own acceptance criteria. Parents continue after their children finish; do not poll chat waiting for a parent before finishing your own work."
+        guidance += " For action turns emit tool calls with null content instead of a narrated plan or lengthy recounting. Split large file writes across responses to fit the output limit. Reuse exact hashes from create/update receipts; a read only to rediscover that hash is unnecessary. Python export receipts already name your own task-local files: read or offer them, never accept_artifact for your own output."
+        if 'coder' in roles:
+            roles['coder'] = replace(roles['coder'], instructions=roles['coder'].instructions +
+                ' Use separate small sample inputs for known-value assertions; never assert guessed totals for the actual input. Diagnose an assertion failure from source and execution evidence rather than silently changing its expected value.')
+        roles = {a: replace(r, tools=tuple(dict.fromkeys((*r.tools, "list_tasks", "submit_for_verification"))),
                             instructions=r.instructions + guidance) for a, r in roles.items()}
     return roles
 

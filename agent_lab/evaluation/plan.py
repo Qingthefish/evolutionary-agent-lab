@@ -15,7 +15,7 @@ from ..protocol import strict_json
 from ..runner import Limits
 from ..runtime import LiveConfig, live_members, live_roles, live_roles_for_policy, policy_delegation_inputs
 from ..delegation import input_records
-from .cases import load_cases
+from .cases import load_cases, input_records as case_input_records, INPUT_PROTOCOL
 from .harness import Evaluator, _case_policy
 from .manifest import digest
 
@@ -113,6 +113,9 @@ class DevelopmentPlan:
                          for c in self.cases}
         if any(prerequisites.values()):
             self.conditions['case_delegation_inputs'] = prerequisites
+        if any(c.inputs for c in self.cases):
+            self.conditions['case_inputs'] = case_input_records(self.cases)
+            self.conditions['input_protocol'] = INPUT_PROTOCOL
         self.sha256=digest(self.conditions)
 
     def inspect(self):
@@ -150,6 +153,9 @@ class DevelopmentPlan:
             report['budget_context'] = self.conditions['case_budget_context']
         if 'case_delegation_inputs' in self.conditions:
             report['delegation_inputs'] = self.conditions['case_delegation_inputs']
+        if 'case_inputs' in self.conditions:
+            report['provided_inputs'] = self.conditions['case_inputs']
+            report['input_protocol'] = INPUT_PROTOCOL
             report['input_preparation'] = ('Received-source child contracts require owned, hash-matched source snapshots '
                 'before delegation; the child must still accept/read and pass its independent checks')
         return report

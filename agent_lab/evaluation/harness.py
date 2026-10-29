@@ -107,6 +107,12 @@ def _case_policy(case, live):
             *(ArtifactRule(p,"absent") for p in case.expected.absent_artifacts)) if case.expected.final_state == "succeeded" else ())
 
 
+def _provide_inputs(case, session, root):
+    """Seed only the current case's declared raw inputs, with human attribution."""
+    for path, content in case.inputs.items():
+        session.files.provide_text(root, HUMAN, path, content)
+
+
 def _drive_live(case, session, live):
     """Live DeepSeek scheduler run. Unvalidated: no live call has been made yet."""
     members = live_members(live)
@@ -116,6 +122,7 @@ def _drive_live(case, session, live):
         session.services = RuntimeServices(session.workflow, session.files, live)
     chat = session.workflow.create_chat("group", [HUMAN, *members])
     root = session.workflow.create_task(chat, HUMAN, "coordinator", case.goal)
+    _provide_inputs(case, session, root)
     scheduler = build_live_scheduler(session.workflow, session.files, root, human=HUMAN, live=live,
         policy=_case_policy(case, live), services=session.services)
     return root, scheduler.run()

@@ -4,10 +4,10 @@
   "protocol": "frozen-experience-isolated-probes-v1",
   "runtime_plan": "runtime.json",
   "training_cases": [
-    "jsonl-repair-training"
+    "jsonl-provided-training"
   ],
   "probe_cases": [
-    "jsonl-repair-probe"
+    "jsonl-provided-probe"
   ],
   "replicates": 1
 }

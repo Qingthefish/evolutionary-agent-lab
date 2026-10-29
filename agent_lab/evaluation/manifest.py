@@ -16,6 +16,7 @@ from ..gateway import _SPECS
 from ..runner import _PROMPT
 from ..runtime import LIVE_AGENTS, live_members, live_roles, live_roles_for_policy, policy_delegation_inputs, provider_endpoint
 from ..delegation import input_records
+from .cases import input_records as case_input_records, INPUT_PROTOCOL
 
 
 def digest(value):
@@ -58,6 +59,9 @@ def build_manifest(cases, live, memory):
         prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, live)) or ()) for c in cases}
         if any(prerequisites.values()):
             runtime['case_delegation_inputs'] = prerequisites
+        if any(c.inputs for c in cases):
+            runtime['case_inputs'] = case_input_records(cases)
+            runtime['input_protocol'] = INPUT_PROTOCOL
     manifest = {"schema_version": 1, "cases": definitions, "runtime": runtime,
                 "code_sha256": digest(sources), "prompt_sha256": digest(_PROMPT),
                 "tools_sha256": digest(_SPECS),
