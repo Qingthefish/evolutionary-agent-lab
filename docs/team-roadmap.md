@@ -423,6 +423,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Prepare a matched single/multi-agent baseline**
 
+- **2026-10-30 integration note:** Read-only inspection of the unchanged `854a3b8` capability catalog finds no classification for `list_tasks` or the newly declared-role-only `submit_for_verification`. Its eventual integration must explicitly handle both without unfairly changing single/multi capabilities. This is a source-level follow-up for the existing C07 owner, not a branch edit, new assignment or current combined-suite acceptance. Ordinary legacy role sets still omit these opt-in tools.
+
 - **Stage / status:** M4 / In review
 - **Owner:** HelloWorld2333666
 - **Dependencies / configuration:** C04 and current C05 protocol contracts; no key is needed for engineering preparation.
@@ -593,6 +595,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Progress / review changes / outcome:** —
 
 - **2026-10-30 draft result:** Added the required [report and presentation-outline draft](final-report.md) plus a whitelisted [development evidence JSON](../evaluation/evidence/development-summary.json), with source/configuration identities, raw-record hashes, negative/unrun outcomes and unknown usage retained. Selected code/experience records cover 129 reserved attempts with one missing provider-usage observation; this is explicitly not all-time account usage. Two earlier complete memory probes are reported alongside failed training parents and later incomplete cases, without a general gain claim. Architecture, input/proposal boundaries, automated clean setup and required live/official/contribution gaps are explicit; no member contribution, official dataset, grade, date or screenshot is invented. This is submission material rather than a second progress register. Link/schema/privacy/metric consistency checks precede publication; final S02 delivery remains open.
+
+- **2026-10-30 publication acceptance:** Code/plan source accepted through [PR #35](https://github.com/Qingthefish/evolutionary-agent-lab/pull/35), merge `e898ce2`, matching tested `01700a4`. Draft/report/evidence synchronization accepted through [PR #36](https://github.com/Qingthefish/evolutionary-agent-lab/pull/36), merge `fa881bd`, matching reviewed `91f87ba`; runtime/test source is unchanged by the documentation PR. Checked **171 local links/anchors**, public schema/totals/raw-record identities and publication files against the local credential without disclosure. Main now carries both scoped packages, with no Actions or teammate-review claim. The current allowance is closed at **36/48 requests and three/three roots**, with twelve requests unused; the original failed/unrun trials and all private raw evidence remain preserved. This accepts the engineering/preparation/draft scope only; A03/A04/A05/C05, another member's D04 reproduction and final S02/official delivery remain open.
 
 ## Starting a Codex session
 
