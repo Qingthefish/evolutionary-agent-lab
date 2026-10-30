@@ -16,5 +16,5 @@
       "expected": "HKGAI"
     }
   ],
-  "declared_subtasks_only": true
+  "declared_subtasks_only": false
 }
