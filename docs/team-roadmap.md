@@ -469,6 +469,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 ### D02
 
+- **2026-10-30 live coverage follow-up claim:** Qingthefish, owner-requested continuation from `44b1f02`, branch `feat/D02-live-human-web`. Prioritize actual private/group interaction, one genuine language clarification with console restart/resume, and a bounded group public-document retrieval / exact-version draft-deletion approval case. Add only the independent checks needed to bind final output to the addressed human's actual response and write chronology. Existing controller/gateway/HTTP services remain the execution path; no scripted human answer or approval. The owner's current request specifically asks to advance real retrieval/Git/human coverage; limit this round to existing local files/coordination and read-only public official-document retrieval, with no runtime Git credentials or push. Save a new cumulative plan before calls: up to 48 HKGAI requests / three roots / 1024 output tokens / 90 seconds, plus bounded public web operations. Pause for each actual human decision, preserve counts and resume only from that real reply. Runtime GitHub remains pending a designated test branch and narrow credential; prepare a concrete plan without forwarding ambient developer credentials. The closed 43-request required-action round and C07 remain unchanged.
+
 **Exercise human interaction end to end**
 
 - **Stage / status:** M3 / In progress (engineering slice accepted; partial real draft review, complete live interaction gate open)
