@@ -1,9 +1,11 @@
 """Synthetic decision provenance checks; actual live humans are not simulated by runtime."""
 import hashlib
+import argparse
 import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from agent_lab.acceptance import ArtifactRule, verify_rules
 from agent_lab.core import Workflow, WorkflowError
@@ -85,6 +87,19 @@ class HumanAnswerAcceptanceTests(unittest.TestCase):
                        {'prefix': ''}, {'prefix': 'x' * 257}, {'human': ''}, {'extra': 'authority'}):
             with self.subTest(change=change), self.assertRaises(WorkflowError): self.rule(**change)
         with self.assertRaises(WorkflowError): ArtifactRule('note.md', 'human_answer', '{"human":"owner","human":"other"}')
+
+    def test_console_exposes_finite_explicit_wall_limits_for_real_human_waits(self):
+        from agent_lab.runtime import add_live_arguments, live_config_from_args
+        parser = argparse.ArgumentParser(); add_live_arguments(parser)
+        with patch.dict('os.environ', {'HUMAN_TEST_KEY': 'unused-test-key'}):
+            args = ['--live', '--model', 'synthetic', '--api-key-env', 'HUMAN_TEST_KEY']
+            live = live_config_from_args(parser.parse_args(args + ['--task-seconds', '14400', '--tree-seconds', '14400']))
+            self.assertEqual(live.role_limits.duration_seconds, 14400)
+            self.assertEqual(live.tree_limits.duration_seconds, 14400)
+            for bad in ('0', '-1', 'nan', 'inf'):
+                with self.subTest(bad=bad), self.assertRaises(WorkflowError):
+                    live_config_from_args(parser.parse_args(args + ['--tree-seconds', bad]))
+        with self.assertRaises(WorkflowError): live_config_from_args(parser.parse_args(['--task-seconds', '14400']))
 
 
 if __name__ == '__main__': unittest.main()
