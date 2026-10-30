@@ -92,6 +92,8 @@ class MultiAgentScheduler:
                     or (any(name.startswith("git_") for name in role.tools) and git is None)
                     or not isinstance(self.clients[agent], DeepSeekClient)):
                 raise RunnerError("Roles must match trusted capabilities, agents, delegates, and provider clients")
+            if self.clients[agent].tool_choice == 'required' and 'submit_for_verification' not in role.tools:
+                raise RunnerError("Required-action roles need the independent verification proposal tool")
             models.add(self.clients[agent].model)
             # Validate transport mode before persisting a schedulable run.
             if (mode == "live") != (type(self.clients[agent].transport) in (DeepSeekHTTP, HKGAIHTTP)):
@@ -106,7 +108,8 @@ class MultiAgentScheduler:
         # The acceptance callable itself remains trusted application code, never
         # a tool argument. Its stable ID must change if its behavior changes.
         settings = {"human": human, "roles": {key: asdict(value) for key, value in self.roles.items()},
-            "clients": {key: {"model": client.model, "max_output_tokens": client.max_tokens}
+            "clients": {key: {"model": client.model, "max_output_tokens": client.max_tokens,
+                              **({'tool_choice': client.tool_choice} if client.tool_choice != 'auto' else {})}
                         for key, client in self.clients.items()},
             "mode": mode, "constraints": constraints, "acceptance_id": acceptance_id,
             "memory_namespace": memory.namespace if memory is not None else None,

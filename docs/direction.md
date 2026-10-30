@@ -60,6 +60,10 @@ The complete acceptance target still includes private/group human interaction, i
 
 Use a versioned development plan to inspect selected live cases, budgets, roles and acceptance before credentials arrive. Actual execution requires explicit authorization and the inspected content fingerprint. The initial checked-in plan covers connection/handoff and structured artifacts only; it is not a full benchmark or the official evaluation adapter. A separate frozen-experience development protocol now versions common training and isolated ON/OFF probes; ordinary batch memory labels remain refused, and live evidence is pending. No model access, paid experiment or alternative provider is inferred from a successful static check.
 
+## Optional required-action experiment
+
+2026-10-30: test an opt-in provider-required tool-action mode after correct isolated outputs were followed by free-text narration and truncation. The model still selects eligible actions and submits to the existing independent verifier; no file is accepted as a goal merely because it exists. Version-3 development plans record this request choice explicitly. Default/legacy behavior, provider identity, tool scope and output/request limits remain unchanged. Unsupported or ignored requests stop without fallback; actual HKGAI compatibility and workflow benefit require separate live evidence. This is a bounded implementation experiment, not an instructor requirement or a settled final architecture.
+
 ## Controlled deletion capability
 
 2026-10-21: expose existing approval-bound file deletion through an explicit `enable_delete` / `--enable-delete` runtime choice. Keep it disabled for older/default configurations; use the same task/version/human-release checks rather than a second deletion implementation. Changing capabilities must not silently resume an old task with new authority. Version-1 run-plan formats remain unchanged and disabled for deletion. This closes a wiring gap in support of R07; actual model use remains a later live check.

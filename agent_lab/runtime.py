@@ -57,6 +57,7 @@ class LiveConfig:
     child_retries: int = 0
     enable_delete: bool = False
     enable_collaboration: bool = False
+    require_tool_actions: bool = False
 
     def __post_init__(self):
         if not isinstance(self.provider, str) or self.provider not in {"deepseek", "hkgai"}:
@@ -78,6 +79,7 @@ class LiveConfig:
         object.__setattr__(self, "constraints", normalize_constraints(self.constraints))
         if (type(self.enable_web) is not bool or type(self.enable_memory) is not bool
                 or type(self.enable_delete) is not bool or type(self.enable_collaboration) is not bool
+                or type(self.require_tool_actions) is not bool
                 or not isinstance(self.memory_namespace, str) or not self.memory_namespace.strip()
                 or len(self.memory_namespace) > 64
                 or bool(self.docker_host) != bool(self.python_image)
@@ -101,7 +103,8 @@ def live_clients(live, roles):
     http, client = ((DeepSeekHTTP, DeepSeekClient) if live.provider == "deepseek"
                     else (HKGAIHTTP, HKGAIClient))
     transport = http(live.api_key, allow_network=live.allow_network, timeout=live.socket_timeout)
-    return {a: client(live.model, transport, max_tokens=live.max_output_tokens) for a in roles}
+    return {a: client(live.model, transport, max_tokens=live.max_output_tokens,
+                      tool_choice='required' if live.require_tool_actions else 'auto') for a in roles}
 
 
 class RuntimeServices:
@@ -345,6 +348,8 @@ def live_roles(members, config=None):
         delegates = tuple(a for a in present if a != agent) if "delegate_task" in tools else ()
         if "delegate_task" in tools and not delegates:
             tools = tuple(t for t in tools if t not in {"delegate_task", "delegate_with_inputs"})
+        if config and config.require_tool_actions:
+            tools = tuple(dict.fromkeys((*tools, 'submit_for_verification')))
         roles[agent] = Role(instructions, tools, delegates,
                             Limits() if config is None else config.role_limits,
                             32 if config is None else config.tool_calls)
@@ -357,6 +362,10 @@ def live_roles_for_policy(members, config, policy):
     if policy.declared_subtasks_only:
         guidance = " Use list_tasks to inspect task IDs/states instead of asking the human for internal coordination data. If the required peer task does not exist, delegate it when eligible or offer your completed artifact to parent_task_id. Once your assigned deliverable is ready and offered, propose independent verification: put submit_for_verification last in the same batch as final file/offer actions, or send a final assistant response without tools. Never supply your own acceptance criteria. Parents continue after their children finish; do not poll chat waiting for a parent before finishing your own work."
         guidance += " For action turns emit tool calls with null content instead of a narrated plan or lengthy recounting. Split large file writes across responses to fit the output limit. Reuse exact hashes from create/update receipts; a read only to rediscover that hash is unnecessary. Python export receipts already name your own task-local files: read or offer them, never accept_artifact for your own output."
+        if config and config.require_tool_actions:
+            guidance = guidance.replace(', or send a final assistant response without tools', '')
+            guidance = guidance.replace('Split large file writes across responses to fit the output limit.',
+                'Keep source files small; use separate helper files when needed.')
         if 'coder' in roles:
             roles['coder'] = replace(roles['coder'], instructions=roles['coder'].instructions +
                 ' Use separate small sample inputs for known-value assertions; never assert guessed totals for the actual input. Diagnose an assertion failure from source and execution evidence rather than silently changing its expected value.')
@@ -482,6 +491,7 @@ def add_live_arguments(parser):
     parser.add_argument("--enable-memory", action="store_true", help="Enable private candidate experience retrieval and outcome capture")
     parser.add_argument("--enable-delete", action="store_true", help="Permit task-local exact-version deletion requests; human approval and release are still required")
     parser.add_argument("--enable-collaboration", action="store_true", help="Permit eligible specialists to delegate and read scoped coordination messages without enabling external tools")
+    parser.add_argument("--require-tool-actions", action="store_true", help="Opt in to provider-required tool calls and explicit independent-verification proposals; unsupported responses stop without fallback")
     parser.add_argument("--memory-namespace", default="runtime-development")
     parser.add_argument("--docker-host", help="Explicit local Docker Unix socket; never starts the engine")
     parser.add_argument("--python-image", help="Official Python image pinned by SHA-256 digest; never pulled automatically")
@@ -493,6 +503,7 @@ def live_config_from_args(args):
         if (args.model or args.api_key_env or args.constraint or args.provider != "deepseek"
                 or args.max_output_tokens != 2048 or args.socket_timeout != 30 or args.task_attempts != 8 or args.tree_attempts != 48
                 or args.enable_web or args.enable_memory or args.enable_delete or args.enable_collaboration or args.memory_namespace != "runtime-development"
+                or getattr(args, 'require_tool_actions', False)
                 or args.docker_host or args.python_image or args.child_retries):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
         return None
@@ -508,4 +519,5 @@ def live_config_from_args(args):
         enable_memory=args.enable_memory, memory_namespace=args.memory_namespace,
         docker_host=args.docker_host, python_image=args.python_image,
         repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else (), child_retries=args.child_retries,
-        enable_delete=args.enable_delete, enable_collaboration=args.enable_collaboration)
+        enable_delete=args.enable_delete, enable_collaboration=args.enable_collaboration,
+        require_tool_actions=getattr(args, 'require_tool_actions', False))

@@ -10,7 +10,7 @@ from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError
 from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolBudgetError, ToolRequestError
 from .files import INPUT_PROTOCOL
-from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY
+from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
 from . import budget
 
 
@@ -51,13 +51,19 @@ def _json(value):
     return json.dumps(value, sort_keys=True, allow_nan=False)
 
 
-def effective_prompt(declared):
-    return _PROMPT + ACTION_GUIDANCE if declared else _PROMPT
+def effective_prompt(declared, *, require_tool_actions=False):
+    prompt = _PROMPT + ACTION_GUIDANCE if declared else _PROMPT
+    return prompt + REQUIRED_ACTION_GUIDANCE if require_tool_actions else prompt
 
 
-def model_context_conditions(declared):
-    return {"policy": CONTEXT_POLICY,
-            "system_prompt_sha256": hashlib.sha256(effective_prompt(True).encode()).hexdigest()} if declared else None
+def model_context_conditions(declared, *, require_tool_actions=False):
+    if not declared and not require_tool_actions:
+        return None
+    result = {"policy": CONTEXT_POLICY if declared else "original-view-required-actions-v1",
+              "system_prompt_sha256": hashlib.sha256(effective_prompt(declared, require_tool_actions=require_tool_actions).encode()).hexdigest()}
+    if require_tool_actions:
+        result['provider_action_protocol'] = REQUIRED_ACTION_POLICY
+    return result
 
 
 class TaskRunner:
@@ -67,9 +73,12 @@ class TaskRunner:
         self.workflow, self.task, self.actor = gateway.workflow, gateway.task, gateway.actor
         self.limits, self.mode, self.verifier = limits, mode, verifier
         self.budget_context = gateway.delegation_rules is not None
-        prompt = effective_prompt(self.budget_context)
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
+        self.require_tool_actions = client.tool_choice == 'required'
+        if self.require_tool_actions and 'submit_for_verification' not in gateway.allowed:
+            raise RunnerError("Required-action runners need the independent verification proposal tool")
+        prompt = effective_prompt(self.budget_context, require_tool_actions=self.require_tool_actions)
         if mode not in {"offline_fixture", "live"}:
             raise RunnerError("Explicitly label offline fixture or live mode")
         is_http = type(client.transport) in (DeepSeekHTTP, HKGAIHTTP)
@@ -115,7 +124,10 @@ class TaskRunner:
                         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest()}
         if self.budget_context:
             settings['budget_context'] = 'local-reservations-v1'
-            settings['model_context'] = model_context_conditions(True)
+        if self.budget_context or self.require_tool_actions:
+            settings['model_context'] = model_context_conditions(self.budget_context, require_tool_actions=self.require_tool_actions)
+        if self.require_tool_actions:
+            settings['provider_action_protocol'] = REQUIRED_ACTION_POLICY
         if 'submit_for_verification' in gateway.allowed:
             settings['submission_protocol'] = 'independent-verification-proposal-v1'
         if type(client.transport) is HKGAIHTTP:
@@ -256,6 +268,12 @@ class TaskRunner:
                     'A file write or record_lesson alone is not a completion proposal. '
                     'Do not spend the last response on optional narration/polling. '
                     'Never skip required work or approval; the independent verifier still decides success.'}
+            if self.require_tool_actions:
+                data['instruction'] = data['instruction'].replace('propose completion with a final response',
+                    'call submit_for_verification last after required actions').replace(
+                    'A final response still needs independent verification.', 'The proposal still needs independent verification.')
+                data['completion_proposal']['instruction'] = data['completion_proposal']['instruction'].replace(
+                    ', or send a final response without tools', '')
         context = json.loads(transcript[1]['content'])
         if not isinstance(context, dict) or transcript[1]['role'] != 'user':
             raise RunnerError('Trusted task context is unavailable; no model call released')

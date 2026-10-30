@@ -39,10 +39,10 @@ class DevelopmentPlan:
             raise WorkflowError('Cannot read a bounded, unambiguous development plan') from None
         plan_keys={'version','purpose','provider','model','api_key_env','cases','case_ids',
                    'max_output_tokens','task_limits','tree_limits','tool_calls','capabilities'}
-        if isinstance(data,dict) and data.get('version')==2: plan_keys.add('socket_timeout')
+        if isinstance(data,dict) and data.get('version') in (2,3): plan_keys.add('socket_timeout')
         _object(data,plan_keys,'Plan')
-        if type(data['version']) is not int or data['version'] not in (1,2) or data['purpose']!='development':
-            raise WorkflowError('Use version-1/2 development plans; official protocol is separate')
+        if type(data['version']) is not int or data['version'] not in (1,2,3) or data['purpose']!='development':
+            raise WorkflowError('Use version-1/2/3 development plans; official protocol is separate')
         if data['provider'] not in ('deepseek','hkgai'):
             raise WorkflowError('Plan must use the instructor-allowed provider')
         if data['model'] is not None and (not isinstance(data['model'],str) or not data['model'].strip()):
@@ -50,7 +50,8 @@ class DevelopmentPlan:
         if not isinstance(data['api_key_env'],str) or not re.fullmatch('[A-Za-z_][A-Za-z0-9_]{0,127}',data['api_key_env']):
             raise WorkflowError('Plan takes a credential variable name, never a literal key')
         capability_keys={'web','memory','child_retries','docker_host','python_image','git_config'}
-        if data['version']==2: capability_keys.add('collaboration')
+        if data['version'] in (2,3): capability_keys.add('collaboration')
+        if data['version']==3: capability_keys.add('require_tool_actions')
         _object(data['capabilities'],capability_keys,'Capabilities')
         caps=data['capabilities']
         if caps['memory'] is not False:
@@ -90,9 +91,11 @@ class DevelopmentPlan:
             tool_calls=data['tool_calls'],enable_web=caps['web'],enable_memory=False,
             child_retries=caps['child_retries'],docker_host=caps['docker_host'],python_image=caps['python_image'],
             repositories=repositories)
-        if data['version']==2:
+        if data['version'] in (2,3):
             self.settings['enable_collaboration']=caps['collaboration']
             self.settings['socket_timeout']=data['socket_timeout']
+        if data['version']==3:
+            self.settings['require_tool_actions']=caps['require_tool_actions']
         template=LiveConfig(api_key='not-used-for-plan-inspection',**self.settings)
         for case in self.cases: _case_policy(case,template)
         self.data=data
@@ -104,12 +107,13 @@ class DevelopmentPlan:
             'acceptance':[ _case_policy(c,template).record() for c in self.cases],
             'roles':{a:asdict(r) for a,r in live_roles(live_members(template),template).items()},
             'repositories': [asdict(r) for r in repositories], 'code_sha256':digest(sources)}
-        if any(c.expected.declared_subtasks_only for c in self.cases):
+        if any(c.expected.declared_subtasks_only for c in self.cases) or template.require_tool_actions:
             self.conditions['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
                 live_members(template),template,_case_policy(c,template)).items()} for c in self.cases}
             self.conditions['case_budget_context'] = {c.id: 'local-reservations-v1' if c.expected.declared_subtasks_only else None
                                                      for c in self.cases}
-            self.conditions['case_model_context'] = {c.id: model_context_conditions(c.expected.declared_subtasks_only)
+            self.conditions['case_model_context'] = {c.id: model_context_conditions(c.expected.declared_subtasks_only,
+                                                         require_tool_actions=template.require_tool_actions)
                                                      for c in self.cases}
         prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, template)) or ())
                          for c in self.cases}
@@ -141,9 +145,11 @@ class DevelopmentPlan:
             'human_protocol':'Pause on real clarification/approval/review; no scripted human answers',
             'memory_protocol':'Fresh empty state per case; memory disabled; no learning comparison',
             'automatic_checks_scope':'Only declared file properties; report facts and arbitrary program correctness need independent tests/review'}
-        if self.data['version']==2:
+        if self.data['version'] in (2,3):
             report['provider_request_limits']={'max_output_tokens':self.settings['max_output_tokens'],
                 'socket_timeout':self.settings['socket_timeout'],'automatic_retries':0}
+        if self.settings.get('require_tool_actions'):
+            report['provider_tool_choice'] = 'required; unsupported/ignored responses stop without fallback; live compatibility unconfirmed by inspection'
         if self.settings.get('enable_collaboration'):
             report['collaboration_protocol']='Model chooses roles/titles/order; scoped specialist delegation/messages enabled; no external backend added'
             report['child_review_boundary']='Children without an exact predeclared criterion pause for actual trusted review; no automatic acceptance'

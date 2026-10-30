@@ -51,6 +51,12 @@ class DockerIntegrationTests(unittest.TestCase):
         return task
 
     def test_provided_input_rejected_result_repair_and_batched_submission_use_real_containers(self):
+        self._provided_input_submission()
+
+    def test_required_actions_reject_repair_and_complete_with_actual_containers(self):
+        self._provided_input_submission(require_tool_actions=True)
+
+    def _provided_input_submission(self, *, require_tool_actions=False):
         from agent_lab.budget import TreeLimits
         from agent_lab.runtime import policy_delegation_inputs
         from test_runner import Script, response, tool
@@ -94,7 +100,8 @@ class DockerIntegrationTests(unittest.TestCase):
         roles={'reviewer':Role('Delegate and deliver checked output',('delegate_with_inputs','accept_artifact','read_text','create_text','submit_for_verification'),('coder',)),
             'coder':Role('Implement and offer checked output',('accept_artifact','create_text','update_text','read_text','run_python','offer_artifact','submit_for_verification'))}
         scheduler=MultiAgentScheduler(self.workflow,self.files,root,human='user',roles=roles,
-            clients={a:DeepSeekClient('synthetic-model',script) for a,script in scripts.items()},mode='offline_fixture',
+            clients={a:DeepSeekClient('synthetic-model',script,tool_choice='required' if require_tool_actions else 'auto')
+                     for a,script in scripts.items()},mode='offline_fixture',
             constraints=['Keep exact input and actual execution evidence'],executor=self.executor,
             verifier_factory=text_acceptance_factory(self.workflow,self.files,root,policy),acceptance_id=policy.acceptance_id,
             limits=TreeLimits(model_attempts=12),delegation_rules=(('coder',child_title),),delegation_inputs=policy_delegation_inputs(policy))
@@ -107,6 +114,8 @@ class DockerIntegrationTests(unittest.TestCase):
         self.assertTrue(any(m['role']=='user' and 'trusted_verification_failure' in m['content'] for m in transcript))
         self.assertEqual(self.workflow.db.execute("SELECT actor FROM events WHERE task=? AND kind='task_input_provided'",(root,)).fetchone()[0],'user')
         self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM events WHERE kind='completion_proposed' AND task IN (?,?)",(root,child_id())).fetchone()[0],3)
+        self.assertTrue(all(request['tool_choice']==('required' if require_tool_actions else 'auto')
+                            for script in scripts.values() for request in script.requests))
 
     def run_code(self, code, *, outputs=(), extra_files=None, task=None, actor="coder", executor=None):
         task = task or self.task

@@ -50,13 +50,17 @@ def build_manifest(cases, live, memory):
             runtime["capabilities"]["delete"] = "task-local-exact-version-human-release-v1"
         if live.enable_collaboration:
             runtime["capabilities"]["collaboration"] = "scoped-specialist-delegation-messages-v1"
+        if live.require_tool_actions:
+            from ..model_context import REQUIRED_ACTION_POLICY
+            runtime['capabilities']['required_tool_actions'] = REQUIRED_ACTION_POLICY
         from .harness import _case_policy
-        if any(c.expected.declared_subtasks_only for c in cases):
+        if any(c.expected.declared_subtasks_only for c in cases) or live.require_tool_actions:
             runtime['case_roles'] = {c.id: {a:asdict(r) for a,r in live_roles_for_policy(
                 live_members(live),live,_case_policy(c,live)).items()} for c in cases}
             runtime['case_budget_context'] = {c.id: 'local-reservations-v1' if c.expected.declared_subtasks_only else None
                                              for c in cases}
-            runtime['case_model_context'] = {c.id: model_context_conditions(c.expected.declared_subtasks_only)
+            runtime['case_model_context'] = {c.id: model_context_conditions(c.expected.declared_subtasks_only,
+                                                     require_tool_actions=live.require_tool_actions)
                                              for c in cases}
         prerequisites = {c.id: input_records(policy_delegation_inputs(_case_policy(c, live)) or ()) for c in cases}
         if any(prerequisites.values()):
