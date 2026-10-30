@@ -6,9 +6,9 @@ MAIE5221 / ARIN5202. **Development draft, 2026-10-30 (Asia/Hong_Kong).** This is
 
 Build a general multi-agent platform that delegates work, uses tools in private workspaces, interacts with humans, retains per-agent experience and automatically records task completion and execution time. Our implementation emphasizes checked execution and bounded recovery. An original research paper, a specific business vertical and an elaborate frontend are not prerequisites.
 
-The engineering source at `10a1c71` passed **522 checks**, with zero skips, errors or failures, including **18 actual-container integration checks and nine UI checks**. These are software checks, not 522 instructor tasks. The latest model task ran that source; its compact-context, concise-action and completion-reminder guidance did not eliminate reply truncation. The [architecture](architecture.md) documents the actual contracts and limits; the [Roadmap](team-roadmap.md) remains the sole task/owner register.
+The engineering source at `a52c34a` passed **534 checks**, with zero skips, errors or failures, including **19 actual-container integration checks and nine UI checks**. These are software checks, not 534 instructor tasks. Its opt-in required-action trial observed 43 tool-call replies without free-text narration/truncation and two independently audited complete JSONL probe roots. This bounded result does not establish general reliability or an official score. The [architecture](architecture.md) documents the actual contracts and limits; the [Roadmap](team-roadmap.md) remains the sole task/owner register.
 
-Two earlier real HKGAI code/report probes completed their full independently audited contracts. Later JSONL exercises provide real failure/repair and input-delivery evidence but no additional complete root. Thus the project has runnable, checked development slices; broad live coverage and official performance remain unresolved.
+Two earlier real HKGAI code/report probes and two current JSONL probes completed their full independently audited contracts. The earlier JSONL failures and the latest exhausted training parent remain preserved. Thus the project has runnable, checked development slices; broad live coverage and official performance remain unresolved.
 
 ## 2. System design
 
@@ -17,7 +17,7 @@ The minimal terminal interface and batch evaluator use a common backend. SQLite 
 - **Input and context:** the creating human can provide bounded new UTF-8 files to a pending root task. Descriptor-based writes preserve exact bytes, ownership and human attribution. Agents receive original receipt metadata and read their own current files. Data contents grant no permission. Child tasks receive only explicitly offered snapshots; private files and full transcripts are not automatically shared. Declared tasks use the versioned concise model view: full own-role/global constraints, bounded peer descriptions without private experience tools, and execution replies retaining outcomes/errors/receipts. Full original sandbox records remain independent evidence; configurations/manifests bind the effective prompt/view policy.
 - **Delegation:** the scheduler runs eligible tasks, waits for children and returns checked child outcomes and explicit offers. Current complete live probes use declared role/title contracts. These constrain automatic acceptance and do not establish open-ended planning or negotiation.
 - **Execution and acceptance:** the gateway validates schemas, task identity, allowlists and budgets before effects. Python runs only in a configured, digest-pinned container with no external network or host mounts, restricted identities/resources, bounded exports and confirmed cleanup. File output must match current source/input hashes and the recorded execution/import, in addition to independent content checks.
-- **Completion proposals:** a final answer or opt-in `submit_for_verification` proposes completion. The latter must be last in a batch and can follow final file/offer actions without another model turn. The existing trusted verifier still decides success. Missing criteria retain independent review; unfinished children, unreleased actions, expiry and budget refusal remain barriers. Interrupted proposals are not automatically re-issued by recovery.
+- **Completion proposals:** a final answer or opt-in `submit_for_verification` proposes completion. The latter must be last in a batch and can follow final file/offer actions without another model turn. The existing trusted verifier still decides success. Missing criteria retain independent review; unfinished children, unreleased actions, expiry and budget refusal remain barriers. Interrupted proposals are not automatically re-issued by recovery. The optional required-action setting sends `tool_choice=required` and rejects ignored/unsupported responses without retry or auto fallback. It leaves model action selection and every independent criterion unchanged; default auto-choice behavior is preserved.
 - **Human interaction:** private/group membership, clarification pauses and exact-action approval/release are durable. A grant is not evidence that an action ran. Model tools cannot answer humans, approve actions or supply acceptance criteria.
 - **Experience:** each agent owns conditional candidate observations/lessons with source outcomes. Retrieval and explicit selection are logged; later outcomes assess use. Contradictory and failed observations remain visible. This is retrieval of experience, not model-weight training or a guarantee that old advice is correct.
 
@@ -32,12 +32,12 @@ python3 -m agent_lab demo
 python3 -m agent_lab scheduler-demo
 python3 -m agent_lab.evaluation run
 python3 -m agent_lab.evaluation plan --config evaluation/provided-input-plan.json
-python3 -m agent_lab.evaluation experience plan --config evaluation/experience-jsonl/plan.json
+python3 -m agent_lab.evaluation experience plan --config evaluation/required-actions-experience-plan.json
 ```
 
 The demos/evaluation fixtures are scripted and labelled accordingly. Plan inspection makes zero model/engine calls and reports missing credentials/executor configuration. An unconfigured live case is not a success. Actual model runs require the inspected conditions, issued credential, explicitly authorized budget and configured backends. Do not commit credentials or reuse an expired/failed task automatically.
 
-A clean Python 3.12.12 setup passed 14 command checks without Textual or course credentials: six demos, console/evaluation commands, blocked live execution and the core suite. Of 522 discovered core checks, 495 passed and 27 Docker/UI checks were explicitly skipped. Logs distinguish actual skips from passes; automated reproduction is not another member's independent reproduction.
+A clean Python 3.12.12 setup passed 15 command checks without Textual or course credentials: six demos, console/evaluation commands, blocked live execution and the core suite. Of 534 discovered core checks, 506 passed and 28 Docker/UI checks were explicitly skipped. Logs distinguish actual skips from passes; automated reproduction is not another member's independent reproduction.
 
 The public [development evidence summary](../evaluation/evidence/development-summary.json) contains whitelisted outcomes, timing, usage, source/configuration identities and hashes of retained raw records. It omits raw prompts, credentials and host paths. Original requests/responses, SQLite files and read-only audits remain in ignored local evidence directories. Hashes bind records for later comparison; they do not authenticate data or replace an audit. Before final delivery, prepare the required accessible evidence package and genuine history screenshots without exposing secrets.
 
@@ -73,6 +73,7 @@ These selected recent code/experience records are development evidence, **not of
 | Same allowance's final distinct provided-file task | 7 new, 36 cumulative | Exact 215-byte human-source → coordinator → coder receipt/read verified; generated code ran but failed an incorrect assertion; repair reply truncated; root failed |
 | Overnight compact-context training/ON portion | 25 | Supplied starter failed and was repaired; coder independently completed, parent exhausted; ON generated correct output but then narrated line counts until truncation; OFF unrun |
 | Overnight allowance's final distinct capability task | 8 new, 33 cumulative | Exact source receipt/read and correct current-code isolated output verified; subsequent narration truncated; no offer/submission or completed root |
+| Required-action common training and matched JSONL probes | 43 (16 training, 14 ON, 13 OFF) | Training coder repaired the supplied bug and completed, parent exhausted; both probes independently completed; all 43 replies were tool calls without narration/truncation |
 
 The older final-slot task carried its original allowance from 29 to 36 requests, leaving 12 unused. The overnight final-slot task carried its different user-requested allowance from 25 to 33, leaving 15 unused. Each used its third and final root slot after a read-only audit of a complete length-limited reply, terminal tasks and no pending human/unknown tool effects. Neither replayed an old request, increased its allowance or completed the missing OFF condition. Unused requests do not permit a fourth root or reveal provider balance.
 
@@ -80,7 +81,7 @@ The overnight training coder was accepted at the time of its independent check. 
 
 An isolated v1 projection of a saved request reduced repeated peer-description text from 4,596 to 1,494 characters (whole payload 17,054 to 14,367 characters with the new system guidance). This is a character-count/view check under changed role conditions, not a provider-token, cost or causal quality comparison.
 
-The one complete real memory pair is:
+The earlier complete code/report memory pair is:
 
 | Condition | Root completion | Attempts | Assignment-to-final seconds | Provider-reported tokens | Experience use |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -89,16 +90,25 @@ The one complete real memory pair is:
 
 Common training cost was 15 attempts and 78,230 reported tokens; its coder succeeded but its parent failed. The ON candidate was source-bound observed experience, not proof of a newly learned algorithm. Both arms used 13 attempts; ON used more tokens. One pair and a small time difference establish exercised experience use, **not a general learning advantage**. Different cases/code/budgets across later rounds cannot establish a causal improvement either.
 
+The current JSONL pair uses identical case content, initial frozen memory, allowed model, non-memory tools, prompt/view policy and budgets; both request provider-required tools. Training is separate and not silently amortized:
+
+| Condition | Root completion | Attempts | Assignment-to-final seconds | Provider-reported tokens | Experience use |
+| --- | ---: | ---: | ---: | ---: | --- |
+| JSONL ON | 1/1 | 14 | 52.244 | 78,666 | One retrieval/selection of a coordinator observation sourced from the failed training parent; later task succeeded |
+| JSONL OFF | 1/1 | 13 | 48.281 | 67,567 | No retrieval/selection |
+
+Common training used 16 attempts and 106,586 reported tokens. Its coder executed the original failing starter, repaired it, produced independently correct output and was accepted, but the parent exhausted the shared local cap after receiving that output. The full work round used 43/48 requests and three/three roots; five unused requests do not authorize a fourth root. ON was slower, used more requests and tokens, and did not establish a benefit. The selected candidate is a source-bound failure observation, not proof of an invented successful repair recipe. Each task family has one matched pair; the different code/request policy and stochastic runs prevent causal comparison to earlier truncated trials. All raw databases/reports are unchanged under independent read-only audits.
+
 ## 6. Failure analysis and corrections
 
 | Observed issue | Evidence and correction | Verified limit |
 | --- | --- | --- |
 | Wrong schema/representation and stale exports | Preserve the failed code trial; clarify exact schemas and require exact-version output replacement after a new run | Repaired earlier probes completed; arbitrary program correctness remains unproven |
 | Correct numbers without required handoff/read | Bind acceptance to actual source/recipient receipts and subsequent reads | Matching text/messages do not substitute for delivery |
-| Coder/parent call exhaustion and unnecessary chatter | Expose current local/shared reservations; remove the redundant ten-call sublimit while keeping the aggregate cap; add explicit verification proposals | Batched submission/rejection/recovery and low-budget notices are engineering-tested; training coder used the proposal tool, but its parent still exhausted calls |
+| Coder/parent call exhaustion and unnecessary chatter | Expose current local/shared reservations; remove the redundant ten-call sublimit while keeping the aggregate cap; add explicit verification proposals | Batched submission/rejection/recovery and low-budget notices are engineering-tested; latest probes fully completed, but the training parent still exhausted its local 16-call limit |
 | Prompt-to-file whitespace transcription | Add creating-human pending-root inputs and input-aware delegation | Real last-slot audit verifies exact custody/read; its overall task still failed |
-| Incorrect hard-coded assertion on real input | The generated script expected two blank lines where current data has three; execution failed and exported no result | Later coders produced correct outputs, but manual recounting still triggered narration/truncation; full task completion remains unproven for these cases |
-| Output-length truncation | Reject incomplete replies, preserve usage/raw records and release no tools from that reply; prefer concise action-only turns | Both compact-context versions still produced truncated replies after correct execution; no automatic failed-call replay or hidden output-cap increase |
+| Incorrect hard-coded assertion on real input | The generated script expected two blank lines where current data has three; execution failed and exported no result | Earlier correct outputs still ended in manual recounting/truncation; the current required-action probes completed both full declared contracts |
+| Output-length truncation | Reject incomplete replies, preserve usage/raw records and release no tools from that reply; prefer concise action-only turns | Earlier compact-context versions still truncated after correct execution. The new opt-in provider-required mode observed 43 conforming tool replies and two complete probes; this one round does not prove the failure eliminated generally |
 | Transport uncertainty | Preserve the DNS failure and stop without automatic reissue; distinguish it from a later complete length-limited reply with known no-tool effects | Quota/pricing/remaining balance remain unknown; no unlimited quota assumption |
 
 Case-provided files are authored test inputs, not model-authored outputs, simulated human answers or granted approvals. Final outputs and execution still require the original independent checks. Saved failed records were not edited into successes.

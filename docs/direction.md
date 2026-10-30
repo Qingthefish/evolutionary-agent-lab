@@ -62,7 +62,7 @@ Use a versioned development plan to inspect selected live cases, budgets, roles 
 
 ## Optional required-action experiment
 
-2026-10-30: test an opt-in provider-required tool-action mode after correct isolated outputs were followed by free-text narration and truncation. The model still selects eligible actions and submits to the existing independent verifier; no file is accepted as a goal merely because it exists. Version-3 development plans record this request choice explicitly. Default/legacy behavior, provider identity, tool scope and output/request limits remain unchanged. Unsupported or ignored requests stop without fallback; actual HKGAI compatibility and workflow benefit require separate live evidence. This is a bounded implementation experiment, not an instructor requirement or a settled final architecture.
+2026-10-30: test an opt-in provider-required tool-action mode after correct isolated outputs were followed by free-text narration and truncation. The model still selects eligible actions and submits to the existing independent verifier; no file is accepted as a goal merely because it exists. Version-3 development plans record this request choice explicitly. Default/legacy behavior, provider identity, tool scope and output/request limits remain unchanged. Unsupported or ignored requests stop without fallback. README and the report retain the bounded HKGAI compatibility/completion evidence and its limits; support by another provider or general workflow benefit still needs its own evidence. This is a bounded implementation experiment, not an instructor requirement or a settled final architecture.
 
 ## Controlled deletion capability
 

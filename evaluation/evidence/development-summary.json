@@ -8,7 +8,7 @@
   "token_accounting_note": "These are provider-reported token counts, not money or account balance. They include valid usage on replies rejected by the parser. Framework unknown-usage fields and failed reserved attempts are retained separately; no missing usage is fabricated as zero.",
   "authorization_note": "Local round caps are distinct from provider quota and some historical allowances overlap; do not add the caps. No course quota reset or unlimited balance is inferred.",
   "raw_evidence_note": "Hashes bind the retained local records; the public file intentionally omits raw text, private file-system paths and credentials. Hashes do not authenticate data or replace independent audits.",
-  "comparison_note": "Only code-dns-restart contains a complete matched real ON/OFF pair here. One pair does not establish a general advantage; differing code/budgets/cases across rounds are not causal comparisons.",
+  "comparison_note": "code-dns-restart and jsonl-required-actions each contain one complete matched real ON/OFF pair. Each is a different bounded task family with one replicate; neither establishes a general advantage. Differing code, request policies, budgets or cases across rounds are not causal comparisons.",
   "rounds": [
     {
       "id": "code-initial",
@@ -582,6 +582,104 @@
       "official_evaluation": false,
       "general_learning_gain_established": false,
       "audit_note": "Correct current-source numeric output and confirmed sandbox cleanup do not complete the task. No offer/submission followed; manual line counting was truncated. New low-budget/proposal guidance did not eliminate the failure."
+    },
+    {
+      "id": "jsonl-required-actions",
+      "local_evidence_key": "review-20261030-required-actions",
+      "source_revision": "a52c34af7cb1ac578f11329eb36f53dcc71d271d",
+      "conditions_sha256": "9a4cf865c274eecdfc22146cbf10dc998a504e457d64acd766d5490c28438555",
+      "raw_experiment_sha256": "9cdcf3d57221a2caf7d9cffd3e65b6da4c6f90cdb5546626f139cedb9dfc4e77",
+      "raw_ledger_sha256": "27e2410775ab9d21a9f52837169f5642690ee14f6b861615aaf78a6c55c9d21c",
+      "provider": "hkgai",
+      "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+      "model_context_policy": "declared-concise-actions-v2",
+      "provider_action_protocol": "required-tools-explicit-verification-v1",
+      "reserved_provider_attempts": 43,
+      "local_round_cap": 48,
+      "planned_root_slots": 3,
+      "stop_reason": null,
+      "complete_roots": 2,
+      "provider_reported_tokens": 252819,
+      "attempts_without_provider_usage": 0,
+      "cases": [
+        {
+          "phase": "training",
+          "memory": "collect",
+          "case_id": "jsonl-provided-training",
+          "status": "executed",
+          "classification": "task_failed",
+          "root_state": "failed",
+          "root_verified_completed": false,
+          "subtasks_observed": 1,
+          "subtasks_verified_completed": 1,
+          "assignment_to_final_seconds": 44.17835998535156,
+          "reserved_provider_attempts": 16,
+          "responses_received": 16,
+          "provider_reported_tokens": 106586,
+          "attempts_without_provider_usage": 0,
+          "framework_unknown_usage_attempts": 0,
+          "memory_retrievals": 0,
+          "memory_selections": 0
+        },
+        {
+          "phase": "probe",
+          "memory": "on",
+          "case_id": "jsonl-provided-probe",
+          "status": "executed",
+          "classification": "completed",
+          "root_state": "succeeded",
+          "root_verified_completed": true,
+          "subtasks_observed": 1,
+          "subtasks_verified_completed": 1,
+          "assignment_to_final_seconds": 52.243913888931274,
+          "reserved_provider_attempts": 14,
+          "responses_received": 14,
+          "provider_reported_tokens": 78666,
+          "attempts_without_provider_usage": 0,
+          "framework_unknown_usage_attempts": 0,
+          "memory_retrievals": 1,
+          "memory_selections": 1
+        },
+        {
+          "phase": "probe",
+          "memory": "off",
+          "case_id": "jsonl-provided-probe",
+          "status": "executed",
+          "classification": "completed",
+          "root_state": "succeeded",
+          "root_verified_completed": true,
+          "subtasks_observed": 1,
+          "subtasks_verified_completed": 1,
+          "assignment_to_final_seconds": 48.2806978225708,
+          "reserved_provider_attempts": 13,
+          "responses_received": 13,
+          "provider_reported_tokens": 67567,
+          "attempts_without_provider_usage": 0,
+          "framework_unknown_usage_attempts": 0,
+          "memory_retrievals": 0,
+          "memory_selections": 0
+        }
+      ],
+      "reply_conformance": {
+        "response_received": 43,
+        "tool_calls_finish": 43,
+        "null_or_empty_content": 43,
+        "length": 0,
+        "missing_usage": 0
+      },
+      "independent_audit": {
+        "full_probe_contracts_passed": 2,
+        "exact_input_custody_records": 4,
+        "original_databases_and_report_unchanged": true,
+        "actual_failed_starter_and_successful_repair": true,
+        "selected_candidate_owner": "coordinator",
+        "selected_candidate_source_outcome": "failed",
+        "selected_candidate_later_task_outcome": "succeeded"
+      },
+      "official_evaluation": false,
+      "general_learning_gain_established": false,
+      "required_choice_causal_gain_established": false,
+      "audit_note": "All 43 observed replies are tool calls with empty/null free text and no truncation. Both frozen JSONL probes pass complete current-source, execution/import, numeric, receipt/read and final-report contracts. Training coder succeeded after real supplied-bug repair, but parent exhausted its 16-call shared cap. ON selected a coordinator failure observation and completed; OFF also completed with fewer calls and less time. This shows exercised experience use, not a demonstrated learning advantage or causal comparison to prior code."
     }
   ]
 }

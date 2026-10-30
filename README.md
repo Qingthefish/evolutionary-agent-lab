@@ -4,13 +4,21 @@ Evolutionary Multi-Agent Collaboration System
 
 ## Status
 
-**Current position — 2026-10-30, overnight follow-up:** the latest engineering source (`10a1c71`) passed **522 checks**, with zero skips/errors/failures, including **18 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 14 command checks and **495 core checks**, with 27 explicit Docker/UI skips. These are engineering results, not model scores.
+**Current position — 2026-10-30, required-action check:** source `a52c34a` passed **534 engineering checks**, zero skips/errors/failures, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 15 command checks and **506 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
 
-The latest authorized HKGAI work round used **33/48 requests across all three fresh roots**. Training genuinely repaired the supplied faulty JSONL script and its coder completed, but the parent exhausted its shared calls. Both subsequent coders produced independently correct output in real containers, then repeated manual line-counting until their replies were truncated; neither completed its task. The original OFF probe remains unrun. Compact peer/execution views, action guidance and remaining-budget reminders are now checked and versioned; **they have not eliminated the observed model failure**. No fourth root or new allowance was created. The 1024-output-token ceiling is this development allowance's setting; it is not a claim about the instructor's grading limits or account balance.
+An explicit opt-in `require_tool_actions` mode requests actual tool calls and uses the existing independent-verification proposal for completion. In the issued HKGAI trial, **all 43 replies were tool calls with no free-text narration or truncation**. Both changed-input JSONL probes completed their full independently audited contracts: current code/input, real isolated execution, correct output, actual handoff/read, report and final verification. The ON probe used 14 requests and selected a prior coordinator failure observation; OFF used 13. Both succeeded, with ON slower and more costly in reported tokens: **no learning advantage is claimed**.
 
-**Retained earlier milestone:** two real HKGAI code/report probes completed current-code/input execution, independent content checks, actual handoff/read and final reports. A matched frozen-memory ON/OFF pair both completed (13 requests each); ON retrieved and explicitly selected source-bound experience. This exercises memory use, not a general learning advantage. Earlier failures and unrun probes remain preserved.
+The common training coder genuinely repaired the supplied faulty script and completed, but its parent exhausted the local 16-request cap. This failure and every previous failed/unrun task remain unchanged. The round used **43/48 requests and all three root slots**; there was no extra root, provider fallback or output-cap increase. Request/output limits are local trial settings, not teacher account balance or grading limits. Required-action mode remains disabled by default; old tasks/C07 behavior is preserved and incompatible resumes are refused.
 
-The platform has durable tasks/conversations, scoped delegation and file transfer, human clarification/approval, private candidate experience, isolated Python, configurable retrieval/Git tools, a minimal terminal interface and automatic outcome/time evidence. Broad live autonomy, required search/Git/human coverage, varied comparisons, official evaluation and final submission evidence remain open. Read the [draft report](docs/final-report.md), [public evidence summary](evaluation/evidence/development-summary.json) and [Roadmap](docs/team-roadmap.md) for exact verified scope. The instructor announcement is the primary authority: general multi-agent collaboration, independent memory/sandboxes, real tools, human interaction and automatic completion/time evaluation; a business vertical or elaborate frontend is not required.
+**Retained evidence:** an earlier code/report ON/OFF pair also completed. There are now two different bounded task families with one matched pair each. Broad autonomous planning/negotiation, remaining real search/Git/human coverage, varied comparisons, official evaluation and final submission evidence remain open. The instructor announcement is the primary authority. Read the [draft report](docs/final-report.md), [public evidence](evaluation/evidence/development-summary.json) and sole task register, the [Roadmap](docs/team-roadmap.md).
+
+Inspect the successful slice without a credential or model call:
+
+```bash
+python3 -m agent_lab.evaluation experience plan --config evaluation/required-actions-experience-plan.json
+```
+
+The portable [runtime plan](evaluation/required-actions-runtime.json) leaves Docker configuration unset. Real execution requires a reviewed ignored local copy, explicit model-call authorization and the configured isolated environment; inspection alone does not validate provider compatibility.
 
 ## First 10 minutes / 新成员从这里开始
 
@@ -47,7 +55,7 @@ Use these entry points to inspect the current implementation; a module's presenc
 | Area | Entry points |
 | --- | --- |
 | Durable tasks, conversations and evidence views | [core.py](agent_lab/core.py), [queries.py](agent_lab/queries.py), [inspection.py](agent_lab/inspection.py) |
-| Model protocol and allowed tool dispatch | [protocol.py](agent_lab/protocol.py), [deepseek.py](agent_lab/deepseek.py), [gateway.py](agent_lab/gateway.py) |
+| Model protocol and allowed tool dispatch | [protocol.py](agent_lab/protocol.py), [deepseek.py](agent_lab/deepseek.py), [gateway.py](agent_lab/gateway.py), [model_context.py](agent_lab/model_context.py) |
 | Shared live configuration, task policies and CLI flags | [runtime.py](agent_lab/runtime.py) |
 | Task execution, delegation and shared limits | [runner.py](agent_lab/runner.py), [scheduler.py](agent_lab/scheduler.py), [delegation.py](agent_lab/delegation.py), [budget.py](agent_lab/budget.py) |
 | Controlled files, public text retrieval and private candidate memory | [files.py](agent_lab/files.py), [provenance.py](agent_lab/provenance.py), [retrieval.py](agent_lab/retrieval.py), [memory.py](agent_lab/memory.py) |
