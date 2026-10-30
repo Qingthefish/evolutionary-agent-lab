@@ -22,6 +22,11 @@
     {
       "path": "scratch.txt",
       "kind": "absent"
+    },
+    {
+      "path": "summary.md",
+      "kind": "contains",
+      "expected": "Search status: unavailable"
     }
   ],
   "declared_subtasks_only": false
