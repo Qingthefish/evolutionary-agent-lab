@@ -142,22 +142,28 @@ class DeepSeekClient:
 
     request_options = {"thinking": {"type": "disabled"}}
 
-    def __init__(self, model, transport, *, max_tokens=2048):
+    def __init__(self, model, transport, *, max_tokens=2048, tool_choice="auto"):
         if not isinstance(model, str) or not model.strip() or len(model) > 128:
             raise ProviderError("An explicit course-approved model identifier is required")
         if not callable(transport) or type(max_tokens) is not int or not 1 <= max_tokens <= 16384:
             raise ProviderError("Supply a transport and a bounded output token limit")
+        if not isinstance(tool_choice, str) or tool_choice not in {"auto", "required"}:
+            raise ProviderError("Use explicit auto or required tool selection")
         self.model = model
         self.transport = transport
         self.max_tokens = max_tokens
+        self.tool_choice = tool_choice
 
     def complete(self, messages, *, tools=()):
         if not isinstance(messages, list) or not messages:
             raise ProviderError("Supply a nonempty trusted conversation")
+        if self.tool_choice == "required" and not tools:
+            raise ProviderError("Required tool selection needs actual tools", kind="invalid_request",
+                                phase="preflight", request_may_have_been_processed=False)
         payload = {"model": self.model, "messages": messages, "stream": False,
                    "max_tokens": self.max_tokens, **self.request_options}
         if tools:
-            payload.update(tools=list(tools), tool_choice="auto")
+            payload.update(tools=list(tools), tool_choice=self.tool_choice)
         try:
             encoded = json.dumps(payload, allow_nan=False).encode("utf-8")
         except (ValueError, TypeError, UnicodeError, RecursionError):
@@ -200,6 +206,8 @@ class DeepSeekClient:
                     raise ValueError()
                 identifiers.add(call["id"])
             if bool(calls) != (reason == "tool_calls"):
+                raise ValueError()
+            if self.tool_choice == "required" and not calls:
                 raise ValueError()
             if calls:
                 message["tool_calls"] = calls

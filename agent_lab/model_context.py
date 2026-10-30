@@ -5,6 +5,13 @@ retain their existing views. Private experience tools are not peer capabilities.
 """
 
 CONTEXT_POLICY = "declared-concise-actions-v2"
+REQUIRED_ACTION_POLICY = "required-tools-explicit-verification-v1"
+REQUIRED_ACTION_GUIDANCE = """
+This run requests tool_choice=required: respond with actual tool calls, not a
+free-text final answer. You choose the eligible actions. To propose completion,
+call submit_for_verification last after required deliverables and handoffs.
+Clarifications still use ask_human; no tool or text grants approval or success.
+"""
 ACTION_GUIDANCE = """
 On action turns use tool_calls and null content. Spend the output budget on the
 actual tool arguments, not narrated plans or repeated evidence. Keep source writes
