@@ -1,0 +1,20 @@
+{
+  "criteria": [
+    {
+      "path": "note.md",
+      "kind": "human_answer",
+      "expected": "{\"human\": \"operator\", \"prefix\": \"Language: \", \"request_index\": 1}"
+    },
+    {
+      "path": "note.md",
+      "kind": "contains",
+      "expected": "534"
+    },
+    {
+      "path": "note.md",
+      "kind": "contains",
+      "expected": "HKGAI"
+    }
+  ],
+  "declared_subtasks_only": true
+}
