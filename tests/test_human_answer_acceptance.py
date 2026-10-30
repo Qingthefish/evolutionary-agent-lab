@@ -93,13 +93,17 @@ class HumanAnswerAcceptanceTests(unittest.TestCase):
         parser = argparse.ArgumentParser(); add_live_arguments(parser)
         with patch.dict('os.environ', {'HUMAN_TEST_KEY': 'unused-test-key'}):
             args = ['--live', '--model', 'synthetic', '--api-key-env', 'HUMAN_TEST_KEY']
-            live = live_config_from_args(parser.parse_args(args + ['--task-seconds', '14400', '--tree-seconds', '14400']))
+            live = live_config_from_args(parser.parse_args(args + ['--task-seconds', '14400', '--tree-seconds', '14400',
+                '--task-reported-tokens', '180000', '--tree-reported-tokens', '180000']))
             self.assertEqual(live.role_limits.duration_seconds, 14400)
             self.assertEqual(live.tree_limits.duration_seconds, 14400)
+            self.assertEqual(live.role_limits.reported_tokens, 180000)
+            self.assertEqual(live.tree_limits.reported_tokens, 180000)
             for bad in ('0', '-1', 'nan', 'inf'):
                 with self.subTest(bad=bad), self.assertRaises(WorkflowError):
                     live_config_from_args(parser.parse_args(args + ['--tree-seconds', bad]))
         with self.assertRaises(WorkflowError): live_config_from_args(parser.parse_args(['--task-seconds', '14400']))
+        with self.assertRaises(WorkflowError): live_config_from_args(parser.parse_args(['--tree-reported-tokens', '180000']))
 
 
 if __name__ == '__main__': unittest.main()
