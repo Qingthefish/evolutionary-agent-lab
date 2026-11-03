@@ -1,0 +1,33 @@
+{
+  "criteria": [
+    {
+      "path": "summary.md",
+      "kind": "contains",
+      "expected": "json.loads"
+    },
+    {
+      "path": "summary.md",
+      "kind": "contains",
+      "expected": "JSONDecodeError"
+    },
+    {
+      "path": "summary.md",
+      "kind": "contains",
+      "expected": "https://docs.python.org/"
+    },
+    {
+      "path": "python-json-source.md",
+      "kind": "exists"
+    },
+    {
+      "path": "scratch.txt",
+      "kind": "absent"
+    },
+    {
+      "path": "summary.md",
+      "kind": "contains",
+      "expected": "Search status: unavailable"
+    }
+  ],
+  "declared_subtasks_only": false
+}

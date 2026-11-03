@@ -486,6 +486,10 @@ def add_live_arguments(parser):
     parser.add_argument("--socket-timeout", type=float, default=30, help="Provider socket-operation timeout in seconds (at most 120); not a task deadline or retry policy")
     parser.add_argument("--task-attempts", type=int, default=8)
     parser.add_argument("--tree-attempts", type=int, default=48)
+    parser.add_argument("--task-seconds", type=float, default=300, help="Task wall-time limit including human waiting")
+    parser.add_argument("--tree-seconds", type=float, default=900, help="Shared goal wall-time limit including human waiting")
+    parser.add_argument("--task-reported-tokens", type=int, default=32000, help="Per-task observed provider-token stop threshold; not account balance")
+    parser.add_argument("--tree-reported-tokens", type=int, default=128000, help="Shared observed provider-token stop threshold; not account balance")
     parser.add_argument("--child-retries", type=int, default=0, help="Shared maximum of explicit failed-child replacements (0 disables; at most 8)")
     parser.add_argument("--enable-web", action="store_true", help="Permit bounded public HTTPS search/retrieval in live mode")
     parser.add_argument("--enable-memory", action="store_true", help="Enable private candidate experience retrieval and outcome capture")
@@ -504,6 +508,8 @@ def live_config_from_args(args):
                 or args.max_output_tokens != 2048 or args.socket_timeout != 30 or args.task_attempts != 8 or args.tree_attempts != 48
                 or args.enable_web or args.enable_memory or args.enable_delete or args.enable_collaboration or args.memory_namespace != "runtime-development"
                 or getattr(args, 'require_tool_actions', False)
+                or getattr(args, 'task_seconds', 300) != 300 or getattr(args, 'tree_seconds', 900) != 900
+                or getattr(args, 'task_reported_tokens', 32000) != 32000 or getattr(args, 'tree_reported_tokens', 128000) != 128000
                 or args.docker_host or args.python_image or args.child_retries):
             raise RuntimeSetupError("Live configuration flags require --live; no implicit credential discovery")
         return None
@@ -514,8 +520,10 @@ def live_config_from_args(args):
         raise RuntimeSetupError("The explicitly named API-key environment variable is not set")
     return LiveConfig(model=args.model, api_key=key, provider=args.provider, allow_network=True,
         constraints=tuple(args.constraint), max_output_tokens=args.max_output_tokens, socket_timeout=args.socket_timeout,
-        role_limits=replace(Limits(), model_attempts=args.task_attempts),
-        tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts), enable_web=args.enable_web,
+        role_limits=replace(Limits(), model_attempts=args.task_attempts, duration_seconds=getattr(args, 'task_seconds', 300),
+                            reported_tokens=getattr(args, 'task_reported_tokens', 32000)),
+        tree_limits=replace(TreeLimits(), model_attempts=args.tree_attempts, duration_seconds=getattr(args, 'tree_seconds', 900),
+                            reported_tokens=getattr(args, 'tree_reported_tokens', 128000)), enable_web=args.enable_web,
         enable_memory=args.enable_memory, memory_namespace=args.memory_namespace,
         docker_host=args.docker_host, python_image=args.python_image,
         repositories=tuple(load_trusted_repositories(args.git_config)) if args.git_config else (), child_retries=args.child_retries,

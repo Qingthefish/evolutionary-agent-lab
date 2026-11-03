@@ -1,0 +1,13 @@
+{
+  "criteria": [
+    {
+      "path": "python-json-source.md",
+      "kind": "exists"
+    },
+    {
+      "path": "python-json-source.md",
+      "kind": "contains",
+      "expected": "Source: https://docs.python.org/"
+    }
+  ]
+}

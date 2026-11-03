@@ -26,7 +26,7 @@ class ArtifactRule:
 
     def __post_init__(self):
         _parts(self.path)
-        if (not isinstance(self.kind,str) or self.kind not in {'exists','absent','contains','json_equals','sha256','received_from','sandbox_output'}
+        if (not isinstance(self.kind,str) or self.kind not in {'exists','absent','contains','json_equals','sha256','received_from','sandbox_output','human_answer'}
                 or type(self.min_bytes) is not int or type(self.max_bytes) is not int
                 or not 0 <= self.min_bytes <= self.max_bytes <= 65536):
             raise WorkflowError('Supply a supported artifact criterion with byte limits up to 65536')
@@ -44,6 +44,8 @@ class ArtifactRule:
                 raise WorkflowError('Expected JSON must be unambiguous and finite') from None
         if self.kind == 'received_from':
             object.__setattr__(self,'expected',_json(source_spec(self.expected)))
+        if self.kind == 'human_answer':
+            object.__setattr__(self,'expected',_json(human_answer_spec(self.expected)))
         if self.kind == 'sandbox_output':
             spec = execution_spec(self.expected)
             if self.path in spec['inputs']:
@@ -56,6 +58,49 @@ class ArtifactRule:
 
 def _json(value):
     return json.dumps(value, sort_keys=True, allow_nan=False, ensure_ascii=True, separators=(',',':'))
+
+
+def human_answer_spec(expected):
+    """A trusted response selector; answer text is never action authority."""
+    try:
+        spec = strict_json(expected)
+        if (not isinstance(spec, dict) or set(spec) != {'human', 'prefix', 'request_index'}
+                or not isinstance(spec['human'], str) or not 1 <= len(spec['human']) <= 128
+                or not spec['human'].strip() or not isinstance(spec['prefix'], str)
+                or not 1 <= len(spec['prefix']) <= 256 or type(spec['request_index']) is not int
+                or not 1 <= spec['request_index'] <= 10):
+            raise ValueError()
+        return spec
+    except (ValueError, TypeError, RecursionError):
+        raise WorkflowError('Human-answer criteria need a human, bounded prefix and clarification index 1–10') from None
+
+
+def human_answer(workflow, task, actor, path, data, spec):
+    """Require a real addressed clarification and a current write after its reply.
+
+    This checks literal answer inclusion and chronology, not semantic quality,
+    human identity outside this workflow, or permission for a critical action.
+    """
+    row = workflow._task(task, actor, assigned=True)
+    workflow._member(row['chat'], spec['human'])
+    if workflow._row('actors', spec['human'])['kind'] != 'human':
+        return False
+    request = workflow.db.execute("""SELECT * FROM requests WHERE task=? AND responder=?
+        AND kind='clarification' ORDER BY rowid LIMIT 1 OFFSET ?""",
+        (task, spec['human'], spec['request_index'] - 1)).fetchone()
+    if (request is None or request['answered'] != 1 or request['approved'] is not None
+            or not isinstance(request['response'], str) or not request['response'].strip()
+            or spec['prefix'] + request['response'] not in data.decode('utf-8')):
+        return False
+    response = workflow.db.execute("""SELECT sequence FROM events WHERE task=? AND actor=?
+        AND kind='human_responded' AND json_extract(detail,'$.request')=?
+        AND json_extract(detail,'$.response')=? ORDER BY sequence LIMIT 1""",
+        (task, spec['human'], request['id'], request['response'])).fetchone()
+    written = workflow.db.execute("""SELECT sequence FROM events WHERE task=? AND actor=?
+        AND kind IN ('file_created','file_updated') AND json_extract(detail,'$.path')=?
+        AND json_extract(detail,'$.sha256')=? ORDER BY sequence DESC LIMIT 1""",
+        (task, actor, path, hashlib.sha256(data).hexdigest())).fetchone()
+    return bool(response and written and response['sequence'] < written['sequence'])
 
 
 def normalize_rules(rules):
@@ -105,6 +150,8 @@ def verify_rules(workflow, files, task, actor, rules):
                 passing=received_from(workflow,task,rule.path,hashlib.sha256(data).hexdigest(),len(data),source_spec(rule.expected))
             elif passing and rule.kind=='sandbox_output':
                 passing=sandbox_output(workflow,files,task,actor,rule.path,hashlib.sha256(data).hexdigest(),len(data),execution_spec(rule.expected))
+            elif passing and rule.kind=='human_answer':
+                passing=human_answer(workflow,task,actor,rule.path,data,human_answer_spec(rule.expected))
             checks[label]=passing
         except (WorkflowError,UnicodeError,ValueError,RecursionError):
             # Unsafe symlinks and malformed JSON are failed checks, not absence.
