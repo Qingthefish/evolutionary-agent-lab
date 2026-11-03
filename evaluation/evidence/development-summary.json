@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "selected-development-evidence",
-  "scope": "Selected recent code/experience development records plus same-allowance final-slot continuations, not all-time project/account usage. Original failures and unrun slots retained; continuation rows are not independent new allowances.",
+  "scope": "Selected recent code/experience development records plus same-allowance final-slot continuations, not all-time project/account usage. Original failures and unrun slots retained; continuation rows are not independent new allowances. A separate interaction_followup record reports one closed human/web round; it is excluded from the nine code/experience aggregate rows.",
   "official_results_available": false,
   "benchmark_valid": false,
   "provider_total_quota_pricing_balance": "unknown",
@@ -681,5 +681,184 @@
       "required_choice_causal_gain_established": false,
       "audit_note": "All 43 observed replies are tool calls with empty/null free text and no truncation. Both frozen JSONL probes pass complete current-source, execution/import, numeric, receipt/read and final-report contracts. Training coder succeeded after real supplied-bug repair, but parent exhausted its 16-call shared cap. ON selected a coordinator failure observation and completed; OFF also completed with fewer calls and less time. This shows exercised experience use, not a demonstrated learning advantage or causal comparison to prior code."
     }
-  ]
+  ],
+  "interaction_followup": {
+    "id": "live-human-web-closeout",
+    "closed_at": 1793710974.501065,
+    "closed_round": true,
+    "excluded_from_code_experience_aggregates": true,
+    "local_evidence_key": "review-20261030-live-human-web",
+    "runtime_code_revision": "4bd246af5373115ea7506d92645b54e9fe89fdec",
+    "model": "t2_hkgai-v3_fp8_1m_e7",
+    "hkgai_http_requests": 18,
+    "framework_reserved_model_attempts": 19,
+    "known_local_preflight_refusals_without_http": 1,
+    "maximum_hkgai_requests": 48,
+    "fresh_roots_created": 3,
+    "maximum_fresh_roots": 3,
+    "complete_roots": 1,
+    "provider_reported_tokens": 101203,
+    "attempts_without_provider_usage": 0,
+    "answered_clarifications": 2,
+    "unique_external_human_decisions": 1,
+    "deletion_approvals": 0,
+    "deletion_effects": 0,
+    "raw_ledger_snapshot_name": "round-18-http.json",
+    "raw_ledger_snapshot_sha256": "f11bb7c96571e89923f379aeff9a7e3db2e94795dbcdb5828a223dcea16179bb",
+    "audit_sha256": "3588bb4e9c470bea1b5d43664c6e5238afb4b4d932182d80b1dd350a0b56aed3",
+    "prior_pending_snapshot": {
+      "at_12_http_pending_snapshot_sha256": "5a76849b45f3c9c6128cd9aa62c4b49c23620f6972581990d99b23390c0fa9a4",
+      "raw_ledger_snapshot_name": "round-12-http.json",
+      "raw_ledger_snapshot_sha256": "3c744646d36b2c8b1cf537372077626b6fc0d3e5f0df1db1782b06ed5b8b559f"
+    },
+    "cases": [
+      {
+        "case": "private",
+        "task_state": "succeeded",
+        "chat_kind": "private",
+        "hkgai_http_requests": 5,
+        "workflow_attempts": 5,
+        "reported_tokens": 12770,
+        "agent_messages": 1,
+        "independently_complete": true,
+        "assignment_to_final_seconds": 2924.641005754471,
+        "recorded_wait_seconds": 2912.755831003189,
+        "deadline_epoch": 1793377627.0755332,
+        "snapshot_name": "private-succeeded.sqlite3",
+        "snapshot_sha256": "cf2d231b0f28de58907f3fb96f99f77b17166c4a98b568ce22e0cf2ee9f598ed",
+        "independent_artifact_checks": [
+          {
+            "path": "note.md",
+            "kind": "human_answer",
+            "passed": true
+          },
+          {
+            "path": "note.md",
+            "kind": "contains",
+            "passed": true
+          },
+          {
+            "path": "note.md",
+            "kind": "contains",
+            "passed": true
+          }
+        ]
+      },
+      {
+        "case": "source",
+        "task_state": "failed",
+        "chat_kind": "group",
+        "hkgai_http_requests": 5,
+        "workflow_attempts": 6,
+        "reported_tokens": 16400,
+        "agent_messages": 0,
+        "independently_complete": false,
+        "assignment_to_final_seconds": 5.9797539710998535,
+        "recorded_wait_seconds": 0.0,
+        "deadline_epoch": 1793378335.561503,
+        "snapshot_name": "source-failed.sqlite3",
+        "snapshot_sha256": "9fa27a5449f80d9731db04f3ef423b1d8c2e387215ec353a80ff7cd854284404",
+        "independent_artifact_checks": [
+          {
+            "path": "python-json-source.md",
+            "kind": "exists",
+            "passed": false
+          },
+          {
+            "path": "python-json-source.md",
+            "kind": "contains",
+            "passed": false
+          }
+        ]
+      },
+      {
+        "case": "group",
+        "task_state": "waiting_approval",
+        "chat_kind": "group",
+        "hkgai_http_requests": 8,
+        "workflow_attempts": 8,
+        "reported_tokens": 72033,
+        "agent_messages": 1,
+        "independently_complete": false,
+        "assignment_to_final_seconds": null,
+        "recorded_wait_seconds": 886.5266931056976,
+        "deadline_epoch": 1793379716.410629,
+        "snapshot_name": "group-waiting_approval.sqlite3",
+        "snapshot_sha256": "dd518d2008a63957c7ae8e5b019e407db3afe6c6b70cfd4bef520b05194faadc",
+        "independent_artifact_checks": [
+          {
+            "path": "summary.md",
+            "kind": "contains",
+            "passed": true
+          },
+          {
+            "path": "summary.md",
+            "kind": "contains",
+            "passed": true
+          },
+          {
+            "path": "summary.md",
+            "kind": "contains",
+            "passed": true
+          },
+          {
+            "path": "python-json-source.md",
+            "kind": "exists",
+            "passed": true
+          },
+          {
+            "path": "scratch.txt",
+            "kind": "absent",
+            "passed": false
+          },
+          {
+            "path": "summary.md",
+            "kind": "contains",
+            "passed": false
+          }
+        ]
+      }
+    ],
+    "direct_official_retrieval": {
+      "path": "python-json-source.md",
+      "sha256": "37c9f1bee204e3788771025d4640c9dadcf70a6976e82278941ceba605b62bb6",
+      "bytes": 24388,
+      "url": "https://docs.python.org/3/library/json.html",
+      "current_artifact_matches_real_retrieval_record": true
+    },
+    "human_provenance_note": "One actual owner language choice (English) supplied two addressed clarification requests. Independent audits match saved reply, request/response events, human membership and later current-version writes. It is one external decision, not two people or two independent approvals.",
+    "group_boundary": "Stored state remains waiting_approval, but original four-hour assignment deadline has elapsed. No decision, deletion, trusted release, new root or replay. Original database is preserved; this is not a complete root.",
+    "group_draft_review": {
+      "full_contract_passed": false,
+      "issues": [
+        "Missing exact Search status: unavailable line (Markdown emphasis changes bytes).",
+        "Whitespace-only input error position varies with whitespace length; empty and three-space input do not both report column 1.",
+        "A normal final newline alone does not create an extra blank iteration when streaming text lines."
+      ],
+      "independent_stdlib_error_probes": {
+        "''": {
+          "column": 1,
+          "position": 0
+        },
+        "'   '": {
+          "column": 4,
+          "position": 3
+        }
+      }
+    },
+    "search_outcome": "Four real Bing RSS reads returned empty or irrelevant results. Source root failed after a fifth retrieval operation was refused locally; no HTTP was forwarded for that refused model attempt. Direct canonical-document retrieval is separate and does not close relevant search coverage.",
+    "public_read_operations_used": 5,
+    "public_read_operations_maximum": 6,
+    "public_budget_note": "Original four-read limit amended transparently to six before direct official-document retrieval, preserving prior records. No paid HKGAI request/root/output increase.",
+    "no_new_model_calls_during_closeout": true,
+    "official_evaluation": false,
+    "general_learning_gain_established": false,
+    "runtime_github_push_executed": false,
+    "next_live_gates": [
+      "Relevant search evidence",
+      "Fresh exact-action human decision/release demonstration with explicit human availability; do not replay expired group task",
+      "Runtime GitHub branch/credential provisioning and remote SHA check",
+      "Issued official dataset/protocol and final submission verification"
+    ]
+  }
 }
