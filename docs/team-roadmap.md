@@ -329,14 +329,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Validate remote failures and uncertainty**
 
-- **Stage / status:** M3 / In progress (remote evidence/reconciliation engineering follow-up)
+- **Stage / status:** M3 / Done (local failure/reconciliation engineering; live GitHub remains B03)
 - **Owner:** Qingthefish (owner-requested continuation, Codex-assisted)
 - **Dependencies / configuration:** Existing Git/gateway foundation; local disposable remotes permit failure checks before B03 runtime credential provisioning.
 - **Scope:** Git/retrieval failure-path tests and only the fixes those checks justify.
 - **Acceptance:** Changed bindings, denial, non-fast-forward, failed network and interrupted push do not receive false success. Uncertain effects are reconciled without blindly repeating a push.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Base revision / branch / PR / evidence:** Main claim `124a327`; branch `fix/B04-git-remote-evidence`; implementation/test source `6b04251`; raw evidence ignored `runs/review-20261104-git-evidence/`; publication pending.
+- **Reviewer:** Qingthefish, Codex-assisted same-session review under owner authorization; no independent teammate approval.
+- **Progress / review changes / outcome:** 2026-11-04: reproduced reconciliation accepting a different configured remote and following a replaced local-remote symlink; malformed/non-ASCII ref output could be mistaken for absence or escape push uncertainty recording. Fixed original-target comparison, local remote revalidation and strict one-ref parsing with SHA-1/SHA-256 support. Six new regressions cover those paths, contradictory exit/result, read-only reconciliation and database restart without replay or rewriting the original uncertain operation. The retained pre-fix log has seven failing subcases and two errors (not nine separate tasks); final 22 Git checks pass. Full 549 passed, zero skips/errors/failures (19 actual-container, nine UI); dedicated environment stopped. Clean Python 3.12.12 without Textual/key: 16 command checks, 521 core passed/28 explicit skips. Original model databases, paused/failed results and teammate C07 branch unchanged. Zero paid/model requests, no new runtime credentials, GitHub runtime push, schema/tool-name change or official score. This accepts local failure/reconciliation behavior; B03/actual GitHub integration remains open. Publication pending.
 
 - **2026-11-04 scoped claim:** From `8a4823d`, branch `fix/B04-git-remote-evidence`. Reproduce reconciliation against a changed configured remote, then require observations to match the original approved remote URL and trusted local-path boundary. Validate malformed/ambiguous remote-ref observations and push outcome disagreements as errors/uncertainty; preserve original operations, approvals and no-retry semantics. Reuse existing tests/gateway, no schema/tool-name/default runtime changes, no paid requests, runtime GitHub credential provisioning or actual GitHub runtime push. Validate targeted and appropriate broader checks, update existing materials and merge the verified focused change. B03 and official end-to-end tool acceptance remain separate.
 
