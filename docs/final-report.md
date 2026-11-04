@@ -1,6 +1,6 @@
 # Evolutionary Multi-Agent Collaboration System — Draft Report
 
-MAIE5221 / ARIN5202. **Development draft, updated 2026-11-03 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. Official tasks, scoring/intervention rules, final member contribution evidence and submission dates have not been incorporated into this draft. The instructor announcement remains the authority in [requirements](requirements.md).
+MAIE5221 / ARIN5202. **Development draft, updated 2026-11-04 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. Official tasks, scoring/intervention rules, final member contribution evidence and submission dates have not been incorporated into this draft. The instructor announcement remains the authority in [requirements](requirements.md).
 
 ## 1. Objective and verified scope
 
@@ -103,6 +103,8 @@ A separate human/web development round is **closed at an expired human-approval 
 
 The group actually retrieved the official Python JSON page (24,388 bytes with matching receipt/hash), read it, posted messages and wrote an English draft, but stopped for exact-version scratch deletion approval. No such decision/release occurred; the original four-hour assignment deadline has now elapsed and the database remains unchanged in `waiting_approval`. Its full contract is unfulfilled: `scratch.txt` remains and the exact `Search status: unavailable` line is missing. Independent semantic review also found an incorrect fixed error column for all-whitespace input and an inaccurate suggestion that a normal final newline alone adds a blank streaming iteration. The draft is preserved rather than rewritten by the auditor. The separate source root failed after four empty/irrelevant Bing RSS reads and a local cap refusal. Direct retrieval from a supplied official URL does not establish relevant search. The read-only public plan's recorded 4→6 adjustment preserved counters and did not increase model allowance. Frozen earlier pending and final DB/ledger snapshots are bound in the [public evidence](../evaluation/evidence/development-summary.json). No new model call was made during this closeout; critical-action live coverage, relevant search, runtime Git provisioning and official evaluation remain open.
 
+A fresh bounded group approval task on **4 November** completed in **7 HKGAI requests / 26,527 reported tokens**, one root. Its actual deletion request named the current scratch version. The owner's genuine decision was saved and matched to the addressed operator; recording approval alone had no file effect. A separate trusted release consumed that request once and recorded deletion of the exact version. Independent read-only checks verify the scratch is absent, retained input matches its provided hash, note creation follows deletion, and the actual group completion message follows the note. Start/resume used distinct processes with no model call during the human pause. Assignment-to-final time was **85.349 seconds**, including **68.286 seconds** of recorded human waiting. One subsequent read of the absent scratch produced a retained tool failure; it is not hidden or called a provider failure. The new case succeeds; the old expired group/search failures remain unchanged. This completes the bounded private-clarification/group-approval interface evidence, while denial/uncertainty retain their earlier engineering checks. Runtime/tests are unchanged from `4bd246a`; ten existing console-interaction regressions pass again. The [separate public record](../evaluation/evidence/development-summary.json) does not enter the nine code/experience comparison rows or establish general autonomy, task success, grades or learning gains.
+
 ## 6. Failure analysis and corrections
 
 | Observed issue | Evidence and correction | Verified limit |
@@ -123,7 +125,7 @@ Current engineering checks do not close these live or submission requirements:
 
 - Broad autonomous decomposition/negotiation and useful replanning outside declared role/title examples.
 - Combined real search/retrieval, file CRUD and runtime GitHub commit/push under a designated branch, narrow credentials and real approvals. Developer publishing is different evidence.
-- Complete real private/group clarification and critical-action interaction through the minimal interface.
+- Broader human interaction/recovery scenarios if demanded by the official protocol. The bounded real private clarification and group approval/release paths now pass; live denial/uncertainty are not newly claimed.
 - More varied matched experience trials and the pending single/multi baseline; report regressions or null effects as well as gains.
 - The actual official dataset/protocol adapter, prescribed runs, scoring/timing/memory/intervention semantics, and performance/failure analysis.
 - Another member's clean setup, each member's genuine significant contribution, final commit-history screenshots and the required presentation/report delivery.
@@ -141,7 +143,7 @@ The announcement requires a week-13 presentation; confirm its exact date/format.
 1. Instructor objective and the engineering problem: observable completion under bounded execution.
 2. Task lifecycle: original inputs, model-selected delegation, isolated code execution, handoff and independent verification.
 3. Human boundaries and private experience: actual grants/outcomes rather than prompt-only restrictions.
-4. Real development results, including failed parents, unrun probes and the one complete memory pair.
+4. Real development results, including failed parents, unrun probes and the two bounded memory pairs and actual private/group human decisions.
 5. Demonstration and limitations: label recorded traces and scripted fixtures clearly; never present them as a new live model run.
 6. Official test results and remaining failure analysis, to be filled only after the prescribed evaluation.
 
