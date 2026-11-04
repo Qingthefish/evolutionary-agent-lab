@@ -1,0 +1,24 @@
+{
+  "criteria": [
+    {
+      "path": "keep.txt",
+      "kind": "sha256",
+      "expected": "4390cb468b4b490fdcbb71d831788b8b4b4d07175e4979e2190aa0aa3e7830a2"
+    },
+    {
+      "path": "scratch.txt",
+      "kind": "absent"
+    },
+    {
+      "path": "review-note.md",
+      "kind": "contains",
+      "expected": "Review result: scratch removed after approval."
+    },
+    {
+      "path": "review-note.md",
+      "kind": "contains",
+      "expected": "Retained input: keep.txt"
+    }
+  ],
+  "declared_subtasks_only": false
+}
