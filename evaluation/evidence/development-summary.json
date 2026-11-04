@@ -909,5 +909,27 @@
     "independent_audit_sha256": "72911ac4a41c8977b673ae2556ffdb015392d798d7b8496edcef874fb9795435",
     "local_unused_requests": 41,
     "no_provider_balance_inferred": true
+  },
+  "latest_engineering_validation": {
+    "source_revision": "6b04251786422c19019cb79d6a633bfcf0bceb08",
+    "full_checks_passed": 549,
+    "full_checks_skipped": 0,
+    "actual_container_checks": 19,
+    "ui_checks": 9,
+    "git_checks_passed": 22,
+    "new_regression_methods": 6,
+    "clean_python": "Python 3.12.12",
+    "clean_command_checks_passed": 16,
+    "clean_core_checks_passed": 521,
+    "clean_explicit_skips": 28,
+    "actual_model_requests": 0,
+    "actual_runtime_github_pushes": 0,
+    "teammate_reproduction": false,
+    "official_evaluation": false,
+    "local_evidence_key": "review-20261104-git-evidence",
+    "raw_focused_audit_sha256": "37d1c4f2c37bfb8eff6400c80b6c0322a169ffc5a46034985c60bc67eda3ca1a",
+    "raw_full_validation_sha256": "054ad4bb6ce3f58b68655bdbe4c0f06bc7b3ced55c40229ddf87325fd93af68c",
+    "raw_clean_summary_sha256": "e39eb313f881f1b7a7f2caf659ee23e28e92da42482a204bfe34aa73287177f1",
+    "scope": "Git remote identity/observation/reconciliation failure engineering using disposable local bare repositories and injected process/observation faults. No runtime GitHub push or model performance established."
   }
 }

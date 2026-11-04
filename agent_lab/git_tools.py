@@ -40,7 +40,7 @@ class GitUncertainError(GitToolError):
 
 _BRANCH = re.compile(r"^(?!-)(?!.*\.\.)(?!.*//)(?!.*@\{)(?!.*\.lock$)(?!/)(?!.*/$)[A-Za-z0-9._/-]{1,100}$")
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
-_SHA = re.compile(r"^[0-9a-f]{40}$")
+_SHA = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
 _DENIED_NAMES = re.compile(
     r"(^|/)(\.env(\..*)?|\.netrc|\.git-credentials|\.npmrc|\.pypirc|id_(rsa|dsa|ecdsa|ed25519)(\.pub)?|"
     r"credentials(\.json)?|secrets?(\..*)?)$|\.(pem|key|p12|pfx|sqlite3?|db)$", re.I)
@@ -556,14 +556,23 @@ class GitTools:
 
     # ---- push -------------------------------------------------------------------------
     def _remote_head(self, url, branch):
+        self._branch(branch)
         code, out, err, interrupted = self._remote_git(["ls-remote", "--refs", url, "refs/heads/" + branch])
         if interrupted or code != 0:
             raise GitToolError("Could not read the remote branch state")
-        for line in out.decode().splitlines():
-            sha, _, ref = line.partition("\t")
-            if ref == "refs/heads/" + branch:
-                return sha
-        return None
+        if out == b"":
+            return None  # A successful query with no matching ref.
+        try:
+            lines = out.decode("ascii").splitlines()
+            if len(lines) != 1:
+                raise ValueError()
+            sha, separator, ref = lines[0].partition("\t")
+            if (separator != "\t" or ref != "refs/heads/" + branch
+                    or not _SHA.fullmatch(sha) or not sha.strip("0")):
+                raise ValueError()
+            return sha
+        except (UnicodeError, ValueError):
+            raise GitToolError("Remote branch observation is malformed or ambiguous; state is unknown") from None
 
     def prepare_push(self, name, remote, branch):
         """Return the exact binding a human must approve. No effect occurs here."""
@@ -634,7 +643,13 @@ class GitTools:
             raise GitToolError("Unknown push operation")
         binding = json.loads(row["arguments"])
         repository = self.repository(binding["repository"])
-        actual = self._remote_head(repository.remote_url(binding["remote"]), binding["branch"])
+        # A new configuration must never turn a different repository's current
+        # ref into evidence about the original operation. Reapply local-path
+        # trust checks too: the saved URL may now be a symlink or unsafe layout.
+        url = self._remote(repository, binding["remote"])
+        if row["repository"] != repository.name or url != binding.get("remote_url"):
+            raise GitToolError("Remote target changed since the original push; reconcile the original target manually")
+        actual = self._remote_head(url, binding["branch"])
         outcome = "remote_shows_commit" if actual == binding["commit"] else "remote_does_not_show_commit"
         record = self._record(repository.name, "reconcile", {"operation_id": operation_id}, actor=actor, task=row["task"])
         self._settle(record, "succeeded", {"operation_id": operation_id, "observed_remote": actual, "outcome": outcome,

@@ -2,6 +2,7 @@
 
 import json
 import os
+from dataclasses import replace
 from pathlib import Path
 import subprocess
 import tempfile
@@ -54,6 +55,22 @@ class GitFixture(unittest.TestCase):
 
 
 class GitToolsTests(GitFixture):
+    def test_remote_ref_observation_rejects_malformed_or_ambiguous_success_output(self):
+        ref = b"refs/heads/agent/work"
+        oid = git("rev-parse", "HEAD", cwd=self.work).encode()
+        bad = (b"\xff", b"noise\n", b"not-a-sha\t" + ref + b"\n",
+               oid + b" " + ref + b"\n", oid + b"\trefs/heads/other\n",
+               oid + b"\t" + ref + b"\n" + oid + b"\t" + ref + b"\n",
+               b"0" * 40 + b"\t" + ref + b"\n")
+        for raw in bad:
+            with self.subTest(raw=raw), patch.object(self.git, "_remote_git", return_value=(0, raw, b"", None)):
+                with self.assertRaises(GitToolError):
+                    self.git._remote_head(str(self.remote), "agent/work")
+        for raw, expected in ((b"", None), (oid + b"\t" + ref + b"\n", oid.decode()),
+                              (b"a" * 64 + b"\t" + ref + b"\n", "a" * 64)):
+            with self.subTest(valid=raw), patch.object(self.git, "_remote_git", return_value=(0, raw, b"", None)):
+                self.assertEqual(self.git._remote_head(str(self.remote), "agent/work"), expected)
+
     def test_read_operations_and_untrusted_repository(self):
         (self.work / "docs" / "a.md").write_text("changed\n")
         (self.work / "docs" / "new.md").write_text("new\n")
@@ -199,6 +216,92 @@ class GitToolsTests(GitFixture):
 
 
 class GitGatewayTests(GitFixture):
+    def uncertain_push_without_effect(self):
+        self.commit_note()
+        request = self.request_push()
+        self.workflow.respond(request, "user", approve=True)
+        original = self.git._exec
+        with patch.object(self.git, "_exec", side_effect=lambda argv, env, seconds:
+                          (None, b"", b"", "timeout") if "push" in argv else original(argv, env, seconds)):
+            with self.assertRaises(ToolRequestError): self.gateway.release_approved(request)
+        return next(op for op in self.git.operations() if op["operation"] == "push")
+
+    def test_reconcile_changed_remote_cannot_observe_another_repository(self):
+        operation = self.uncertain_push_without_effect()
+        alternative = self.remote.parent / "alternative.git"
+        git("init", "-q", "--bare", str(alternative))
+        git("push", "-q", str(alternative), "agent/work", cwd=self.work)
+        changed = GitTools(self.workflow, [replace(self.config, remotes=(("origin", str(alternative)),))])
+        self.addCleanup(changed.close)
+        before = len(changed.operations())
+        with patch.object(changed, "_remote_head", wraps=changed._remote_head) as observe:
+            with self.assertRaises(GitToolError): changed.reconcile(operation["id"], actor="user")
+            observe.assert_not_called()
+        self.assertEqual(len(changed.operations()), before)
+        self.assertIsNone(self.remote_head("agent/work"))
+        self.assertEqual(next(op for op in changed.operations() if op["id"] == operation["id"])["status"], "uncertain")
+
+    def test_reconcile_rechecks_local_remote_path_before_observation(self):
+        operation = self.uncertain_push_without_effect()
+        saved = self.remote.with_name("saved.git")
+        self.remote.rename(saved)
+        self.remote.symlink_to(saved, target_is_directory=True)
+        with patch.object(self.git, "_remote_head", wraps=self.git._remote_head) as observe:
+            with self.assertRaises(GitToolError): self.git.reconcile(operation["id"], actor="user")
+            observe.assert_not_called()
+        self.assertEqual(sum(op["operation"] == "reconcile" for op in self.git.operations()), 0)
+
+    def test_reconcile_after_database_restart_preserves_uncertainty_without_replay(self):
+        operation = self.uncertain_push_without_effect()
+        self.git.close()
+        self.workflow.close()
+        self.workflow = Workflow(Path(self.directory.name) / "state.sqlite3")
+        self.git = GitTools(self.workflow, [self.config])
+        with patch.object(self.git, "_exec", wraps=self.git._exec) as commands:
+            result = self.git.reconcile(operation["id"], actor="user")
+            self.assertEqual(result["outcome"], "remote_does_not_show_commit")
+            self.assertFalse(any("push" in c.args[0] for c in commands.call_args_list))
+        original = next(op for op in self.git.operations() if op["id"] == operation["id"])
+        self.assertEqual(original, operation)  # Observation cannot rewrite the original failed/unknown effect.
+        self.assertIsNone(self.remote_head("agent/work"))
+
+    def test_unreadable_post_push_ref_stays_uncertain_then_read_only_reconciles(self):
+        self.commit_note()
+        request = self.request_push()
+        self.workflow.respond(request, "user", approve=True)
+        original = self.git._remote_git
+        observations = 0
+        def malformed_after_push(arguments, **kwargs):
+            nonlocal observations
+            observations += 1
+            if observations == 2: return 0, b"\xff", b"", None
+            return original(arguments, **kwargs)
+        with patch.object(self.git, "_remote_git", side_effect=malformed_after_push):
+            with self.assertRaises(ToolRequestError): self.gateway.release_approved(request)
+        operation = next(op for op in self.git.operations() if op["operation"] == "push")
+        self.assertEqual(operation["status"], "uncertain")
+        self.assertFalse(operation["result"]["remote_observed"])
+        self.assertEqual(self.remote_head("agent/work"), operation["arguments"]["commit"])
+        with patch.object(self.git, "_exec", wraps=self.git._exec) as commands:
+            self.assertEqual(self.git.reconcile(operation["id"], actor="user")["outcome"], "remote_shows_commit")
+            self.assertFalse(any("push" in c.args[0] for c in commands.call_args_list))
+        with self.assertRaises(WorkflowError): self.gateway.release_approved(request)
+
+    def test_failed_exit_after_actual_push_is_uncertain_and_never_replayed(self):
+        self.commit_note()
+        request = self.request_push()
+        self.workflow.respond(request, "user", approve=True)
+        original = self.git._exec
+        def failed_exit(argv, env, seconds):
+            result = original(argv, env, seconds)
+            return (1, result[1], b"connection closed after effect", None) if "push" in argv else result
+        with patch.object(self.git, "_exec", side_effect=failed_exit):
+            with self.assertRaises(ToolRequestError): self.gateway.release_approved(request)
+        operation = next(op for op in self.git.operations() if op["operation"] == "push")
+        self.assertEqual(operation["status"], "uncertain")
+        self.assertEqual(operation["result"]["observed_remote"], operation["arguments"]["commit"])
+        with self.assertRaises(WorkflowError): self.gateway.release_approved(request)
+
     def setUp(self):
         super().setUp()
         self.files = FileTools(self.workflow, Path(self.directory.name) / "files")
