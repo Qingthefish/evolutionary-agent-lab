@@ -329,14 +329,16 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Validate remote failures and uncertainty**
 
-- **Stage / status:** M3 / Unclaimed
-- **Owner:** —
-- **Dependencies / configuration:** B03 and coordinated gateway wiring.
+- **Stage / status:** M3 / In progress (remote evidence/reconciliation engineering follow-up)
+- **Owner:** Qingthefish (owner-requested continuation, Codex-assisted)
+- **Dependencies / configuration:** Existing Git/gateway foundation; local disposable remotes permit failure checks before B03 runtime credential provisioning.
 - **Scope:** Git/retrieval failure-path tests and only the fixes those checks justify.
 - **Acceptance:** Changed bindings, denial, non-fast-forward, failed network and interrupted push do not receive false success. Uncertain effects are reconciled without blindly repeating a push.
 - **Base revision / branch / PR / evidence:** —
 - **Reviewer:** —
 - **Progress / review changes / outcome:** —
+
+- **2026-11-04 scoped claim:** From `8a4823d`, branch `fix/B04-git-remote-evidence`. Reproduce reconciliation against a changed configured remote, then require observations to match the original approved remote URL and trusted local-path boundary. Validate malformed/ambiguous remote-ref observations and push outcome disagreements as errors/uncertainty; preserve original operations, approvals and no-retry semantics. Reuse existing tests/gateway, no schema/tool-name/default runtime changes, no paid requests, runtime GitHub credential provisioning or actual GitHub runtime push. Validate targeted and appropriate broader checks, update existing materials and merge the verified focused change. B03 and official end-to-end tool acceptance remain separate.
 
 ### B05
 
