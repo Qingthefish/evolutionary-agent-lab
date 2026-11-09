@@ -1,12 +1,12 @@
 # Evolutionary Multi-Agent Collaboration System — Draft Report
 
-MAIE5221 / ARIN5202. **Development draft, updated 2026-11-04 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. Official tasks, scoring/intervention rules, final member contribution evidence and submission dates have not been incorporated into this draft. The instructor announcement remains the authority in [requirements](requirements.md).
+MAIE5221 / ARIN5202. **Development draft, updated 2026-11-09 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. Official tasks, scoring/intervention rules, final member contribution evidence and submission dates have not been incorporated into this draft. The instructor announcement remains the authority in [requirements](requirements.md).
 
 ## 1. Objective and verified scope
 
 Build a general multi-agent platform that delegates work, uses tools in private workspaces, interacts with humans, retains per-agent experience and automatically records task completion and execution time. Our implementation emphasizes checked execution and bounded recovery. An original research paper, a specific business vertical and an elaborate frontend are not prerequisites.
 
-The latest engineering source at `6b04251` passed **549 checks**, with zero skips, errors or failures, including **19 actual-container integration checks and nine UI checks**. These are software checks, not 549 instructor tasks. The earlier opt-in required-action trial at `a52c34a` observed 43 tool-call replies without free-text narration/truncation and two independently audited complete JSONL probe roots. This bounded result does not establish general reliability or an official score. The [architecture](architecture.md) documents the actual contracts and limits; the [Roadmap](team-roadmap.md) remains the sole task/owner register.
+The latest engineering source at `c4c6e84` passed **549 checks**, with zero skips, errors or failures, including **19 actual-container integration checks and nine UI checks**. These are software checks, not 549 instructor tasks. The earlier opt-in required-action trial at `a52c34a` observed 43 tool-call replies without free-text narration/truncation and two independently audited complete JSONL probe roots. This bounded result does not establish general reliability or an official score. The [architecture](architecture.md) documents the actual contracts and limits; the [Roadmap](team-roadmap.md) remains the sole task/owner register.
 
 Two earlier real HKGAI code/report probes and two current JSONL probes completed their full independently audited contracts. The earlier JSONL failures and the latest exhausted training parent remain preserved. Thus the project has runnable, checked development slices; broad live coverage and official performance remain unresolved.
 
@@ -48,6 +48,8 @@ python3 -m unittest discover -s tests -p test_sandbox_integration.py -k provided
 ```
 
 This check uses real isolated executions with scripted provider decisions. It rejects an incorrect executed result, repairs/reruns it, checks exact input custody and completes child/parent submissions in nine scripted decisions. Without the explicit Docker variables it is skipped, not passed. It establishes engineering behavior, not HKGAI autonomy.
+
+The batch evaluator saves the reviewed development plan before entering the first case. Its `run-progress.json` records selected cases, the manifest, completed outcomes, the active case and the cases still to start. A process interruption leaves the last published checkpoint available for inspection. If an active case may have produced an effect, inspect its retained state before considering another run. The completed batch publishes its regular `report.md` and `results.json`.
 
 ## 4. Evaluation method
 

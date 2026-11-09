@@ -26,9 +26,9 @@ Deliver a runnable general multi-agent platform and an evaluation entry point: a
 | --- | --- | --- |
 | M0 — coordinate | Common baseline, visible claims and agreed boundaries | Register ready; individual claims recorded below |
 | M1 — foundation integration | Existing platform plus #7/#8/#9 reviewed and integrated with honest evidence labels | Done; I01–I03 record that integration |
-| M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Earlier bounded text and two code/report roots are accepted; actual draft acceptance is retained. Two later required-action JSONL probe roots completed; earlier failed roots remain. Open-ended negotiation and critical-action live human coverage remain open |
-| M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Bounded real code/handoff and private experience-use probes audited; broader live search/GitHub/human behavior and demonstrated learning benefit remain pending |
-| M4 — stabilize/evaluate | Reproducible setup, pinned configuration, development comparisons/failure analysis and official adapter | Pending prerequisites |
+| M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Earlier bounded text and two code/report roots are accepted; actual draft acceptance is retained. Two later required-action JSONL probe roots completed; earlier failed roots remain. Open-ended negotiation remains open. D01/D02 accept the bounded real private clarification and group approval/release paths |
+| M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Bounded real code/handoff and private experience-use probes audited; relevant live search, runtime GitHub push and demonstrated learning benefit remain pending |
+| M4 — stabilize/evaluate | Reproducible setup, pinned configuration, development comparisons/failure analysis and official adapter | Development batch checkpoint and rehearsal verified. Final release/configuration and official adapter await their remaining prerequisites |
 | M5 — official delivery | Issued test protocol/results and required submission materials | Await official set and actual deadlines |
 
 These are gates, not claimed percentages. Independent cards can proceed in parallel; external model access need not block offline implementation. Draft the architecture/presentation during M3/M4. The announcement says presentation in week 13, report after week 13, and has conflicting “3 weeks” / “3/1 weeks” dataset wording: confirm exact dates and memory/intervention/repeat rules. Optional extensions and UI styling must not delay mandatory coverage.
@@ -299,6 +299,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Base revision / branch / PR / evidence:** Scope baseline 2d373dc; batch branch feat/integrated-runtime-tools; implementation c95747c. Actual public search/retrieval and nine retrieval boundary tests; shared evidence/review in [A05](#a05).
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
 - **Progress / review changes / outcome:** 2026-10-21: owner-requested batch implementation, without per-card approval stops. Added explicit public HTTPS search/retrieval, checked/pinned DNS, redirect/size/type/deadline controls, query identity/site filtering, cited text artifacts and failure records. Actual Python documentation retrieved; public search availability/relevance remains a provider limitation. Accepted and merged via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) on 2026-10-21 in 8888060.
+
+- **2026-11-09 relevance diagnosis.** Four direct RSS queries and two HTML queries through the existing public HTTPS transport returned no requested Python JSON/pathlib documentation page among the inspected results. English/US query parameters did not resolve the relevance issue. Raw bodies and hashes are retained in ignored `runs/review-20261109-search/`. This was a read-only service diagnosis with zero model requests. Relevant search remains an acceptance gap.
 
 ### B02
 
@@ -594,9 +596,11 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Dependencies / configuration:** M3, D04 and versioned evaluation configuration.
 - **Scope:** Release/config manifest and necessary integration/regression checks.
 - **Acceptance:** Pin the revision/config, list known limitations and triage required fixes. No unsupported feature or unrun check is reported as completed.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
+- **Base revision / branch / PR / evidence:** Claim `1d69e88`, tested source `c4c6e84`. Rehearsal and regression evidence in ignored `runs/review-20261109-batch-checkpoint/`.
+- **Reviewer:** Qingthefish, Codex-assisted review.
 - **Progress / review changes / outcome:** 2026-11-09 scoped preparation from `b5ba5a6` on `fix/A07-batch-checkpoint`. Preserve the reviewed development plan before case execution and checkpoint completed outcomes plus active/unstarted case IDs. Exercise interruption and offline rehearsal through existing entry points. The official dataset adapter and release freeze retain their existing acceptance gates.
+
+- **2026-11-09 checkpoint review.** A fault injected during the second case reproduces the loss of the reviewed plan and earlier case outcomes on the previous implementation. The batch evaluator now publishes the reviewed plan and run manifest before case effects, then atomically replaces the progress snapshot around each case. The checkpoint distinguishes recorded outcomes, the active case and unstarted cases. The normal CLI rehearsal produced four accepted fixtures, five detected negative controls and one unconfigured live case. The checkpoint and final results agree for all ten cases. Full suite 549 passed, including 19 actual-container and nine UI checks. Clean Python 3.12.12 passed 16 commands and 521 core checks with 28 explicit skips. Model calls were zero. The active case may need reconciliation after interruption. Official format mapping and the final release freeze remain open.
 
 ### S01
 

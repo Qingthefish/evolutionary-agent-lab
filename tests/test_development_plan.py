@@ -46,21 +46,51 @@ class DevelopmentPlanTests(unittest.TestCase):
                 evaluator.assert_not_called()
                 self.assertFalse((Path(temp)/'runs').exists())
 
-    def test_supplied_key_and_model_only_enable_explicit_execution_with_snapshot(self):
+    def test_interrupted_execution_preserves_reviewed_plan_and_completed_outcomes(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp); filename=self.plan_file(root,model='explicit-issued-model')
-            output=root/'runs';(output/'test-run').mkdir(parents=True)
+            output=root/'runs'
             with patch.dict('os.environ',{'COURSE_DEEPSEEK_API_KEY':'issued-secret'},clear=True), \
-                 patch('agent_lab.evaluation.plan.Evaluator') as evaluator:
+                 patch('agent_lab.evaluation.harness._drive_live') as driver:
                 planned=DevelopmentPlan(filename)
-                evaluator.return_value.run.return_value={'run_id':'test-run'}
-                planned.execute(allow_model_calls=True,plan_sha256=planned.sha256,output_root=output)
-                live=evaluator.call_args.kwargs['live']
-                self.assertEqual(live.model,'explicit-issued-model')
-                self.assertTrue(live.allow_network)
-            snapshot=json.loads((output/'test-run/development-plan.json').read_text())
-            self.assertEqual(snapshot['plan_sha256'],planned.sha256)
-            self.assertNotIn('issued-secret',json.dumps(snapshot))
+                selected = [case.id for case in planned.cases]
+                observations = []
+
+                def interrupt(case, session, live):
+                    run = next(output.iterdir())
+                    snapshot = run / 'development-plan.json'
+                    progress = run / 'run-progress.json'
+                    observations.append((live.model, live.allow_network,
+                                         snapshot.read_text() if snapshot.exists() else None,
+                                         progress.read_text() if progress.exists() else None))
+                    if case.id == selected[0]:
+                        raise RuntimeError('injected driver failure')
+                    raise KeyboardInterrupt
+
+                driver.side_effect = interrupt
+                with self.assertRaises(KeyboardInterrupt):
+                    planned.execute(allow_model_calls=True,plan_sha256=planned.sha256,output_root=output)
+
+            self.assertEqual(len(observations), len(selected))
+            for index, (model, network, snapshot, checkpoint) in enumerate(observations):
+                self.assertEqual((model, network), ('explicit-issued-model', True))
+                self.assertIsNotNone(snapshot)
+                self.assertEqual(json.loads(snapshot)['plan_sha256'], planned.sha256)
+                self.assertNotIn('issued-secret', snapshot)
+                self.assertIsNotNone(checkpoint)
+                progress = json.loads(checkpoint)
+                self.assertEqual(progress['active_case_id'], selected[index])
+                self.assertEqual(progress['not_started_case_ids'], selected[index + 1:])
+                self.assertNotIn('issued-secret', checkpoint)
+            run = next(output.iterdir())
+            progress = json.loads((run / 'run-progress.json').read_text())
+            self.assertEqual(progress['status'], 'incomplete')
+            self.assertEqual(progress['selected_case_ids'], selected)
+            self.assertEqual(progress['active_case_id'], selected[1])
+            self.assertEqual(progress['not_started_case_ids'], [])
+            self.assertEqual([(r['case']['id'], r['classification']) for r in progress['results']],
+                             [(selected[0], 'driver_error')])
+            self.assertFalse((run / 'results.json').exists())
 
     def test_budget_change_changes_fingerprint_and_hkgai_has_no_provider_fallback(self):
         with tempfile.TemporaryDirectory() as temp:

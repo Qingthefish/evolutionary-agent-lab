@@ -176,10 +176,6 @@ class DevelopmentPlan:
         if readiness['blockers']:
             raise WorkflowError('Plan is blocked: '+'; '.join(readiness['blockers']))
         live=LiveConfig(api_key=os.environ[self.data['api_key_env']],allow_network=True,**self.settings)
-        result=Evaluator(self.cases,output_root=output_root,live=live).run([c.id for c in self.cases])
-        # Record the reviewed plan alongside the evaluator's full run manifest.
-        import json
-        directory=Path(output_root)/result['run_id']
-        (directory/'development-plan.json').write_text(json.dumps(
-            {'plan_sha256':self.sha256,'conditions':self.conditions},ensure_ascii=True,indent=2)+'\n')
-        return result
+        reviewed_plan = {'plan_sha256': self.sha256, 'conditions': self.conditions}
+        return Evaluator(self.cases, output_root=output_root, live=live).run(
+            [case.id for case in self.cases], reviewed_plan=reviewed_plan)
