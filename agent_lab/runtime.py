@@ -233,7 +233,12 @@ def _encode(value):
 def policy_for_task(live=None, *, constraints=(), root_artifacts=(), child_rules=(), root_criteria=(), declared_subtasks_only=False):
     if live is not None and not isinstance(live, LiveConfig):
         raise RuntimeSetupError("Use the shared LiveConfig")
-    return TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)), root_artifacts, child_rules, root_criteria, declared_subtasks_only)
+    policy = TaskPolicy((*(() if live is None else live.constraints), *normalize_constraints(constraints)),
+                        root_artifacts, child_rules, root_criteria, declared_subtasks_only)
+    criteria = (*policy.root_criteria, *(rule for child in policy.child_rules for rule in child.criteria))
+    if live is not None and not live.enable_web and any(rule.kind == 'searched_source' for rule in criteria):
+        raise RuntimeSetupError('Search source criteria require explicit web tools')
+    return policy
 
 
 def policy_from_spec(data, live=None):

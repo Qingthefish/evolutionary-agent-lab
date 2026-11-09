@@ -14,6 +14,7 @@ from .inspection import ArtifactInspector
 from .protocol import strict_json
 from .provenance import received_from, source_spec
 from .execution_proof import execution_spec, sandbox_output
+from .retrieval import public_url, searched_source
 
 
 @dataclass(frozen=True)
@@ -26,7 +27,7 @@ class ArtifactRule:
 
     def __post_init__(self):
         _parts(self.path)
-        if (not isinstance(self.kind,str) or self.kind not in {'exists','absent','contains','json_equals','sha256','received_from','sandbox_output','human_answer'}
+        if (not isinstance(self.kind,str) or self.kind not in {'exists','absent','contains','json_equals','sha256','received_from','sandbox_output','human_answer','searched_source'}
                 or type(self.min_bytes) is not int or type(self.max_bytes) is not int
                 or not 0 <= self.min_bytes <= self.max_bytes <= 65536):
             raise WorkflowError('Supply a supported artifact criterion with byte limits up to 65536')
@@ -46,6 +47,10 @@ class ArtifactRule:
             object.__setattr__(self,'expected',_json(source_spec(self.expected)))
         if self.kind == 'human_answer':
             object.__setattr__(self,'expected',_json(human_answer_spec(self.expected)))
+        if self.kind == 'searched_source':
+            if not self.path.endswith(('.md', '.txt')):
+                raise WorkflowError('Search source criteria require a .md or .txt artifact')
+            object.__setattr__(self, 'expected', public_url(self.expected))
         if self.kind == 'sandbox_output':
             spec = execution_spec(self.expected)
             if self.path in spec['inputs']:
@@ -152,6 +157,8 @@ def verify_rules(workflow, files, task, actor, rules):
                 passing=sandbox_output(workflow,files,task,actor,rule.path,hashlib.sha256(data).hexdigest(),len(data),execution_spec(rule.expected))
             elif passing and rule.kind=='human_answer':
                 passing=human_answer(workflow,task,actor,rule.path,data,human_answer_spec(rule.expected))
+            elif passing and rule.kind == 'searched_source':
+                passing = searched_source(workflow, task, actor, rule.path, data, rule.expected)
             checks[label]=passing
         except (WorkflowError,UnicodeError,ValueError,RecursionError):
             # Unsafe symlinks and malformed JSON are failed checks, not absence.

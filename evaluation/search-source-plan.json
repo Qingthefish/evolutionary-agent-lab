@@ -1,0 +1,39 @@
+{
+  "version": 3,
+  "purpose": "development",
+  "provider": "hkgai",
+  "model": "t2_hkgai-v3_fp8_1m_e7",
+  "api_key_env": "COURSE_HKGAI_API_KEY",
+  "cases": "search-source",
+  "case_ids": [
+    "search-source-json",
+    "search-source-pathlib"
+  ],
+  "max_output_tokens": 1024,
+  "socket_timeout": 90,
+  "task_limits": {
+    "model_attempts": 12,
+    "reported_tokens": 64000,
+    "duration_seconds": 600,
+    "repeated_outcomes": 3
+  },
+  "tree_limits": {
+    "tasks": 1,
+    "depth": 1,
+    "model_attempts": 12,
+    "reported_tokens": 64000,
+    "tool_calls": 32,
+    "duration_seconds": 600
+  },
+  "tool_calls": 24,
+  "capabilities": {
+    "collaboration": false,
+    "web": true,
+    "memory": false,
+    "child_retries": 0,
+    "docker_host": null,
+    "python_image": null,
+    "git_config": null,
+    "require_tool_actions": true
+  }
+}
