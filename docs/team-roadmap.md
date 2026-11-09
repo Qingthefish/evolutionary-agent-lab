@@ -315,6 +315,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
 - **Progress / review changes / outcome:** 2026-10-21: a researcher retrieved cited text and explicitly handed it through task-owned artifacts to downstream work. Input delegation preflights hashes and offers snapshots before waiting; child metadata exposes only offered paths, not private transcripts/files. Partial offers retain child identity and clear uncertainty. Review removed duplicate child-result/input notifications. Accepted and merged via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) on 2026-10-21 in 8888060.
 
+- **2026-11-09 scoped follow-up.** Starting from `c6f4985`, add an independent acceptance criterion for a current cited file that follows an actual search result, retrieval and subsequent read in the same assigned task. Reuse existing source records, file receipts and case policies. Keep the previously accepted handoff slice and record candidate search availability separately. This work uses zero model requests.
+
 ### B03
 
 **Connect a real GitHub push**
