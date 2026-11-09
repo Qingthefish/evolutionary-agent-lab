@@ -302,6 +302,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-11-09 relevance diagnosis.** Four direct RSS queries and two HTML queries through the existing public HTTPS transport returned no requested Python JSON/pathlib documentation page among the inspected results. English/US query parameters did not resolve the relevance issue. Raw bodies and hashes are retained in ignored `runs/review-20261109-search/`. This was a read-only service diagnosis with zero model requests. Relevant search remains an acceptance gap.
 
+- **2026-11-09 candidate screening.** A public DuckDuckGo HTML request for the Python JSON documentation returned HTTP 202. The second query was left unrun after that response. Brave documents a ranked search API with domain query support and a subscription credential. An authenticated probe requires a configured search credential and budget. [DuckDuckGo HTML help](https://safe.duckduckgo.com/duckduckgo-help-pages/features/non-javascript) · [Brave API reference](https://api-dashboard.search.brave.com/api-reference/web/search/get)
+
 ### B02
 
 **Retrieve and hand off cited text**
@@ -316,6 +318,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Progress / review changes / outcome:** 2026-10-21: a researcher retrieved cited text and explicitly handed it through task-owned artifacts to downstream work. Input delegation preflights hashes and offers snapshots before waiting; child metadata exposes only offered paths, not private transcripts/files. Partial offers retain child identity and clear uncertainty. Review removed duplicate child-result/input notifications. Accepted and merged via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) on 2026-10-21 in 8888060.
 
 - **2026-11-09 scoped follow-up.** Starting from `c6f4985`, add an independent acceptance criterion for a current cited file that follows an actual search result, retrieval and subsequent read in the same assigned task. Reuse existing source records, file receipts and case policies. Keep the previously accepted handoff slice and record candidate search availability separately. This work uses zero model requests.
+
+- **2026-11-09 source acceptance review.** Source `f66271b` adds `searched_source` with same-task search → retrieval → read evidence and a current-file digest check. Three regressions cover wrong or edited artifacts, cross-task copies, search after retrieval and live configuration without web tools. Two development cases independently specify the expected Python documentation URLs. Real direct fetches hit both URLs and text markers, and both correctly failed the search criterion. The plan inspection found two cases and a 24-attempt maximum. The live search cases remain unrun. Full suite 552 passed, including 19 container and nine UI checks. Clean Python 3.12.12 passed 16 commands and 524 core checks with 28 explicit skips. Model requests were zero. Raw evidence is in ignored `runs/review-20261109-search-source-proof/`. Publication pending.
 
 ### B03
 

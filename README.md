@@ -4,7 +4,7 @@ Evolutionary Multi-Agent Collaboration System
 
 ## Status
 
-**Current position — 2026-11-09, batch evaluation checkpoint verified:** runtime source `c4c6e84` passed **549 engineering checks**, zero skips/errors/failures, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 16 command checks and **521 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
+**Current position — 2026-11-09, search source acceptance verified:** runtime source `f66271b` passed **552 engineering checks**, zero skips/errors/failures, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 16 command checks and **524 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
 
 **Accepted required-action milestone:** an explicit opt-in `require_tool_actions` mode requests actual tool calls and uses the existing independent-verification proposal for completion. In the issued HKGAI trial, **all 43 replies were tool calls with no free-text narration or truncation**. Both changed-input JSONL probes completed their full independently audited contracts: current code/input, real isolated execution, correct output, actual handoff/read, report and final verification. The ON probe used 14 requests and selected a prior coordinator failure observation; OFF used 13. Both succeeded, with ON slower and more costly in reported tokens: **no learning advantage is claimed**.
 
@@ -27,6 +27,8 @@ The portable [runtime plan](evaluation/required-actions-runtime.json) leaves Doc
 **Git failure handling verified:** result reconciliation now checks the original approved remote URL and revalidates the local target before observing it. Changed targets, symlink replacements, malformed refs and contradictory push results cannot produce a false success; unknown effects remain recorded and are never automatically pushed again. Six new regressions plus existing Git checks pass (22 total), and the full 549-check suite passes. This closes [B04's local failure/reconciliation engineering scope](docs/team-roadmap.md#b04); actual GitHub runtime pushing still requires the designated narrow credential under B03. No model requests or runtime GitHub pushes were made in this follow-up.
 
 **Development evaluation recovery evidence.** The evaluator saves the selected cases and manifest before execution. For reviewed plans it also saves the approved plan snapshot. Each returned case outcome is checkpointed in `run-progress.json` alongside the active and unstarted case IDs. Inspect the active case's retained state before deciding how to proceed after an interruption. The offline rehearsal recorded four accepted fixtures, five detected negative controls and one unconfigured live case. See [A07](docs/team-roadmap.md#a07).
+
+**Search and source acceptance.** `searched_source` checks that the assigned task found a URL in search, retrieved it to the expected final URL and read the current saved bytes. The [two-case development plan](evaluation/search-source-plan.json) checks the official Python JSON and pathlib pages. Direct fetches confirmed both URLs and required text markers. The search cases have been inspected offline and await a usable search backend.
 
 ## First 10 minutes / 新成员从这里开始
 
@@ -238,7 +240,7 @@ Example trusted structural policy (these expectations must be authored independe
 {"criteria":[{"path":"report.md","kind":"contains","expected":"## Sources","min_bytes":100},{"path":"scratch.txt","kind":"absent"}],"child_rules":[{"assignee":"writer","title":"Write structured result","criteria":[{"path":"data.json","kind":"json_equals","expected":"{\"count\":3}"}]}]}
 ```
 
-Supported kinds are `exists`, `absent`, `contains`, `json_equals`, `sha256`, `received_from` and `sandbox_output`, with bounded `min_bytes`/`max_bytes`. JSON criteria are for internal structured data, not complex document formats. `received_from` takes an exact source assignee/title/path plus explicit `allow_relay` and `require_read` booleans; it checks identity-bound consumed receipts and ordered reads of the same file version. Identical recreated content alone does not prove delivery. Unsupported/unknown task acceptance still needs trusted review; candidate-produced “tests passed” text is never enough to satisfy missing criteria.
+Supported kinds are `exists`, `absent`, `contains`, `json_equals`, `sha256`, `received_from`, `sandbox_output`, `human_answer` and `searched_source`, with bounded `min_bytes`/`max_bytes`. JSON criteria are for internal structured data, not complex document formats. `received_from` takes an exact source assignee/title/path plus explicit `allow_relay` and `require_read` booleans; it checks identity-bound consumed receipts and ordered reads of the same file version. Identical recreated content alone does not prove delivery. Unsupported/unknown task acceptance still needs trusted review; candidate-produced “tests passed” text is never enough to satisfy missing criteria.
 
 ## Inspect or exercise the memory comparison protocol
 
