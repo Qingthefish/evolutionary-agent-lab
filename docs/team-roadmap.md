@@ -596,7 +596,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Dependencies / configuration:** M3, D04 and versioned evaluation configuration.
 - **Scope:** Release/config manifest and necessary integration/regression checks.
 - **Acceptance:** Pin the revision/config, list known limitations and triage required fixes. No unsupported feature or unrun check is reported as completed.
-- **Base revision / branch / PR / evidence:** Claim `1d69e88`, tested source `c4c6e84`. Rehearsal and regression evidence in ignored `runs/review-20261109-batch-checkpoint/`.
+- **Base revision / branch / PR / evidence:** Claim `1d69e88`, tested source `c4c6e84`. Rehearsal and regression evidence in ignored `runs/review-20261109-batch-checkpoint/`. Accepted via [PR #42](https://github.com/Qingthefish/evolutionary-agent-lab/pull/42), merge `3fb7d5e`, matching reviewed tree `da90e99`.
 - **Reviewer:** Qingthefish, Codex-assisted review.
 - **Progress / review changes / outcome:** 2026-11-09 scoped preparation from `b5ba5a6` on `fix/A07-batch-checkpoint`. Preserve the reviewed development plan before case execution and checkpoint completed outcomes plus active/unstarted case IDs. Exercise interruption and offline rehearsal through existing entry points. The official dataset adapter and release freeze retain their existing acceptance gates.
 
