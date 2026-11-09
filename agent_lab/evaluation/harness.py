@@ -269,6 +269,12 @@ def _classify(case, checks, workflow_state):
     return "acceptance_failed"
 
 
+def _write_json(path, value):
+    temporary = path.with_suffix('.json.tmp')
+    temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+    temporary.replace(path)
+
+
 class Evaluator:
     def __init__(self, cases, *, output_root, live=None, memory="off"):
         if memory not in {"on", "off"}:
@@ -290,7 +296,7 @@ class Evaluator:
         self.output_root = Path(output_root)
         self.live, self.memory = live, memory
 
-    def run(self, case_ids=None, *, label=None):
+    def run(self, case_ids=None, *, label=None, reviewed_plan=None):
         selected_ids = sorted(self.cases) if case_ids is None else list(case_ids)
         if not selected_ids or len(set(selected_ids)) != len(selected_ids):
             raise WorkflowError("Select a nonempty unique case set")
@@ -300,7 +306,20 @@ class Evaluator:
         directory = self.output_root / run_id
         directory.mkdir(parents=True, mode=0o700)
         started = time.time()
-        results = [self._run_case(case, directory / case.id) for case in selected]
+        manifest_sha256 = digest(manifest)
+        if reviewed_plan is not None:
+            _write_json(directory / 'development-plan.json', reviewed_plan)
+        results = []
+        progress_path = directory / 'run-progress.json'
+        progress = {"run_id": run_id, "status": "incomplete", "started": started,
+                    "selected_case_ids": selected_ids, "manifest": manifest,
+                    "manifest_sha256": manifest_sha256, "results": results}
+        for index, case in enumerate(selected):
+            progress.update(active_case_id=case.id, not_started_case_ids=selected_ids[index + 1:])
+            _write_json(progress_path, progress)
+            results.append(self._run_case(case, directory / case.id))
+            progress['active_case_id'] = None
+            _write_json(progress_path, progress)
         drivers = {case.driver for case in selected}
         live_executed = any(r["mode"] == "live" and r["status"] == "executed" for r in results)
         mode = "live" if live_executed and not drivers & OFFLINE_DRIVERS else (
@@ -314,9 +333,11 @@ class Evaluator:
                "memory_exercised": False,
                "model_calls": 0 if not live_executed else None,
                "started": started, "ended": time.time(), "summary": summary, "results": results,
-               "manifest": manifest, "manifest_sha256": digest(manifest)}
-        (directory / "results.json").write_text(json.dumps(run, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+               "manifest": manifest, "manifest_sha256": manifest_sha256}
         (directory / "report.md").write_text(markdown_report(run), encoding="utf-8")
+        _write_json(directory / 'results.json', run)
+        progress.update(status='complete', ended=run['ended'])
+        _write_json(progress_path, progress)
         return run
 
     def _run_case(self, case, directory):

@@ -70,6 +70,12 @@ class EvaluationTests(unittest.TestCase):
         self.assertIn("not a model benchmark", report)
         self.assertIn("**Benchmark valid:** `false`", report)
         self.assertEqual(load_run(self.output, run["run_id"])["summary"], summary)
+        progress = json.loads((self.output / run['run_id'] / 'run-progress.json').read_text())
+        self.assertEqual(progress['status'], 'complete')
+        self.assertIsNone(progress['active_case_id'])
+        self.assertEqual(progress['not_started_case_ids'], [])
+        self.assertEqual(progress['results'], load_run(self.output, run['run_id'])['results'])
+        self.assertEqual(progress['manifest_sha256'], run['manifest_sha256'])
         self.assertEqual([r["run_id"] for r in list_runs(self.output)], [run["run_id"]])
 
     def test_failures_are_classified_not_hidden(self):
