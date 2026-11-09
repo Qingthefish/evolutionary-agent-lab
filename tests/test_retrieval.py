@@ -9,10 +9,12 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from agent_lab.acceptance import ArtifactRule, verify_rules
 from agent_lab.core import Workflow, WorkflowError
 from agent_lab.files import FileTools
 from agent_lab.gateway import ToolGateway
 from agent_lab.retrieval import PublicHTTPS, RetrievalError, RetrievalLimits, WebRetrieval, plain_text, public_url
+from agent_lab.runtime import LiveConfig, policy_for_task
 from test_runner import tool
 
 PUBLIC = [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('93.184.216.34', 443))]
@@ -145,6 +147,52 @@ class RetrievalTests(unittest.TestCase):
         for body in (b'<html>challenge</html>',b'<!DOCTYPE rss><rss/>',b'<rss><channel><link>https://x/?q=another</link></channel></rss>'):
             with patch.object(self.web.http,'fetch',return_value=self.page(body)), self.assertRaises(RetrievalError):
                 self.web.search_web(self.task,'researcher',query='docs',limit=1)
+
+    def search_for_guide(self):
+        body = b'''<rss><channel><link>https://www.bing.com/search?q=guide</link>
+            <item><title>Guide</title><link>https://docs.example.org/guide</link></item>
+            </channel></rss>'''
+        with patch.object(self.web.http, 'fetch', return_value=self.page(body)):
+            self.web.search_web(self.task, 'researcher', query='guide', limit=3)
+
+    def test_searched_source_requires_the_current_retrieved_bytes_and_a_later_read(self):
+        path = 'source.md'
+        url = 'https://docs.example.org/guide'
+        rule = ArtifactRule(path, 'searched_source', url)
+
+        def passed():
+            return all(verify_rules(self.workflow, self.files, self.task, 'researcher', (rule,)).values())
+
+        self.search_for_guide()
+        with patch.object(self.web.http, 'fetch', return_value=self.page()):
+            result = self.web.retrieve_text(self.task, 'researcher', url=url, path=path)
+        self.assertFalse(passed())
+        saved = self.files.read_text(self.task, 'researcher', path)
+        self.assertTrue(passed())
+        wrong_url = ArtifactRule(path, 'searched_source', 'https://docs.example.org/other')
+        self.assertFalse(any(verify_rules(self.workflow, self.files, self.task, 'researcher', (wrong_url,)).values()))
+        self.files.create_text(self.target, 'writer', path, saved['content'])
+        self.files.read_text(self.target, 'writer', path)
+        self.assertFalse(any(verify_rules(self.workflow, self.files, self.target, 'writer', (rule,)).values()))
+        self.files.update_text(self.task, 'researcher', path, saved['content'] + '\nEdited',
+                               expected_sha256=result['artifact']['sha256'])
+        self.assertFalse(passed())
+
+    def test_search_after_direct_fetch_does_not_backfill_source_evidence(self):
+        url = 'https://docs.example.org/guide'
+        rule = ArtifactRule('source.md', 'searched_source', url)
+        with patch.object(self.web.http, 'fetch', return_value=self.page()):
+            self.web.retrieve_text(self.task, 'researcher', url=url, path='source.md')
+        self.search_for_guide()
+        self.files.read_text(self.task, 'researcher', 'source.md')
+        checks = verify_rules(self.workflow, self.files, self.task, 'researcher', (rule,))
+        self.assertFalse(any(checks.values()))
+
+    def test_live_policy_requires_web_for_search_source_criteria(self):
+        rule = ArtifactRule('source.md', 'searched_source', 'https://docs.example.org/guide')
+        live = LiveConfig(model='fixture-model', api_key='fixture-secret')
+        with self.assertRaisesRegex(WorkflowError, 'require explicit web tools'):
+            policy_for_task(live, root_criteria=(rule,))
 
     def test_gateway_requires_backend_and_caps_new_search_calls(self):
         with self.assertRaises(WorkflowError):

@@ -911,6 +911,80 @@
     "no_provider_balance_inferred": true
   },
   "latest_engineering_validation": {
+    "source_revision": "f66271bc9d016d29a67d80ac65221910f554f5c5",
+    "scope": "Search-result, retrieval-receipt and current-file read acceptance",
+    "full_checks_passed": 552,
+    "full_checks_skipped": 0,
+    "actual_container_checks": 19,
+    "ui_checks": 9,
+    "clean_python": "Python 3.12.12",
+    "clean_command_checks_passed": 16,
+    "clean_core_checks_passed": 524,
+    "clean_explicit_skips": 28,
+    "actual_model_requests": 0,
+    "official_evaluation": false,
+    "local_evidence_key": "review-20261109-search-source-proof",
+    "search_plan_inspection_sha256": "1eccfda3a60918fd76717e35cd2dab5d63a5c14d65fbf8686cffcadf7043e284",
+    "direct_retrieval_observations": [
+      {
+        "case": "search-source-json",
+        "url": "https://docs.python.org/3/library/json.html",
+        "status": "retrieved",
+        "final_url": "https://docs.python.org/3/library/json.html",
+        "artifact": {
+          "path": "source.md",
+          "sha256": "64893bd7dfede203b51f414240140409b9fa4a69096753e4422ba34883bc10bb",
+          "bytes": 24388
+        },
+        "response_sha256": "56790c14b79dbc2ebb540f0a746593f930cccc7db9efbc9bc051ae430390c078",
+        "checks": {
+          "criterion:0:source.md:contains": true,
+          "criterion:1:source.md:searched_source": false
+        }
+      },
+      {
+        "case": "search-source-pathlib",
+        "url": "https://docs.python.org/3/library/pathlib.html",
+        "status": "retrieved",
+        "final_url": "https://docs.python.org/3/library/pathlib.html",
+        "artifact": {
+          "path": "source.md",
+          "sha256": "907cf58c7a76c95c98b0069e36f083ecdd60363678b79c6acff6c709fd8aade3",
+          "bytes": 24428
+        },
+        "response_sha256": "e1a0de66ccfb55f12aa980e05613fa98d3d57486fbf4751031a22a1110da57a1",
+        "checks": {
+          "criterion:0:source.md:contains": true,
+          "criterion:1:source.md:searched_source": false
+        }
+      }
+    ],
+    "raw_full_validation_sha256": "727d530c2b8b97795e28ef373e10f449f36b7f19e9157ffed05da9ae73fde408",
+    "raw_clean_summary_sha256": "a702eec01a7a3b29f90b4197748ee2659119d1fc4a7b79893e18b37a033add76"
+  },
+  "git_evidence_validation": {
+    "source_revision": "6b04251786422c19019cb79d6a633bfcf0bceb08",
+    "full_checks_passed": 549,
+    "full_checks_skipped": 0,
+    "actual_container_checks": 19,
+    "ui_checks": 9,
+    "git_checks_passed": 22,
+    "new_regression_methods": 6,
+    "clean_python": "Python 3.12.12",
+    "clean_command_checks_passed": 16,
+    "clean_core_checks_passed": 521,
+    "clean_explicit_skips": 28,
+    "actual_model_requests": 0,
+    "actual_runtime_github_pushes": 0,
+    "teammate_reproduction": false,
+    "official_evaluation": false,
+    "local_evidence_key": "review-20261104-git-evidence",
+    "raw_focused_audit_sha256": "37d1c4f2c37bfb8eff6400c80b6c0322a169ffc5a46034985c60bc67eda3ca1a",
+    "raw_full_validation_sha256": "054ad4bb6ce3f58b68655bdbe4c0f06bc7b3ced55c40229ddf87325fd93af68c",
+    "raw_clean_summary_sha256": "e39eb313f881f1b7a7f2caf659ee23e28e92da42482a204bfe34aa73287177f1",
+    "scope": "Git remote identity/observation/reconciliation failure engineering using disposable local bare repositories and injected process/observation faults. No runtime GitHub push or model performance established."
+  },
+  "batch_checkpoint_validation": {
     "source_revision": "c4c6e848c80deede77107c2834d1a03ea4a47853",
     "full_checks_passed": 549,
     "full_checks_skipped": 0,
@@ -942,27 +1016,5 @@
       "search_diagnostic_gets": 6,
       "requested_document_pages_found": 0
     }
-  },
-  "git_evidence_validation": {
-    "source_revision": "6b04251786422c19019cb79d6a633bfcf0bceb08",
-    "full_checks_passed": 549,
-    "full_checks_skipped": 0,
-    "actual_container_checks": 19,
-    "ui_checks": 9,
-    "git_checks_passed": 22,
-    "new_regression_methods": 6,
-    "clean_python": "Python 3.12.12",
-    "clean_command_checks_passed": 16,
-    "clean_core_checks_passed": 521,
-    "clean_explicit_skips": 28,
-    "actual_model_requests": 0,
-    "actual_runtime_github_pushes": 0,
-    "teammate_reproduction": false,
-    "official_evaluation": false,
-    "local_evidence_key": "review-20261104-git-evidence",
-    "raw_focused_audit_sha256": "37d1c4f2c37bfb8eff6400c80b6c0322a169ffc5a46034985c60bc67eda3ca1a",
-    "raw_full_validation_sha256": "054ad4bb6ce3f58b68655bdbe4c0f06bc7b3ced55c40229ddf87325fd93af68c",
-    "raw_clean_summary_sha256": "e39eb313f881f1b7a7f2caf659ee23e28e92da42482a204bfe34aa73287177f1",
-    "scope": "Git remote identity/observation/reconciliation failure engineering using disposable local bare repositories and injected process/observation faults. No runtime GitHub push or model performance established."
   }
 }

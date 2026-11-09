@@ -21,6 +21,7 @@ from uuid import uuid4
 import xml.etree.ElementTree as ET
 
 from .core import WorkflowError
+from .protocol import strict_json
 
 
 class RetrievalError(WorkflowError):
@@ -197,6 +198,46 @@ def plain_text(body, content_type, maximum):
     if not source:
         raise RetrievalError("Source contained no usable text")
     return source[:maximum], len(source) > maximum
+
+
+def searched_source(workflow, task, actor, path, data, expected_url):
+    """Check the assigned task's search, retrieval and read of the current bytes."""
+    db = workflow.db
+    if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='retrieval_records'").fetchone():
+        return False
+    records = {row['id']: row for row in db.execute(
+        "SELECT id,kind,request,result FROM retrieval_records WHERE task=? AND actor=? AND status='succeeded'",
+        (task, actor))}
+    if not records:
+        return False
+    receipt = {'path': path, 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
+    discovered = set()
+    retrieved = False
+    for event in db.execute("""SELECT kind,detail FROM events WHERE task=? AND actor=?
+                             AND kind IN ('source_retrieved','file_read') ORDER BY sequence""", (task, actor)):
+        detail = strict_json(event['detail'])
+        if event['kind'] == 'file_read':
+            if retrieved and detail == receipt:
+                return True
+            continue
+        if not isinstance(detail, dict) or not isinstance(detail.get('source_id'), str):
+            continue
+        identifier = detail['source_id']
+        record = records.get(identifier)
+        if record is None or record['kind'] != detail.get('kind') or not isinstance(record['result'], str):
+            continue
+        result = strict_json(record['result'])
+        if not isinstance(result, dict) or result.get('source_id') != identifier:
+            continue
+        if record['kind'] == 'search' and result.get('status') == 'results' and isinstance(result.get('results'), list):
+            discovered.update(item['url'] for item in result['results']
+                              if isinstance(item, dict) and isinstance(item.get('url'), str))
+        elif record['kind'] == 'retrieve' and result.get('url') == expected_url and result.get('artifact') == receipt:
+            request = strict_json(record['request'])
+            if (isinstance(request, dict) and request.get('path') == path
+                    and isinstance(request.get('url'), str) and request['url'] in discovered):
+                retrieved = True
+    return False
 
 
 class WebRetrieval:
