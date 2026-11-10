@@ -26,7 +26,7 @@ Deliver a runnable general multi-agent platform and an evaluation entry point: a
 | --- | --- | --- |
 | M0 — coordinate | Common baseline, visible claims and agreed boundaries | Register ready; individual claims recorded below |
 | M1 — foundation integration | Existing platform plus #7/#8/#9 reviewed and integrated with honest evidence labels | Done; I01–I03 record that integration |
-| M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Earlier bounded text and two code/report roots are accepted; actual draft acceptance is retained. Two later required-action JSONL probe roots completed; earlier failed roots remain. Open-ended negotiation remains open. D01/D02 accept the bounded real private clarification and group approval/release paths |
+| M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Earlier bounded text and two code/report roots are accepted; actual draft acceptance is retained. Two later required-action JSONL probe roots completed; earlier failed roots remain. A live writer-to-editor assignment and verified relay now pass under declared contracts. Open-ended negotiation remains open. D01/D02 accept the bounded real private clarification and group approval/release paths |
 | M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Bounded real code/handoff and private experience-use probes audited; relevant live search, runtime GitHub push and demonstrated learning benefit remain pending |
 | M4 — stabilize/evaluate | Reproducible setup, pinned configuration, development comparisons/failure analysis and official adapter | Development batch checkpoint and rehearsal verified. Final release/configuration and official adapter await their remaining prerequisites |
 | M5 — official delivery | Issued test protocol/results and required submission materials | Await official set and actual deadlines |
@@ -106,7 +106,7 @@ For a returning/new member: pull current main; read README, [announcement/eviden
 | Candidate starting point | Concrete next result | Starting boundary |
 | --- | --- | --- |
 | [B05](#b05) | Completed workflow example: approval-bound deletion | Read its claim, review and accepted results; choose an available card for new work |
-| [A03](#a03) | Accepted capability slice; partial actual collaboration evidence | Preserve the paused writer/editor trial; do not treat a draft or successful connectivity probe as completed collaboration |
+| [A03](#a03) | Live peer assignment and relay verified under declared contracts | Open-ended decomposition and role negotiation; preserve the earlier partial trial |
 | [C07](#c07) | Claimed: HelloWorld2333666's single/multi-agent baseline | Published feature branch awaits PR/full acceptance; do not duplicate evaluation work |
 | [D02](#d02) | Accepted bounded real private clarification and group approval/release | Reuse these records and routes; broader official scenarios remain separate |
 | [D04](#d04) | Independently install/run from the guide and fix actual setup problems | Clean environment, README and only necessary setup/CLI fixes; existing preparation is retained |
@@ -235,9 +235,11 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-11-11 scoped live follow-up.** Qingthefish continues A03 from `830c800` on `evaluation/A03-peer-review`. Test one fresh local-file task in which a writer assigns a peer review and the coordinator receives the checked snapshot. Declare titles and independent checks in advance. Record actual parent links, receipts, file reads and final outcomes. The task uses the issued HKGAI model with at most 24 requests in this new round, 1024 output tokens per request and a 90-second socket timeout. Stop at an actual human decision or uncertain provider failure. This evaluates a bounded peer handoff. Open-ended planning and role negotiation remain separate.
 
+- **2026-11-11 live review.** Case source `666e5f4` completed one root and both subtasks in 14 of 24 allowed requests (13.337 seconds to final status). A read-only audit verified the writer-to-editor parent link, corrected output and each snapshot receipt/read through the relay back to the coordinator. The requested course model ID differs from the response label; both are retained without assuming equivalence. All 52 focused regression checks passed; runtime and test sources match `f66271b`. Earlier partial/failed runs remain preserved. Roles/titles were declared, so broad decomposition and negotiation stay open. See the [public evidence](../evaluation/evidence/development-summary.json); raw evidence is retained under ignored `runs/review-20261111-peer-review/`.
+
 **Demonstrate live autonomous delegation**
 
-- **Stage / status:** M2 / In progress (engineering slice accepted; partial actual delegation/handoff evidence, root not complete)
+- **Stage / status:** M2 / In progress (bounded peer delegation and completed root verified; open-ended decomposition and negotiation remain open)
 - **Owner:** Qingthefish (owner-authorized continuation, Codex-assisted)
 - **Dependencies / configuration:** A01 and A02.
 - **Scope:** Opt-in shared collaboration capability independent of web/memory/execution/Git; versioned development plan, bounded socket configuration and focused checks. Retain scheduler budgets, exact child criteria and real human-review boundaries; no C07 edits or automatic approval of model-chosen tasks.
