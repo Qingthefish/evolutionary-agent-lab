@@ -1,0 +1,46 @@
+{
+  "schema": "c07-single-multi-topology",
+  "version": 1,
+  "experiment_id": "c07-negative-required-decomposition",
+  "purpose": "Negative control. A case that prescribes a delegated subtask cannot be a single-agent control; loading this manifest must fail.",
+  "evidence_class": "engineering_validation",
+  "runtime_plan": "invalid/runtime.json",
+  "case_annotations": {
+    "c07-invalid-required-decomposition": {
+      "category": "other",
+      "oracle_scope": "exact_text",
+      "note": "Requires a writer subtask and at least two tasks, so the fairness validator must reject it."
+    }
+  },
+  "topologies": {
+    "single_agent": {
+      "agent": "solo",
+      "instructions": "c07-single-agent-v1",
+      "task_limits": {
+        "model_attempts": 24,
+        "reported_tokens": 64000,
+        "duration_seconds": 300,
+        "repeated_outcomes": 3,
+        "tool_calls": 64
+      }
+    },
+    "multi_agent": {
+      "roles": "runtime-live-roles-v1",
+      "root": "coordinator",
+      "child_release": "c07-structural-handoff-v1"
+    }
+  },
+  "memory": {
+    "mode": "disabled",
+    "initial_state": "fresh-empty-per-run"
+  },
+  "human": {
+    "policy": "boundary-stops-run-v1"
+  },
+  "procedure": {
+    "replicates": 1,
+    "order": "alternating-by-replicate-and-case-v1",
+    "isolation": "fresh-state-directory-per-run-v1"
+  },
+  "pilot_budget": null
+}

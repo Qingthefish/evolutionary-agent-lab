@@ -1,0 +1,154 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-correction-total.multi_agent.adverse",
+  "case_id": "c07-correction-total",
+  "topology": "multi_agent",
+  "description": "Coordinator accepts the wrong writer file, proposes completion, fails verification, then tries create_text (exists error) and accept_artifact (exists error) before repeating the same final proposal. The script ends with that repeated proposal.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Added the missing initial delegate_task turn (the draft accepted an artifact that was never offered) and one repeated final proposal so the coordinator reaches its real per-task attempt cap. Other turns unchanged.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "coordinator": [
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "writer",
+              "title": "Create total.txt with the sum of 17, 25, 8 and 50"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "total.txt"
+              },
+              "path": "total.txt"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Accepted total.txt from the writer. Task complete."
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "total.txt",
+              "content": "100\n"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "editor",
+              "title": "Fix total.txt so it contains 100 followed by exactly one newline"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "total.txt"
+              },
+              "path": "total.txt"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Accepted total.txt from the writer. Task complete."
+      },
+      {
+        "final": "Accepted total.txt from the writer. Task complete."
+      }
+    ],
+    "writer": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "total.txt",
+              "content": "100"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "total.txt",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "total.txt"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote total.txt with 100 and offered it to the coordinator."
+      }
+    ],
+    "editor": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "total.txt",
+              "content": "100\n"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "total.txt",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "total.txt"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote total.txt with 100 and one trailing newline, and offered it to the coordinator."
+      }
+    ]
+  }
+}

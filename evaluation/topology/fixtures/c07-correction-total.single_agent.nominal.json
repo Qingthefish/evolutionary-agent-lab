@@ -1,0 +1,60 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-correction-total.single_agent.nominal",
+  "case_id": "c07-correction-total",
+  "topology": "single_agent",
+  "description": "First write lacks the trailing newline; verifier fails, agent reads and updates with update_text.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "solo": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "total.txt",
+              "content": "100"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote total.txt with the sum 100."
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "read_text",
+            "arguments": {
+              "path": "total.txt"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "update_text",
+            "arguments": {
+              "path": "total.txt",
+              "content": "100\n",
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "total.txt"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Added the missing trailing newline, so total.txt now holds 100 followed by one newline."
+      }
+    ]
+  }
+}
