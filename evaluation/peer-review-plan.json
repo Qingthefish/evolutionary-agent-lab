@@ -1,0 +1,38 @@
+{
+  "version": 3,
+  "purpose": "development",
+  "provider": "hkgai",
+  "model": "t2_hkgai-v3_fp8_1m_e7",
+  "api_key_env": "COURSE_HKGAI_API_KEY",
+  "cases": "peer-review",
+  "case_ids": [
+    "live-peer-room-notice"
+  ],
+  "max_output_tokens": 1024,
+  "socket_timeout": 90,
+  "task_limits": {
+    "model_attempts": 10,
+    "reported_tokens": 64000,
+    "duration_seconds": 600,
+    "repeated_outcomes": 3
+  },
+  "tree_limits": {
+    "tasks": 3,
+    "depth": 3,
+    "model_attempts": 24,
+    "reported_tokens": 128000,
+    "tool_calls": 60,
+    "duration_seconds": 600
+  },
+  "tool_calls": 24,
+  "capabilities": {
+    "collaboration": true,
+    "web": false,
+    "memory": false,
+    "child_retries": 0,
+    "docker_host": null,
+    "python_image": null,
+    "git_config": null,
+    "require_tool_actions": true
+  }
+}
