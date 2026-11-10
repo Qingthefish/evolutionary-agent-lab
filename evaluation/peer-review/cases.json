@@ -1,0 +1,61 @@
+[
+  {
+    "id": "live-peer-room-notice",
+    "title": "Writer delegates a correction review and returns the checked notice",
+    "driver": "live_scheduler",
+    "goal": "Deliver a checked Markdown room notice. The writer owns drafting and assigning the review to the editor. The coordinator should assign only the writer task titled \"Draft room notice\". The writer creates draft.md for Room B214 at 14:30, then delegates the task titled \"Check room notice\" to editor using delegate_with_inputs with the actual draft.md snapshot. The editor accepts and reads the draft, applies the corrections Room B241 and 15:00, creates final.md, and offers it back to the writer. The writer accepts and reads that file, then offers the same file to the coordinator. The coordinator accepts and reads final.md before proposing completion.",
+    "constraints": [
+      "Use only local Markdown files and collaboration tools. Each role must preserve the handoff receipts. Offer final.md before submitting that role for verification.",
+      "Both draft.md and final.md use exactly three lines and a final newline. Line 1 is # Room notice. Line 2 is Room: <room>. Line 3 is Time: <time>. Do not add commentary to either file.",
+      "Use only the two declared child task titles. The editor is a child of the writer, not the coordinator."
+    ],
+    "expected": {
+      "final_state": "succeeded",
+      "declared_subtasks_only": true,
+      "min_tasks": 3,
+      "max_seconds": 600,
+      "artifacts": {
+        "final.md": "# Room notice\nRoom: B241\nTime: 15:00\n"
+      },
+      "criteria": [
+        {
+          "path": "final.md",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"editor\", \"title\": \"Check room notice\", \"path\": \"final.md\", \"allow_relay\": true, \"require_read\": true}"
+        },
+        {
+          "path": "final.md",
+          "kind": "received_from",
+          "expected": "{\"assignee\": \"writer\", \"title\": \"Draft room notice\", \"path\": \"final.md\", \"allow_relay\": false, \"require_read\": true}"
+        }
+      ],
+      "subtasks": [
+        {
+          "assignee": "writer",
+          "title": "Draft room notice",
+          "final_state": "succeeded",
+          "artifacts": {
+            "draft.md": "# Room notice\nRoom: B214\nTime: 14:30\n",
+            "final.md": "# Room notice\nRoom: B241\nTime: 15:00\n"
+          }
+        },
+        {
+          "assignee": "editor",
+          "title": "Check room notice",
+          "final_state": "succeeded",
+          "artifacts": {
+            "draft.md": "# Room notice\nRoom: B214\nTime: 14:30\n",
+            "final.md": "# Room notice\nRoom: B241\nTime: 15:00\n"
+          },
+          "criteria": [
+            {
+              "path": "draft.md",
+              "kind": "received_from",
+              "expected": "{\"assignee\": \"writer\", \"title\": \"Draft room notice\", \"path\": \"draft.md\", \"allow_relay\": false, \"require_read\": true}"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

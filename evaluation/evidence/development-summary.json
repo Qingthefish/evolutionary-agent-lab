@@ -1016,5 +1016,66 @@
       "search_diagnostic_gets": 6,
       "requested_document_pages_found": 0
     }
+  },
+  "peer_review_followup": {
+    "local_evidence_key": "review-20261111-peer-review",
+    "provider": "hkgai",
+    "source_revision": "666e5f42f85f3e451ac0ef0d09a443f53922eb88",
+    "run_id": "20261111-001816-5f9c13",
+    "case_id": "live-peer-room-notice",
+    "plan_sha256": "2756d6775f8fa32862f025078f97f798f47e2704d09f94692d9072cf46fa3286",
+    "case_sha256": "d0260883bb195b57de478fc9fccc5272e951e4ad740f0391600ed9a6782e4673",
+    "raw_ledger_sha256": "d930194fb5aa1545f7911db25a8f871b0519224b90e8a3c44e389a14985fb0ec",
+    "raw_results_sha256": "312a2200fa205b95b859b49fb274d06fb3798013c46d6aa70480058b2fbbfa69",
+    "raw_workflow_sha256": "63d3697f3f9cd498a5879d15131b6e934cb339279788309cc7d98cb652659563",
+    "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+    "response_model_labels": [
+      "t2_hkgai-v3_fp8_1m_e10_meeting"
+    ],
+    "response_model_differs_from_requested_id": true,
+    "model_requests": 14,
+    "maximum_requests": 24,
+    "provider_reported_total_tokens": 55769,
+    "root_elapsed_seconds": 13.337056875228882,
+    "verified_roots": 1,
+    "verified_subtasks": 2,
+    "human_interventions": 0,
+    "handoffs": [
+      {
+        "source": "writer",
+        "target": "editor",
+        "path": "draft.md",
+        "sha256": "c3a501dc1503adaa0bd23a9674394aa386e1ef81b89f02dabdc1ab1de17652e7",
+        "offer_sequence": 16,
+        "receive_sequence": 21,
+        "read_sequence": 27
+      },
+      {
+        "source": "editor",
+        "target": "writer",
+        "path": "final.md",
+        "sha256": "2908c4d7836945c3166718f36748aa6c6ff7b7e6081b6ac552649841f20ee25e",
+        "offer_sequence": 35,
+        "receive_sequence": 45,
+        "read_sequence": 49
+      },
+      {
+        "source": "writer",
+        "target": "coordinator",
+        "path": "final.md",
+        "sha256": "2908c4d7836945c3166718f36748aa6c6ff7b7e6081b6ac552649841f20ee25e",
+        "offer_sequence": 53,
+        "receive_sequence": 62,
+        "read_sequence": 66
+      }
+    ],
+    "checks_passed": 15,
+    "scope": "Declared writer/editor contracts with a real writer-to-editor assignment and checked relay.",
+    "official_evaluation": false,
+    "independent_audit_sha256": "b614cc7f487f8d308d80dee55735f856a319c474df11de32066d69ff00971787",
+    "model_reply_tool_calls": 14,
+    "unused_local_requests": 10,
+    "fixed_role_and_title_contracts": true,
+    "provider_model_equivalence_verified": false
   }
 }
