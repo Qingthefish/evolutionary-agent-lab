@@ -233,6 +233,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 ### A03
 
+- **2026-11-11 scoped live follow-up.** Qingthefish continues A03 from `830c800` on `evaluation/A03-peer-review`. Test one fresh local-file task in which a writer assigns a peer review and the coordinator receives the checked snapshot. Declare titles and independent checks in advance. Record actual parent links, receipts, file reads and final outcomes. The task uses the issued HKGAI model with at most 24 requests in this new round, 1024 output tokens per request and a 90-second socket timeout. Stop at an actual human decision or uncertain provider failure. This evaluates a bounded peer handoff. Open-ended planning and role negotiation remain separate.
+
 **Demonstrate live autonomous delegation**
 
 - **Stage / status:** M2 / In progress (engineering slice accepted; partial actual delegation/handoff evidence, root not complete)
