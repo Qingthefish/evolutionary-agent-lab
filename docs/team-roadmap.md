@@ -346,6 +346,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Reviewer:** Qingthefish, Codex-assisted same-session self-review under standing merge authorization; no independent peer approval claimed.
 - **Progress / review changes / outcome:** 2026-10-21: explicit named-variable, repository-URL-scoped GitHub credential injection is implemented; no ambient developer credential is forwarded. Added strict configuration/permission parsing, disabled HTTP redirects and scrubbed credential diagnostics. Existing exact-approval/remote-SHA checks remain. Only a disposable local remote was pushed; actual GitHub runtime push acceptance still requires a designated test repository/branch and narrow credential. Offline slice accepted via [PR #17](https://github.com/Qingthefish/evolutionary-agent-lab/pull/17) in 8888060. Next: provision the designated test remote/branch and narrow credential, execute an approved runtime push and verify its remote SHA before closing B03.
 
+- **2026-11-11 scoped acceptance follow-up.** Qingthefish (Codex-assisted), from `bee0f6f`, branch `fix/B03-runtime-git-acceptance`. Reproduce the evaluator missing live runtime Git evidence, then bind remote acceptance to the exact consumed approval and current ref on the original configured remote. Exercise the shared runtime against a disposable local remote and preserve any failures. GitHub execution still requires a designated test target and its runtime credential.
+
 ### B04
 
 **Validate remote failures and uncertainty**
