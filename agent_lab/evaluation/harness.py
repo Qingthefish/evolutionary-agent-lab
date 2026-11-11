@@ -19,6 +19,7 @@ from ..core import Workflow, WorkflowError
 from ..files import FileTools
 from ..inspection import ArtifactInspector, ArtifactMissingError
 from ..memory import ExperienceMemory
+from ..queries import WorkflowQueries
 from ..runtime import (LIVE_AGENTS, ChildTextRule, LiveConfig, RuntimeServices,
                        build_live_scheduler, live_members, policy_for_task)
 from .. import offline_scenarios
@@ -99,6 +100,8 @@ def _drive_offline(case, session):
 
 
 def _case_policy(case, live):
+    if case.driver == "live_scheduler" and case.expected.remote_branch_verified and not live.repositories:
+        raise WorkflowError("Live remote-branch checks require a trusted Git repository configuration")
     children = tuple(ChildTextRule(s.assignee, s.title, s.artifacts,
         (*s.criteria, *(ArtifactRule(p,"absent") for p in s.absent_artifacts))) for s in case.expected.subtasks
         if s.final_state == "succeeded" and (s.artifacts or s.criteria or s.absent_artifacts))
@@ -163,6 +166,31 @@ def _human_matches(request, outcome):
     return outcome == "consumed" and request["approved"] == 1 and bool(request["consumed"])
 
 
+def _remote_branch_verified(git, task_ids, requests):
+    if git is None:
+        return False
+    marks = ",".join("?" * len(task_ids))
+    push = git.workflow.db.execute(
+        f"""SELECT id, arguments FROM git_operations WHERE operation='push' AND status='verified'
+            AND task IN ({marks}) ORDER BY rowid DESC LIMIT 1""", task_ids).fetchone()
+    if push is None:
+        return False
+    try:
+        request_id = json.loads(push["arguments"])["request_id"]
+        approval = next((row for row in requests if row["id"] == request_id), None)
+        if approval is None or not approval["answered"]:
+            return False
+        action = json.loads(approval["action"])
+        effect = WorkflowQueries(git.workflow)._bound_effect(approval, action)
+        if (effect is None or effect["kind"] != "git_push_verified"
+                or json.loads(effect["detail"])["operation_id"] != push["id"]):
+            return False
+        binding = action["binding"]
+        return git.observe_push_binding(binding) == binding["commit"]
+    except (WorkflowError, KeyError, TypeError, ValueError):
+        return False
+
+
 def _checks(case, session, root, duration):
     workflow = session.workflow
     task = workflow.task(root, HUMAN)
@@ -206,15 +234,8 @@ def _checks(case, session, root, duration):
                               "expected_count": expected.count, "actual_count": len(matches),
                               "request_ids": [r["id"] for r in matches]})
     if case.expected.remote_branch_verified:
-        verified = workflow.db.execute(
-            f"SELECT result FROM git_operations WHERE operation='push' AND status='verified' AND task IN ({marks})",
-            ids).fetchone() if session.git is not None else None
-        ok = False
-        if verified is not None:
-            result = json.loads(verified["result"])
-            repository = session.git.repositories[result["repository"]]
-            ok = session.git._remote_head(repository.remote_url(result["remote"]), result["branch"]) == result["commit"]
-        checks["remote_branch_verified"] = ok
+        git = session.services.git if session.services is not None else session.git
+        checks["remote_branch_verified"] = _remote_branch_verified(git, ids, requests)
     states = {}
     for row in tree:
         states[row["state"]] = states.get(row["state"], 0) + 1
