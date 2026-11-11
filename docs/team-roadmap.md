@@ -483,6 +483,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-10-29 integration finding:** The new optional list_tasks tool needs an explicit C07 capability classification before this incoming branch can pass its all-gateway-tools taxonomy check. Untouched C07: 47 topology checks ran, 46 passed and one errored on that unknown tool. A temporary proposal adds list_tasks to COORDINATION_TOOLS; with that bridge 84 focused checks pass. Review the intended single-agent exclusion before applying during C07 integration. The original branch/commits remain unchanged; this is not full C07 acceptance or a live comparison.
 
+- **2026-11-11 combined review.** [#48](https://github.com/Qingthefish/evolutionary-agent-lab/pull/48) by HelloWorld2333666 integrates the existing C07 topology baseline with the shared provider and current tools. [#49](https://github.com/Qingthefish/evolutionary-agent-lab/pull/49) by the same author adds a read-only coordination audit and builds on #48. The integration review reuses input provision for both topologies, checks receipt identity and order for handoff reads, counts only failed parents as failures, and restricts run-report database paths to the run directory. Five retained live batches reconcile across 13 rooted slots, with two slots lacking a root. The three roots that failed after coder success each exhausted the shared attempt cap. Raw logs are retained in ignored `runs/review-20261111-c07-prs/`. The historical evidence does not establish a single/multi performance difference. [Public audit summary](../evaluation/evidence/development-summary.json)
+
 ### D01
 
 **Submit real tasks through the interface**

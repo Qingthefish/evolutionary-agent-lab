@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "purpose": "development",
+  "provider": "deepseek",
+  "model": null,
+  "api_key_env": "COURSE_DEEPSEEK_API_KEY",
+  "cases": "cases",
+  "case_ids": [
+    "c07-invalid-required-decomposition"
+  ],
+  "max_output_tokens": 2048,
+  "task_limits": {
+    "model_attempts": 8,
+    "reported_tokens": 32000,
+    "duration_seconds": 300,
+    "repeated_outcomes": 3
+  },
+  "tree_limits": {
+    "tasks": 16,
+    "depth": 4,
+    "model_attempts": 24,
+    "reported_tokens": 64000,
+    "tool_calls": 64,
+    "duration_seconds": 600
+  },
+  "tool_calls": 32,
+  "capabilities": {
+    "web": false,
+    "memory": false,
+    "child_retries": 0,
+    "docker_host": null,
+    "python_image": null,
+    "git_config": null
+  }
+}

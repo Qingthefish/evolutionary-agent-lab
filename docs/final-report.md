@@ -115,6 +115,8 @@ A separate **11 November HKGAI search run** completed both planned roots in **ei
 
 The **11 November Git acceptance rehearsal** reproduced a false negative in the evaluator. A successful scoped runtime push to a local bare remote was missed because the verifier looked for the offline fixture backend. The updated evaluator checked the consumed approval and independently read the matching branch SHA on the original remote. The fixture also checked the pending and granted states before release, a changed remote, unavailable or missing refs, and a missing consumption record. The approval was scripted for the local fixture. The GitHub runtime trial still requires a designated target and credential. [Git acceptance evidence](../evaluation/evidence/development-summary.json)
 
+On **11 November**, C07’s read-only audit reconciled 13 recorded slots across five retained HKGAI development batches. Two other slots lacked root records. In three training runs the coder succeeded, while the root failed after using the shared attempt cap. The parent and child used **7 + 8**, **3 + 13**, and **7 + 9** requests respectively. The final parent action was a progress message, an artifact acceptance, and a memory record respectively. None of those last turns submitted the root for verification. The audit used no new provider requests and the original database hashes matched after reading. C07’s paired single/multi replay uses scripted turns and supplies engineering evidence. [C07 evidence](../evaluation/evidence/development-summary.json)
+
 ## 6. Failure analysis and corrections
 
 | Observed issue | Evidence and correction | Verified limit |

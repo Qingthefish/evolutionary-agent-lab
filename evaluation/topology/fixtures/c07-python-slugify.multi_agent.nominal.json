@@ -1,0 +1,109 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-python-slugify.multi_agent.nominal",
+  "case_id": "c07-python-slugify",
+  "topology": "multi_agent",
+  "description": "Writer produces correct files and offers them; coordinator accepts both.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "coordinator": [
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "writer",
+              "title": "Write slugify.py and examples.json"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "slugify.py"
+              },
+              "path": "slugify.py"
+            }
+          },
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "examples.json"
+              },
+              "path": "examples.json"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Accepted slugify.py and examples.json from the writer."
+      }
+    ],
+    "writer": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "slugify.py",
+              "content": "import re\n\n\ndef slugify(text):\n    lowered = text.lower()\n    slug = re.sub(r\"[^a-z0-9]+\", \"-\", lowered)\n    return slug.strip(\"-\")\n"
+            }
+          },
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "examples.json",
+              "content": "{\"Hello, World!\": \"hello-world\", \"  Multi   Agent  \": \"multi-agent\", \"C07 -- Baseline\": \"c07-baseline\", \"already-slugged\": \"already-slugged\"}\n"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "slugify.py",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "slugify.py"
+              }
+            }
+          },
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "examples.json",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "examples.json"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote slugify.py and examples.json and offered both to the coordinator."
+      }
+    ]
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-correction-total.multi_agent.nominal",
+  "case_id": "c07-correction-total",
+  "topology": "multi_agent",
+  "description": "Writer's file lacks the newline. Coordinator accepts it as a scratch file, reads it, delegates a fix to editor, then accepts the editor's offer as total.txt. The child_artifact ref resolves to the latest offer for total.txt, which is the editor's.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "coordinator": [
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "writer",
+              "title": "Create total.txt with the sum of 17, 25, 8 and 50"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "total.txt"
+              },
+              "path": "draft-total.txt"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "read_text",
+            "arguments": {
+              "path": "draft-total.txt"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "editor",
+              "title": "Create total.txt containing 100 followed by exactly one newline"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "total.txt"
+              },
+              "path": "total.txt"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Accepted total.txt from the editor. The draft from the writer lacked the trailing newline, so it was replaced."
+      }
+    ],
+    "writer": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "total.txt",
+              "content": "100"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "total.txt",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "total.txt"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote total.txt with 100 and offered it to the coordinator."
+      }
+    ],
+    "editor": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "total.txt",
+              "content": "100\n"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "total.txt",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "total.txt"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Wrote total.txt with 100 and one trailing newline, and offered it to the coordinator."
+      }
+    ]
+  }
+}

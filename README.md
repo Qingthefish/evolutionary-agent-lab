@@ -4,7 +4,7 @@ Evolutionary Multi-Agent Collaboration System
 
 ## Status
 
-**Current position — 2026-11-11:** runtime source `26d60c3` passed **557 engineering checks**, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 16 command checks and **529 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
+**Current position — 2026-11-11:** runtime source `61bc2ce` passed **620 engineering checks**, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 16 command checks and **592 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
 
 **Accepted required-action milestone:** an explicit opt-in `require_tool_actions` mode requests actual tool calls and uses the existing independent-verification proposal for completion. In the issued HKGAI trial, **all 43 replies were tool calls with no free-text narration or truncation**. Both changed-input JSONL probes completed their full independently audited contracts: current code/input, real isolated execution, correct output, actual handoff/read, report and final verification. The ON probe used 14 requests and selected a prior coordinator failure observation; OFF used 13. Both succeeded, with ON slower and more costly in reported tokens: **no learning advantage is claimed**.
 
@@ -75,6 +75,7 @@ Use these entry points to inspect the current implementation; a module's presenc
 | Controlled files, public text retrieval and private candidate memory | [files.py](agent_lab/files.py), [provenance.py](agent_lab/provenance.py), [retrieval.py](agent_lab/retrieval.py), [memory.py](agent_lab/memory.py) |
 | Python sandbox, execution evidence and restricted Git operations | [sandbox.py](agent_lab/sandbox.py), [execution_proof.py](agent_lab/execution_proof.py), [git_tools.py](agent_lab/git_tools.py) |
 | Frozen experience trials and reset/provenance boundaries | [experience.py](agent_lab/evaluation/experience.py), [memory_protocol.py](agent_lab/evaluation/memory_protocol.py) |
+| Matched single/multi-agent conditions, fairness checks and replay | [topology.py](agent_lab/evaluation/topology.py), [topology_plan.py](agent_lab/evaluation/topology_plan.py), [topology_report.py](agent_lab/evaluation/topology_report.py), [topology_fixture.py](agent_lab/evaluation/topology_fixture.py) |
 | Terminal interface and development evaluator | [tui/](agent_lab/tui/), [evaluation/](agent_lab/evaluation/) |
 | Checks and development cases | [tests/](tests/), [evaluation/dev/](evaluation/dev/) |
 
@@ -267,6 +268,29 @@ Each replicate starts fresh training. A checked, frozen SQLite seed retains orig
 Training costs are reported separately. Failed, paused, interrupted and unrun planned cases remain in the report/denominator. Human boundaries stop that trial without a scripted answer; incomplete/unknown training effects prevent dependent probes. This first protocol does not resume interrupted trials automatically. Preserve their state and start an explicitly authorized new run after inspecting the failure. Mutable Git repositories are rejected until a repository-reset protocol exists. Normal interactive runtime memory/Git/HITL remain available separately.
 
 Reports and seeds stay in ignored `runs/`. `compare` rechecks conditions, candidate identity, reset boundaries, role/tool/budget matching, observed model IDs and result evidence; edited headline summaries are ignored. Fingerprints detect changes, not forged results. No official scoring/reset rule is assumed, and no single/multi-agent baseline is supplied by this memory protocol.
+
+## Inspect or exercise the single/multi-agent baseline (C07 preparation)
+
+```bash
+python3 -m agent_lab.evaluation topology plan
+python3 -m agent_lab.evaluation topology plan --config evaluation/topology/negative-control-plan.json   # must be rejected
+python3 -m agent_lab.evaluation topology demo --fixtures evaluation/topology/fixtures/adverse-set.json
+python3 -m agent_lab.evaluation topology compare --run runs/topology-development/RUN_ID
+```
+
+[evaluation/topology-plan.json](evaluation/topology-plan.json) wraps a normal development runtime plan and adds two topologies. The single agent `solo` receives the team's task tools without delegation or hand-off tools. The team is the existing `live_roles` set under the same `MultiAgentScheduler`. Loading the manifest checks model, cases, acceptance, aggregate budgets, tool capabilities, memory and human policy, and fails closed with structured reasons. Cases that prescribe a decomposition are rejected as single-agent controls. Topology-specific differences such as role prompts and coordination tools are recorded as confounds.
+
+Delegated children have no independent content oracle, so the default `c07-structural-handoff-v1` policy releases a child only after it has offered a snapshot to its parent. Only the root is judged by the case criteria, and each recorded task states its acceptance basis. Reports also show how many team runs actually delegated. With `trusted-review`, unattended team runs stop for human review instead.
+
+`demo` replays scripted model turns through the real scheduler, gateway, budgets and acceptance. The fixtures are development simulations drafted with an AI assistant outside the runtime and normalized by hand. Each fixture records its provenance. Their reports are `engineering_validation` with zero model calls and synthetic usage placeholders. They are not model results. Live pilot execution needs an issued model, the named key variable, `--allow-model-calls` and the inspected `--plan-sha256`, and stays within the manifest's `pilot_budget`. A live result is `pilot_compared` only when every pair is complete and every run has an observed model identity and known usage. Otherwise it is `pilot_incomplete`, with the gaps listed. [evaluation/topology/smoke-plan.json](evaluation/topology/smoke-plan.json) is a separate first live check with one case, one run per topology and at most 16 model attempts. Its result is `smoke_only` and is never a comparison. Each run uses a fresh state directory, and alternating order is recorded. Unrun, interrupted and failed runs stay in denominators, unknown usage is never shown as zero and monetary cost is reported as unavailable.
+
+To diagnose coordination costs in a retained C07 or frozen-experience run, use the read-only audit. It reconciles reserved requests, known tokens and tool calls against the database and distinguishes a waiting parent from a failed one.
+
+```bash
+python3 -m agent_lab.evaluation.coordination_audit --run runs/topology-development/RUN_ID --summary
+```
+
+Five historical batches yielded three training roots where the coder succeeded and the root exhausted its shared request budget. The last root actions in those three examples were a progress message, an artifact acceptance and a memory record. See the [audit evidence](evaluation/evidence/development-summary.json).
 
 ## Run the combined actual-tool fixture
 

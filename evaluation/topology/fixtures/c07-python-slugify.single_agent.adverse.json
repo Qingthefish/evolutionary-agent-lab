@@ -1,0 +1,32 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-python-slugify.single_agent.adverse",
+  "case_id": "c07-python-slugify",
+  "topology": "single_agent",
+  "description": "Creates slugify.py, then the provider call fails without a response, so that attempt's usage is unknown.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Hand-written during normalization (no Haiku draft)",
+    "normalization": "Simulates a transport failure; the runner must stop and record unknown usage rather than zero.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "solo": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "slugify.py",
+              "content": "import re\n\n\ndef slugify(text):\n    return re.sub(r\"[^a-z0-9]+\", \"-\", text.lower()).strip(\"-\")\n"
+            }
+          }
+        ]
+      },
+      {
+        "provider_error": "connection reset before a response was received"
+      }
+    ]
+  }
+}

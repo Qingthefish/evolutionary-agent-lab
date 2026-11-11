@@ -1,0 +1,109 @@
+{
+  "schema": "c07-replay-fixture",
+  "version": 1,
+  "fixture_id": "c07-structured-release.multi_agent.nominal",
+  "case_id": "c07-structured-release",
+  "topology": "multi_agent",
+  "description": "Writer creates and offers both files; coordinator accepts both under the required root names.",
+  "provenance": {
+    "kind": "development_simulation",
+    "drafted_with": "Claude Haiku, used outside the project runtime as a drafting aid on 2026-10-22; it is not the evaluated model",
+    "normalization": "Reviewed by hand and replayed through the real runtime; dynamic IDs and digests are transcript references. No content changes.",
+    "model_evidence": false
+  },
+  "scripts": {
+    "coordinator": [
+      {
+        "tool_calls": [
+          {
+            "name": "delegate_task",
+            "arguments": {
+              "assignee": "writer",
+              "title": "Create release.json and release-notes.md for release 2.1.0"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "release.json"
+              },
+              "path": "release.json"
+            }
+          },
+          {
+            "name": "accept_artifact",
+            "arguments": {
+              "artifact_id": {
+                "$ref": "child_artifact",
+                "source_path": "release-notes.md"
+              },
+              "path": "release-notes.md"
+            }
+          }
+        ]
+      },
+      {
+        "final": "Accepted release.json and release-notes.md from the writer for release 2.1.0."
+      }
+    ],
+    "writer": [
+      {
+        "tool_calls": [
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "release.json",
+              "content": "{\"version\": \"2.1.0\", \"breaking\": false, \"changes\": [\"Add CSV export\", \"Fix login timeout\", \"Update install guide\"]}\n"
+            }
+          },
+          {
+            "name": "create_text",
+            "arguments": {
+              "path": "release-notes.md",
+              "content": "## Changes\n\n- Add CSV export\n- Fix login timeout\n- Update install guide\n"
+            }
+          }
+        ]
+      },
+      {
+        "tool_calls": [
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "release.json",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "release.json"
+              }
+            }
+          },
+          {
+            "name": "offer_artifact",
+            "arguments": {
+              "path": "release-notes.md",
+              "target_task": {
+                "$ref": "parent_task_id"
+              },
+              "expected_sha256": {
+                "$ref": "file_sha256",
+                "path": "release-notes.md"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "final": "Created both files for 2.1.0 and offered them to the coordinator."
+      }
+    ]
+  }
+}

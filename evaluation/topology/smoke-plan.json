@@ -1,0 +1,48 @@
+{
+  "schema": "c07-single-multi-topology",
+  "version": 1,
+  "experiment_id": "c07-live-smoke-check",
+  "purpose": "Smallest authorized live check that the provider path, both topologies and evidence recording work. One case, one run per topology. It is not a comparison and its outcome is not topology evidence.",
+  "evidence_class": "pilot_smoke",
+  "runtime_plan": "smoke/runtime.json",
+  "case_annotations": {
+    "c07-correction-total": {
+      "category": "correction_after_failure",
+      "oracle_scope": "exact_text",
+      "note": "Exact bytes including the single trailing newline; a wrong first proposal receives trusted verification feedback and can be repaired."
+    }
+  },
+  "topologies": {
+    "single_agent": {
+      "agent": "solo",
+      "instructions": "c07-single-agent-v1",
+      "task_limits": {
+        "model_attempts": 8,
+        "reported_tokens": 16000,
+        "duration_seconds": 180,
+        "repeated_outcomes": 3,
+        "tool_calls": 16
+      }
+    },
+    "multi_agent": {
+      "roles": "runtime-live-roles-v1",
+      "root": "coordinator",
+      "child_release": "c07-structural-handoff-v1"
+    }
+  },
+  "memory": {
+    "mode": "disabled",
+    "initial_state": "fresh-empty-per-run"
+  },
+  "human": {
+    "policy": "boundary-stops-run-v1"
+  },
+  "procedure": {
+    "replicates": 1,
+    "order": "alternating-by-replicate-and-case-v1",
+    "isolation": "fresh-state-directory-per-run-v1"
+  },
+  "pilot_budget": {
+    "max_total_model_attempts": 16
+  }
+}
