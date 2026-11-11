@@ -1,13 +1,22 @@
 """Independent C01 acceptance contract, including deliberate false-success traps."""
 
 import copy
+from dataclasses import replace
 import json
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 
+from agent_lab.core import WorkflowError
 from agent_lab.evaluation import CaseError, Evaluator, load_cases, parse_case, summarize
 from agent_lab.evaluation.harness import HUMAN, _Session, _checks, _drive_offline
+from agent_lab.gateway import ToolGateway
+from agent_lab.git_tools import GitToolError
+from agent_lab.offline_scenarios import DEMO_BRANCH, DEMO_REMOTE, demo_repository_config, prepare_demo_repository
+from agent_lab.runtime import LiveConfig, RuntimeServices, live_roles
+from test_runner import tool
 
 
 CASES = Path(__file__).resolve().parents[1] / "evaluation" / "dev"
@@ -120,6 +129,69 @@ class AcceptanceContractTests(unittest.TestCase):
             session.workflow.consume_approval(request, "writer", action)
             checks, _ = _checks(case, session, root, 0.1)
             self.assertTrue(all(v for k, v in checks.items() if k.startswith("human:")))
+        finally:
+            session.close()
+
+    def test_live_git_acceptance_checks_approved_commit_at_original_remote(self):
+        case = parse_case({"id": "runtime-git", "title": "Runtime Git", "goal": "Push the note after approval",
+                           "driver": "live_scheduler", "expected": {"final_state": "succeeded",
+                                                                   "remote_branch_verified": True}})
+        with self.assertRaisesRegex(WorkflowError, "require a trusted Git repository"):
+            Evaluator([case], output_root=self.root / "runs", live=LiveConfig("fixture-model", "fixture-key"))
+        session = _Session(self.root, "git-acceptance")
+        try:
+            repository = demo_repository_config(self.root)
+            live = LiveConfig("fixture-model", "fixture-key", repositories=(repository,))
+            session.services = RuntimeServices(session.workflow, session.files, live)
+            backend = session.services.git
+            prepare_demo_repository(backend, repository)
+            remote = repository.remote_url(DEMO_REMOTE)
+            workflow = session.workflow
+            workflow.register_actor("integrator", "agent")
+            chat = workflow.create_chat("private", [HUMAN, "integrator"])
+            root = workflow.create_task(chat, HUMAN, "integrator", case.goal)
+            workflow.start_task(root, "integrator")
+            role = live_roles(("integrator",), live)["integrator"]
+            gateway = ToolGateway(workflow, session.files, root, "integrator", human=HUMAN,
+                                  allowed=role.tools, git=backend)
+            session.files.create_text(root, "integrator", "note.md", "# Git acceptance fixture\n")
+            commit = json.loads(gateway.dispatch(tool("git_commit", {
+                "repository": repository.name, "files": {"docs/note.md": "note.md"}, "message": "Add fixture note",
+            }, "commit"))["content"])["result"]
+            push = json.loads(gateway.dispatch(tool("git_push", {
+                "repository": repository.name, "remote": DEMO_REMOTE, "branch": DEMO_BRANCH,
+            }, "push"))["content"])["result"]
+            request = push["request_id"]
+
+            def check():
+                return _checks(case, session, root, 0.1)[0]["remote_branch_verified"]
+
+            self.assertFalse(check())
+            workflow.respond(request, HUMAN, approve=True)
+            self.assertFalse(check())
+            self.assertIsNone(backend._remote_head(remote, DEMO_BRANCH))
+            gateway.release_approved(request)
+            workflow.finish_task(root, "integrator", checks={"local_note": True})
+            self.assertEqual(backend._remote_head(remote, DEMO_BRANCH), commit["commit"])
+            self.assertTrue(check())
+
+            with patch.object(backend, "_remote_head", side_effect=GitToolError("Remote ref unavailable")):
+                self.assertFalse(check())
+            with patch.object(backend, "_remote_head", return_value=None):
+                self.assertFalse(check())
+
+            other = shutil.copytree(remote, self.root / "other.git")
+            changed = replace(repository, remotes=((DEMO_REMOTE, str(other)),))
+            with patch.dict(backend.repositories, {repository.name: changed}):
+                with patch.object(backend, "_remote_head", wraps=backend._remote_head) as observe:
+                    self.assertFalse(check())
+                    observe.assert_not_called()
+
+            with workflow._transaction():
+                workflow.db.execute("UPDATE requests SET consumed=0 WHERE id=?", (request,))
+            with patch.object(backend, "_remote_head", wraps=backend._remote_head) as observe:
+                self.assertFalse(check())
+                observe.assert_not_called()
         finally:
             session.close()
 

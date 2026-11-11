@@ -636,22 +636,25 @@ class GitTools:
         self._settle(record, "failed", evidence, task=task, actor=actor, event="git_push_failed")
         raise GitToolError("Push was rejected; the remote branch does not show the approved commit")
 
+    def observe_push_binding(self, binding):
+        """Read the current ref on the original bound remote."""
+        repository = self.repository(binding["repository"])
+        url = self._remote(repository, binding["remote"])
+        if url != binding.get("remote_url"):
+            raise GitToolError("Remote target changed since the original push; reconcile the original target manually")
+        return self._remote_head(url, binding["branch"])
+
     def reconcile(self, operation_id, *, actor):
         """Observe remote state for an uncertain push. Never pushes or retries."""
         row = self.workflow.db.execute("SELECT * FROM git_operations WHERE id=?", (operation_id,)).fetchone()
         if row is None or row["operation"] != "push":
             raise GitToolError("Unknown push operation")
         binding = json.loads(row["arguments"])
-        repository = self.repository(binding["repository"])
-        # A new configuration must never turn a different repository's current
-        # ref into evidence about the original operation. Reapply local-path
-        # trust checks too: the saved URL may now be a symlink or unsafe layout.
-        url = self._remote(repository, binding["remote"])
-        if row["repository"] != repository.name or url != binding.get("remote_url"):
+        if row["repository"] != binding["repository"]:
             raise GitToolError("Remote target changed since the original push; reconcile the original target manually")
-        actual = self._remote_head(url, binding["branch"])
+        actual = self.observe_push_binding(binding)
         outcome = "remote_shows_commit" if actual == binding["commit"] else "remote_does_not_show_commit"
-        record = self._record(repository.name, "reconcile", {"operation_id": operation_id}, actor=actor, task=row["task"])
+        record = self._record(row["repository"], "reconcile", {"operation_id": operation_id}, actor=actor, task=row["task"])
         self._settle(record, "succeeded", {"operation_id": operation_id, "observed_remote": actual, "outcome": outcome,
                                            "note": "Observation only; no push was attempted"})
         return {"operation_id": operation_id, "observed_remote": actual, "outcome": outcome}
