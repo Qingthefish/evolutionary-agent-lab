@@ -109,6 +109,8 @@ A fresh bounded group approval task on **4 November** completed in **7 HKGAI req
 
 A separate **11 November** [peer-review case](../evaluation/peer-review/cases.json) completed one root and two subtasks in **14 HKGAI requests / 55,769 reported tokens**, with **13.337 seconds** from assignment to final status and no human intervention. The coordinator delegated to the writer; the writer used an actual input-bearing delegation to assign the editor. A read-only audit checked the exact corrected room/time and all three ordered offer, receipt and read sequences (writer → editor → writer → coordinator). Roles and titles were declared in advance. The client requested the course ID `t2_hkgai-v3_fp8_1m_e7`; all 14 replies reported `t2_hkgai-v3_fp8_1m_e10_meeting`. The responses do not establish that the two labels identify an equivalent backend. This observation is separate from the matched comparisons and official results. See the [public audit summary](../evaluation/evidence/development-summary.json).
 
+The optional Python Module Index adapter passed three direct runtime tool checks on **11 November**. Each query found a module page in the official index. The runtime fetched that page, saved its cited text and read it from the assigned task. Independent checks confirmed the official URL, a required content marker and the order of the search, retrieval and file read. The source criterion rejected all three cases before the file read. The checks used six actual public HTTPS requests across `json`, `pathlib` and `csv`. Model-driven search and general web relevance remain open. [Development evidence](../evaluation/evidence/development-summary.json)
+
 ## 6. Failure analysis and corrections
 
 | Observed issue | Evidence and correction | Verified limit |

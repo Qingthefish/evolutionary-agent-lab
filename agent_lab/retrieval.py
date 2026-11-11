@@ -240,20 +240,57 @@ def searched_source(workflow, task, actor, path, data, expected_url):
     return False
 
 
+PYTHON_DOCS_INDEX = "https://docs.python.org/3/py-modindex.html"
+PYTHON_DOCS_SEARCH = "python-docs-module-index-v1"
+_MODULE_NAME = r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*"
+_PYTHON_MODULE_QUERY = re.compile(rf"site:docs\.python\.org\s+({_MODULE_NAME})", re.ASCII)
+
+
+class _PythonModuleIndex(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.in_index = False
+        self.modules = {}
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "table":
+            self.in_index = "modindextable" in (attrs.get("class") or "").split()
+        if tag != "a" or not self.in_index:
+            return
+        href = attrs.get("href") or ""
+        path, _, module = href.partition("#module-")
+        if (re.fullmatch(r"library/[A-Za-z0-9_.-]+\.html", path)
+                and re.fullmatch(_MODULE_NAME, module, re.ASCII)):
+            urls = self.modules.setdefault(module, {})
+            urls[urljoin(PYTHON_DOCS_INDEX, path)] = None
+
+    def handle_endtag(self, tag):
+        if tag == "table":
+            self.in_index = False
+
+
 class WebRetrieval:
-    def __init__(self, workflow, files, *, allow_network=False, limits=RetrievalLimits()):
+    def __init__(self, workflow, files, *, allow_network=False, limits=RetrievalLimits(),
+                 enable_python_docs_search=False):
         if files.workflow is not workflow:
             raise RetrievalError("Retrieval and files must use the same workflow")
+        if type(enable_python_docs_search) is not bool:
+            raise RetrievalError("Use explicit Python documentation search configuration")
         self.workflow, self.files = workflow, files
         self.http = PublicHTTPS(allow_network=allow_network, limits=limits)
+        self.enable_python_docs_search = enable_python_docs_search
         self.workflow.db.execute("""CREATE TABLE IF NOT EXISTS retrieval_records (
             id TEXT PRIMARY KEY, task TEXT NOT NULL REFERENCES tasks(id), actor TEXT NOT NULL,
             kind TEXT NOT NULL, request TEXT NOT NULL, status TEXT NOT NULL, result TEXT,
             started REAL NOT NULL, ended REAL)""")
 
     def configuration(self):
-        return {"backend": "public-https-bing-rss-v1", "network": self.http.allow_network,
-                "limits": asdict(self.http.limits), "credentials": False}
+        settings = {"backend": "public-https-bing-rss-v1", "network": self.http.allow_network,
+                    "limits": asdict(self.http.limits), "credentials": False}
+        if self.enable_python_docs_search:
+            settings["scoped_search"] = PYTHON_DOCS_SEARCH
+        return settings
 
     def _run(self, task, actor, kind, request, operation):
         with self.workflow._transaction():
@@ -283,7 +320,11 @@ class WebRetrieval:
     def search_web(self, task, actor, *, query, limit):
         if not isinstance(query, str) or not query.strip() or len(query) > 1000 or type(limit) is not int or not 1 <= limit <= 10:
             raise RetrievalError("Supply a query up to 1000 characters and one to ten results")
+        module = _PYTHON_MODULE_QUERY.fullmatch(query.strip()) if self.enable_python_docs_search else None
+
         def search():
+            if module:
+                return self._search_python_docs(query, module[1], limit)
             page = self.http.fetch("https://www.bing.com/search?" + urlencode({"q": query, "format": "rss"}))
             if any(marker in page["body"].upper() for marker in (b"<!DOCTYPE", b"<!ENTITY")):
                 raise RetrievalError("Search XML declarations are unsupported")
@@ -316,6 +357,24 @@ class WebRetrieval:
             return {"query": query, "results": results, "search_url": page["url"], "response_sha256": page["sha256"],
                     "retrieved_at": self.workflow.clock(), "status": "results" if results else "empty"}
         return self._run(task, actor, "search", {"query": query, "limit": limit}, search)
+
+    def _search_python_docs(self, query, module, limit):
+        page = self.http.fetch(PYTHON_DOCS_INDEX)
+        if page["url"] != PYTHON_DOCS_INDEX or page["content_type"] != "text/html":
+            raise RetrievalError("Python documentation search did not receive the official module index")
+        index = _PythonModuleIndex()
+        try:
+            index.feed(page["body"].decode("utf-8"))
+            index.close()
+        except UnicodeError:
+            raise RetrievalError("Python documentation module index is not UTF-8") from None
+        if not index.modules:
+            raise RetrievalError("Python documentation module index contains no recognizable entries")
+        results = [{"title": module, "url": url, "snippet": "Entry in the official Python Module Index."}
+                   for url in list(index.modules.get(module, ()))[:limit]]
+        return {"query": query, "results": results, "search_url": page["url"], "response_sha256": page["sha256"],
+                "retrieved_at": self.workflow.clock(), "status": "results" if results else "empty",
+                "backend": PYTHON_DOCS_SEARCH}
 
     def retrieve_text(self, task, actor, *, url, path):
         from .files import _parts

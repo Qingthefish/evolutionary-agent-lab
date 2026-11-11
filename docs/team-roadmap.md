@@ -310,6 +310,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-11-11 scoped follow-up.** Qingthefish (Codex-assisted), from `c68b3c8`, branch `feat/B01-python-docs-search`. Add opt-in lookup of a module by name in the live Python documentation module index. Keep ordinary web search on Bing RSS. Verify the same-task search, retrieval and read against the existing independent cases using public HTTPS and no model requests. A credentialed general search backend remains a separate dependency.
 
+- **2026-11-11 scoped search review.** Source `21fc9f2` adds the official module-index option to the shared runtime and version-3 development plan. Six actual public GETs through the runtime tool gateway found, retrieved and read the official `json`, `pathlib` and `csv` pages. The existing source criterion failed before each read and passed afterward with the independent content check. Full suite 556 passed, including 19 container and nine UI checks. Clean Python 3.12.12 passed 16 commands and 528 core checks with 28 explicit skips. The first clean attempt hit local loopback sandbox restrictions and is retained. The prior Bing failures and task records are preserved. HKGAI-driven search, general search relevance and official evaluation remain open. Raw evidence is retained in ignored `runs/review-20261111-search-backend/`. [Public audit summary](../evaluation/evidence/development-summary.json)
+
 ### B02
 
 **Retrieve and hand off cited text**

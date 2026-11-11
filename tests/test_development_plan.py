@@ -36,6 +36,21 @@ class DevelopmentPlanTests(unittest.TestCase):
         with patch.dict('os.environ',{'COURSE_DEEPSEEK_API_KEY':'different'},clear=True): b=DevelopmentPlan(SOURCE)
         self.assertEqual(a.sha256,b.sha256)
 
+    def test_scoped_search_plan_binds_roles_and_requires_web_access(self):
+        source = SOURCE.with_name('search-source-plan.json')
+        planned = DevelopmentPlan(source)
+        self.assertTrue(planned.settings['enable_python_docs_search'])
+        self.assertIn('site:docs.python.org <module>', planned.inspect()['scoped_search'])
+        self.assertIn('site:docs.python.org <module>', planned.conditions['roles']['coordinator']['instructions'])
+        with tempfile.TemporaryDirectory() as temp:
+            data = json.loads(source.read_text())
+            data['cases'] = str(source.parent / data['cases'])
+            data['capabilities']['web'] = False
+            path = Path(temp) / 'plan.json'
+            path.write_text(json.dumps(data))
+            with self.assertRaisesRegex(WorkflowError, 'requires explicit public web access'):
+                DevelopmentPlan(path)
+
     def test_unissued_missing_permission_and_stale_plan_cannot_execute(self):
         with tempfile.TemporaryDirectory() as temp:
             planned=DevelopmentPlan(SOURCE)

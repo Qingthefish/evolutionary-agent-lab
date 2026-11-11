@@ -13,7 +13,8 @@ from agent_lab.acceptance import ArtifactRule, verify_rules
 from agent_lab.core import Workflow, WorkflowError
 from agent_lab.files import FileTools
 from agent_lab.gateway import ToolGateway
-from agent_lab.retrieval import PublicHTTPS, RetrievalError, RetrievalLimits, WebRetrieval, plain_text, public_url
+from agent_lab.retrieval import (PYTHON_DOCS_INDEX, PYTHON_DOCS_SEARCH, PublicHTTPS, RetrievalError,
+                                 RetrievalLimits, WebRetrieval, plain_text, public_url)
 from agent_lab.runtime import LiveConfig, policy_for_task
 from test_runner import tool
 
@@ -154,6 +155,45 @@ class RetrievalTests(unittest.TestCase):
             </channel></rss>'''
         with patch.object(self.web.http, 'fetch', return_value=self.page(body)):
             self.web.search_web(self.task, 'researcher', query='guide', limit=3)
+
+    def test_scoped_index_returns_actual_module_link_and_ignores_other_targets(self):
+        body = b"""<a href="library/unrelated.html#module-xml.etree">Outside index</a>
+            <table class="indextable modindextable">
+              <tr><td><a href="https://example.org/library/a.html#module-xml.etree">External</a>
+              <a href="library/../a.html#module-xml.etree">Traversal</a>
+              <a href="library/xml.etree.html#module-xml.etree">xml.etree</a>
+              <a href="library/xml.etree.html#module-xml.etree">Duplicate</a></td></tr>
+            </table>"""
+        web = WebRetrieval(self.workflow, self.files, enable_python_docs_search=True)
+        page = dict(self.page(body), url=PYTHON_DOCS_INDEX)
+        with patch.object(web.http, 'fetch', return_value=page) as fetch:
+            result = web.search_web(self.task, 'researcher', query='site:docs.python.org xml.etree', limit=3)
+            missing = web.search_web(self.task, 'researcher', query='site:docs.python.org imaginary', limit=1)
+        self.assertEqual([call.args[0] for call in fetch.call_args_list], [PYTHON_DOCS_INDEX] * 2)
+        self.assertEqual(web.configuration()['scoped_search'], PYTHON_DOCS_SEARCH)
+        self.assertEqual(result['backend'], PYTHON_DOCS_SEARCH)
+        self.assertEqual(result['response_sha256'], page['sha256'])
+        self.assertEqual([row['url'] for row in result['results']], ['https://docs.python.org/3/library/xml.etree.html'])
+        self.assertEqual(missing['status'], 'empty')
+
+    def test_scoped_index_failure_is_recorded_without_fallback(self):
+        web = WebRetrieval(self.workflow, self.files, enable_python_docs_search=True)
+        challenge = dict(self.page(b'<html><title>Challenge</title></html>'), url=PYTHON_DOCS_INDEX)
+        with patch.object(web.http, 'fetch', return_value=challenge) as fetch, self.assertRaises(RetrievalError):
+            web.search_web(self.task, 'researcher', query='site:docs.python.org json', limit=1)
+        fetch.assert_called_once_with(PYTHON_DOCS_INDEX)
+        self.assertEqual(self.workflow.db.execute("SELECT status FROM retrieval_records").fetchone()[0], 'failed')
+
+    def test_ordinary_search_stays_on_bing_with_or_without_scoped_search(self):
+        query = 'site:docs.python.org python json'
+        body = b"""<rss><channel><link>https://www.bing.com/search?q=site%3Adocs.python.org+python+json</link>
+            </channel></rss>"""
+        for enabled in (False, True):
+            web = WebRetrieval(self.workflow, self.files, enable_python_docs_search=enabled)
+            with patch.object(web.http, 'fetch', return_value=self.page(body)) as fetch:
+                self.assertEqual(web.search_web(self.task, 'researcher', query=query, limit=1)['status'], 'empty')
+            self.assertTrue(fetch.call_args.args[0].startswith('https://www.bing.com/search?'))
+        self.assertNotIn('scoped_search', self.web.configuration())
 
     def test_searched_source_requires_the_current_retrieved_bytes_and_a_later_read(self):
         path = 'source.md'

@@ -50,6 +50,9 @@ def build_manifest(cases, live, memory):
             runtime["capabilities"]["delete"] = "task-local-exact-version-human-release-v1"
         if live.enable_collaboration:
             runtime["capabilities"]["collaboration"] = "scoped-specialist-delegation-messages-v1"
+        if live.enable_python_docs_search:
+            from ..retrieval import PYTHON_DOCS_SEARCH
+            runtime["capabilities"]["scoped_search"] = PYTHON_DOCS_SEARCH
         if live.require_tool_actions:
             from ..model_context import REQUIRED_ACTION_POLICY
             runtime['capabilities']['required_tool_actions'] = REQUIRED_ACTION_POLICY

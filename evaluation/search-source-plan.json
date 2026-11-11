@@ -29,6 +29,7 @@
   "capabilities": {
     "collaboration": false,
     "web": true,
+    "python_docs_search": true,
     "memory": false,
     "child_retries": 0,
     "docker_host": null,
