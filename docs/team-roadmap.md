@@ -329,6 +329,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-11-09 source acceptance review.** Source `f66271b` adds `searched_source` with same-task search → retrieval → read evidence and a current-file digest check. Three regressions cover wrong or edited artifacts, cross-task copies, search after retrieval and live configuration without web tools. Two development cases independently specify the expected Python documentation URLs. Real direct fetches hit both URLs and text markers, and both correctly failed the search criterion. The plan inspection found two cases and a 24-attempt maximum. The live search cases remain unrun. Full suite 552 passed, including 19 container and nine UI checks. Clean Python 3.12.12 passed 16 commands and 524 core checks with 28 explicit skips. Model requests were zero. Raw evidence is in ignored `runs/review-20261109-search-source-proof/`. Accepted via [PR #43](https://github.com/Qingthefish/evolutionary-agent-lab/pull/43), merge `2cef9b1`, matching reviewed tree `82aefbb`.
 
+- **2026-11-11 live search follow-up.** Qingthefish (Codex-assisted), from `b666c1a`, branch `evaluation/B02-live-python-search`. Run the existing two-case HKGAI plan with its 24-request total, 1024 output tokens per request and 90-second socket timeout. Restrict public requests in this trial to the Python documentation host. Retain actual model calls, HTTP responses, task-local reads, accepted outcomes and any paused or unrun cases. The trial stops on transport/authentication/unknown effects or human intervention.
+
 ### B03
 
 **Connect a real GitHub push**
