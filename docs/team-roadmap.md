@@ -308,6 +308,8 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-11-09 candidate screening.** A public DuckDuckGo HTML request for the Python JSON documentation returned HTTP 202. The second query was left unrun after that response. Brave documents a ranked search API with domain query support and a subscription credential. An authenticated probe requires a configured search credential and budget. [DuckDuckGo HTML help](https://safe.duckduckgo.com/duckduckgo-help-pages/features/non-javascript) · [Brave API reference](https://api-dashboard.search.brave.com/api-reference/web/search/get)
 
+- **2026-11-11 scoped follow-up.** Qingthefish (Codex-assisted), from `c68b3c8`, branch `feat/B01-python-docs-search`. Add opt-in lookup of a module by name in the live Python documentation module index. Keep ordinary web search on Bing RSS. Verify the same-task search, retrieval and read against the existing independent cases using public HTTPS and no model requests. A credentialed general search backend remains a separate dependency.
+
 ### B02
 
 **Retrieve and hand off cited text**
