@@ -50,10 +50,13 @@ class DevelopmentPlan:
         if not isinstance(data['api_key_env'],str) or not re.fullmatch('[A-Za-z_][A-Za-z0-9_]{0,127}',data['api_key_env']):
             raise WorkflowError('Plan takes a credential variable name, never a literal key')
         capability_keys={'web','memory','child_retries','docker_host','python_image','git_config'}
-        if data['version'] in (2,3): capability_keys.add('collaboration')
-        if data['version']==3: capability_keys.add('require_tool_actions')
-        _object(data['capabilities'],capability_keys,'Capabilities')
         caps=data['capabilities']
+        if data['version'] in (2,3): capability_keys.add('collaboration')
+        if data['version']==3:
+            capability_keys.add('require_tool_actions')
+            if isinstance(caps,dict) and 'python_docs_search' in caps:
+                capability_keys.add('python_docs_search')
+        _object(caps,capability_keys,'Capabilities')
         if caps['memory'] is not False:
             raise WorkflowError('Memory-enabled batch plans await a versioned cross-task/reset protocol')
         for name in ('cases',):
@@ -96,6 +99,7 @@ class DevelopmentPlan:
             self.settings['socket_timeout']=data['socket_timeout']
         if data['version']==3:
             self.settings['require_tool_actions']=caps['require_tool_actions']
+            self.settings['enable_python_docs_search']=caps.get('python_docs_search',False)
         template=LiveConfig(api_key='not-used-for-plan-inspection',**self.settings)
         for case in self.cases: _case_policy(case,template)
         self.data=data
@@ -150,6 +154,8 @@ class DevelopmentPlan:
                 'socket_timeout':self.settings['socket_timeout'],'automatic_retries':0}
         if self.settings.get('require_tool_actions'):
             report['provider_tool_choice'] = 'required; unsupported/ignored responses stop without fallback; live compatibility unconfirmed by inspection'
+        if self.settings.get('enable_python_docs_search'):
+            report['scoped_search'] = "Official Python Module Index for 'site:docs.python.org <module>'"
         if self.settings.get('enable_collaboration'):
             report['collaboration_protocol']='Model chooses roles/titles/order; scoped specialist delegation/messages enabled; no external backend added'
             report['child_review_boundary']='Children without an exact predeclared criterion pause for actual trusted review; no automatic acceptance'
