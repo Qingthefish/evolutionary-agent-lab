@@ -4,7 +4,7 @@ Evolutionary Multi-Agent Collaboration System
 
 ## Status
 
-**Current position — 2026-11-11:** runtime source `f66271b` passed **552 engineering checks**, zero skips/errors/failures, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 16 command checks and **524 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
+**Current position — 2026-11-11:** runtime source `21fc9f2` passed **556 engineering checks**, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 16 command checks and **528 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
 
 **Accepted required-action milestone:** an explicit opt-in `require_tool_actions` mode requests actual tool calls and uses the existing independent-verification proposal for completion. In the issued HKGAI trial, **all 43 replies were tool calls with no free-text narration or truncation**. Both changed-input JSONL probes completed their full independently audited contracts: current code/input, real isolated execution, correct output, actual handoff/read, report and final verification. The ON probe used 14 requests and selected a prior coordinator failure observation; OFF used 13. Both succeeded, with ON slower and more costly in reported tokens: **no learning advantage is claimed**.
 
@@ -30,7 +30,7 @@ The portable [runtime plan](evaluation/required-actions-runtime.json) leaves Doc
 
 **Development evaluation recovery evidence.** The evaluator saves the selected cases and manifest before execution. For reviewed plans it also saves the approved plan snapshot. Each returned case outcome is checkpointed in `run-progress.json` alongside the active and unstarted case IDs. Inspect the active case's retained state before deciding how to proceed after an interruption. The offline rehearsal recorded four accepted fixtures, five detected negative controls and one unconfigured live case. See [A07](docs/team-roadmap.md#a07).
 
-**Search and source acceptance.** `searched_source` checks that the assigned task found a URL in search, retrieved it to the expected final URL and read the current saved bytes. The [two-case development plan](evaluation/search-source-plan.json) checks the official Python JSON and pathlib pages. Direct fetches confirmed both URLs and required text markers. The search cases have been inspected offline and await a usable search backend.
+**Search and source acceptance.** The [two-case development plan](evaluation/search-source-plan.json) enables the official Python Module Index for queries such as `site:docs.python.org json`. In CLI/TUI live mode, pass `--enable-web --enable-python-docs-search`. General queries use the existing Bing RSS adapter. Real runtime tool requests found, retrieved and read the official `json`, `pathlib` and `csv` pages. Each passed the independent `searched_source` and content criteria after the saved-file read. The HKGAI-driven search cases still await a live run.
 
 ## First 10 minutes / 新成员从这里开始
 

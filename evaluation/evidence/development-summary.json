@@ -1077,5 +1077,84 @@
     "unused_local_requests": 10,
     "fixed_role_and_title_contracts": true,
     "provider_model_equivalence_verified": false
+  },
+  "python_docs_search_followup": {
+    "local_evidence_key": "review-20261111-search-backend",
+    "source_revision": "21fc9f2b324fb916f892417b9294447d71071548",
+    "plan_sha256": "6c0d9c8e273fed6030dd190a1449555760743717ce40b6f2129f4e2d7c2e96b0",
+    "mode": "direct_runtime_tool_requests",
+    "search_backend": "python-docs-module-index-v1",
+    "actual_public_gets_in_tool_check": 6,
+    "actual_model_requests": 0,
+    "official_evaluation": false,
+    "raw_public_audit_sha256": "a325bd9c2ad10eb0d35a47deb833f4e62fc45927644b820b9896fa11498bdd20",
+    "raw_workflow_sha256": "e0b84d2c5f2aa78a5ad5047a5ccda240caecd7bc05c036e3cf8ebffff0ec2721",
+    "raw_initial_probes_sha256": "dbec1eb693a3880133846be0b0a10e1d156b5a3add0433ffe242ed3c104187b1",
+    "raw_full_validation_sha256": "8228f3266f474a8905908bba5297555f268779ad9f02ac49843b6a4e2848e353",
+    "raw_clean_summary_sha256": "c9e7e6e88ccef51754d6eae86f2ca8df2c0343f85793bf7c4fb14c8333f6be27",
+    "full_passed": 556,
+    "full_skips": 0,
+    "actual_container_checks": 19,
+    "ui_checks": 9,
+    "clean_python": "Python 3.12.12",
+    "clean_command_checks_passed": 16,
+    "clean_core_passed": 528,
+    "clean_explicit_skips": 28,
+    "cases": [
+      {
+        "case_id": "search-source-json",
+        "query": "site:docs.python.org json",
+        "source_url": "https://docs.python.org/3/library/json.html",
+        "index_response_sha256": "e5856355e27f42d03bcd1f86c35006789e8e185a5b8357571c2df2bf1d0d64cd",
+        "source_response_sha256": "f336083159cdf69756effd57a3ae5e1c1eea8c81e29431c62ce93d76b5a61615",
+        "artifact_sha256": "49c2cdfe3480042075eb83d4f8b27ea18d5a8a87d094f1cfcad93128c0059e83",
+        "event_sequences": [
+          4,
+          8,
+          11
+        ],
+        "rejected_before_read": true,
+        "checks": {
+          "criterion:0:source.md:contains": true,
+          "criterion:1:source.md:searched_source": true
+        }
+      },
+      {
+        "case_id": "search-source-pathlib",
+        "query": "site:docs.python.org pathlib",
+        "source_url": "https://docs.python.org/3/library/pathlib.html",
+        "index_response_sha256": "e5856355e27f42d03bcd1f86c35006789e8e185a5b8357571c2df2bf1d0d64cd",
+        "source_response_sha256": "b6ed31034b00c7b7e01234d4434aad0cb63a89c7eb1b8e11d22027600e2b1374",
+        "artifact_sha256": "fd92cbec898ec62bf5c356377cac723a7a9f161605208ca502a6442294c17dd4",
+        "event_sequences": [
+          16,
+          20,
+          23
+        ],
+        "rejected_before_read": true,
+        "checks": {
+          "criterion:0:source.md:contains": true,
+          "criterion:1:source.md:searched_source": true
+        }
+      },
+      {
+        "case_id": "source-extra-csv",
+        "query": "site:docs.python.org csv",
+        "source_url": "https://docs.python.org/3/library/csv.html",
+        "index_response_sha256": "e5856355e27f42d03bcd1f86c35006789e8e185a5b8357571c2df2bf1d0d64cd",
+        "source_response_sha256": "1e2242d4ece1703705a2c091f311d7d6e117efa00547259160c3050e2c7ec21d",
+        "artifact_sha256": "af0bf866089235ebee94aec33367a26c3e6bfb085af34f05b58719224af78349",
+        "event_sequences": [
+          28,
+          32,
+          35
+        ],
+        "rejected_before_read": true,
+        "checks": {
+          "criterion:0:source.md:searched_source": true,
+          "criterion:1:source.md:contains": true
+        }
+      }
+    ]
   }
 }
