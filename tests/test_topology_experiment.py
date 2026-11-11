@@ -5,6 +5,7 @@ runtime, budgets, acceptance, isolation and reporting work, not model quality.
 """
 from contextlib import closing, redirect_stdout, redirect_stderr
 import copy
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -92,6 +93,30 @@ class TopologyReplayTests(unittest.TestCase):
         markdown = (self.nominal_dir / "report.md").read_text()
         self.assertIn("ENGINEERING VALIDATION ONLY", markdown)
         self.assertIn("scripted outcome, not performance", markdown)
+
+    def test_both_topologies_receive_case_inputs_before_their_first_turn(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            source = folder / "cases"
+            source.mkdir()
+            cases = json.loads((ROOT / "evaluation/topology/cases/c07-cases.json").read_text())
+            case_id = cases[0]["id"]
+            content = "  source input\n\n"
+            cases[0]["inputs"] = {"source.txt": content}
+            (source / "cases.json").write_text(json.dumps(cases))
+            manifest = one_replicate(temp, runtime={"cases": str(source)})
+            report, _ = run_fixture(manifest, FIXTURES / "nominal-set.json", folder / "runs")
+            for result in (r for r in report["results"] if r["case_id"] == case_id):
+                run = folder / "runs" / report["run_id"]
+                with database(run, result) as db:
+                    root = result["root"]
+                    events = db.execute(
+                        "SELECT kind,actor,detail FROM events WHERE task=? AND kind IN "
+                        "('task_input_provided','model_attempt_reserved') ORDER BY sequence", (root,)).fetchall()
+                self.assertEqual(events[0][:2], ("task_input_provided", "evaluator"))
+                self.assertEqual(json.loads(events[0][2]), {"path": "source.txt", "bytes": len(content),
+                                 "sha256": hashlib.sha256(content.encode()).hexdigest()})
+                self.assertEqual(events[1][0], "model_attempt_reserved")
 
     def test_repairs_follow_real_trusted_verification_feedback(self):
         result = row(self.nominal, "c07-text-word-counts", "single_agent")

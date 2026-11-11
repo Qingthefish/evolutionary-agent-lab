@@ -20,7 +20,7 @@ from ..protocol import strict_json
 from ..runtime import LiveConfig, RuntimeServices, TaskPolicy, bind_task_policy, live_clients, text_acceptance_factory
 from ..scheduler import MultiAgentScheduler
 from .experience import _error
-from .harness import HUMAN, _Session, _case_policy, _checks, _classify
+from .harness import HUMAN, _Session, _case_policy, _checks, _classify, _provide_inputs
 from .manifest import digest
 from .memory_protocol import tree_usage
 from .plan import DevelopmentPlan, _object
@@ -372,6 +372,7 @@ class TopologyTrial:
             chat = session.workflow.create_chat("group", [HUMAN, *condition.members])
             root = session.workflow.create_task(chat, HUMAN, condition.root, case.goal)
             row["root"] = root
+            _provide_inputs(case, session, root)
             policy = bind_task_policy(session.workflow, root, HUMAN, experiment.policies[case.id],
                                       default=TaskPolicy(live.constraints))
             release = condition.record["child_release"]

@@ -66,6 +66,16 @@ class SchedulerFixtureAudit(unittest.TestCase):
         self.assertEqual(tasks["editor"]["after_children_done"]["attempts"], 0)  # No children.
         self.assertEqual(tasks["coordinator"]["children_succeeded"], 1)
 
+    def test_waiting_parent_is_not_reported_as_failed(self):
+        db = self.run_dir / "paused copy #1.sqlite3"
+        shutil.copy(self.db, db)
+        with closing(sqlite3.connect(db)) as connection:
+            connection.execute("UPDATE tasks SET state='waiting_input',ended=NULL WHERE parent IS NULL")
+            connection.commit()
+        result = audit_database(db)["roots"][0]
+        self.assertEqual(result["root_state"], "waiting_input")
+        self.assertEqual(result["parents_failed_after_all_children_succeeded"], [])
+
     def test_summary_cli_contains_no_task_text(self):
         title = sqlite3.connect(self.db).execute("SELECT title FROM tasks WHERE parent IS NULL").fetchone()[0]
         buffer = io.StringIO()
@@ -126,8 +136,9 @@ class FailureAndMissingData(unittest.TestCase):
         shutil.copy(source / "workflow.sqlite3", db)  # Test-owned copy; the audit itself never writes.
         with closing(sqlite3.connect(db)) as con:
             task, actor = con.execute("SELECT id,assignee FROM tasks WHERE assignee='coordinator'").fetchone()
-            path = json.loads(con.execute("SELECT detail FROM events WHERE task=? AND kind='artifact_received'",
-                                          (task,)).fetchone()[0])["path"]
+            receipt = json.loads(con.execute("SELECT detail FROM events WHERE task=? AND kind='artifact_received'",
+                                             (task,)).fetchone()[0])
+            path = receipt["path"]
             number = con.execute("SELECT max(number) FROM runner_turns WHERE task=?", (task,)).fetchone()[0] + 1
             proposed = [("poll-1", "read_messages", {"limit": 5}), ("poll-2", "read_messages", {"limit": 5}),
                         ("read-1", "read_text", {"path": path}), ("write-1", "create_text", {"path": "x.txt", "content": ""})]
@@ -137,8 +148,11 @@ class FailureAndMissingData(unittest.TestCase):
                 "message": message, "finish_reason": "tool_calls", "usage": {"total_tokens": 7},
                 "response_id": "t", "model": "m"}), 1e12, 1e12))
             for i, n, a in proposed[:3]:  # The last proposal was never reserved.
-                con.execute("INSERT INTO tool_calls VALUES(?,?,?,?,?,'succeeded','{}')",
-                            (task, i, actor, n, json.dumps(a, sort_keys=True)))
+                result = {"result": {k: receipt[k] for k in ("path", "sha256", "bytes")}} if n == "read_text" else {}
+                con.execute("INSERT INTO tool_calls VALUES(?,?,?,?,?,'succeeded',?)",
+                            (task, i, actor, n, json.dumps(a, sort_keys=True), json.dumps(result)))
+                con.execute("INSERT INTO events(task,actor,kind,detail,timestamp) VALUES(?,?,'tool_reserved',?,?)",
+                            (task, actor, json.dumps({"call_id": i, "name": n}), 1e12))
             con.commit()
         tasks = by_assignee(audit_database(db)["roots"][0])
         coordinator = tasks["coordinator"]
@@ -149,6 +163,12 @@ class FailureAndMissingData(unittest.TestCase):
         self.assertEqual(coordinator["exact_repeated_calls"], {"read_messages": 1})
         self.assertEqual(coordinator["polling_calls"], {"read_messages": 2})
         self.assertEqual(coordinator["tool_calls_by_class"]["handoff"], 2)  # accept_artifact + read of received path
+        with closing(sqlite3.connect(db)) as con:
+            con.execute("UPDATE tool_calls SET result=? WHERE task=? AND call_id='read-1'",
+                        (json.dumps({"result": {"path": path, "sha256": "0" * 64, "bytes": receipt["bytes"]}}), task))
+            con.commit()
+        changed = by_assignee(audit_database(db)["roots"][0])["coordinator"]
+        self.assertEqual(changed["tool_calls_by_class"]["handoff"], 1)
 
     def test_c07_run_directory_reconciles_and_reports_missing_databases(self):
         from agent_lab.evaluation.topology_fixture import run_fixture as topology_fixture
@@ -169,6 +189,10 @@ class FailureAndMissingData(unittest.TestCase):
         again = {s["slot"]: s for s in audit_run(run)["slots"]}
         self.assertIsNone(again[missing["slot"]]["audit"])
         self.assertEqual(again[missing["slot"]]["missing"], "database not available")
+        missing["state_directory"] = str(self.path)
+        (run / "experiment.json").write_text(json.dumps(report))
+        outside = {s["slot"]: s for s in audit_run(run)["slots"]}
+        self.assertEqual(outside[missing["slot"]]["missing"], "database path is outside the run directory")
 
     def test_forked_experience_probes_count_only_their_own_root(self):
         from agent_lab.evaluation.experience_fixture import run_fixture as experience_fixture

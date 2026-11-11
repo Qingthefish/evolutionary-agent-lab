@@ -72,7 +72,7 @@ class _Records:
 
     def __init__(self, path):
         self.path = Path(path)
-        self.db = sqlite3.connect(f"file:{self.path.resolve()}?mode=ro", uri=True)
+        self.db = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA query_only=ON")
 
@@ -109,23 +109,27 @@ def _task_audit(records, task, children):
     tid = task["id"]
     calls = {}
     if records.table("tool_calls"):
-        for row in records.db.execute("SELECT call_id,name,arguments,status FROM tool_calls WHERE task=? ORDER BY rowid", (tid,)):
+        for row in records.db.execute("SELECT call_id,name,arguments,status,result FROM tool_calls WHERE task=? ORDER BY rowid", (tid,)):
             calls[row["call_id"]] = dict(row)
-    received = set()
+    received, handoff_reads = {}, set()
     failures = {}
     for event in records.db.execute("SELECT kind,detail FROM events WHERE task=? AND kind IN "
-                                    "('artifact_received','provider_request_failed') ORDER BY sequence", (tid,)):
+                                    "('artifact_received','provider_request_failed','tool_reserved') ORDER BY sequence", (tid,)):
         detail = _loads(event["detail"]) or {}
         if event["kind"] == "artifact_received" and isinstance(detail.get("path"), str):
-            received.add(detail["path"])
+            received[detail["path"]] = (detail.get("sha256"), detail.get("bytes"))
         elif event["kind"] == "provider_request_failed":
             failures[detail.get("number")] = (detail.get("diagnostics") or {}).get("kind", "unknown")
+        elif event["kind"] == "tool_reserved" and detail.get("name") == "read_text":
+            call = calls.get(detail.get("call_id"))
+            if call is None or call["status"] != "succeeded":
+                continue
+            result = (_loads(call["result"]) or {}).get("result", {})
+            if result.get("sha256") and received.get(result.get("path")) == (result["sha256"], result.get("bytes")):
+                handoff_reads.add(call["call_id"])
 
     def classify(call):
-        label = tool_class(call["name"])
-        if call["name"] == "read_text" and (_loads(call["arguments"]) or {}).get("path") in received:
-            return "handoff"  # Reading a path this task imported through an explicit handoff.
-        return label
+        return "handoff" if call.get("call_id") in handoff_reads else tool_class(call["name"])
 
     child_done = None
     if children and all(c["state"] in TERMINAL for c in children):
@@ -214,7 +218,7 @@ def audit_root(records, root):
                       "tool_calls_match": usage["tool_calls"] == totals["tool_calls"]}
     overhead = {key: sum(by_class.get(c, _empty())[key] for c in OVERHEAD) for key in totals}
     root_row = rows[root]
-    failed_after_children = [t for t in tasks if t["children"] and t["state"] != "succeeded"
+    failed_after_children = [t for t in tasks if t["children"] and t["state"] == "failed"
                              and t["children_succeeded"] == len(t["children"])]
     return {"root": root, "root_state": root_row["state"],
             "root_error": ((_loads(root_row["evidence"]) or {}).get("error") or "")[:300] or None,
@@ -226,9 +230,8 @@ def audit_root(records, root):
             "reconciliation": reconciliation, "per_task": tasks}
 
 
-def _report_rows(directory):
+def _report_rows(directory, report):
     """Map each recorded run slot to its own database and root; never all roots."""
-    report = json.loads((directory / "experiment.json").read_text())
     for row in report.get("results", []):
         if not row.get("root"):
             yield row, None, "no root recorded (not run or failed before task creation)"
@@ -242,14 +245,18 @@ def _report_rows(directory):
         else:
             yield row, None, "unrecognized report layout"
             continue
-        yield row, path, None
+        resolved = path.resolve()
+        if not resolved.is_relative_to(directory):
+            yield row, None, "database path is outside the run directory"
+            continue
+        yield row, resolved, None
 
 
 def audit_run(directory):
-    directory = Path(directory)
+    directory = Path(directory).resolve()
     report = json.loads((directory / "experiment.json").read_text())
     slots, groups = [], {}
-    for row, path, problem in _report_rows(directory):
+    for row, path, problem in _report_rows(directory, report):
         label = {k: row.get(k) for k in ("slot", "replicate", "topology", "phase", "memory", "case_id") if k in row}
         if "case_id" not in label and isinstance(row.get("case"), dict):
             label["case_id"] = row["case"].get("id")
