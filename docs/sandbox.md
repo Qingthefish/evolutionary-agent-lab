@@ -17,6 +17,12 @@ Copy the **complete repository and digest reference** printed by inspection, suc
 
 On Linux, use an existing appropriately configured local Docker engine and its actual Unix socket instead of Colima. The backend requires working memory/swap, CPU, PID, and default seccomp support; it fails closed when these checks fail. It does not install Docker, start a VM, change contexts, or pull images itself. If image setup needs a proxy, configure only the designated engine using the [Docker daemon proxy instructions](https://docs.docker.com/engine/daemon/proxy/). Host proxy/API credentials are not forwarded to executed code.
 
+## Windows hosts
+
+Native Windows Python is not supported by the controlled file broker or executor host. Use a normal WSL 2 Linux distribution and follow the [supported environment and clean setup](../README.md#supported-environment-and-clean-setup) instructions. Keep the checkout and run directories in that distribution's Linux filesystem, not a Windows-mounted path such as `/mnt/c`. Docker Desktop's internal distribution is not a substitute for a development distribution.
+
+The offline core requires no Docker engine. For actual execution, explicitly configure an existing local Linux engine's Unix socket and an already-pulled digest-pinned image. Docker Desktop being installed does not verify the required engine isolation features; the same backend checks and actual isolation tests below still apply. WSL setup alone is not sandbox acceptance evidence.
+
 ## Actual execution fixture
 
 Replace the image placeholder with the inspected full digest reference:

@@ -16,7 +16,8 @@ from .tui.controller import ControlCenter
 
 
 def main(argv=None):
-    parser=argparse.ArgumentParser(prog='python -m agent_lab.console')
+    # Keep status --task from matching global --task-* flags on Python 3.12.
+    parser=argparse.ArgumentParser(prog='python -m agent_lab.console',allow_abbrev=False)
     parser.add_argument('--state-dir',default='runs/console-session')
     parser.add_argument('--human',default='operator')
     add_live_arguments(parser)
