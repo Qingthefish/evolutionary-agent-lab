@@ -37,7 +37,15 @@ python scripts/check_setup.py --output runs/d04-clean-setup
 
 The [setup reproduction script](scripts/check_setup.py) checks the six existing offline demos, console create/status/reopen behavior, evaluation cases, static plan inspection, refusal of unauthorized execution and the full engineering suite. It saves the source revision/diff identity, environment, command results and stdout/stderr logs in a new output directory; choose a new path for every attempt. It does not install dependencies or select live-model, web or Docker execution. Docker opt-in variables are removed for these child commands. Optional UI/container skips are counted separately, and `clean_core_environment` indicates whether the interpreter is in a venv without Textual. These results are setup evidence, not live capability or benchmark scores. Use `--repo` to check a separate source checkout with the same interpreter.
 
-**Independent setup reproduction (2026-11-14):** a fresh Ubuntu 24.04 WSL 2 distribution, a non-root Linux user and Python 3.12.3 venv reproduced a console bug on original main `48709e5`: `status --task` was parsed as an ambiguous abbreviation of global `--task-*` flags, producing five errors and one failure in the 620-test suite. The console now requires exact top-level option names. After this fix and the unsupported-platform regression check, all 16 setup command checks passed; 621 tests were discovered, with 593 passing and 28 explicit skips (19 actual-container, nine optional UI). No third-party Python package or course credential was needed. This validates the tested WSL core setup; configured Docker/live-model reproduction and final D04 acceptance remain separate.
+**Independent setup reproduction (2026-11-14):** a fresh Ubuntu 24.04 WSL 2 distribution, a non-root Linux user and Python 3.12.3 venv reproduced a console bug on original main `48709e5`: `status --task` was parsed as an ambiguous abbreviation of global `--task-*` flags, producing five errors and one failure in the 620-test suite. The console now requires exact top-level option names. After this fix and the unsupported-platform regression check, all 16 setup command checks passed; 621 tests were discovered, with 593 passing and 28 explicit skips (19 actual-container, nine optional UI). No third-party Python package or course credential was needed. This core-only record is preserved separately from the configured reproduction below.
+
+**Configured setup reproduction (2026-11-14):** the same Ubuntu 24.04 WSL 2 environment, Python 3.12.3 and optional Textual 8.2.8 passed all **621 engineering checks**, including **19 actual-container and nine UI checks**, with zero skips, errors or failures. Docker Desktop's Linux engine was selected through an explicit local Unix socket and a digest-pinned official Python image. The documented sandbox fixture performed actual isolated execution, exited zero and confirmed container cleanup. These engineering checks made zero model calls. See the [Windows sandbox setup](docs/sandbox.md#windows-hosts).
+
+**Allowed-provider setup smoke:** the issued HKGAI connection completed the existing tool-cycle case in **three actual requests and 5,104 reported tokens**, with `probe.txt` independently checked. The requested and returned model IDs have different suffixes (`e7` versus `e10`); equivalence is unconfirmed. A separate combined A05 probe then stopped after **two additional requests**: one accepted response reported 3,886 tokens and the next failed as `invalid_completion`, with its usage unknown. It produced no file or sandbox effect and was not retried; the failed A05 record remains unchanged.
+
+**Direct live Docker setup check:** after an explicit continuation, a distinct private coder task completed in **four actual HKGAI requests and 12,711 reported tokens**. The model wrote a 123-byte `main.py`, executed that exact source snapshot in the configured Docker sandbox, imported the exact `d04-live-docker-ok:5` result with its final newline, read it and submitted to the existing independent verifier. Exit code zero, source/output hashes, cleanup and final task success were checked. A separate direct Docker CLI probe also verified non-root execution, no external network, resource limits and removal of its container. This small fixed-value setup demo does not replace the failed multi-agent A05 task or establish general code correctness.
+
+The cumulative record is **nine actual requests, 21,701 known reported tokens plus unknown usage for the earlier rejected response**, within the original 20-request ceiling. Original failures and database hashes were preserved. [Whitelisted setup evidence](evaluation/evidence/d04-setup-reproduction.json) records the separate outcomes. D04's independent setup, allowed-provider and actual Docker reproduction is ready for coordinator review; final card acceptance remains with PR review and merging.
 
 ## Status
 
@@ -151,12 +159,13 @@ The offline checks have passed locally on Python 3.12 and 3.14. A [CI workflow t
 
 ## Run the terminal control center
 
-An optional [Textual](https://textual.textualize.io/) dashboard exposes conversations, the live task tree and execution inspector, artifacts, candidate memory, approvals, and execution logs on top of the existing workflow, gateway, scheduler, and file broker. Textual is the only extra dependency; the core package and its tests remain standard-library only.
+An optional [Textual](https://textual.textualize.io/) dashboard exposes conversations, the live task tree and execution inspector, artifacts, candidate memory, approvals, and execution logs on top of the existing workflow, gateway, scheduler, and file broker. Textual is the only extra dependency; the core package and its tests remain standard-library only. Use a separate ignored environment to preserve the clean core venv:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements-tui.txt
-.venv/bin/python -m agent_lab.tui
+python3 -m venv venv/tui
+source venv/tui/bin/activate
+python -m pip install -r requirements-tui.txt
+python -m agent_lab.tui
 ```
 
 The default session directory `runs/tui-session` is reused across restarts, so conversations, tasks, approvals, and history persist. Offline mode is the default and is labelled in the header. It can create conversations, post messages, and create real tasks, but **a task created without a configured model stays pending**: no arbitrary request is completed offline. Dashboard scenarios (`chat`, `delegation`, `approval`, `memory`, `git`) drive the real workflow, gateway, file broker, approval release, and verifiers with scripted provider responses; their results are `offline_fixture` evidence with zero model calls. Approving an action only records the decision; a separate *Release & execute* step consumes it through `ToolGateway.release_approved` and shows the verified effect. Press `?` for shortcuts.

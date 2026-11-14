@@ -23,6 +23,31 @@ Native Windows Python is not supported by the controlled file broker or executor
 
 The offline core requires no Docker engine. For actual execution, explicitly configure an existing local Linux engine's Unix socket and an already-pulled digest-pinned image. Docker Desktop being installed does not verify the required engine isolation features; the same backend checks and actual isolation tests below still apply. WSL setup alone is not sandbox acceptance evidence.
 
+For Docker Desktop, use its WSL 2 engine and enable integration for the development distribution under **Settings > Resources > WSL Integration**, following the [Docker WSL documentation](https://docs.docker.com/desktop/features/wsl/). The executor needs a Linux Docker CLI and an actual local Unix socket; Docker VMM's socketless Windows CLI integration does not satisfy this requirement. Avoid installing a competing in-distribution engine alongside Desktop integration.
+
+The tested WSL endpoint was `unix:///var/run/docker.sock`. From the Linux shell, verify that this socket exists before using the following example; another environment must explicitly select its actual local socket:
+
+```bash
+command -v docker
+test -S /var/run/docker.sock
+docker --host unix:///var/run/docker.sock info --format '{{json .}}'
+docker --host unix:///var/run/docker.sock pull python:3.12-slim
+docker --host unix:///var/run/docker.sock image inspect python:3.12-slim --format '{{index .RepoDigests 0}}'
+```
+
+Use the complete inspected digest, retaining the existing isolation policy:
+
+```bash
+python3 -m agent_lab sandbox-demo --docker-host unix:///var/run/docker.sock --image 'python@sha256:REPLACE_WITH_INSPECTED_DIGEST'
+AGENT_LAB_DOCKER_HOST=unix:///var/run/docker.sock AGENT_LAB_PYTHON_IMAGE='python@sha256:REPLACE_WITH_INSPECTED_DIGEST' python3 -m unittest discover -s tests -v
+```
+
+Install the optional Textual requirements in a separate venv, as described in the README, to include UI checks while preserving the standard-library-only core environment. `scripts/check_setup.py` deliberately removes Docker opt-in variables, so use direct fixture/test commands for configured Docker reproduction.
+
+**Independent configured reproduction (2026-11-14):** Ubuntu 24.04 WSL 2, Python 3.12.3, Textual 8.2.8 and Docker engine 29.8.1 passed all **621 checks**, including **19 actual-container and nine UI checks**, without skips, errors or failures. The sandbox fixture completed actual execution with exit code zero and confirmed cleanup using a digest-pinned official Python image. These engineering checks made zero model calls.
+
+A distinct direct-coder setup demo subsequently used four actual HKGAI requests: the model wrote a small Python source file, ran its exact snapshot in the configured sandbox, read the imported checked result and completed independent verification. Source/output hashes, zero exit status and confirmed container removal bind that result to real execution. The earlier failed multi-agent A05 probe remains failed, with one response's usage unknown. The [whitelisted setup evidence](../evaluation/evidence/d04-setup-reproduction.json) separates these outcomes and records the cumulative nine requests rather than resetting the allowance. This fixed-value setup demo is not a general code benchmark or full A05 acceptance.
+
 ## Actual execution fixture
 
 Replace the image placeholder with the inspected full digest reference:

@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "card": "D04",
+  "record_date": "2026-11-14",
+  "timezone": "Asia/Hong_Kong",
+  "evidence_class": "independent_setup_reproduction",
+  "benchmark_valid": false,
+  "official_evaluation": false,
+  "tested_revision": "950c894f270f9fee2b028c8ff09bc70ba4840d02",
+  "baseline_revision": "48709e577ff13595c8b184914a35d48e13cc9971",
+  "d04_final_card_status": "pending coordinator review/merge",
+  "scope": "Independent clean-core setup, configured engineering checks, direct Docker controls, an allowed-provider file-tool smoke and one small model-authored Docker execution. The earlier failed multi-agent A05 probe remains failed.",
+  "publication_policy": "Whitelisted observations and SHA-256 identifiers only. Raw logs, databases, private prompts, credentials and absolute local paths remain excluded.",
+  "environment": {
+    "distribution": "Ubuntu 24.04.5 LTS",
+    "host_environment": "WSL 2",
+    "runtime_user": "non-root Linux user",
+    "python": "3.12.3",
+    "configured_optional_textual": "8.2.8",
+    "docker_engine": "29.8.1",
+    "docker_kernel": "6.18.58.1-microsoft-standard-WSL2",
+    "architecture": "x86_64",
+    "checkout_filesystem": "Linux filesystem",
+    "docker_connection": "explicit local Unix socket with a Linux Docker CLI"
+  },
+  "baseline_reproduction": {
+    "kind": "engineering_tests_without_live_models",
+    "source_revision": "48709e577ff13595c8b184914a35d48e13cc9971",
+    "tests_discovered": 620,
+    "passed": 586,
+    "skipped": 28,
+    "failures": 1,
+    "errors": 5,
+    "outcome": "failed",
+    "reproduced_problem": "On Python 3.12, console status --task was parsed as an ambiguous abbreviation of global --task-* flags.",
+    "correction": "Disable top-level argparse option abbreviation while preserving exact command options."
+  },
+  "clean_core_reproduction": {
+    "kind": "scripted_offline_setup_and_engineering_tests",
+    "clean_venv_without_textual": true,
+    "third_party_python_packages_required": false,
+    "course_credentials_used": false,
+    "model_calls": 0,
+    "command_checks": {
+      "total": 16,
+      "passed": 16,
+      "failed": 0,
+      "blocked": 0,
+      "scope": [
+        "six existing scripted offline demos",
+        "console help, create, status and refusal of unconfigured advance",
+        "evaluation case listing and scripted evaluation classifications",
+        "static development and experience plan inspection",
+        "refusal of unauthorized model execution before run-state creation",
+        "full core engineering suite"
+      ]
+    },
+    "tests": {
+      "discovered": 621,
+      "passed": 593,
+      "skipped": 28,
+      "failures": 0,
+      "errors": 0,
+      "skips": {
+        "actual_container": 19,
+        "optional_ui": 9
+      }
+    },
+    "source_record": {
+      "base_revision": "48709e577ff13595c8b184914a35d48e13cc9971",
+      "dirty_at_reproduction": true,
+      "tracked_diff_sha256": "aa0bccbe1cc87bea54f866a1094164b276ebddab6c72872234c9f1f18bae7de9",
+      "subsequent_d04_commit": "950c894f270f9fee2b028c8ff09bc70ba4840d02",
+      "identity_limit": "The original runner hashed tracked changes; its then-untracked reproduction script was not included in that diff hash.",
+      "verification_script_sha256": "c49b0619635d13677b7c2ca7cb3c24d4d76f1ccce9e1183258324f565b5f5a06",
+      "committed_source_files_match_tested_copies": true
+    },
+    "result_limit": "Fixture success verifies the stated setup contracts; it is not model capability, learning or official performance evidence."
+  },
+  "configured_engineering_suite": {
+    "kind": "engineering_tests_with_actual_docker_and_optional_ui",
+    "model_calls": 0,
+    "tests_discovered": 621,
+    "passed": 621,
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0,
+    "actual_container_tests": 19,
+    "optional_ui_tests": 9,
+    "elapsed_seconds": 131.187,
+    "outcome": "passed",
+    "result_limit": "Provider responses in engineering fixtures remain synthetic even when Docker execution and local Git effects are real."
+  },
+  "documented_sandbox_fixture": {
+    "kind": "fixed_scripted_payload_in_actual_docker",
+    "mode": "sandbox_integration_fixture",
+    "model_calls": 0,
+    "benchmark_valid": false,
+    "image": "python@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b",
+    "process_sandbox": true,
+    "demo_passed": true,
+    "exit_code": 0,
+    "interrupted": null,
+    "cleanup_confirmed": true,
+    "host_mounts": false,
+    "network": "none",
+    "payload_uid": 65534,
+    "supervisor_uid": 65533,
+    "memory_mib": 128,
+    "pids": 32,
+    "default_seccomp_observed": true
+  },
+  "provider_identity": {
+    "provider": "hkgai",
+    "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+    "observed_response_model": "t2_hkgai-v3_fp8_1m_e10",
+    "model_equivalence": "unconfirmed",
+    "provider_fallback": false
+  },
+  "allowed_provider_setup_smoke": {
+    "kind": "actual_hkgai_model_and_file_tool_cycle",
+    "outcome": "completed",
+    "actual_requests": 3,
+    "accepted_provider_responses": 3,
+    "reported_tokens": 5104,
+    "unknown_usage_attempts": 0,
+    "checked_artifact": "probe.txt",
+    "artifact_check_passed": true,
+    "root_succeeded": true,
+    "case_elapsed_seconds": 4.576694197000052,
+    "sandbox_jobs": 0,
+    "automatic_retries": 0,
+    "result_limit": "One bounded connection and file-tool case; no Docker, general autonomy or benchmark claim."
+  },
+  "retained_failed_combined_probe": {
+    "kind": "actual_hkgai_combined_a05_attempt",
+    "outcome": "task_failed",
+    "actual_requests": 2,
+    "accepted_provider_responses": 1,
+    "reported_tokens_known": 3886,
+    "unknown_usage_attempts": 1,
+    "failure": {
+      "kind": "invalid_completion",
+      "phase": "parsing",
+      "request_may_have_been_processed": true,
+      "automatic_retry": false
+    },
+    "root_state": "failed",
+    "coder_state": "failed",
+    "file_effects_observed": 0,
+    "sandbox_jobs": 0,
+    "case_elapsed_seconds": 5.649846134999734,
+    "retried": false,
+    "a05_acceptance_established": false,
+    "result_limit": "The original failed attempt is retained. Its unknown fifth-request usage is not zero and the failure is not promoted by later controls."
+  },
+  "prior_postrun_audit": {
+    "kind": "read_only_audit_without_new_model_calls",
+    "new_model_calls": 0,
+    "success": false,
+    "smoke_artifact_and_completion_checks_passed": true,
+    "combined_success_checks_passed": false,
+    "audit_completion_error_type": "FileNotFoundError",
+    "result_limit": "The audit encountered an absent combined output after the failed attempt; this audit is not recorded as a complete pass."
+  },
+  "direct_docker_control": {
+    "kind": "fixed_trusted_control_payload_via_actual_docker_cli",
+    "model_calls": 0,
+    "image": "python@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b",
+    "exit_code": 0,
+    "uid": 65534,
+    "effective_capabilities": 0,
+    "seccomp": 2,
+    "no_new_privileges": 1,
+    "network_interfaces": [
+      "lo"
+    ],
+    "memory_limit_bytes": 134217728,
+    "pid_limit": 32,
+    "root_write_blocked": true,
+    "calculation_result": 5,
+    "container_absent_after_run": true,
+    "host_mounts": false,
+    "external_network": false,
+    "result_limit": "Actual isolation control with a fixed payload; the model did not generate or execute this control."
+  },
+  "request_accounting_before_direct_live": {
+    "actual_requests": 5,
+    "accepted_provider_responses": 4,
+    "reported_tokens_known": 8990,
+    "unknown_usage_attempts": 1,
+    "cumulative_authorized_request_cap": 20,
+    "automatic_retries": 0,
+    "accounting_limit": "Provider attempts and reported tokens are recorded, not a monetary billing measurement. This snapshot precedes the fresh direct-live probe."
+  },
+  "direct_live": {
+    "status": "passed",
+    "kind": "actual_hkgai_authored_source_in_actual_docker",
+    "fixed_value_setup_demo": true,
+    "actual_requests": 4,
+    "accepted_provider_responses": 4,
+    "reported_tokens": 12711,
+    "unknown_usage_attempts": 0,
+    "fresh_root_number": 3,
+    "new_request_cap": 8,
+    "task_state": "succeeded",
+    "source_bytes": 123,
+    "source_sha256": "d8770e34607c23686dbea1f9aa15a1d000397d3980d250fb5e2221173eae99c2",
+    "source_snapshot_matches_sandbox_input": true,
+    "output_bytes": 21,
+    "output_sha256": "b86ac56ff7d833006472d7599287ecee3b3225179c0d4412d78f866611e469ae",
+    "exact_expected_output": "d04-live-docker-ok:5\n",
+    "process_sandbox": true,
+    "exit_code": 0,
+    "interrupted": null,
+    "cleanup_confirmed": true,
+    "imported_result_read": true,
+    "original_evidence_unchanged": true,
+    "independent_read_only_audit": "passed",
+    "audit_model_calls": 0,
+    "result_limit": "One private coder and a tiny fixed-value execution; no multi-agent handoff, general code-correctness or official-score claim.",
+    "independent_audit_checks": {
+      "root_succeeded_with_independent_checks": true,
+      "one_private_coder_only": true,
+      "current_source_matches_exact_run_inputs": true,
+      "real_isolated_zero_exit": true,
+      "exact_independent_output": true,
+      "durable_export_and_import_hashes": true,
+      "reserve_cleanup_import_read_chronology": true,
+      "all_jobs_cleanup_confirmed": true,
+      "same_original_daemon": true,
+      "no_original_run_containers_remain": true,
+      "all_four_responses_definite": true,
+      "original_stopped_round_unchanged": true,
+      "source_has_assertion": true
+    },
+    "event_sequences": {
+      "reserved": [
+        10
+      ],
+      "cleanup": [
+        11
+      ],
+      "import": [
+        13
+      ],
+      "read": [
+        17
+      ]
+    },
+    "container_absent_after_run": true
+  },
+  "cumulative_request_accounting": {
+    "actual_requests": 9,
+    "accepted_provider_responses": 8,
+    "reported_tokens_known": 21701,
+    "unknown_usage_attempts": 1,
+    "cumulative_authorized_request_cap": 20,
+    "actual_root_tasks": 3,
+    "automatic_retries": 0,
+    "original_failed_probe_replayed": false,
+    "accounting_limit": "Known reported tokens exclude one rejected response with unknown usage; no monetary cost estimate is inferred."
+  },
+  "raw_evidence_sha256": {
+    "baseline_full_suite_stderr": "f9dcb8fa6da90d8f1a72332c61fdee63bbfa095e228da1917ed59a871e3c618c",
+    "clean_core_summary": "4457689c9221421038470d9013584a2eaa0c20f0483400e49adc799c86e23768",
+    "clean_core_full_suite_stderr": "215f6db13bcc893541047c5a5dd5c7f3b4b7739d9ac00fe12505f4deead46b9b",
+    "configured_full_suite_stderr": "4314d446fb3a58f1ae6823e100c7b1813602b99a0d4a1c5b0444b0d6bf184c0d",
+    "sandbox_fixture_report": "a648773e8dc411409da9f49b91d163860fb516c670cfc859f522a98fe94d322e",
+    "prior_provider_ledger": "825f63ec7ee7e7b010c2b2fc6c65d162ee854302c47b43516ba44c18308fae83",
+    "prior_postrun_audit": "2823fdab530bf9dd39c27218fa09b3a9b8de845e6b6d8ce5d008bd8048139b10",
+    "provider_smoke_results": "d0ebfeaab87f83f34bfc7cadbbed88b2c11d121fe06531706d47a7633c82e792",
+    "retained_failed_combined_results": "089e18d990d9e1e9f53e5fe5652d15fc3396b2a853f1adb38846273bc0d915c3",
+    "direct_docker_control": "78a43131ddc65d79c1281f27be7cedee4def168891937d92e92a26748f4dd56d",
+    "direct_live_continuation_ledger": "f2001bd38dd71e9c8194e2f19a1f68e634cb15abfad549a366601eb48c63a381",
+    "direct_live_independent_audit": "2d2f364396ef647fd9a9ab6f087317cc7fc5823449ee7ded66f197e1fc732b28",
+    "direct_live_workflow_database": "2f94e4a72964cb6938809f9c2368486dfe1e67c63a96a9587d7cb529f654b24c"
+  },
+  "remaining_limits": [
+    "The successful direct-live task is a narrow sole-coder setup demonstration, not a multi-agent delegation or general performance result.",
+    "The retained first combined A05 attempt failed; separate passing controls do not erase it.",
+    "Requested and returned HKGAI model identities differ; their equivalence is not established.",
+    "General autonomous planning, learning benefit, runtime GitHub push and official evaluation remain their existing separate acceptance scopes.",
+    "Final D04 card acceptance and the main task-register update remain with coordinator review and merging."
+  ]
+}
