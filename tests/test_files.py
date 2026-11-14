@@ -7,10 +7,23 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest.mock import patch
 
 from agent_lab import Workflow, WorkflowError
 from agent_lab.files import FileTools, FileToolError
 from agent_lab.__main__ import file_demo
+
+
+class FilePlatformBoundaryTests(unittest.TestCase):
+    def test_unsupported_platform_rejects_before_creating_a_file_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "files"
+            with patch("agent_lab.files.os.supports_dir_fd", set()):
+                with self.assertRaisesRegex(
+                    FileToolError, "descriptor-based file boundary.*Linux or macOS.*WSL"
+                ):
+                    FileTools(None, root)
+            self.assertFalse(root.exists())
 
 
 class FileToolsTests(unittest.TestCase):

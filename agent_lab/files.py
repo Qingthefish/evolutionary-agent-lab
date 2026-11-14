@@ -38,7 +38,12 @@ class FileTools:
         required = [os.open, os.mkdir, os.unlink, os.rename]
         if (not all(function in os.supports_dir_fd for function in required)
                 or not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY")):
-            raise FileToolError("This platform cannot enforce the required descriptor-based file boundary")
+            raise FileToolError(
+                "This platform cannot enforce the required descriptor-based file boundary. "
+                "Run on Linux or macOS; on Windows, use a WSL Linux distribution with "
+                "the checkout and runtime data in its Linux filesystem. See README.md "
+                "for supported environment and clean setup."
+            )
         if type(max_bytes) is not int or max_bytes < 1:
             raise FileToolError("File byte limit must be a positive integer")
         self.workflow = workflow
