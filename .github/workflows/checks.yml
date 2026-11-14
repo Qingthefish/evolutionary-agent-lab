@@ -1,0 +1,127 @@
+name: Offline workflow checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PYTHONUTF8: '1'
+  PYTHONNOUSERSITE: '1'
+  PYTHONDONTWRITEBYTECODE: '1'
+  AGENT_LAB_DOCKER_HOST: ''
+  AGENT_LAB_PYTHON_IMAGE: ''
+
+jobs:
+  core:
+    name: Core / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Create a clean standard-library environment
+        run: python -m venv .venv
+      - name: Reproduce offline setup and run the full core suite
+        run: .venv/bin/python scripts/check_setup.py --output runs/ci-core
+      - name: Publish command and test counts, including skip reasons
+        if: always()
+        run: |
+          .venv/bin/python - <<'PY'
+          import json, os
+          from pathlib import Path
+          data = json.loads(Path('runs/ci-core/summary.json').read_text())
+          suite = next(case for case in data['cases'] if case['name'] == 'unittest')
+          counts = suite.get('observed', {})
+          lines = ['## Core setup checks',
+                   f"Python: {data['python']['version']}",
+                   f"Commands: {data['passed']} passed, {data['failed']} failed, {data['blocked']} blocked",
+                   f"Tests: {counts.get('discovered', 'unavailable')} discovered; "
+                   f"{counts.get('passed', 'unavailable')} passed; {counts.get('skipped', 'unavailable')} skipped",
+                   'Model calls: 0. Actual Docker and optional UI checks are unconfigured in this job.',
+                   '', '### Explicit skips', '']
+          lines.extend(f"- `{skip['test']}`: {skip['reason']}" for skip in counts.get('skip_details', []))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+              stream.write('\n\n'.join(lines) + '\n')
+          assert data['clean_core_environment'], 'Core job must use a fresh venv without Textual'
+          assert data['model_calls'] == 0 and data['success'], 'Offline setup checks did not all pass'
+          assert suite['status'] == 'passed' and counts['discovered'] > 0, 'Core suite did not pass'
+          PY
+      - name: Preserve setup summary and command logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: core-python-${{ matrix.python-version }}
+          path: |
+            runs/ci-core/summary.json
+            runs/ci-core/*.log
+          if-no-files-found: error
+          retention-days: 14
+
+  ui:
+    name: Textual UI / Python 3.12
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.12'
+      - name: Install optional UI requirements in a separate environment
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements-tui.txt
+          .venv/bin/python -c 'import textual; print("Textual", textual.__version__)'
+      - name: Run actual headless UI interactions
+        run: |
+          mkdir -p runs/ci-ui
+          .venv/bin/python -m unittest discover -s tests -p test_tui_app.py -v 2>&1 | tee runs/ci-ui/unittest.log
+      - name: Publish UI counts and reject silently skipped UI checks
+        if: always()
+        run: |
+          .venv/bin/python - <<'PY'
+          import json, os, platform
+          from pathlib import Path
+          from scripts.check_setup import suite_counts
+          counts = suite_counts(Path('runs/ci-ui/unittest.log').read_text())
+          summary = {'python': platform.python_version(), 'model_calls': 0, 'tests': counts}
+          Path('runs/ci-ui/summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+              stream.write(f"## Headless Textual UI checks\n\nPython: {summary['python']}\n\n"
+                           f"{counts['discovered']} discovered; {counts['passed']} passed; "
+                           f"{counts['skipped']} skipped. Model calls: 0.\n")
+          assert counts['discovered'] > 0, 'No UI checks were discovered'
+          assert counts['passed'] == counts['discovered'], 'Every discovered UI check must pass without skips'
+          PY
+      - name: Preserve UI summary and interaction log
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: textual-ui-python-3.12
+          path: |
+            runs/ci-ui/summary.json
+            runs/ci-ui/unittest.log
+          if-no-files-found: error
+          retention-days: 14
