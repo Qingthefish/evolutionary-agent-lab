@@ -1,6 +1,6 @@
 # Evolutionary Multi-Agent Collaboration System — Draft Report
 
-MAIE5221 / ARIN5202. **Development draft, updated 2026-11-11 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. Official tasks, scoring/intervention rules, final member contribution evidence and submission dates have not been incorporated into this draft. The instructor announcement remains the authority in [requirements](requirements.md).
+MAIE5221 / ARIN5202. **Development draft, updated 2026-11-14 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. Official tasks, scoring/intervention rules, final member contribution evidence and submission dates have not been incorporated into this draft. The instructor announcement remains the authority in [requirements](requirements.md).
 
 ## 1. Objective and verified scope
 
@@ -141,13 +141,13 @@ Current engineering checks do not close these live or submission requirements:
 - Broader human interaction/recovery scenarios if demanded by the official protocol. The bounded real private clarification and group approval/release paths now pass; live denial/uncertainty are not newly claimed.
 - More varied matched experience trials and the pending single/multi baseline; report regressions or null effects as well as gains.
 - The actual official dataset/protocol adapter, prescribed runs, scoring/timing/memory/intervention semantics, and performance/failure analysis.
-- Another member's clean setup, each member's genuine significant contribution, final commit-history screenshots and the required presentation/report delivery.
+- Final per-member contribution statements, commit-history screenshots, and the required presentation and report delivery.
 
 Detailed ownership, acceptance and dependencies remain in the Roadmap; this draft does not create another task register. No score, completion percentage or final grade is inferred from check counts.
 
 ## 8. Contributions and AI assistance
 
-Repository history preserves actual authors and reviews. The accepted contributions include Qingthefish's Codex-assisted backend/integration work and HelloWorld2333666's terminal/Git/evaluation foundations (PRs #7–#9). Further claims must be checked against actual code and review history; repository access alone does not establish contribution. AI assistance was used for implementation, checks, documentation and review. Automated/Codex-assisted self-review is not independent teammate approval. Final per-member statements and required screenshots remain to be verified.
+Repository history preserves actual authors and reviews. The accepted contributions include Qingthefish's Codex-assisted backend/integration work and HelloWorld2333666's terminal, Git and evaluation foundations (PRs #7–#9), plus the C07 comparison and coordination audit (PRs #48–#50). Minho Joh (aminoacid11) reproduced setup on clean WSL, fixed CLI parsing, tested HKGAI and Docker, and added the GitHub Actions workflow. [D04 PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) · [I04 PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) Further claims must be checked against actual code and review history; repository access alone does not establish contribution. AI assistance was used for implementation, checks, documentation and review. Automated/Codex-assisted self-review is not independent teammate approval. Final per-member statements and required screenshots remain to be verified.
 
 ## 9. Proposed presentation outline
 

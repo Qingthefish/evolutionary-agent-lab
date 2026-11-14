@@ -109,7 +109,7 @@ For a returning/new member: pull current main; read README, [announcement/eviden
 | [A03](#a03) | Live peer assignment and relay verified under declared contracts | Open-ended decomposition and role negotiation; preserve the earlier partial trial |
 | [C07](#c07) | Claimed: HelloWorld2333666's single/multi-agent baseline | Published feature branch awaits PR/full acceptance; do not duplicate evaluation work |
 | [D02](#d02) | Accepted bounded real private clarification and group approval/release | Reuse these records and routes; broader official scenarios remain separate |
-| [D04](#d04) | Minho Joh submitted a clean WSL reproduction and CLI fixes | [PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) is in review |
+| [D04](#d04) | Minho Joh reproduced setup in WSL and fixed CLI parsing | Accepted through [PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) |
 
 These are available/proposed claim scopes, not assignments. Review card status at the time of claiming. A01 validates the issued HKGAI connection; its authorized initial budget used three of at most four requests and has stopped, without authorizing a new trial. A03 and the remaining live gates need their own agreed scope/budget using that setup. B03 also needs a separately scoped runtime GitHub credential. Official work waits for the instructor's dataset/protocol. UI styling or speculative redesign is not a replacement for required coverage. See the requirements audit for the distinction between engineering checks and unvalidated model performance. Older dated blocker records describe their acceptance at that time; the issued model is now available locally, while later live evidence remains outstanding.
 
@@ -196,14 +196,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Enable actual CI**
 
-- **Stage / status:** M4 / In review
+- **Stage / status:** M4 / Done
 - **Owner:** Minho Joh (aminoacid11)
 - **Dependencies / configuration:** Owner can install a workflow with the necessary GitHub permission; development work does not wait for this.
 - **Scope:** docs/ci-workflow.yml and a focused .github/workflows/ change; no runtime feature changes.
 - **Acceptance:** Actual core/UI jobs expose their results and explicit skips; no CI success is claimed before a run exists.
-- **Base revision / branch / PR / evidence:** D04 branch `feat/D04-clean-setup` at `09313f5`. I04 branch `feat/I04-actions` at `a907093`. [PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) targets the D04 branch.
-- **Reviewer:** Coordinator review pending.
-- **Progress / review changes / outcome:** Minho claimed I04 on 2026-11-14. The PR reports passing core and UI jobs. Review the run evidence and land D04 before changing the base of #53 to main. [Reported Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43592923676)
+- **Base revision / branch / PR / evidence:** D04 branch `feat/D04-clean-setup` at `09313f5`. I04 branch `feat/I04-actions` at `a907093`. [PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) merged to main in `48c5ed6` after #52.
+- **Reviewer:** Qingthefish (Codex-assisted).
+- **Progress / review changes / outcome:** Minho claimed I04 on 2026-11-14. Coordinator checked the pinned workflow, documentation copy and all three PR jobs. After #52 merged, #53 targeted main and merged with the reviewed workflow and source. The first push workflow on main also passed. [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595176368)
 
 ### A01
 
@@ -587,16 +587,16 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-10-30 automated preparation result:** Clean committed source `01700a4` on Python **3.12.12**, fresh standard-library-only venv, no Textual/key: **14 command checks passed**, including six scripted demos, console/evaluation entry points, read-only normal/experience inspection, refusal of unauthorized live execution and the full core suite. **512 discovered / 485 passed / 27 explicitly skipped** (18 Docker and nine optional UI); separate final configured regression passed all 512 with actual containers/UI. Python non-loopback connection guarding was an extra test-process precaution, not evidence of the Docker isolation boundary. The first verification helper incorrectly parsed a human-readable trailing report path as JSON; its original log remains and the corrected helper uses the first JSON document. No product command or failure record was rewritten. Final raw outputs: ignored `runs/review-20261030-acceptance-batch/clean-setup-final/`; earlier preparation outputs preserved separately. README/report describe configured, unconfigured and scripted behavior. This accepts scoped automated preparation, not another member's reproduction or final D04 closure.
 
-- **Stage / status:** M4 / In review
+- **Stage / status:** M4 / Done
 - **Owner:** Minho Joh (aminoacid11)
 - **Dependencies / configuration:** M3; final real-model/tool setup awaits issued access and relevant backends.
 - **Scope:** Installation/run instructions and one minimal reproducible demo; coordinate shared README edits.
 - **Acceptance:** Another member can install and run from the guide, use the actual supported capabilities and identify missing configuration. Core use works without optional Textual dependencies; setup does not expose credentials.
 - **Base revision / branch / PR / evidence:** Baseline 304ea4d; shared branch/evidence in A06. Versioned evaluation/development-plan.json and two development connection cases; README updated in place. Clean source-snapshot Python 3.12 CLI and offline-suite checks are retained in ignored runs/review-20261021-recovery/clean-snapshot-checks.json (24 explicit skips for unavailable Docker/UI). No teammate reproduction is implied.
-- **Reviewer:** Qingthefish coordinates; Codex-assisted same-session self-review, no independent teammate reproduction claimed.
+- **Reviewer:** Qingthefish (Codex-assisted).
 - **Progress / review changes / outcome:** 2026-10-21: static inspection needs no model/key/network/engine and lists actual missing model configuration. Explicit execution requires the inspected content fingerprint and permission, uses declared budgets and real human pauses, and snapshots conditions with results. Inspection rejects hidden fields, unsupported memory/official labels and missing cases; HKGAI has no fallback. Initial cases cover connection/handoff and structured artifacts only. This is preparation for live setup, not a release freeze, full requirement benchmark, learning comparison or official adapter. Engineering preparation accepted via PR #18; another member's clean setup and actual configured live/tool reproduction remain before closing D04.
 
-- **2026-11-14 claim and PR:** Minho claimed D04 and opened [PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) from main `48709e5`, branch `feat/D04-clean-setup` at `09313f5`. The PR reports a fresh Ubuntu WSL 2 setup, a CLI fix for ambiguous options, and configured HKGAI and Docker checks. The earlier Qingthefish preparation stays recorded above. Coordinator acceptance of this reproduction is pending.
+- **2026-11-14 claim and PR:** Minho claimed D04 and opened [PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) from main `48709e5`, branch `feat/D04-clean-setup` at `09313f5`. The PR reports a fresh Ubuntu WSL 2 setup, a CLI fix for ambiguous options, and configured HKGAI and Docker checks. The earlier Qingthefish preparation stays recorded above. Coordinator reviewed the source and published evidence and reran all 16 clean setup checks on macOS/Python 3.12.12. The suite recorded 593 passes and 28 explicit skips. The old parsing failure was reported on WSL/Python 3.12.3. The patched command worked in the coordinator environment. #52 merged in `b9388c3`. [Minho’s WSL and provider evidence](../evaluation/evidence/d04-setup-reproduction.json)
 
 ### C06
 
