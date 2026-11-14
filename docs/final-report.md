@@ -6,7 +6,7 @@ MAIE5221 / ARIN5202. **Development draft, updated 2026-11-14 (Asia/Hong_Kong).**
 
 Build a general multi-agent platform that delegates work, uses tools in private workspaces, interacts with humans, retains per-agent experience and automatically records task completion and execution time. Our implementation emphasizes checked execution and bounded recovery. An original research paper, a specific business vertical and an elaborate frontend are not prerequisites.
 
-The latest engineering source at `f66271b` passed **552 checks**, with zero skips, errors or failures, including **19 actual-container integration checks and nine UI checks**. These are software checks, not 552 instructor tasks. The earlier opt-in required-action trial at `a52c34a` observed 43 tool-call replies without free-text narration/truncation and two independently audited complete JSONL probe roots. This bounded result does not establish general reliability or an official score. The [architecture](architecture.md) documents the actual contracts and limits; the [Roadmap](team-roadmap.md) remains the sole task/owner register.
+Minho’s configured WSL reproduction at `950c894` passed **621 engineering checks**, including **19 actual-container integration checks and nine UI checks**, with zero skips. The coordinator independently ran the 16 clean setup steps and recorded 593 core passes with 28 Docker/UI skips. The core and Textual jobs passed on main. [D04 evidence](../evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085) The earlier opt-in required-action trial at `a52c34a` observed 43 tool-call replies without free-text narration/truncation and two independently audited complete JSONL probe roots. This bounded result does not establish general reliability or an official score. The [architecture](architecture.md) documents the actual contracts and limits; the [Roadmap](team-roadmap.md) remains the sole task/owner register.
 
 Two earlier real HKGAI code/report probes and two current JSONL probes completed their full independently audited contracts. The earlier JSONL failures and the latest exhausted training parent remain preserved. Thus the project has runnable, checked development slices; broad live coverage and official performance remain unresolved.
 
@@ -139,9 +139,9 @@ Current engineering checks do not close these live or submission requirements:
 - Broad autonomous decomposition/negotiation and useful replanning outside declared role/title examples.
 - Combined real search/retrieval, file CRUD and runtime GitHub commit/push under a designated branch, narrow credentials and real approvals. Developer publishing is different evidence.
 - Broader human interaction/recovery scenarios if demanded by the official protocol. The bounded real private clarification and group approval/release paths now pass; live denial/uncertainty are not newly claimed.
-- More varied matched experience trials and the pending single/multi baseline; report regressions or null effects as well as gains.
+- More varied matched memory trials and a live single/multi comparison using the merged C07 harness. Report null effects and regressions alongside gains.
 - The actual official dataset/protocol adapter, prescribed runs, scoring/timing/memory/intervention semantics, and performance/failure analysis.
-- Final per-member contribution statements, commit-history screenshots, and the required presentation and report delivery.
+- Verify the fourth member’s code contribution, assemble all members’ commit-history screenshots and complete the presentation and final report.
 
 Detailed ownership, acceptance and dependencies remain in the Roadmap; this draft does not create another task register. No score, completion percentage or final grade is inferred from check counts.
 

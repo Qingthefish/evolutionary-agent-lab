@@ -28,8 +28,8 @@ Deliver a runnable general multi-agent platform and an evaluation entry point: a
 | M1 — foundation integration | Existing platform plus #7/#8/#9 reviewed and integrated with honest evidence labels | Done; I01–I03 record that integration |
 | M2 — first live slice | Issued model, live delegation, human interaction and independently checked output with model/time/usage evidence | Earlier bounded text and two code/report roots are accepted; actual draft acceptance is retained. Two later required-action JSONL probe roots completed; earlier failed roots remain. A live writer-to-editor assignment and verified relay now pass under declared contracts. Open-ended negotiation remains open. D01/D02 accept the bounded real private clarification and group approval/release paths |
 | M3 — required coverage | Every R01–R13 capability has actual evidence or an explicit unresolved instructor dependency | Bounded code/handoff, private experience use and HKGAI Python documentation search audited. General web relevance, runtime GitHub push and demonstrated learning benefit remain pending |
-| M4 — stabilize/evaluate | Reproducible setup, pinned configuration, development comparisons/failure analysis and official adapter | Development batch checkpoint and rehearsal verified. Final release/configuration and official adapter await their remaining prerequisites |
-| M5 — official delivery | Issued test protocol/results and required submission materials | Await official set and actual deadlines |
+| M4 — stabilize/evaluate | Reproducible setup, pinned configuration, development comparisons/failure analysis and official adapter | D04 clean teammate setup, I04 CI on main and C07’s comparison harness and audit are accepted. Release/configuration freeze, matched live single/multi comparison and official task mapping remain open |
+| M5 — official delivery | Issued test protocol/results and required submission materials | Architecture, report and presentation outline drafted. Official protocol and results, final delivery and complete contribution evidence remain open |
 
 These are gates, not claimed percentages. Independent cards can proceed in parallel; external model access need not block offline implementation. Draft the architecture/presentation during M3/M4. The announcement says presentation in week 13, report after week 13, and has conflicting “3 weeks” / “3/1 weeks” dataset wording: confirm exact dates and memory/intervention/repeat rules. Optional extensions and UI styling must not delay mandatory coverage.
 
@@ -107,7 +107,7 @@ For a returning/new member: pull current main; read README, [announcement/eviden
 | --- | --- | --- |
 | [B05](#b05) | Completed workflow example: approval-bound deletion | Read its claim, review and accepted results; choose an available card for new work |
 | [A03](#a03) | Live peer assignment and relay verified under declared contracts | Open-ended decomposition and role negotiation; preserve the earlier partial trial |
-| [C07](#c07) | Claimed: HelloWorld2333666's single/multi-agent baseline | Published feature branch awaits PR/full acceptance; do not duplicate evaluation work |
+| [C07](#c07) | HelloWorld2333666’s single/multi harness and audit are merged | Live comparison is tracked in [C05](#c05) |
 | [D02](#d02) | Accepted bounded real private clarification and group approval/release | Reuse these records and routes; broader official scenarios remain separate |
 | [D04](#d04) | Minho Joh reproduced setup in WSL and fixed CLI parsing | Accepted through [PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) |
 

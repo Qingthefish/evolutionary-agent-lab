@@ -49,7 +49,7 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
-**Current position — 2026-11-11:** runtime source `61bc2ce` passed **620 engineering checks**, including **19 actual-container and nine UI checks**. Clean Python 3.12 without Textual/course credentials passed 16 command checks and **592 core checks**, with 28 explicit Docker/UI skips. These are engineering checks, not instructor tasks or scores.
+**Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)
 
 **Accepted required-action milestone:** an explicit opt-in `require_tool_actions` mode requests actual tool calls and uses the existing independent-verification proposal for completion. In the issued HKGAI trial, **all 43 replies were tool calls with no free-text narration or truncation**. Both changed-input JSONL probes completed their full independently audited contracts: current code/input, real isolated execution, correct output, actual handoff/read, report and final verification. The ON probe used 14 requests and selected a prior coordinator failure observation; OFF used 13. Both succeeded, with ON slower and more costly in reported tokens: **no learning advantage is claimed**.
 
