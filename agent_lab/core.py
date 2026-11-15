@@ -125,40 +125,52 @@ class Workflow:
         )
 
     def register_actor(self, actor, kind):
+        with self._transaction():
+            self._register_actor(actor, kind)
+
+    def _register_actor(self, actor, kind):
+        """Internal: caller holds the workflow transaction."""
         if not isinstance(actor, str) or not actor.strip() or kind not in {"human", "agent"}:
             raise WorkflowError("Provide an actor identifier and human/agent kind")
-        with self._transaction():
-            previous = self.db.execute("SELECT kind FROM actors WHERE id=?", (actor,)).fetchone()
-            if previous and previous["kind"] != kind:
-                raise WorkflowError("An actor's kind cannot be changed")
-            self.db.execute("INSERT OR IGNORE INTO actors VALUES(?,?)", (actor, kind))
+        previous = self.db.execute("SELECT kind FROM actors WHERE id=?", (actor,)).fetchone()
+        if previous and previous["kind"] != kind:
+            raise WorkflowError("An actor's kind cannot be changed")
+        self.db.execute("INSERT OR IGNORE INTO actors VALUES(?,?)", (actor, kind))
 
     def create_chat(self, kind, participants):
-        people = set(participants)
         with self._transaction():
-            kinds = [self._row("actors", p)["kind"] for p in people]
-            if kind not in {"private", "group"} or not {"human", "agent"}.issubset(kinds):
-                raise WorkflowError("A conversation requires a human and an agent")
-            if kind == "private" and len(people) != 2:
-                raise WorkflowError("A private conversation has exactly two participants")
-            identifier = uuid4().hex
-            self.db.execute("INSERT INTO chats VALUES(?,?)", (identifier, kind))
-            self.db.executemany("INSERT INTO members VALUES(?,?)", [(identifier, p) for p in people])
+            return self._create_chat(kind, participants)
+
+    def _create_chat(self, kind, participants):
+        """Internal: caller holds the workflow transaction."""
+        people = set(participants)
+        kinds = [self._row("actors", p)["kind"] for p in people]
+        if kind not in {"private", "group"} or not {"human", "agent"}.issubset(kinds):
+            raise WorkflowError("A conversation requires a human and an agent")
+        if kind == "private" and len(people) != 2:
+            raise WorkflowError("A private conversation has exactly two participants")
+        identifier = uuid4().hex
+        self.db.execute("INSERT INTO chats VALUES(?,?)", (identifier, kind))
+        self.db.executemany("INSERT INTO members VALUES(?,?)", [(identifier, p) for p in people])
         return identifier
 
     def post_message(self, chat, actor, body, *, task=None):
+        with self._transaction():
+            self._post_message(chat, actor, body, task=task)
+
+    def _post_message(self, chat, actor, body, *, task=None):
+        """Internal: caller holds the workflow transaction."""
         if not isinstance(body, str) or not body.strip():
             raise WorkflowError("A message cannot be empty")
-        with self._transaction():
-            self._member(chat, actor)
-            if task is not None:
-                assigned = self._task(task, actor, assigned=True)
-                if assigned["chat"] != chat or assigned["state"] != "running":
-                    raise WorkflowError("Task messages require a running assignment in this conversation")
-            self.db.execute(
-                "INSERT INTO messages(chat,sender,body,timestamp) VALUES(?,?,?,?)",
-                (chat, actor, body, self.clock()),
-            )
+        self._member(chat, actor)
+        if task is not None:
+            assigned = self._task(task, actor, assigned=True)
+            if assigned["chat"] != chat or assigned["state"] != "running":
+                raise WorkflowError("Task messages require a running assignment in this conversation")
+        return self.db.execute(
+            "INSERT INTO messages(chat,sender,body,timestamp) VALUES(?,?,?,?)",
+            (chat, actor, body, self.clock()),
+        ).lastrowid
 
     def messages(self, chat, actor):
         self._member(chat, actor)

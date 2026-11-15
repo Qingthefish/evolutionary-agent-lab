@@ -639,6 +639,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Base revision / branch / PR / evidence:** —
 - **Reviewer:** —
 - **Progress / review changes / outcome:** Prepare the offline sequential session workflow from the reviewed C06 inputs. Verify that the two tasks stay in the same group and that a human can carry a reviewed Task 1 artifact into Task 2. Official execution, scoring and submission remain separate acceptance steps.
+- **2026-11-16 rehearsal:** The official software input opened with all four original roles, posted Task 1 verbatim and refused an early Task 2. A separate synthetic test reopened the state, ran Task 2 in the existing group, read Task 1's exact transferred version and passed independent output verification. It also checked that a failed Task 1 remains in the record and a rejected post leaves no extra message. The live scheduler binding and model run remain open. [Session commands](official-mid-test.md#s01-handoff-and-unresolved-rules)
 
 ### S02
 
