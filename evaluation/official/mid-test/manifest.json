@@ -1,0 +1,237 @@
+{
+  "dataset_id": "nlp-mid-test-2026",
+  "protocol": {
+    "acceptance": "negotiated_with_human",
+    "between_scenarios": "separate_group",
+    "format_conflict_task_ids": [
+      "scenario-3-task-2"
+    ],
+    "human": "real_unscripted",
+    "memory_reset_rules": "unspecified",
+    "repeat_rules": "unspecified",
+    "scoring_rubric": "unspecified",
+    "timing_rule": "unspecified",
+    "within_scenario": "same_group_same_context"
+  },
+  "readme": {
+    "source": "README.md",
+    "text": "# Three Multi-Agent Collaboration Scenarios\n\nThese materials define only the group members, individual role prompts, and tasks. You can design the system-level and general collaboration mechanisms (Harness). During execution, the agent team determines the task breakdown, workflow, technical approach, testing methods, and completion criteria in consultation with the human requester.\n\n| Scenario                                                                                  | Four agent roles                                                              | Task 1                                                                        | Task 2                                                                                      |\n| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |\n| [Software Development Team](scenario_1_software_engineering 2/01_role_initialization.md)  | Technical Lead, Software Developer, Test Engineer, Release Manager            | [Meeting Room Booking System](scenario_1_software_engineering 2/02_task_1.md) | [Room Usage Dashboard](scenario_1_software_engineering 2/03_task_2.md)                        |\n| [Newsroom](scenario_2_newsroom 2/01_role_initialization.md)                               | Editor-in-Chief, Reporter, Fact-Checker, Editor                               | [Initial News Report](scenario_2_newsroom 2/02_task_1.md)                     | [Fact-Check AI-Writing Detectors](scenario_2_newsroom 2/03_task_2.md)                       |\n| [Securities Investment Fund Team](scenario_3_securities_fund 2/01_role_initialization.md) | Fund Manager, Investment Research Analyst, Risk Manager, Marketing Specialist | [Simulated Investment Proposal](scenario_3_securities_fund 2/02_task_1.md)    | [Semiconductor Industry Analysis in HTML Slides](scenario_3_securities_fund 2/03_task_2.md) |\n\nEach scenario folder contains three files:\n\n```text\n01_role_initialization.md  # Group members and individual role prompts\n02_task_1.md               # The first task posted to the group\n03_task_2.md               # The second task for the same team\n```\n\nCreate the group and its agents, then post Task 1. Subsequently, post Task 2 to the same group so that the team continues working with its existing collaboration context. Move to the next scenario after both tasks. The human responds to the actual conversation rather than following a predefined question-and-answer script.\n\nTask quality can be evaluated by providing the complete dialogue history and task outputs to models such as DeepSeek or ChatGPT.\n"
+  },
+  "scenarios": [
+    {
+      "id": "software-engineering",
+      "role_source": "scenario_1_software_engineering 2/01_role_initialization.md",
+      "roles": [
+        {
+          "id": "lead",
+          "name": "Technical Lead",
+          "prompt": "You are the technical lead of a software development team. You are responsible for understanding the user’s goals, shaping the overall technical approach, coordinating software delivery, and discussing important questions and trade-offs with the user."
+        },
+        {
+          "id": "dev",
+          "name": "Software Developer",
+          "prompt": "You are the software developer on a software development team. You are responsible for turning requirements into working software, solving technical problems during development, and improving the implementation in response to feedback from the team and the user."
+        },
+        {
+          "id": "qa",
+          "name": "Test Engineer",
+          "prompt": "You are the test engineer on a software development team. You are responsible for examining the software from the user’s perspective and assessing its quality. Decide how best to validate it, identify problems, verify improvements, and communicate your assessment to the team."
+        },
+        {
+          "id": "release",
+          "name": "Release Manager",
+          "prompt": "You are the release manager of a software development team. You are responsible for version management, delivering runnable software, and preparing release notes so that users can obtain and use the team’s work. You also support subsequent version updates."
+        }
+      ],
+      "tasks": [
+        {
+          "depends_on": null,
+          "id": "scenario-1-task-1",
+          "prompt": "Our team currently manages meeting rooms using a shared spreadsheet. We often run into double bookings and records that are not updated after cancellations. Please build a usable meeting room booking system that makes it easy to check availability, book rooms, and cancel bookings. Show me what you have built and explain how to use it. If you need to understand how we work or need other information, you can ask me in the group.",
+          "requested_format": "unspecified",
+          "sequence": 1,
+          "source": "scenario_1_software_engineering 2/02_task_1.md",
+          "title": "Build a Meeting Room Booking System"
+        },
+        {
+          "depends_on": "scenario-1-task-1",
+          "id": "scenario-1-task-2",
+          "prompt": "Extend the meeting room booking system with an interactive dashboard for the person managing the rooms. For a selected date range, it should show how often each room is booked, the total time reserved, the busiest days and times, and how often bookings are cancelled. Use clear charts and summaries so the manager can identify heavily used and underused rooms and decide whether to change room allocation. Use the system's booking records; You can ask me about unclear requirements during development.",
+          "requested_format": "unspecified",
+          "sequence": 2,
+          "source": "scenario_1_software_engineering 2/03_task_2.md",
+          "title": "Add a Room Usage Dashboard"
+        }
+      ],
+      "title": "Software Development Team"
+    },
+    {
+      "id": "newsroom",
+      "role_source": "scenario_2_newsroom 2/01_role_initialization.md",
+      "roles": [
+        {
+          "id": "chief_editor",
+          "name": "Editor-in-Chief",
+          "prompt": "You are the editor-in-chief of a newsroom. You are responsible for the choice of stories, reporting angles, and overall quality. Coordinate the team’s work to produce news content suited to its intended readers, and discuss editorial judgments with the requester."
+        },
+        {
+          "id": "reporter",
+          "name": "Reporter",
+          "prompt": "You are a reporter in a newsroom. You are responsible for finding story leads, gathering information, and investigating facts to provide well-supported material for reporting. Continue following up on questions that deserve further investigation."
+        },
+        {
+          "id": "fact_checker",
+          "name": "Fact-Checker",
+          "prompt": "You are the fact-checker in a newsroom. You are responsible for checking facts, sources, and key claims in reporting, identifying insufficient or conflicting evidence, and sharing your findings with the team."
+        },
+        {
+          "id": "editor",
+          "name": "Editor",
+          "prompt": "You are an editor in a newsroom. You are responsible for organizing and refining articles so that they are accurate, clear, and suitable for their readers. Continue revising the content in response to reporting findings and team feedback."
+        }
+      ],
+      "tasks": [
+        {
+          "depends_on": null,
+          "id": "scenario-2-task-1",
+          "prompt": "We want to produce a news report on “AI on HKUST University Campuses” for students and faculty. Please choose a specific recent event worth reporting, investigate it, and prepare the report for publication across different channels. Help readers understand what happened and why it matters. You can discuss the choice of story and the audience’s needs with me.",
+          "requested_format": "unspecified",
+          "sequence": 1,
+          "source": "scenario_2_newsroom 2/02_task_1.md",
+          "title": "Produce a News Report"
+        },
+        {
+          "depends_on": "scenario-2-task-1",
+          "id": "scenario-2-task-2",
+          "prompt": "Please investigate the following claim: \"AI-writing detectors can reliably determine whether a university student's assignment was written by AI.\" Examine the evidence and produce a fact-check article for students and faculty explaining your conclusion and any remaining uncertainty. You can discuss the interpretation of the claim, editorial angle, and questions that arise with me during the process.",
+          "requested_format": "unspecified",
+          "sequence": 2,
+          "source": "scenario_2_newsroom 2/03_task_2.md",
+          "title": "Fact-Check AI-Writing Detectors"
+        }
+      ],
+      "title": "Newsroom"
+    },
+    {
+      "id": "securities-fund",
+      "role_source": "scenario_3_securities_fund 2/01_role_initialization.md",
+      "roles": [
+        {
+          "id": "fund_manager",
+          "name": "Fund Manager",
+          "prompt": "You are the fund manager of a securities investment fund. You are responsible for setting the investment objectives and portfolio direction, combining investment research, risk assessments, and client input to make investment decisions, and explaining the trade-offs involved."
+        },
+        {
+          "id": "research",
+          "name": "Investment Research Analyst",
+          "prompt": "You are an investment research analyst at a securities investment fund. You are responsible for researching markets, industries, and securities, providing analysis and evidence for investment proposals, and reassessing investment judgments as new information becomes available."
+        },
+        {
+          "id": "risk",
+          "name": "Risk Manager",
+          "prompt": "You are the risk manager of a securities investment fund. You are responsible for identifying and assessing investment risks, examining whether proposals suit the client’s objectives and risk tolerance, and recommending ways to manage those risks."
+        },
+        {
+          "id": "marketing",
+          "name": "Marketing Specialist",
+          "prompt": "You are the marketing specialist at a securities investment fund. You are responsible for understanding clients’ needs and concerns, communicating them to the team, and explaining investment proposals and changes in materials that clients can understand."
+        }
+      ],
+      "tasks": [
+        {
+          "depends_on": null,
+          "id": "scenario-3-task-1",
+          "prompt": "I am 25 years old, have HKD 1,000,000, and would like to invest in US stocks. Please research and develop a simulated investment proposal for me, explain the reasons for the allocation and its risks, and prepare an introduction I can understand. You can ask me further questions about my investment objectives, time horizon, and risk preferences.",
+          "requested_format": "unspecified",
+          "sequence": 1,
+          "source": "scenario_3_securities_fund 2/02_task_1.md",
+          "title": "Develop a Simulated Investment Proposal"
+        },
+        {
+          "depends_on": "scenario-3-task-1",
+          "id": "scenario-3-task-2",
+          "prompt": "Taking an end-of-2026 perspective, prepare an analytical presentation for our fund team on the future of the semiconductor industry. Deliver it as HTML slides that can be opened and presented slide by slide in a browser. Develop your judgments through research and explain the investment implications and key risks. Decide the research scope, content structure, and presentation design yourselves. If you need to clarify the audience, analytical focus, or other information, you can discuss it with me during the process.",
+          "requested_format": "html_slides",
+          "sequence": 2,
+          "source": "scenario_3_securities_fund 2/03_task_2.md",
+          "title": "The Future of the Semiconductor Industry: An HTML Slide Presentation"
+        }
+      ],
+      "title": "Securities Investment Fund Team"
+    }
+  ],
+  "schema_version": 1,
+  "source": {
+    "archive_name": "Mid_Test.zip",
+    "bytes": 13002,
+    "ignored_members": [
+      "__MACOSX/._README.md",
+      "__MACOSX/._scenario_1_software_engineering 2",
+      "__MACOSX/._scenario_2_newsroom 2",
+      "__MACOSX/._scenario_3_securities_fund 2",
+      "__MACOSX/scenario_1_software_engineering 2/._01_role_initialization.md",
+      "__MACOSX/scenario_1_software_engineering 2/._02_task_1.md",
+      "__MACOSX/scenario_1_software_engineering 2/._03_task_2.md",
+      "__MACOSX/scenario_2_newsroom 2/._01_role_initialization.md",
+      "__MACOSX/scenario_2_newsroom 2/._02_task_1.md",
+      "__MACOSX/scenario_2_newsroom 2/._03_task_2.md",
+      "__MACOSX/scenario_3_securities_fund 2/._01_role_initialization.md",
+      "__MACOSX/scenario_3_securities_fund 2/._02_task_1.md",
+      "__MACOSX/scenario_3_securities_fund 2/._03_task_2.md"
+    ],
+    "members": [
+      {
+        "bytes": 2838,
+        "path": "README.md",
+        "sha256": "9bc106f579ba7fbc3ee536b83d390c906e64cff69294c915e65134f7a3b9134b"
+      },
+      {
+        "bytes": 1568,
+        "path": "scenario_1_software_engineering 2/01_role_initialization.md",
+        "sha256": "1a742e2a409f9e35487d6d9dd1fb6077399c9d316928a106136e3e56f3d0fd4d"
+      },
+      {
+        "bytes": 502,
+        "path": "scenario_1_software_engineering 2/02_task_1.md",
+        "sha256": "5348cba2dcb24a5ecf48f047642c132815ac63586858696dac12d29c7de04c6c"
+      },
+      {
+        "bytes": 564,
+        "path": "scenario_1_software_engineering 2/03_task_2.md",
+        "sha256": "884c6c3210b53e9b245463a95783e83f6c2803b8477030377c8b7d5b6a58ace7"
+      },
+      {
+        "bytes": 1463,
+        "path": "scenario_2_newsroom 2/01_role_initialization.md",
+        "sha256": "fc55a51748240e084f745e60b46284523e1dad49cb0a918c7b21b0e779048367"
+      },
+      {
+        "bytes": 424,
+        "path": "scenario_2_newsroom 2/02_task_1.md",
+        "sha256": "be7250cdbb23f0c5b82d0666df8d25fff87c8cd9dfe7746be2c57046224cdda0"
+      },
+      {
+        "bytes": 470,
+        "path": "scenario_2_newsroom 2/03_task_2.md",
+        "sha256": "e471ee0d4de335b2e12d991b159b5d6940449e52dd9e9b48e4ee4a31769c5737"
+      },
+      {
+        "bytes": 1637,
+        "path": "scenario_3_securities_fund 2/01_role_initialization.md",
+        "sha256": "ede6e2be8850cc4b213cc8e90bcf8d2aa3b870e2451ca5a4ca75fbc0f0052d4b"
+      },
+      {
+        "bytes": 422,
+        "path": "scenario_3_securities_fund 2/02_task_1.md",
+        "sha256": "c35990173358be55aa39e6955faffec9d1972c6550e38a76cbd4de26d0ca4b2b"
+      },
+      {
+        "bytes": 626,
+        "path": "scenario_3_securities_fund 2/03_task_2.md",
+        "sha256": "06fdc7b62d17bd83a6f5a3ef7d145411a5edb09d6c2851ea1cb76b2b4e0f8baa"
+      }
+    ],
+    "sha256": "e104fedbb6db46399936c69251ca2843dfa1e5845441f0a17af6e1af88cf25f2"
+  },
+  "split": "official_mid"
+}

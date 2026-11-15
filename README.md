@@ -178,6 +178,20 @@ Live mode must be requested explicitly (`--live --provider hkgai --model <id> --
 
 ## Run development evaluations
 
+The instructor's **2026 mid-test** is preserved with a separate C06 input
+adapter: three four-agent scenarios, each with two ordered tasks in the same
+group. Inspect it without credentials or model calls:
+
+```bash
+python -m agent_lab.evaluation.official inspect
+```
+
+See [official mid-test preparation](docs/official-mid-test.md) for source hashes,
+review-bound preparation and the S01 handoff. All six tasks remain unrun; missing
+rules include the source's HTML-slide request versus the earlier MD/TXT boundary.
+This entry does not execute or score tasks. Development commands below retain
+their existing fresh-case semantics.
+
 ```bash
 python3 -m agent_lab.evaluation list
 python3 -m agent_lab.evaluation run
