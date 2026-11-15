@@ -108,3 +108,20 @@ The following need review rather than invented defaults:
 
 Protocol gaps do not remove tasks from the manifest. This package is the mid-test,
 not an invented final held-out dataset.
+
+### Software scenario rehearsal
+
+- Verify that both roots have the same conversation ID and same four assigned
+  roles. Preserve the actual human questions and decisions, and record the
+  outcome of Task 1 before posting Task 2.
+- For Task 1, apply independently checked booking, cancellation and availability
+  cases to the team's actual deliverable. Save the version of the booking records
+  used by Task 2.
+- For Task 2, compare the dashboard's counts and times to independently
+  calculated results for a selected date range from those records. Confirm that
+  changing the date range changes the results as expected.
+- Retain both task outcomes, artifacts, dialogue, total elapsed time and human
+  waiting time. Record any failed or blocked checks against the delivered work.
+
+These proposed checks guide the rehearsal. The requester and the team still
+agree the actual completion criteria in the conversation.

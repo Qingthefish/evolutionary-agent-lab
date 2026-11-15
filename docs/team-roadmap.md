@@ -602,14 +602,15 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Prepare the official dataset adapter**
 
-- **Stage / status:** M4 / Unclaimed
-- **Owner:** —
-- **Dependencies / configuration:** Stable evaluation contracts; final mapping awaits the instructor's dataset/protocol.
-- **Scope:** Dataset adapter, manifests and official-run configuration; keep development and official inputs separate.
-- **Acceptance:** When issued, every official task and intervention/memory/repeat rule maps to recorded evaluation inputs/outputs. Do not substitute our development cases or silently remove failures/unrun tasks.
-- **Base revision / branch / PR / evidence:** —
-- **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Stage / status:** M4 / Mid-test input preparation accepted. Final test inputs and protocol pending.
+- **Owner:** Jingran (jingran-jupiter) contributed the mid-test adapter. Qingthefish coordinated its review and integration.
+- **Dependencies / configuration:** Download the issued mid-test ZIP from Canvas and generate the local manifest. Final mapping awaits the instructor's final dataset and protocol.
+- **Scope:** Dataset adapter, manifests and official-run configuration. Development inputs and course archives are kept apart.
+- **Acceptance:** Preserve the issued prompts and ordered tasks, record the same-group continuation and real human dialogue requirements, and retain all expected tasks in the execution handoff. The prescribed runs and final evaluation rules are tracked in S01.
+- **Base revision / branch / PR / evidence:** Jingran's [PR #54](https://github.com/Qingthefish/evolutionary-agent-lab/pull/54) at `db000a3`; reviewed integration at `b25c9be`. [Mid-test guide](official-mid-test.md)
+- **Reviewer:** Qingthefish, Codex-assisted.
+- **Progress / review changes / outcome:** 2026-11-16: verified all ten ZIP documents against an independent Canvas download, compared all 12 role prompts and six task prompts with the source, and prepared the three same-group sequences through the CLI. All six tasks remain unrun. Review moved the archive and generated manifests to local ignored paths, replaced course-dependent automated checks with a synthetic fixture and scoped the HTML format question to the relevant task. All 23 focused checks passed with zero model calls.
+- **Offline regression:** Clean Python 3.12.12 and 3.14.7 each passed all 16 setup commands and 616 tests, with 19 Docker and nine optional UI checks explicitly skipped. The [software rehearsal checklist](official-mid-test.md#software-scenario-rehearsal) specifies what to verify when the two tasks can be run in one conversation.
 
 ### A07
 
