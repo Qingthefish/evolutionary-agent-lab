@@ -188,8 +188,9 @@ python -m agent_lab.evaluation.official inspect --config runs/official-mid-input
 ```
 
 The inspection records six unrun tasks, the input hashes and the choices
-remaining for the S01 execution and scoring workflow. Development commands
-below start each case from fresh state.
+remaining for S01. The [session rehearsal](docs/official-mid-test.md#s01-handoff-and-unresolved-rules)
+keeps each pair in one saved group and tracks a selected artifact's transfer
+and read across tasks. Development commands below start each case from fresh state.
 
 ```bash
 python3 -m agent_lab.evaluation list

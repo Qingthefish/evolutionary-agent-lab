@@ -84,13 +84,39 @@ requires adapter review rather than silently inheriting its fixed interpretation
 
 ## S01 handoff and unresolved rules
 
-C06 prepares inputs/configuration; it supplies no live driver, automatic grading
-or official score. The development `Evaluator` resets state per case and
-`DevelopmentPlan` rejects held-out inputs; these defaults are unchanged. S01 must
-consume the scenario contract with the existing workflow/scheduler/tool APIs,
-retain Task 1 context for Task 2 and real human decisions, and collect dialogue,
-outputs, observed models, total time, human waits and usage. Failed, blocked and
-unrun tasks must stay in the approved metrics' denominator.
+C06 prepares inputs and configuration. S01 now opens a persistent group with
+the four original role IDs, posts each exact task prompt as both a message and
+a root task, and keeps the same group across process restarts. Task 2 can be
+posted after Task 1 reaches a terminal state. A repeated post returns the
+existing root for the same assignee. An operator can provide a reviewed Task 1
+artifact to pending Task 2 by specifying its source task, path and SHA-256.
+The status report distinguishes that transfer from a later read of the same
+bytes by the second root.
+
+To rehearse setup with the original local inputs, use a fresh ignored state
+directory and the fingerprint from C06 inspection:
+
+```bash
+python -m agent_lab.evaluation.official_session \
+  --config runs/official-mid-inputs/plan.json --state-dir runs/software-scenario \
+  init --scenario software-engineering --human requester --plan-sha256 REVIEWED_SHA256
+python -m agent_lab.evaluation.official_session \
+  --config runs/official-mid-inputs/plan.json --state-dir runs/software-scenario \
+  post --sequence 1 --assignee lead
+python -m agent_lab.evaluation.official_session \
+  --config runs/official-mid-inputs/plan.json --state-dir runs/software-scenario status
+```
+
+These commands leave Task 1 pending. Task 2 uses `post --sequence 2 --assignee ROLE`
+under the same state directory after Task 1 finishes. Use
+`carry --source-task TASK_ID --source-path PATH --sha256 SHA256 --target-path PATH`
+before starting Task 2 if it needs an earlier artifact. Keep the status output
+local because it contains conversation text. Use `--help` for options.
+
+The next S01 step binds the four source prompts to the live scheduler and
+adds the execution and human review workflow. Official scoring still requires
+dialogue, outputs, observed models, total time, human waits and usage. Failed,
+blocked and unrun tasks must stay in the approved metrics' denominator.
 
 The following need review rather than invented defaults:
 
