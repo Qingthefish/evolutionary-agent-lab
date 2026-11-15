@@ -1,0 +1,52 @@
+"""The software rehearsal keeps its shared limits and stops at human requests."""
+
+from types import SimpleNamespace
+import tempfile
+import unittest
+
+from agent_lab.core import Workflow, WorkflowError
+from agent_lab.evaluation.official_live import TOOL_POLICY, advance, runtime_config
+
+
+class OfficialLiveTests(unittest.TestCase):
+    def test_software_budget_allocations_sum_to_the_reviewed_cap(self):
+        session = SimpleNamespace(scenario={"id": "software-engineering"})
+        settings = {"provider": "hkgai", "tool_policy": TOOL_POLICY, "model": "issued-model",
+                    "per_scenario_model_attempts": 47, "max_output_tokens": 1024, "api_key_env": "COURSE_TEST_KEY"}
+        plan = SimpleNamespace(config={"runtime": settings})
+        backend = {"docker_host": "unix:///test/docker.sock", "image": "test-image",
+                   "allow_network": False, "environ": {"COURSE_TEST_KEY": "dummy-fixture"}}
+        first = runtime_config(session, plan, 1, **backend)
+        second = runtime_config(session, plan, 2, **backend)
+        self.assertEqual((first.tree_limits.model_attempts, second.tree_limits.model_attempts), (24, 23))
+        self.assertFalse(first.allow_network)
+        self.assertFalse(first.enable_web)
+        self.assertEqual(first.repositories, ())
+        self.assertEqual(first.socket_timeout, 90)
+        settings["per_scenario_model_attempts"] = 49
+        with self.assertRaisesRegex(WorkflowError, "bounded scenario budget"):
+            runtime_config(session, plan, 1, **backend)
+
+    def test_advance_stops_before_another_turn_when_request_is_open(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workflow = Workflow(f"{directory}/workflow.sqlite3")
+            self.addCleanup(workflow.close)
+            workflow.register_actor("operator", "human")
+            workflow.register_actor("lead", "agent")
+            chat = workflow.create_chat("group", ["operator", "lead"])
+            root = workflow.create_task(chat, "operator", "lead", "Fixture")
+            workflow.start_task(root, "lead")
+            calls = []
+
+            def step():
+                calls.append("step")
+                workflow.ask_human(root, "lead", "operator", "Fixture clarification")
+                return {"state": "running"}
+
+            scheduler = SimpleNamespace(workflow=workflow, root=root, step=step, status=lambda: {"root": root})
+            result = advance(scheduler, 8)
+            self.assertEqual(calls, ["step"])
+            self.assertEqual(result["state"], "blocked")
+            self.assertEqual(result["needs"][0]["requests"][0]["prompt"], "Fixture clarification")
+            self.assertEqual(advance(scheduler, 1), result)
+            self.assertEqual(calls, ["step"])

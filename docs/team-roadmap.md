@@ -631,7 +631,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run the official evaluation**
 
-- **Stage / status:** M5 / In progress (mid-test session rehearsal)
+- **Stage / status:** M5 / In progress (live software rehearsal started)
 - **Owner:** Qingthefish (owner-requested continuation, Codex-assisted)
 - **Dependencies / configuration:** C06, A07, the official dataset and authorized runtime access.
 - **Scope:** Official raw run records, complete result counts and metrics.
@@ -640,6 +640,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 - **Reviewer:** —
 - **Progress / review changes / outcome:** Prepare the offline sequential session workflow from the reviewed C06 inputs. Verify that the two tasks stay in the same group and that a human can carry a reviewed Task 1 artifact into Task 2. Official execution, scoring and submission remain separate acceptance steps.
 - **2026-11-16 rehearsal:** The official software input opened with all four original roles, posted Task 1 verbatim and refused an early Task 2. A separate synthetic test reopened the state, ran Task 2 in the existing group, read Task 1's exact transferred version and passed independent output verification. It also checked that a failed Task 1 remains in the record and a rejected post leaves no extra message. The live scheduler binding and model run remain open. [Session commands](official-mid-test.md#s01-handoff-and-unresolved-rules)
+- **2026-11-16 live start:** Bound the four source roles to HKGAI and the previously verified isolated Python backend. The local sandbox fixture ran and cleaned up successfully. Task 1 used two requests. The first returned successful group-message and task-list reads (requested `e7`, returned `e10`, 3,151 reported tokens). The second returned an invalid completion at parsing, with usage unknown and no tool effect. The task stopped without replay. No implementation, live human review, completion or Task 2 outcome is claimed. Python 3.12 regression recorded 621 passes and 28 explicit skips. [Software live commands](official-mid-test.md#hkgai-software-rehearsal)
 
 ### S02
 

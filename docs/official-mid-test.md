@@ -113,10 +113,37 @@ under the same state directory after Task 1 finishes. Use
 before starting Task 2 if it needs an earlier artifact. Keep the status output
 local because it contains conversation text. Use `--help` for options.
 
-The next S01 step binds the four source prompts to the live scheduler and
-adds the execution and human review workflow. Official scoring still requires
-dialogue, outputs, observed models, total time, human waits and usage. Failed,
-blocked and unrun tasks must stay in the approved metrics' denominator.
+### HKGAI software rehearsal
+
+For the software scenario, copy the operator plan into a fresh local input
+directory alongside its archive and manifest. Set the issued HKGAI model,
+`tool_policy` to `software-files-coordination-python-v1`, and set the authorized
+`per_scenario_model_attempts` (2–48) and `max_output_tokens` (1–1024). Inspect
+this plan before initializing the run. The two roots' call caps add up to
+the reviewed scenario budget. This path uses a 90-second socket timeout and
+requires the [existing isolated Python backend](sandbox.md).
+
+After posting Task 1, load the key through the plan's environment variable and
+run the local preflight. Replace the socket and digest with the verified ones:
+
+```bash
+python -m agent_lab.evaluation.official_live \
+  --config runs/software-inputs/plan.json --state-dir runs/software-scenario --sequence 1 \
+  preflight --docker-host "$DOCKER_SOCKET_URL" --image "$PINNED_PYTHON_IMAGE"
+```
+
+Replace `preflight` with `advance` to run one provider turn in the same state.
+Use `--turns` for up to eight turns per command. The runtime stops at pending
+clarifications or independent proposals for review. The operator can use
+`answer --request ID --text TEXT` for an actual clarification answer or
+`review --task ID --decision accept|reject --feedback TEXT` with the same
+backend options after inspecting a proposal. Record specific checked evidence
+in the feedback. Post Task 2 to the same group after Task 1 reaches a terminal
+state and carry forward reviewed inputs before advancing the second root.
+
+Official scoring still requires dialogue, outputs, observed models, total time,
+human waits and usage. Failed, blocked and unrun tasks must stay in the approved
+metrics' denominator.
 
 The following need review rather than invented defaults:
 
