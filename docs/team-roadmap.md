@@ -631,14 +631,14 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run the official evaluation**
 
-- **Stage / status:** M5 / Unclaimed
-- **Owner:** —
+- **Stage / status:** M5 / In progress (mid-test session rehearsal)
+- **Owner:** Qingthefish (owner-requested continuation, Codex-assisted)
 - **Dependencies / configuration:** C06, A07, the official dataset and authorized runtime access.
 - **Scope:** Official raw run records, complete result counts and metrics.
 - **Acceptance:** Evaluate under the issued protocol, preserve full denominators/timing/failures and required memory history. Development results are not presented as official scores.
 - **Base revision / branch / PR / evidence:** —
 - **Reviewer:** —
-- **Progress / review changes / outcome:** —
+- **Progress / review changes / outcome:** Prepare the offline sequential session workflow from the reviewed C06 inputs. Verify that the two tasks stay in the same group and that a human can carry a reviewed Task 1 artifact into Task 2. Official execution, scoring and submission remain separate acceptance steps.
 
 ### S02
 
