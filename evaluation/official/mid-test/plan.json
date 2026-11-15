@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "purpose": "official_mid_preparation",
+  "archive": "Mid_Test.zip",
+  "manifest": "manifest.json",
+  "runtime": {
+    "provider": "hkgai",
+    "model": null,
+    "api_key_env": "COURSE_HKGAI_API_KEY",
+    "per_scenario_model_attempts": null,
+    "max_output_tokens": null,
+    "tool_policy": null
+  },
+  "operator_decisions": {
+    "completion_criteria": null,
+    "memory_persistence": null,
+    "repeat_policy": null,
+    "timing_rule": null,
+    "html_format_conflict": null
+  }
+}

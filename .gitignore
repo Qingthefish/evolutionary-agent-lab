@@ -29,6 +29,8 @@ htmlcov/
 /runs/
 /logs/
 /models/
+/evaluation/official/mid-test/*
+!/evaluation/official/mid-test/plan.json
 *.sqlite3
 *.sqlite3-*
 

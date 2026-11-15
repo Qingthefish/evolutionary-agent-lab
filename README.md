@@ -178,6 +178,19 @@ Live mode must be requested explicitly (`--live --provider hkgai --model <id> --
 
 ## Run development evaluations
 
+The C06 input adapter reads the instructor's **2026 mid-test** from a local
+copy of the Canvas archive. It prepares three four-agent scenarios, each with
+two ordered tasks in the same group. Follow the local setup steps in the
+[mid-test guide](docs/official-mid-test.md), then inspect the prepared inputs:
+
+```bash
+python -m agent_lab.evaluation.official inspect --config runs/official-mid-inputs/plan.json
+```
+
+The inspection records six unrun tasks, the input hashes and the choices
+remaining for the S01 execution and scoring workflow. Development commands
+below start each case from fresh state.
+
 ```bash
 python3 -m agent_lab.evaluation list
 python3 -m agent_lab.evaluation run

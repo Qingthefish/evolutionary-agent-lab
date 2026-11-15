@@ -140,14 +140,16 @@ Current engineering checks do not close these live or submission requirements:
 - Combined real search/retrieval, file CRUD and runtime GitHub commit/push under a designated branch, narrow credentials and real approvals. Developer publishing is different evidence.
 - Broader human interaction/recovery scenarios if demanded by the official protocol. The bounded real private clarification and group approval/release paths now pass; live denial/uncertainty are not newly claimed.
 - More varied matched memory trials and a live single/multi comparison using the merged C07 harness. Report null effects and regressions alongside gains.
-- The actual official dataset/protocol adapter, prescribed runs, scoring/timing/memory/intervention semantics, and performance/failure analysis.
-- Verify the fourth member’s code contribution, assemble all members’ commit-history screenshots and complete the presentation and final report.
+- Prescribed mid-test and final runs, final dataset mapping, scoring and timing rules, memory and intervention handling, and performance and failure analysis. The [mid-test adapter](official-mid-test.md) prepares three scenarios with six tasks.
+- Assemble all members’ commit-history screenshots and complete the presentation and final report.
 
 Detailed ownership, acceptance and dependencies remain in the Roadmap; this draft does not create another task register. No score, completion percentage or final grade is inferred from check counts.
 
 ## 8. Contributions and AI assistance
 
 Repository history preserves actual authors and reviews. The accepted contributions include Qingthefish's Codex-assisted backend/integration work and HelloWorld2333666's terminal, Git and evaluation foundations (PRs #7–#9), plus the C07 comparison and coordination audit (PRs #48–#50). Minho Joh (aminoacid11) reproduced setup on clean WSL, fixed CLI parsing, tested HKGAI and Docker, and added the GitHub Actions workflow. [D04 PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) · [I04 PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) Further claims must be checked against actual code and review history; repository access alone does not establish contribution. AI assistance was used for implementation, checks, documentation and review. Automated/Codex-assisted self-review is not independent teammate approval. Final per-member statements and required screenshots remain to be verified.
+
+Jingran (jingran-jupiter) contributed the C06 instructor mid-test adapter, including input parsing, same-group preparation and automated checks. The coordinator adapted it to use a local course archive while keeping his authorship. [C06 source PR #54](https://github.com/Qingthefish/evolutionary-agent-lab/pull/54) · [Review evidence](team-roadmap.md#c06)
 
 ## 9. Proposed presentation outline
 
@@ -164,7 +166,7 @@ The announcement requires a week-13 presentation; confirm its exact date/format.
 
 | Field | Status |
 | --- | --- |
-| Official dataset version/hash and exact task count | Not present in this draft |
+| Official dataset version/hash and exact task count | Mid-test: three scenarios and six ordered tasks, with source hashes recorded by C06. Final test dataset pending. |
 | Instructor timing, human intervention, memory reset/repeat and scoring rules | Await verified protocol |
 | Final revision/configuration and authorized evaluation budget | To freeze for the official run |
 | Official completion rate, execution time and failure/memory analysis | No official results claimed |
