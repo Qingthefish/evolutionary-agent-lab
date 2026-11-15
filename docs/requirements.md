@@ -32,6 +32,15 @@ Source: instructor announcement supplied by the user, “Final Project Specifica
 
 ## Questions affecting design
 
+The instructor's mid-test package was supplied on 2026-11-15. It defines three
+four-agent scenarios with two sequential tasks per same group and real human
+dialogue. The [C06 adapter](official-mid-test.md) reads the original local package
+and preserves roles, prompts and source hashes while preparing all six task records without
+execution. The package supplies no fixed scoring rubric, repeat/reset rules or
+call budget. Its final scenario explicitly requests HTML slides, which conflicts
+with the earlier MD/TXT boundary; keep the original prompt and obtain clarification
+before changing runtime formats. Operator proposals are not official rules.
+
 - Minimum accepted sandbox boundary and meaning of heterogeneous agents under one provider.
 - Human participation during standardized evaluation, and whether waiting time counts toward execution time. Until clarified, record both total wall time and human-wait time separately without excluding either from reports silently.
 - Whether memory persists between final test tasks and whether repeat runs are allowed.
@@ -78,7 +87,7 @@ Required-action follow-up (2026-10-30): opt-in source `a52c34a` passed **534 ful
 | R11 — minimal functional UI | Actual console interaction passed under D01 and D02. Minho reproduced clean WSL setup and the optional UI, and the headless UI job passed on main | Broader official scenarios and configurations. [D01](team-roadmap.md#d01) · [D02](team-roadmap.md#d02) · [D04](team-roadmap.md#d04) · [I04](team-roadmap.md#i04) |
 | R12 — allowed model backbone | Explicit DeepSeek and issued HKGAI HTTP adapters; fixed separate hosts and shared setup with no provider fallback. Real HKGAI create/read/final cycle passed independent file checks with observed model/usage/time | Confirm quota and authorize subsequent live trials; connection acceptance in [A01](team-roadmap.md#a01) does not establish the other required model behaviors |
 | R13 — automatic completion/time | Separate root/subtask outcomes, failures/waits and recorded model/time/usage; received_from checks distinguish numeric correctness from required delivery/read | Map the official timing/intervention/scoring semantics and configure independent criteria per task; old limited reports are retained alongside stricter audits; [C06](team-roadmap.md#c06). No course performance established |
-| R14 — standardized test set | General development case loader and retained manifests | Actual official format/protocol adapter and full prescribed run; [C06](team-roadmap.md#c06), [S01](team-roadmap.md#s01) |
+| R14 — standardized test set | General development loader and a separate sequential-scenario adapter for the original local mid-test ZIP | Resolve remaining protocol/format rules, implement scenario execution and run the prescribed evaluation. [C06 preparation](official-mid-test.md) · [S01](team-roadmap.md#s01) |
 | R15 — continuous collaborative history/screenshots | The merged history records contributions from Qingthefish, HelloWorld2333666 and Minho Joh (aminoacid11) | Verify the fourth member’s code contribution and assemble each member’s commit-history screenshots. [Contribution evidence](final-report.md#8-contributions-and-ai-assistance) · [S02](team-roadmap.md#s02) |
 | R16 — architecture document | [architecture.md](architecture.md) explains routing, memory, isolation, permissions and evaluation | Reconcile the final release configuration and live changes; [A07](team-roadmap.md#a07), [S02](team-roadmap.md#s02) |
 | R17 — test report/presentation | Development Markdown reports and failure/provenance records | Official mid/final results, failure/memory discussion and week-13 presentation/final report; [S01](team-roadmap.md#s01), [S02](team-roadmap.md#s02) |
