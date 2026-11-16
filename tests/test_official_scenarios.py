@@ -17,11 +17,17 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from agent_lab.core import WorkflowError
+from agent_lab import budget
+from agent_lab.core import Workflow, WorkflowError
+from agent_lab.deepseek import DeepSeekClient
 from agent_lab.evaluation import official_live, official_session
 from agent_lab.evaluation.official import OfficialMidTestPlan
 from agent_lab.evaluation.official_dataset import load_mid_test
-from agent_lab.evaluation.official_live import CONSTRAINTS, POLICIES, TOOL_POLICY, TOOLS, runtime_config
+from agent_lab.evaluation.official_live import (CONSTRAINTS, POLICIES, TOKENS_PER_REQUEST, TOOL_POLICY, TOOLS,
+                                                runtime_config)
+from agent_lab.files import FileTools
+from agent_lab.runner import Limits
+from agent_lab.scheduler import MultiAgentScheduler, Role
 from agent_lab.evaluation.topology import tool_classes
 from agent_lab.hkgai import HKGAIHTTP
 from official_mid_fixture import README_SHA256, SCENARIOS, write_archive
@@ -118,6 +124,74 @@ class ScenarioPolicies(unittest.TestCase):
                            docker_host=None, image=None, allow_network=False, environ={"COURSE_TEST_KEY": KEY})
 
 
+class TokenStopThresholds(unittest.TestCase):
+    """The request cap is the budget; the reported-token stop only guards against runaway use."""
+
+    def test_thresholds_scale_with_the_request_share_in_every_scenario(self):
+        self.assertEqual(TOKENS_PER_REQUEST, 11250)  # 180,000 / 16, as in the retained HKGAI development plans.
+        for name in POLICIES:
+            for attempts, shares in ((48, (24, 24)), (47, (24, 23)), (2, (1, 1))):
+                session = SimpleNamespace(scenario={"id": name})
+                plan = SimpleNamespace(config={"runtime": settings(name, per_scenario_model_attempts=attempts)})
+                backend = ("unix:///test/docker.sock", IMAGE) if POLICIES[name].python else (None, None)
+                for sequence, share in zip((1, 2), shares):
+                    live = runtime_config(session, plan, sequence, docker_host=backend[0], image=backend[1],
+                                          allow_network=False, environ={"COURSE_TEST_KEY": KEY})
+                    self.assertEqual((live.tree_limits.model_attempts, live.role_limits.model_attempts), (share, share))
+                    self.assertEqual((live.tree_limits.reported_tokens, live.role_limits.reported_tokens),
+                                     (share * 11250,) * 2)
+                    self.assertEqual((live.max_output_tokens, live.tool_calls, live.socket_timeout), (1024, 40, 90))
+
+    def test_shared_defaults_used_elsewhere_are_unchanged(self):
+        self.assertEqual((Limits().reported_tokens, budget.TreeLimits().reported_tokens), (32000, 128000))
+        self.assertEqual((Limits().model_attempts, budget.TreeLimits().model_attempts), (8, 48))
+
+    def run_task(self, live, tokens_per_reply):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        workflow = Workflow(Path(directory.name) / "state.sqlite3")
+        self.addCleanup(workflow.close)
+        files = FileTools(workflow, Path(directory.name) / "files")
+        self.addCleanup(files.close)
+        workflow.register_actor("requester", "human")
+        workflow.register_actor("lead", "agent")
+        root = workflow.create_task(workflow.create_chat("group", ["requester", "lead"]), "requester", "lead", "Fixture")
+        replies = []
+
+        def transport(payload):
+            replies.append(payload)
+            call = {"id": f"call-{len(replies)}", "type": "function", "function": {
+                "name": "create_text", "arguments": json.dumps({"path": f"part-{len(replies)}.txt", "content": "x"})}}
+            return json.dumps({"id": "fixture", "model": "synthetic-thresholds", "usage": {
+                "prompt_tokens": tokens_per_reply - 100, "completion_tokens": 100, "total_tokens": tokens_per_reply},
+                "choices": [{"finish_reason": "tool_calls",
+                             "message": {"role": "assistant", "content": None, "tool_calls": [call]}}]}).encode()
+
+        scheduler = MultiAgentScheduler(workflow, files, root, human="requester",
+            roles={"lead": Role("Fixture role", ("create_text",), (), live.role_limits, live.tool_calls)},
+            clients={"lead": DeepSeekClient("synthetic-thresholds", transport)}, mode="offline_fixture",
+            constraints=[], acceptance_id="fixture-thresholds", verifier_factory=lambda task: None,
+            limits=live.tree_limits)
+        state = scheduler.run()
+        reason = workflow.db.execute("SELECT stop_reason FROM runner_sessions WHERE task=?", (root,)).fetchone()[0]
+        written = workflow.db.execute("SELECT count(*) FROM tool_calls WHERE status='succeeded'").fetchone()[0]
+        return state, len(replies), written, reason
+
+    def test_typical_usage_reaches_the_request_cap_and_runaway_usage_still_stops(self):
+        live = configure("newsroom")
+        # 5,900 reported tokens per reply is the median of the retained HKGAI rounds; a synthetic reply here.
+        state, requests, written, reason = self.run_task(live, 5900)
+        self.assertEqual((requests, written), (24, 24))  # Under the old 32,000 default this stopped at reply six.
+        self.assertIn("attempt", reason)
+        self.assertNotIn("token", reason.lower())
+        self.assertEqual(state["budget"]["tokens"], 24 * 5900)
+        # Far above the ceiling: the guard still stops the task and releases no tools from the last reply.
+        state, requests, written, reason = self.run_task(live, 60000)
+        self.assertEqual((requests, written), (5, 4))
+        self.assertIn("reported token budget", reason)
+        self.assertEqual(state["task_state"], "failed")
+
+
 class OfflinePreflight(unittest.TestCase):
     def setUp(self):
         directory = tempfile.TemporaryDirectory()
@@ -188,6 +262,8 @@ class OfflinePreflight(unittest.TestCase):
                 self.assertEqual((report["mode"], report["task_state"], report["live_model_attempts"]),
                                  ("live", "pending", 0))
                 self.assertEqual(report["budget"]["attempts"], 0)
+                self.assertEqual((report["budget"]["limits"]["model_attempts"], report["budget"]["limits"]["reported_tokens"]),
+                                 (24, 24 * TOKENS_PER_REQUEST))
                 web, execution = report["configuration"]["web"], report["configuration"]["execution"]
                 self.assertEqual(web is not None, policy.web)
                 if policy.web:

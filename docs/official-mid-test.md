@@ -160,6 +160,17 @@ take neither and refuse them. `preflight` prints the policy and tool list,
 makes no model request and keeps network access off. Only `advance` enables the
 provider and, for the web policies, public search and retrieval.
 
+The authorized budget is the request cap in the plan. Each root's
+reported-token stop is a runaway guard set to 11,250 tokens per request of its
+share, so 270,000 tokens for a 24-request root. That ratio is the one the
+retained HKGAI development plans used (180,000 tokens for 16 requests). With
+the earlier shared defaults a task would have stopped at 32,000 tokens, about
+six replies at the usage seen in retained runs. The request cap, the
+1,024-token output cap and the defaults used by other runs are unchanged, and
+`preflight` prints the thresholds. A root that already started keeps its
+original limits and refuses different ones, so the retained 2026-11-16 Task 1
+can still be inspected and exported but not advanced under the new values.
+
 Prepare **one plan copy per scenario run** in its own ignored `runs/...` input
 directory, beside the archive and manifest, with the model, `tool_policy`,
 budget and operator decisions set. Changing any plan value changes

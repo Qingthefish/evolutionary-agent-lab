@@ -70,6 +70,13 @@ POLICIES = {
 }
 
 
+# The owner-authorized budget is the request cap. The reported-token stop is a
+# runaway guard scaled to that cap, so it does not end a task long before its
+# requests are used. 11,250 per request matches the retained HKGAI development
+# plans (180,000 tokens for 16 requests). Global defaults are unchanged.
+TOKENS_PER_REQUEST = 11250
+
+
 def scenario_policy(session):
     policy = POLICIES.get(session.scenario["id"])
     if policy is None:
@@ -94,12 +101,14 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
     # Separate persisted root limits sum to the scenario cap. Restarting does
     # not reclaim calls, and both roots retain their original allocation.
     root_attempts = (attempts + (sequence == 1)) // 2
+    root_tokens = root_attempts * TOKENS_PER_REQUEST
     key = (os.environ if environ is None else environ).get(config["api_key_env"], "")
     return LiveConfig(
         model=config["model"], api_key=key, provider="hkgai", allow_network=allow_network,
         socket_timeout=90, max_output_tokens=tokens, tool_calls=40, require_tool_actions=True,
-        tree_limits=TreeLimits(tasks=8, depth=3, model_attempts=root_attempts, duration_seconds=14400),
-        role_limits=Limits(model_attempts=root_attempts, duration_seconds=14400),
+        tree_limits=TreeLimits(tasks=8, depth=3, model_attempts=root_attempts, duration_seconds=14400,
+                               reported_tokens=root_tokens),
+        role_limits=Limits(model_attempts=root_attempts, duration_seconds=14400, reported_tokens=root_tokens),
         docker_host=docker_host if policy.python else None, python_image=image if policy.python else None,
         enable_web=policy.web,
     )
