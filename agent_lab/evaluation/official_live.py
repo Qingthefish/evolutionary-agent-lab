@@ -2,7 +2,7 @@
 
 import argparse
 from contextlib import ExitStack
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 import os
 from pathlib import Path
@@ -112,6 +112,17 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
         docker_host=docker_host if policy.python else None, python_image=image if policy.python else None,
         enable_web=policy.web,
     )
+
+
+def runtime_services(workflow, files, live):
+    """Backends whose recorded configuration is the same for every command.
+
+    The scheduler and runner persist the retrieval configuration, including its
+    network permission, and refuse a later command whose value differs. Web
+    policies therefore always configure retrieval as the run permits it. Only
+    `advance` dispatches tools, and only `advance` enables the provider.
+    """
+    return RuntimeServices(workflow, files, replace(live, allow_network=live.allow_network or live.enable_web))
 
 
 def _posted_root(session, sequence):
@@ -230,7 +241,7 @@ def main(argv=None):
                 with ExitStack() as stack:
                     files = FileTools(workflow, Path(args.state_dir) / "files")
                     stack.callback(files.close)
-                    services = RuntimeServices(workflow, files, live)
+                    services = runtime_services(workflow, files, live)
                     stack.callback(services.close)
                     scheduler = make_scheduler(session, root, files, live, services)
                     if args.command == "preflight":

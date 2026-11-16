@@ -156,9 +156,12 @@ scenario's plan to the matching identifier; a different value is refused.
 All three share the coordination and file tools, the same limits and review by
 the trusted human. The software policy is unchanged. Pass `--docker-host` and
 `--image` only for a policy with the Python sandbox; the newsroom commands
-take neither and refuse them. `preflight` prints the policy and tool list,
-makes no model request and keeps network access off. Only `advance` enables the
-provider and, for the web policies, public search and retrieval.
+take neither and refuse them. `preflight` prints the policy and tool list
+and makes no model request. Only `advance` sends provider requests or runs
+tools. For the web policies, every command records retrieval with network
+permitted, because the run's recorded tool configuration must not change
+between commands; `preflight` and `review` still dispatch no tool,
+so they make no search or retrieval request.
 
 The authorized budget is the request cap in the plan. Each root's
 reported-token stop is a runaway guard set to 11,250 tokens per request of its

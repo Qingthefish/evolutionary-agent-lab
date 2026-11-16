@@ -205,6 +205,8 @@ class OfflinePreflight(unittest.TestCase):
         for guard in (patch.object(HKGAIHTTP, "__call__", side_effect=AssertionError("No provider request")),
                       patch("subprocess.run", side_effect=AssertionError("No container start")),
                       patch("subprocess.Popen", side_effect=AssertionError("No container start")),
+                      patch("agent_lab.retrieval.PublicHTTPS.fetch", side_effect=AssertionError("No public fetch")),
+                      patch("socket.create_connection", side_effect=AssertionError("No network connection")),
                       patch("agent_lab.sandbox.shutil.which", return_value=sys.executable),
                       patch.dict(os.environ, {"COURSE_HKGAI_API_KEY": KEY})):
             guard.start()
@@ -267,12 +269,34 @@ class OfflinePreflight(unittest.TestCase):
                 web, execution = report["configuration"]["web"], report["configuration"]["execution"]
                 self.assertEqual(web is not None, policy.web)
                 if policy.web:
-                    self.assertFalse(web["network"])
+                    # Recorded as the run permits it, so advance can reopen this state. Preflight
+                    # dispatches no tool: any public fetch or socket here fails the test.
+                    self.assertTrue(web["network"])
                 self.assertEqual(execution is not None, policy.python)
                 if policy.python:
                     self.assertEqual(execution["image"], IMAGE)
                 state = Path(common[3])
                 self.assertEqual([p for p in (state / "files").rglob("*") if p.is_file()], [])
+
+    def test_web_policies_advance_and_review_the_state_their_preflight_opened(self):
+        # Regression: the recorded retrieval network flag differed between preflight and
+        # advance, so a later command refused the state as a changed configuration.
+        for scenario in ("newsroom", "securities-fund"):
+            with self.subTest(scenario=scenario):
+                common = self.prepare(scenario)
+                options = self.docker_options() if POLICIES[scenario].python else []
+                self.run_cli(official_live, [*common, "preflight", *options])
+                answer = json.dumps({"id": "fixture", "model": "synthetic-web-policy",
+                    "usage": {"prompt_tokens": 9, "completion_tokens": 3, "total_tokens": 12},
+                    "choices": [{"finish_reason": "tool_calls", "message": {"role": "assistant", "content": None,
+                        "tool_calls": [{"id": "ask", "type": "function", "function": {"name": "ask_human",
+                            "arguments": json.dumps({"prompt": "Synthetic fixture question?"})}}]}}]}).encode()
+                with patch.object(HKGAIHTTP, "__call__", return_value=answer) as provider:
+                    blocked = self.run_cli(official_live, [*common, "advance", "--turns", "2", *options])
+                self.assertEqual(provider.call_count, 1)
+                self.assertEqual(blocked["needs"][0]["requests"][0]["prompt"], "Synthetic fixture question?")
+                again = self.run_cli(official_live, [*common, "preflight", *options])
+                self.assertEqual((again["budget"]["attempts"], again["model_calls"]), (1, 0))
 
     def test_container_options_are_checked_per_policy(self):
         news, fund = self.prepare("newsroom"), self.prepare("securities-fund")
