@@ -360,7 +360,9 @@ class ExperienceSourceFailureTests(unittest.TestCase):
             self.assertEqual(compared['probes'][arm]['planned'],4)
             self.assertEqual(compared['probes'][arm]['not_run'],4)
             self.assertEqual(compared['probes'][arm]['goal_completion_rate'],0)
-        self.assertEqual(sum(r['classification']=='blocked' for r in report['results']),2)
+        self.assertEqual(sum(r['classification']=='blocked' for r in report['results']),1)
+        self.assertEqual(report['stop'],{'slot':0,'reason':'human_or_unfinished_boundary'})
+        self.assertTrue(all(r['status']=='not_run' for r in report['results'][1:]))
 
 
 if __name__=='__main__':unittest.main()
