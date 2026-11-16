@@ -13,7 +13,7 @@
 
 - The submitted model runtime must use DeepSeek or HKGAI. Do not silently substitute OpenAI, Anthropic, local models, or replay output for required live evaluation.
 - An offline test double may validate plumbing; label its output as synthetic and never report it as model capability.
-- Keep document tasks and outputs in Markdown or plain text. Internal structured records and source code are allowed; do not build PDF, DOCX, or PPT workflows.
+- Keep document tasks and outputs in Markdown or plain text. Internal structured records and source code are allowed; do not build PDF, DOCX, or PPT workflows. The one exception is the instructor's mid-test securities-fund Task 2, whose prompt explicitly asks for HTML slides: the agents may deliver HTML task files for that task only.
 - Keep the UI minimal. Prioritize autonomous delegation, human interaction, isolation, tools, per-agent memory, and evaluation.
 - File-system separation must be enforced, including path traversal and symlink boundaries; prompt instructions alone are not isolation.
 - Proactively clarify ambiguity and enforce approval before critical tool actions. Define critical actions explicitly; avoid unnecessary confirmations for authorized low-impact work. Bind approval to the action and arguments; persist task state so clarification and approval can resume the original task.

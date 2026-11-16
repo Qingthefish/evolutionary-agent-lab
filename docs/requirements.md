@@ -13,7 +13,7 @@ Source: instructor announcement supplied by the user, “Final Project Specifica
 | R07 | File read, generation, update, deletion | Observable file changes inside the authorized workspace |
 | R08 | Code writing, testing, execution | Generated or modified source, actual execution results, and independent validation |
 | R09 | Git commit and push to GitHub | Actual commit and remote branch verification in a designated test repository |
-| R10 | Documents use .md/.txt; no complex document-format work | Supported document inputs/outputs and stated format boundary |
+| R10 | Documents use .md/.txt; no complex document-format work. The mid-test securities-fund Task 2 prompt explicitly asks for HTML slides, so HTML task files are delivered for that task only | Supported document inputs/outputs and stated format boundary |
 | R11 | Minimal functional interface | Functional private/group interaction, task status, and clarification/approval controls |
 | R12 | DeepSeek or HKGAI only; OpenAI/Anthropic API prohibited | Explicit provider configuration and live evaluation metadata |
 | R13 | Automatic task completion rate and execution time | Goal/subtask outcomes checked against observable artifacts; end-to-end duration including failed runs |
@@ -37,9 +37,21 @@ four-agent scenarios with two sequential tasks per same group and real human
 dialogue. The [C06 adapter](official-mid-test.md) reads the original local package
 and preserves roles, prompts and source hashes while preparing all six task records without
 execution. The package supplies no fixed scoring rubric, repeat/reset rules or
-call budget. Its final scenario explicitly requests HTML slides, which conflicts
-with the earlier MD/TXT boundary; keep the original prompt and obtain clarification
-before changing runtime formats. Operator proposals are not official rules.
+call budget. Operator proposals are not official rules.
+
+Three format statements apply and should not be mixed:
+
+- **General convention.** Documents are Markdown or plain text, and the project
+  builds no PDF, DOCX or PPT workflow.
+- **Explicit instructor requirement.** The securities-fund Task 2 prompt asks for
+  HTML slides that open and present slide by slide in a browser. The original
+  prompt is kept, and HTML task files are permitted for that task only. The
+  existing file tools already write and read such files, so no tool, file
+  permission or acceptance check was widened. The decision is recorded in the
+  [plan template](../evaluation/official/mid-test/plan.json).
+- **Optional QA observations.** A reviewer may note whether a deck is a single
+  file, works offline or behaves the same in a second browser. The instructor
+  did not ask for these, so they are not acceptance criteria.
 
 - Minimum accepted sandbox boundary and meaning of heterogeneous agents under one provider.
 - Human participation during standardized evaluation, and whether waiting time counts toward execution time. Until clarified, record both total wall time and human-wait time separately without excluding either from reports silently.
@@ -83,7 +95,7 @@ Required-action follow-up (2026-10-30): opt-in source `a52c34a` passed **534 ful
 | R07 — Read/Generate/Update/Delete | Broker/gateway implement CRUD; real file creation/read and approved exact-version deletion observed, with unchanged retained input. Prior checks cover stale versions, denial, ownership and restart | Combined supported-tool workflow remains [A05](team-roadmap.md#a05); version-1 plans still disable deletion |
 | R08 — code writing/testing/execution | Two actual HKGAI code/report probes pass independent current-source/input, isolated-execution, cleanup, output-import, numeric/schema and receipt/read checks. All three coder subtasks in the repaired run passed; training parent failure stays recorded | Bounded declared contracts and case-specific numeric oracles do not establish arbitrary code correctness or general autonomy. Broader live coverage remains [A04](team-roadmap.md#a04)/[A05](team-roadmap.md#a05)/[C06](team-roadmap.md#c06) |
 | R09 — commit/push to GitHub | The shared runtime pushed to a disposable local remote after a fixture approval. Evaluation checked the exact consumed approval and the SHA on the original remote | A designated GitHub test branch, a repository-scoped runtime credential and actual human approval; [B03](team-roadmap.md#b03), [B04](team-roadmap.md#b04) |
-| R10 — MD/TXT documents | Plain-text document tooling and Markdown reports; JSON/SQLite are internal configuration/state | Maintain this boundary in future tools and official mapping; no PDF/DOCX/PPT parser project |
+| R10 — MD/TXT documents | Plain-text document tooling and Markdown reports; JSON/SQLite are internal configuration/state. HTML is allowed only for the mid-test securities-fund Task 2, as its prompt requires | Maintain this boundary in future tools and official mapping; no PDF/DOCX/PPT parser project. No live HTML delivery has been run yet |
 | R11 — minimal functional UI | Actual console interaction passed under D01 and D02. Minho reproduced clean WSL setup and the optional UI, and the headless UI job passed on main | Broader official scenarios and configurations. [D01](team-roadmap.md#d01) · [D02](team-roadmap.md#d02) · [D04](team-roadmap.md#d04) · [I04](team-roadmap.md#i04) |
 | R12 — allowed model backbone | Explicit DeepSeek and issued HKGAI HTTP adapters; fixed separate hosts and shared setup with no provider fallback. Real HKGAI create/read/final cycle passed independent file checks with observed model/usage/time | Confirm quota and authorize subsequent live trials; connection acceptance in [A01](team-roadmap.md#a01) does not establish the other required model behaviors |
 | R13 — automatic completion/time | Separate root/subtask outcomes, failures/waits and recorded model/time/usage; received_from checks distinguish numeric correctness from required delivery/read | Map the official timing/intervention/scoring semantics and configure independent criteria per task; old limited reports are retained alongside stricter audits; [C06](team-roadmap.md#c06). No course performance established |

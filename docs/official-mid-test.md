@@ -69,7 +69,8 @@ Use a new directory for each preparation. It saves:
   preparation supplies no success, zero execution time or completion score.
 
 The [plan template](../evaluation/official/mid-test/plan.json) names HKGAI as an
-operator choice. Model, budget, tool policy and unresolved protocol choices are
+operator choice and records the HTML format decision for scenario 3 Task 2.
+Model, budget, tool policy and the other protocol choices are
 null. Configure/review them before S01 execution. Proposed choices are not
 instructor rules and do not enable execution. Credentials stay outside the
 repository; only a variable name is configured.
@@ -141,15 +142,62 @@ backend options after inspecting a proposal. Record specific checked evidence
 in the feedback. Post Task 2 to the same group after Task 1 reaches a terminal
 state and carry forward reviewed inputs before advancing the second root.
 
+### Tool policies for the three scenarios
+
+Each scenario has its own reviewed tool policy. Set `tool_policy` in that
+scenario's plan to the matching identifier; a different value is refused.
+
+| Scenario | `tool_policy` | Web search and retrieval | Python sandbox |
+| --- | --- | --- | --- |
+| `software-engineering` | `software-files-coordination-python-v1` | no | yes |
+| `newsroom` | `newsroom-files-coordination-web-v1` | yes | no |
+| `securities-fund` | `securities-files-coordination-web-python-v1` | yes | yes |
+
+All three share the coordination and file tools, the same limits and review by
+the trusted human. The software policy is unchanged. Pass `--docker-host` and
+`--image` only for a policy with the Python sandbox; the newsroom commands
+take neither and refuse them. `preflight` prints the policy and tool list,
+makes no model request and keeps network access off. Only `advance` enables the
+provider and, for the web policies, public search and retrieval.
+
+Prepare **one plan copy per scenario run** in its own ignored `runs/...` input
+directory, beside the archive and manifest, with the model, `tool_policy`,
+budget and operator decisions set. Changing any plan value changes
+`plan_sha256`, and a state directory only opens with the plan it was
+initialized from. Do not edit the plan used by an existing state directory,
+including the retained 2026-11-16 software run.
+
+### Order, failure and continuity
+
+- When Task 1 reaches any terminal state (succeeded, failed or cancelled),
+  record its outcome, then post Task 2 to the same group. A failed Task 1
+  never silently omits Task 2.
+- The two roots have separate call allocations, so a failed Task 1 does not
+  spend Task 2's share.
+- `carry` works from a closed Task 1 tree, including a failed one, and only
+  with the exact reviewed SHA-256 of the file.
+- Whether a whole scenario may be repeated is the `repeat_policy` operator
+  decision. Every attempt is preserved and reported, including failed ones.
+- Known limitation: an agent's `read_messages` call returns at most the 20
+  most recent group messages, each cut to 2,048 characters. Older Task 1
+  dialogue is not reachable that way during Task 2. The full conversation is
+  still retained in the state directory and the evidence export.
+
 Official scoring still requires dialogue, outputs, observed models, total time,
 human waits and usage. Failed, blocked and unrun tasks must stay in the approved
 metrics' denominator.
 
 The following need review rather than invented defaults:
 
-- **Output format:** scenario 3 Task 2 asks for HTML slides, while the earlier
-  announcement limits documents to MD/TXT. The exact prompt and a format-conflict
-  blocker are retained; no rewritten task or widened runtime file policy is supplied.
+- **Output format:** documents are Markdown or plain text by convention. Scenario 3
+  Task 2 is the one exception: its prompt explicitly asks for HTML slides that open
+  and present slide by slide in a browser, so the team delivers HTML task files for
+  that task only. The plan template records this decision, the exact prompt is
+  unchanged, and no tool, file permission or acceptance check was widened. The
+  agents choose the presentation design. A plan whose `html_format_conflict` is
+  null still reports the format blocker on that task. Single-file delivery,
+  offline operation and a second-browser check are optional reviewer
+  observations, not acceptance criteria.
 - **Acceptance/scoring:** criteria are negotiated; no scoring rubric is supplied.
   File existence or an agent's claim of success is insufficient. Trusted review
   and its evidence must be recorded.
