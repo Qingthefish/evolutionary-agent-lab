@@ -89,6 +89,33 @@ Interpret multiple matched development cases and any allowed repeats together;
 one favorable pair is not general improvement. Official inputs, memory/reset and
 repeat rules remain separate from development experiments.
 
+### Retained development attempt, 2026-11-16
+
+The existing JSONL plan was attempted on source commit
+`679c145c01404bc249ee0f4f38f8aa7c99ad9a1c` under a fresh authorized allowance of
+48 requests across three roots. A dedicated Linux Docker VM and the actual
+digest-pinned Python sandbox had passed validation first: all 670 discovered
+tests passed with Docker and the optional Textual dependency configured, with
+zero skips. These are engineering checks, not model task results.
+
+Run `20261116-191157-19d03a` reserved and started **one actual HKGAI request** in
+training. Its retained `provider_request_failed` event reports `kind=timeout`,
+`phase=opening`, about 91.45 seconds, no HTTP status/response byte count, and
+`request_may_have_been_processed=true`. The requested model was
+`t2_hkgai-v3_fp8_1m_e7`; no returned model identity or token usage was observed.
+The known-token counter is zero with **one unknown-usage attempt**, not evidence
+of zero cost or zero provider processing.
+
+Training ended failed; both planned probe slots remain `not_run`. The trial
+stopped at slot 0 with `unknown_provider_usage`, without retrying or spending the
+remaining allowance on replacement tasks. Analysis is `not_comparable`; there
+is no ON/OFF effect estimate, learning gain, or C05 acceptance claim. Original
+SQLite, experiment/configuration JSON and the request ledger are retained in the
+ignored local run directory. This is an interface-stage failure; it supplies no
+evidence about the memory algorithm's effectiveness. No response was available
+to diagnose the remote cause. Any later model attempt needs reconciliation and
+authorization rather than automatic reissue.
+
 ## Limits
 
 This checks recorded consistency and describes associations. It does not
