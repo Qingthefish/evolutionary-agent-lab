@@ -183,6 +183,29 @@ including the retained 2026-11-16 software run.
   dialogue is not reachable that way during Task 2. The full conversation is
   still retained in the state directory and the evidence export.
 
+### Evidence export
+
+After a scenario, or at any point during it, export its record for review into
+a new directory outside the state directory:
+
+```bash
+python -m agent_lab.evaluation.official_export \
+  --config runs/software-inputs/plan.json --state-dir runs/software-scenario \
+  --output runs/software-export
+```
+
+The exporter opens the database read-only, works on a temporary copy and never
+writes inside the state directory. It refuses an existing output directory. The
+export holds the plan fingerprint, original roles and prompts, both task
+statuses (including `not_posted`), the group conversation as JSON and Markdown,
+human questions, answers and review decisions, the task tree with stop reasons
+and timing, per-turn usage (unknown stays unknown), tool, retrieval and sandbox
+records, provider failure diagnostics, the task files with SHA-256, the recorded
+configuration and code identity. `manifest.json` lists every file with its
+hash. `evidence_class` marks a scripted offline run as synthetic so it cannot
+be mistaken for live evidence. Keep exports local: they contain conversation
+text.
+
 Official scoring still requires dialogue, outputs, observed models, total time,
 human waits and usage. Failed, blocked and unrun tasks must stay in the approved
 metrics' denominator.
