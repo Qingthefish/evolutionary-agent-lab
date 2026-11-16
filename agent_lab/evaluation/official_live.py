@@ -201,13 +201,58 @@ def review_proposal(scheduler, task_id, decision, feedback):
     workflow.finish_task(task_id, task["assignee"], verifier=reviewed_checks)
 
 
+# Which recorded state each operator action may resolve. None of them sends a
+# model request or re-runs a tool; an unknown provider response stays unknown.
+RECONCILE = {"release-claim": {"ready", "paused", "awaiting_verification", None},
+             "abort": {"calling", "processing", "stopping"},
+             "recover-tools": {"processing"}}
+
+
+def reconcile(scheduler, task_id, action, reason, *, human):
+    """Resolve an interrupted operator process after confirming it has stopped.
+
+    `release-claim` clears only a stale controller claim. `abort` stops an
+    interrupted task without replay, so it ends failed with its partial record.
+    `recover-tools` rebuilds already committed results of the stored response
+    and leaves unstarted calls unexecuted; an uncertain tool effect refuses.
+    """
+    if action not in RECONCILE or not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
+        raise WorkflowError("Choose a reconciliation action and give a concrete operator reason")
+    workflow = scheduler.workflow
+    if task_id not in {task["id"] for task in descendants(workflow, scheduler.root)}:
+        raise WorkflowError("Select a task from this task tree")
+    has_sessions = workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='runner_sessions'").fetchone()
+    session = has_sessions and workflow.db.execute(
+        "SELECT status FROM runner_sessions WHERE task=?", (task_id,)).fetchone()
+    before = session["status"] if session else None
+    claimed = workflow.db.execute("SELECT owner FROM scheduler_runs WHERE root=?",
+                                  (scheduler.root,)).fetchone()["owner"] is not None
+    if before not in RECONCILE[action] or (action == "release-claim" and not claimed):
+        raise WorkflowError(f"Nothing for {action} to resolve: runner is {before or 'not started'}, "
+                            f"controller claim {'held' if claimed else 'free'}")
+    if claimed:
+        scheduler.recover_controller()
+    if action == "abort":
+        scheduler.runner(task_id).abort("Operator reconciliation without replay: " + reason)
+    elif action == "recover-tools":
+        scheduler.runner(task_id).recover_tools()
+    with workflow._transaction():
+        workflow._event(task_id, human, "official_reconciliation_recorded", {
+            "action": action, "reason": reason, "runner_state_before": before,
+            "controller_claim_released": claimed, "model_requests": 0, "effects_replayed": False})
+    after = workflow.db.execute("SELECT status FROM runner_sessions WHERE task=?", (task_id,)).fetchone() if before else None
+    return {"reconciled": task_id, "action": action, "runner_state_before": before,
+            "runner_state_after": after["status"] if after else None,
+            "task_state": workflow.task(task_id, human)["state"], "controller_claim_released": claimed}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument("--config", required=True)
     parser.add_argument("--state-dir", required=True)
     parser.add_argument("--sequence", type=int, choices=(1, 2), required=True)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("preflight", "advance", "review"):
+    for name in ("preflight", "advance", "review", "reconcile"):
         command = commands.add_parser(name, allow_abbrev=False)
         # Required only by a policy with the Python tool; checked per scenario.
         command.add_argument("--docker-host")
@@ -218,6 +263,12 @@ def main(argv=None):
             command.add_argument("--task", required=True)
             command.add_argument("--decision", choices=("accept", "reject"), required=True)
             command.add_argument("--feedback", required=True)
+        elif name == "reconcile":
+            command.add_argument("--task", required=True)
+            command.add_argument("--action", choices=tuple(RECONCILE), required=True)
+            command.add_argument("--reason", required=True)
+            command.add_argument("--confirm-stopped", action="store_true",
+                                 help="Confirm that no other advance or review process is still running")
     answer = commands.add_parser("answer", allow_abbrev=False)
     answer.add_argument("--request", required=True)
     answer.add_argument("--text", required=True)
@@ -236,6 +287,8 @@ def main(argv=None):
                 workflow.respond(args.request, session.human, answer=args.text)
                 result = {"answered": args.request}
             else:
+                if args.command == "reconcile" and not args.confirm_stopped:
+                    raise WorkflowError("Confirm with --confirm-stopped that the interrupted process has exited")
                 live = runtime_config(session, plan, args.sequence, docker_host=args.docker_host,
                                       image=args.image, allow_network=args.command == "advance")
                 with ExitStack() as stack:
@@ -251,6 +304,8 @@ def main(argv=None):
                                                        "configuration": services.configuration()}
                     elif args.command == "advance":
                         result = advance(scheduler, args.turns)
+                    elif args.command == "reconcile":
+                        result = reconcile(scheduler, args.task, args.action, args.reason, human=session.human)
                     else:
                         review_proposal(scheduler, args.task, args.decision, args.feedback)
                         result = scheduler.status()

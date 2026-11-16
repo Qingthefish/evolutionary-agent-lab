@@ -160,7 +160,7 @@ take neither and refuse them. `preflight` prints the policy and tool list
 and makes no model request. Only `advance` sends provider requests or runs
 tools. For the web policies, every command records retrieval with network
 permitted, because the run's recorded tool configuration must not change
-between commands; `preflight` and `review` still dispatch no tool,
+between commands; `preflight`, `review` and `reconcile` still dispatch no tool,
 so they make no search or retrieval request.
 
 The authorized budget is the request cap in the plan. Each root's
@@ -196,6 +196,34 @@ including the retained 2026-11-16 software run.
   most recent group messages, each cut to 2,048 characters. Older Task 1
   dialogue is not reachable that way during Task 2. The full conversation is
   still retained in the state directory and the evidence export.
+
+### Recovering an interrupted command
+
+If an `advance` or `review` process stops mid-request, for example from Ctrl-C,
+a closed terminal or a crash, later `advance` calls report `calling`,
+`processing`, `stopping` or `controller_reconciliation_or_busy` and make no
+progress. Task 2 cannot be posted until Task 1 is terminal. First confirm that
+no other `advance` or `review` process for this state is still running. Then
+use `reconcile` with the same container options as `advance`:
+
+```bash
+python -m agent_lab.evaluation.official_live \
+  --config runs/software-inputs/plan.json --state-dir runs/software-scenario --sequence 1 \
+  reconcile --task TASK_ID --action abort --reason "Terminal closed during the request" \
+  --confirm-stopped --docker-host "$DOCKER_SOCKET_URL" --image "$PINNED_PYTHON_IMAGE"
+```
+
+| Reported state | Action | Effect |
+| --- | --- | --- |
+| `calling` (no response stored) | `abort` | The task ends failed. The request is never re-sent, and its usage stays unknown. |
+| `processing` (response stored, tools interrupted) | `recover-tools` | Already committed tool results are rebuilt. Unstarted calls are marked not executed, and the task can continue. |
+| `processing` with a tool whose effect is unknown | `abort` | `recover-tools` refuses. Inspect the files first; the reserved tool stays recorded. |
+| `stopping` | `abort` | Finishes the interrupted stop. |
+| `controller_reconciliation_or_busy` only | `release-claim` | Clears the stale claim; the task is unchanged. |
+
+Each action is recorded as an `official_reconciliation_recorded` event with the
+operator's reason, and it sends no model request. An aborted Task 1 is a
+failed attempt: record it and post Task 2 to the same group, as above.
 
 ### Evidence export
 
