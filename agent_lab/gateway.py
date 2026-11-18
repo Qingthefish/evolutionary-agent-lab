@@ -35,6 +35,9 @@ _SPECS = {
     "create_text": ("Create a new file without overwriting; returns its current SHA-256 receipt", {"path": _PATH, "content": _CONTENT}),
     "update_text": ("Replace only the exact known task-local version using its current SHA-256 receipt", {
         "path": _PATH, "content": _CONTENT, "expected_sha256": _HASH}),
+    "append_text": ("Append text to the end of your exact known task-local file version using its current SHA-256 receipt. "
+                    "Write a file too long for one response in parts: create_text the first part, then append_text the rest", {
+        "path": _PATH, "content": _CONTENT, "expected_sha256": _HASH}),
     "delete_text": ("Request human approval to delete the exact version; pauses task", {
         "path": _PATH, "expected_sha256": _HASH}),
     "ask_human": ("Ask the configured human for missing information; pauses task", {
@@ -403,7 +406,7 @@ class ToolGateway:
                 action={"tool": name, "arguments": args},
             )
             return {"request_id": request, "action": {"tool": name, "arguments": args}}
-        if name in {"read_text", "create_text", "update_text", "offer_artifact", "accept_artifact"}:
+        if name in {"read_text", "create_text", "update_text", "append_text", "offer_artifact", "accept_artifact"}:
             return getattr(self.files, name)(self.task, self.actor, **args)
         if name == "ask_human":
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}

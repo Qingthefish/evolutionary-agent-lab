@@ -529,7 +529,8 @@ class TaskRunner:
                     "instruction": "Your previous response reached the output-token limit and was discarded unread; "
                         "none of its tool calls ran. Continue the same task. Keep each response within the limit: "
                         "use fewer tool calls per response and brief arguments, and split long documents across "
-                        "several smaller files."})})
+                        "several smaller files" + (", or write a long file in parts with create_text then append_text"
+                                                   if "append_text" in self.gateway.allowed else "") + "."})})
                 task_state = self.workflow.task(self.task, self.actor)["state"]
                 self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
                                          ("paused" if task_state.startswith("waiting_") else "ready",

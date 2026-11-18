@@ -140,9 +140,12 @@ local because it contains conversation text. Use `--help` for options.
 For the software scenario, copy the operator plan into a fresh local input
 directory alongside its archive and manifest. Set the issued HKGAI model,
 `tool_policy` to `software-files-coordination-python-v1`, and set the authorized
-`per_scenario_model_attempts` (2–48) and `max_output_tokens` (1–1024). Inspect
+`per_scenario_model_attempts` (2–96, up to 48 per task) and `max_output_tokens`
+(1–1024 by default; up to 4096 with `--output-token-ceiling`). Inspect
 this plan before initializing the run. The two roots' call caps add up to
-the reviewed scenario budget. This path uses a 90-second socket timeout and
+the reviewed scenario budget. Shares above 24 requests scale the per-role and
+tree tool-call caps in the same proportion. Agents may write a file longer than
+one response in parts with `create_text` and then `append_text`. This path uses a 90-second socket timeout and
 requires the [existing isolated Python backend](sandbox.md).
 
 After posting Task 1, load the key through the plan's environment variable and

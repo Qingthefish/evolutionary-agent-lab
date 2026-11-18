@@ -34,7 +34,7 @@ from official_mid_fixture import README_SHA256, SCENARIOS, write_archive
 
 # Reviewed software values recorded from origin/main at 92c5039, not from this code.
 SOFTWARE_TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
-                  "create_text", "read_text", "update_text", "offer_artifact", "accept_artifact",
+                  "create_text", "read_text", "update_text", "append_text", "offer_artifact", "accept_artifact",
                   "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
 SOFTWARE_CONSTRAINTS_SHA256 = "b9ca0bcae3a767500cfb3bcc1d03653e0e57514b62429482c92943e18f61a372"
 IMAGE = "python@sha256:" + "a" * 64
@@ -107,7 +107,7 @@ class ScenarioPolicies(unittest.TestCase):
         for name in POLICIES:
             other = next(policy.identifier for key, policy in POLICIES.items() if key != name)
             for changes in ({"tool_policy": other}, {"tool_policy": None}, {"max_output_tokens": 1025},
-                            {"per_scenario_model_attempts": 49}, {"per_scenario_model_attempts": 1},
+                            {"per_scenario_model_attempts": 97}, {"per_scenario_model_attempts": 1},
                             {"provider": "deepseek"}, {"model": None}):
                 with self.subTest(scenario=name, changes=changes), self.assertRaisesRegex(
                         WorkflowError, "bounded scenario budget"):
