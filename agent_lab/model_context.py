@@ -4,8 +4,18 @@ Original sandbox records and own-role instructions remain intact. Legacy tasks
 retain their existing views. Private experience tools are not peer capabilities.
 """
 
-CONTEXT_POLICY = "declared-concise-actions-v2"
+CONTEXT_POLICY = "declared-concise-actions-v3"
 REQUIRED_ACTION_POLICY = "required-tools-explicit-verification-v1"
+# Shown only with a verified child's offered snapshots in declared views. The
+# parent chooses the receipt path, so the handoff read needs no extra response.
+HANDOFF_INTEGRATION = {
+    "version": "batched-handoff-integration-v1",
+    "instruction": "You choose each accept_artifact destination path, so propose accept_artifact and then "
+        "read_text of that same path together in ONE batch; the read still runs after the receipt. "
+        "When your deliverable can be written, put the final file writes, any required lesson and "
+        "submit_for_verification last in one batch. This child has finished: status messages to it "
+        "neither deliver nor propose anything. Independent checks still decide success.",
+}
 REQUIRED_ACTION_GUIDANCE = """
 This run requests tool_choice=required: respond with actual tool calls, not a
 free-text final answer. You choose the eligible actions. To propose completion,
