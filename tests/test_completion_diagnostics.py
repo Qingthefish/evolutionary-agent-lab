@@ -51,10 +51,10 @@ REJECTED = {
     "not_json": (b'{"id": "' + SENTINEL.encode() + b'", ', None, None, None),
     "missing_field": (changed(lambda v: v.pop("choices")), None, None, None),
     "choice_count": (changed(lambda v: v["choices"].append(copy.deepcopy(v["choices"][0]))), None, None, None),
-    "finish_reason": (reply(calls=[call()], reason="length"), "length", None, None),
-    "role": (changed(lambda v: message_of(v).update(role="user")), "stop", None, None),
-    "content_type": (changed(lambda v: message_of(v).update(content=[SENTINEL])), "stop", None, None),
-    "reasoning_type": (changed(lambda v: message_of(v).update(reasoning_content=[SENTINEL])), "stop", None, True),
+    "finish_reason": (reply(calls=[call()], reason="length"), "length", 1, False),
+    "role": (changed(lambda v: message_of(v).update(role="user")), "stop", 0, True),
+    "content_type": (changed(lambda v: message_of(v).update(content=[SENTINEL])), "stop", 0, None),
+    "reasoning_type": (changed(lambda v: message_of(v).update(reasoning_content=[SENTINEL])), "stop", 0, True),
     "tool_call_shape": (changed(lambda v: message_of(v)["tool_calls"][0].update(extra=SENTINEL), calls=[call()]),
                         "tool_calls", 1, False),
     "tool_call_limit": (reply(calls=[call(f"call-{n}") for n in range(17)]), "tool_calls", 17, False),
@@ -171,7 +171,7 @@ class TruncatedReplyStopsTheTask(unittest.TestCase):
             detail = json.loads(workflow.db.execute(
                 "SELECT detail FROM events WHERE task=? AND kind='provider_request_failed'", (task,)).fetchone()[0])
             self.assertEqual(detail["diagnostics"]["completion_check"], {
-                "parse_rule": "finish_reason", "finish_reason": "length", "tool_calls": None, "content_present": None})
+                "parse_rule": "finish_reason", "finish_reason": "length", "tool_calls": 1, "content_present": False})
             self.assertEqual(workflow.db.execute("SELECT count(*) FROM tool_calls").fetchone()[0], 0)
             self.assertEqual([p for p in (root / "files").rglob("*") if p.is_file()], [])
             stored = "".join(str(value) for table in ("events", "runner_turns", "runner_sessions")

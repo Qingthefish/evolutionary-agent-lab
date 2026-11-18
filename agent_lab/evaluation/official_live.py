@@ -11,6 +11,7 @@ from ..budget import TreeLimits, descendants
 from ..core import WorkflowError
 from ..files import FileTools
 from ..runner import Limits
+from ..model_context import ACTION_GUIDANCE
 from ..runtime import LiveConfig, RuntimeServices, live_clients
 from ..scheduler import MultiAgentScheduler, Role
 from .official import OfficialMidTestPlan
@@ -83,15 +84,18 @@ def scenario_policy(session):
     return policy
 
 
-def runtime_config(session, plan, sequence, *, docker_host, image, allow_network, environ=None):
+def runtime_config(session, plan, sequence, *, docker_host, image, allow_network, environ=None,
+                   output_token_ceiling=1024):
     if type(sequence) is not int or sequence not in (1, 2):
         raise WorkflowError("Select task 1 or 2")
     policy = scenario_policy(session)
     config = plan.config["runtime"]
     attempts, tokens = config["per_scenario_model_attempts"], config["max_output_tokens"]
+    if type(output_token_ceiling) is not int or output_token_ceiling not in (1024, 2048, 4096):
+        raise WorkflowError("Use an explicitly authorized output ceiling of 1024, 2048 or 4096")
     if (config["provider"] != "hkgai" or config["tool_policy"] != policy.identifier or not config["model"]
             or type(attempts) is not int or not 2 <= attempts <= 48
-            or type(tokens) is not int or not 1 <= tokens <= 1024):
+            or type(tokens) is not int or not 1 <= tokens <= output_token_ceiling):
         raise WorkflowError("Review the HKGAI model, this scenario's tool policy and bounded scenario budget first")
     if policy.python and (not docker_host or not image):
         raise WorkflowError("This scenario's tool policy requires the configured isolated Python backend")
@@ -138,6 +142,12 @@ def make_scheduler(session, root, files, live, services):
     constraints = list(policy.constraints)
     if allow_html:
         constraints[constraints.index(_FORMAT)] = "This instructor task requests HTML slides; deliver them as HTML task files."
+    constraints.append(ACTION_GUIDANCE.strip())
+    constraints.append(
+        f"Each response has an output limit of {live.max_output_tokens} tokens. "
+        "Use a small batch of short tool calls per turn. Divide source into small modules "
+        "that fit individual file writes, and delegate focused deliverables to eligible peers."
+    )
     roles = {entry["id"]: Role(entry["prompt"], policy.tools,
                 tuple(agent for agent in session.agents if agent != entry["id"]),
                 live.role_limits, live.tool_calls) for entry in session.scenario["roles"]}
@@ -261,6 +271,8 @@ def main(argv=None):
         # Required only by a policy with the Python tool; checked per scenario.
         command.add_argument("--docker-host")
         command.add_argument("--image")
+        command.add_argument("--output-token-ceiling", type=int, choices=(1024, 2048, 4096), default=1024,
+                             help="Explicitly authorized per-request output ceiling; default 1024")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
         elif name == "review":
@@ -294,7 +306,8 @@ def main(argv=None):
                 if args.command == "reconcile" and not args.confirm_stopped:
                     raise WorkflowError("Confirm with --confirm-stopped that the interrupted process has exited")
                 live = runtime_config(session, plan, args.sequence, docker_host=args.docker_host,
-                                      image=args.image, allow_network=args.command == "advance")
+                                      image=args.image, allow_network=args.command == "advance",
+                                      output_token_ceiling=args.output_token_ceiling)
                 with ExitStack() as stack:
                     files = FileTools(workflow, Path(args.state_dir) / "files")
                     stack.callback(files.close)

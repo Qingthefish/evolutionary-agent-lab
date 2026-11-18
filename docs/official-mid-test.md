@@ -7,6 +7,15 @@ tool effect. Its failed record is retained. The new diagnostic labels will
 identify the failed structural check in a future reply. All six tasks still
 need complete live execution and independent outcome review.
 
+On November 19, two fresh software trials each stopped on the second reply
+with `finish_reason=length` at the 1,024 output-token cap. Adding compact
+action guidance did not complete the task. Four requests were reserved in
+total, with both failed tasks retained. A local operator can select a larger
+output ceiling with `--output-token-ceiling 2048|4096` after an explicit budget
+authorization. The default ceiling is 1,024, and the configured plan value must
+fit the selected ceiling. Existing task configurations cannot acquire the new
+setting on resume.
+
 The November 18 integration review checked the later interrupted-state recovery
 command as well. It tightened file export against linked task directories,
 added full runner transcripts to the local export and bound HTML permission in

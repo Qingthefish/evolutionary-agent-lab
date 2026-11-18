@@ -9,6 +9,20 @@ from agent_lab.evaluation.official_live import TOOL_POLICY, advance, runtime_con
 
 
 class OfficialLiveTests(unittest.TestCase):
+    def test_larger_output_ceiling_needs_explicit_operator_selection(self):
+        session = SimpleNamespace(scenario={"id": "software-engineering"})
+        settings = {"provider": "hkgai", "tool_policy": TOOL_POLICY, "model": "issued-model",
+                    "per_scenario_model_attempts": 44, "max_output_tokens": 4096, "api_key_env": "COURSE_TEST_KEY"}
+        plan = SimpleNamespace(config={"runtime": settings})
+        backend = {"docker_host": "unix:///test/docker.sock", "image": "test-image",
+                   "allow_network": False, "environ": {"COURSE_TEST_KEY": "dummy-fixture"}}
+        with self.assertRaisesRegex(WorkflowError, "bounded scenario budget"):
+            runtime_config(session, plan, 1, **backend)
+        selected = runtime_config(session, plan, 1, output_token_ceiling=4096, **backend)
+        self.assertEqual(selected.max_output_tokens, 4096)
+        self.assertEqual(selected.tree_limits.model_attempts, 22)
+        self.assertEqual(selected.socket_timeout, 90)
+
     def test_software_budget_allocations_sum_to_the_reviewed_cap(self):
         session = SimpleNamespace(scenario={"id": "software-engineering"})
         settings = {"provider": "hkgai", "tool_policy": TOOL_POLICY, "model": "issued-model",
