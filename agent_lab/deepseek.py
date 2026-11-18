@@ -68,6 +68,38 @@ class ProviderError(Exception):
         return {key: dict(value) if isinstance(value, dict) else value for key, value in self._diagnostic.items()}
 
 
+class TruncatedCompletion(ProviderError):
+    """A complete response stopped at the output-token limit (finish_reason=length).
+
+    The message and any tool calls are discarded unread; no tool is released.
+    Only the provider-reported usage and identity are kept, so the runner can
+    count the attempt and decide whether the task may continue.
+    Proposed 2026-11-18, pending owner review.
+    """
+
+    def __init__(self, usage, response_id, model, **diagnostics):
+        super().__init__("Invalid, incomplete, or unsupported provider completion; no tools released",
+                         kind="invalid_completion", phase="parsing", **diagnostics)
+        self.usage = dict(usage)
+        self.response_id = response_id
+        self.model = model
+
+
+def _truncated_identity(data):
+    """Strict usage and identity of a length-stopped response, or None if either is unusable."""
+    try:
+        usage = data["usage"]
+        counts = {key: usage[key] for key in ("prompt_tokens", "completion_tokens", "total_tokens")}
+        if (any(type(value) is not int or value < 0 for value in counts.values())
+                or counts["total_tokens"] != counts["prompt_tokens"] + counts["completion_tokens"]):
+            return None
+        if any(not isinstance(data[key], str) or not data[key] or len(data[key]) > 256 for key in ("id", "model")):
+            return None
+    except (KeyError, TypeError):
+        return None
+    return counts, data["id"], data["model"]
+
+
 def _transport_kind(error):
     # URLError.reason may be an exception OR an arbitrary string. Never log it.
     for _ in range(3):
@@ -205,6 +237,7 @@ class DeepSeekClient:
         # shape is classified by the rule being checked. Accepted completions
         # and the single sanitized error are unchanged.
         check = {"parse_rule": "other", "finish_reason": None, "tool_calls": None, "content_present": None}
+        truncated = None
         try:
             check["parse_rule"] = "not_json"
             data = strict_json(raw)
@@ -226,6 +259,8 @@ class DeepSeekClient:
             if content is None or isinstance(content, str):
                 check["content_present"] = bool(content and content.strip())
             check["parse_rule"] = "finish_reason"
+            if reason == "length":
+                truncated = _truncated_identity(data)
             if not isinstance(reason, str) or reason not in {"stop", "tool_calls"}:
                 raise ValueError()
             check["parse_rule"] = "role"
@@ -288,6 +323,9 @@ class DeepSeekClient:
             if any(not isinstance(data[key], str) or not data[key] for key in ("id", "model")):
                 raise ValueError()
         except (ValueError, KeyError, TypeError, UnicodeError, RecursionError):
+            if truncated is not None:
+                raise TruncatedCompletion(*truncated, request_bytes=len(encoded), response_bytes=len(raw),
+                                          completion_check=check) from None
             raise ProviderError("Invalid, incomplete, or unsupported provider completion; no tools released",
                 kind="invalid_completion", phase="parsing", request_bytes=len(encoded), response_bytes=len(raw),
                 completion_check=check) from None

@@ -90,6 +90,8 @@ class ContinuityAfterFailure(unittest.TestCase):
                 replies = [reply([("create_text", {"path": "draft.txt", "content": DRAFT}),
                                   ("ask_human", {"prompt": "Synthetic fixture question?"})]),
                            # A reply cut off at the output limit: rejected, no tool released.
+                           reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length"),
+                           # one truncation continues; the second consecutive one fails the task.
                            reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length")]
                 one = self.scheduler(workflow, files, session, first, lambda payload: replies.pop(0), first_share)
                 self.assertEqual(one.run()["state"], "blocked")
@@ -112,9 +114,12 @@ class ContinuityAfterFailure(unittest.TestCase):
                 self.assertEqual((failed["state"], pending["state"]), ("failed", "pending"))
                 self.assertEqual([r["prompt"] for r in failed["requests"]], ["Synthetic fixture question?"])
                 self.assertTrue(failed["runner"]["synthetic"])
-                self.assertEqual(failed["runner"]["attempts"], 2)
-                self.assertIn("Provider attempt failed", failed["runner"]["stop_reason"])
-                self.assertIsNone(failed["runner"]["turns"][1]["usage"])  # Unknown, never zero.
+                # the first truncation continues, the second consecutive one stops.
+                self.assertEqual(failed["runner"]["attempts"], 3)
+                self.assertIn("output-token limit on consecutive attempts", failed["runner"]["stop_reason"])
+                for turn in failed["runner"]["turns"][1:]:  # Received in full: usage is known, nothing ran.
+                    self.assertEqual((turn["finish_reason"], turn["usage"], turn["tool_names"]),
+                                     ("length", {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}, []))
 
                 original = next(e for e in workflow.events(first, "requester") if e["kind"] == "file_created")
                 digest = json.loads(original["detail"])["sha256"]
@@ -132,7 +137,7 @@ class ContinuityAfterFailure(unittest.TestCase):
                 two = self.scheduler(workflow, files, session, second["root"],
                                      lambda payload: self.fail("No Task 2 request in this check"), second_share)
                 used = [budget.status(workflow, root) for root in (first, second["root"])]
-                self.assertEqual([(u["attempts"], u["limits"]["model_attempts"]) for u in used], [(2, 24), (0, 23)])
+                self.assertEqual([(u["attempts"], u["limits"]["model_attempts"]) for u in used], [(3, 24), (0, 23)])  # one extra counted attempt
                 self.assertEqual(two.status()["task_state"], "pending")
                 after = session.status()["tasks"]
                 self.assertEqual((after[0]["state"], after[0]["root"]), ("failed", first))

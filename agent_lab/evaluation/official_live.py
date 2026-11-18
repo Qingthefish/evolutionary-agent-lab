@@ -72,9 +72,11 @@ POLICIES = {
 
 # The owner-authorized budget is the request cap. The reported-token stop is a
 # runaway guard scaled to that cap, so it does not end a task long before its
-# requests are used. 11,250 per request matches the retained HKGAI development
-# plans (180,000 tokens for 16 requests). Global defaults are unchanged.
-TOKENS_PER_REQUEST = 11250
+# requests are used. Each request resends the whole transcript, so reported usage
+# grows with the task. Proposed 2026-11-18, pending owner review: 11,250 per
+# request stopped a live newsroom Task 1 at request 14 of 24; retained newsroom
+# requests reached 30,000-45,000 prompt tokens late in a task. Global defaults are unchanged.
+TOKENS_PER_REQUEST = 50000
 
 
 def scenario_policy(session):
