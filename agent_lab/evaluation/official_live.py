@@ -26,9 +26,10 @@ TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
 # direct child, carrying explicitly offered snapshots, instead of the whole task
 # failing. Replacements share the same request cap; no budget is added.
 CHILD_REPLACEMENTS = 2
-# Proposed 2026-11-18 (owner-approved, pending merge): up to 48 requests per task.
-# Live software Task 1 used all 24 after its developer child was accepted.
-MAX_SCENARIO_ATTEMPTS = 96
+# Proposed 2026-11-18 (owner-approved, pending merge): up to 72 requests per task.
+# Live software Task 1 used all 24, then all 48 in three runs, after its developer
+# child was accepted: the lead/dev/qa/release pipeline needed about 50-70 requests.
+MAX_SCENARIO_ATTEMPTS = 144
 CONSTRAINTS = [
     "Use local files and the supplied Python sandbox with standard-library dependencies. "
     "Deliver runnable source and Markdown or plain-text instructions. No external services are configured.",

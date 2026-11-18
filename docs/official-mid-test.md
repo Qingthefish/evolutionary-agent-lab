@@ -140,7 +140,7 @@ local because it contains conversation text. Use `--help` for options.
 For the software scenario, copy the operator plan into a fresh local input
 directory alongside its archive and manifest. Set the issued HKGAI model,
 `tool_policy` to `software-files-coordination-python-v1`, and set the authorized
-`per_scenario_model_attempts` (2–96, up to 48 per task) and `max_output_tokens`
+`per_scenario_model_attempts` (2–144, up to 72 per task) and `max_output_tokens`
 (1–1024 by default; up to 4096 with `--output-token-ceiling`). Inspect
 this plan before initializing the run. The two roots' call caps add up to
 the reviewed scenario budget. Shares above 24 requests scale the per-role and

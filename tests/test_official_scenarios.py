@@ -107,7 +107,7 @@ class ScenarioPolicies(unittest.TestCase):
         for name in POLICIES:
             other = next(policy.identifier for key, policy in POLICIES.items() if key != name)
             for changes in ({"tool_policy": other}, {"tool_policy": None}, {"max_output_tokens": 1025},
-                            {"per_scenario_model_attempts": 97}, {"per_scenario_model_attempts": 1},
+                            {"per_scenario_model_attempts": 145}, {"per_scenario_model_attempts": 1},
                             {"provider": "deepseek"}, {"model": None}):
                 with self.subTest(scenario=name, changes=changes), self.assertRaisesRegex(
                         WorkflowError, "bounded scenario budget"):
