@@ -79,7 +79,14 @@ class OfficialLiveTests(unittest.TestCase):
         self.assertFalse(first.enable_web)
         self.assertEqual(first.repositories, ())
         self.assertEqual(first.socket_timeout, 90)
-        settings["per_scenario_model_attempts"] = 49
+        self.assertEqual((first.tool_calls, first.tree_limits.tool_calls), (40, 128))  # Unchanged up to 24.
+        # Proposed 2026-11-18: up to 96 per scenario, 48 per task, with tool caps scaled to the share.
+        settings["per_scenario_model_attempts"] = 96
+        first, second = runtime_config(session, plan, 1, **backend), runtime_config(session, plan, 2, **backend)
+        self.assertEqual((first.tree_limits.model_attempts, second.tree_limits.model_attempts), (48, 48))
+        self.assertEqual((first.role_limits.model_attempts, first.tree_limits.reported_tokens), (48, 48 * 50000))
+        self.assertEqual((first.tool_calls, first.tree_limits.tool_calls), (80, 256))
+        settings["per_scenario_model_attempts"] = 97
         with self.assertRaisesRegex(WorkflowError, "bounded scenario budget"):
             runtime_config(session, plan, 1, **backend)
 

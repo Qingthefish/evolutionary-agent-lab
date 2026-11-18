@@ -260,6 +260,31 @@ class FileTools:
                     pass
             return self._receipt(task, actor, "file_updated", path, data)
 
+    def append_text(self, task, actor, path, content, *, expected_sha256):
+        """Append to the exact known version, so one file can be written in several responses.
+
+        Same version check and atomic replace as update_text; the combined file
+        keeps the byte limit. Recorded as an ordinary file update. Proposed 2026-11-18.
+        """
+        addition = self._encode(content)
+        with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
+            current = self._read(parent, name)
+            self._expected(current, expected_sha256)
+            data = current + addition
+            if len(data) > self.max_bytes:
+                raise FileToolError("File exceeds the configured byte limit")
+            bytes(data).decode("utf-8")
+            temporary = ".write-" + uuid4().hex
+            self._create(parent, temporary, data)
+            try:
+                os.replace(temporary, name, src_dir_fd=parent, dst_dir_fd=parent)
+            finally:
+                try:
+                    os.unlink(temporary, dir_fd=parent)
+                except FileNotFoundError:
+                    pass
+            return self._receipt(task, actor, "file_updated", path, data)
+
     def delete_text(self, task, actor, path, *, expected_sha256, request_id=None):
         with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
             if request_id is not None:

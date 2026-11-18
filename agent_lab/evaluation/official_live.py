@@ -20,12 +20,15 @@ from .official_session import OfficialScenarioSession, TERMINAL, _workflow
 
 TOOL_POLICY = "software-files-coordination-python-v1"
 TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
-         "create_text", "read_text", "update_text", "offer_artifact", "accept_artifact",
+         "create_text", "read_text", "update_text", "append_text", "offer_artifact", "accept_artifact",
          "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
 # Proposed 2026-11-18 (owner-approved, pending merge): a parent may replace a failed
 # direct child, carrying explicitly offered snapshots, instead of the whole task
 # failing. Replacements share the same request cap; no budget is added.
 CHILD_REPLACEMENTS = 2
+# Proposed 2026-11-18 (owner-approved, pending merge): up to 48 requests per task.
+# Live software Task 1 used all 24 after its developer child was accepted.
+MAX_SCENARIO_ATTEMPTS = 96
 CONSTRAINTS = [
     "Use local files and the supplied Python sandbox with standard-library dependencies. "
     "Deliver runnable source and Markdown or plain-text instructions. No external services are configured.",
@@ -100,7 +103,7 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
     if type(output_token_ceiling) is not int or output_token_ceiling not in (1024, 2048, 4096):
         raise WorkflowError("Use an explicitly authorized output ceiling of 1024, 2048 or 4096")
     if (config["provider"] != "hkgai" or config["tool_policy"] != policy.identifier or not config["model"]
-            or type(attempts) is not int or not 2 <= attempts <= 48
+            or type(attempts) is not int or not 2 <= attempts <= MAX_SCENARIO_ATTEMPTS
             or type(tokens) is not int or not 1 <= tokens <= output_token_ceiling):
         raise WorkflowError("Review the HKGAI model, this scenario's tool policy and bounded scenario budget first")
     if policy.python and (not docker_host or not image):
@@ -111,12 +114,14 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
     # not reclaim calls, and both roots retain their original allocation.
     root_attempts = (attempts + (sequence == 1)) // 2
     root_tokens = root_attempts * TOKENS_PER_REQUEST
+    # Tool-call caps grow with the request share; shares up to 24 keep the reviewed 40/128.
+    scale = -(-root_attempts // 24)
     key = (os.environ if environ is None else environ).get(config["api_key_env"], "")
     return LiveConfig(
         model=config["model"], api_key=key, provider="hkgai", allow_network=allow_network,
-        socket_timeout=90, max_output_tokens=tokens, tool_calls=40, require_tool_actions=True,
+        socket_timeout=90, max_output_tokens=tokens, tool_calls=40 * scale, require_tool_actions=True,
         tree_limits=TreeLimits(tasks=8, depth=3, model_attempts=root_attempts, duration_seconds=14400,
-                               reported_tokens=root_tokens),
+                               reported_tokens=root_tokens, tool_calls=128 * scale),
         role_limits=Limits(model_attempts=root_attempts, duration_seconds=14400, reported_tokens=root_tokens),
         docker_host=docker_host if policy.python else None, python_image=image if policy.python else None,
         enable_web=policy.web,
@@ -158,7 +163,8 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
     constraints.append(
         f"Each response has an output limit of {live.max_output_tokens} tokens. "
         "Use a small batch of short tool calls per turn. Divide source into small modules "
-        "that fit individual file writes, and delegate focused deliverables to eligible peers."
+        "that fit individual file writes, write any longer file in parts with create_text then append_text, "
+        "and delegate focused deliverables to eligible peers."
     )
     roles = {entry["id"]: Role(entry["prompt"], tools_for_role(session.scenario["id"], entry["id"], policy.tools),
                 tuple(agent for agent in session.agents if agent != entry["id"]),
