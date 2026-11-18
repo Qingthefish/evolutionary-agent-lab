@@ -21,7 +21,11 @@ from .official_session import OfficialScenarioSession, TERMINAL, _workflow
 TOOL_POLICY = "software-files-coordination-python-v1"
 TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
          "create_text", "read_text", "update_text", "offer_artifact", "accept_artifact",
-         "delegate_task", "delegate_with_inputs", "run_python", "submit_for_verification")
+         "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
+# Proposed 2026-11-18 (owner-approved, pending merge): a parent may replace a failed
+# direct child, carrying explicitly offered snapshots, instead of the whole task
+# failing. Replacements share the same request cap; no budget is added.
+CHILD_REPLACEMENTS = 2
 CONSTRAINTS = [
     "Use local files and the supplied Python sandbox with standard-library dependencies. "
     "Deliver runnable source and Markdown or plain-text instructions. No external services are configured.",
@@ -156,7 +160,8 @@ def make_scheduler(session, root, files, live, services):
     return MultiAgentScheduler(session.workflow, files, root, human=session.human, roles=roles,
         clients=live_clients(live, roles), mode="live", constraints=constraints,
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
-        limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html)
+        limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
+        child_retries=CHILD_REPLACEMENTS)
 
 
 def _review_boundaries(scheduler):
