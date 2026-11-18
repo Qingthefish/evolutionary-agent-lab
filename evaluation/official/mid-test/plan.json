@@ -16,6 +16,6 @@
     "memory_persistence": null,
     "repeat_policy": null,
     "timing_rule": null,
-    "html_format_conflict": null
+    "html_format_conflict": "Securities-fund Task 2's issued prompt explicitly asks for HTML slides that open and present slide by slide in a browser. HTML task files are therefore permitted for that task only. Other documents keep the Markdown/plain-text convention. No tool, file permission or acceptance check is widened, and the agents choose the presentation design."
   }
 }

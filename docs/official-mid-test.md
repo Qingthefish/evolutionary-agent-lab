@@ -1,5 +1,17 @@
 # Instructor mid-test input adapter (C06)
 
+The reviewed S01 commands cover all three mid-test scenario policies. A real
+software Task 1 trial stopped after two HKGAI requests on November 16. The first
+completed group/task reads. The second failed completion parsing before any
+tool effect. Its failed record is retained. The new diagnostic labels will
+identify the failed structural check in a future reply. All six tasks still
+need complete live execution and independent outcome review.
+
+The November 18 integration review checked the later interrupted-state recovery
+command as well. It tightened file export against linked task directories,
+added full runner transcripts to the local export and bound HTML permission in
+the system prompt to the securities scenario's second root and its descendants.
+
 Download the instructor's November 15, 2026 [Mid_Test.zip from Canvas](https://canvas.ust.hk/courses/73253/modules/items/1916529).
 Keep the archive, generated manifest and prepared prompts in the ignored
 `runs/` directory. The adapter records the SHA-256 of the archive and each
@@ -69,7 +81,8 @@ Use a new directory for each preparation. It saves:
   preparation supplies no success, zero execution time or completion score.
 
 The [plan template](../evaluation/official/mid-test/plan.json) names HKGAI as an
-operator choice. Model, budget, tool policy and unresolved protocol choices are
+operator choice and records the HTML format decision for scenario 3 Task 2.
+Model, budget, tool policy and the other protocol choices are
 null. Configure/review them before S01 execution. Proposed choices are not
 instructor rules and do not enable execution. Credentials stay outside the
 repository; only a variable name is configured.
@@ -141,15 +154,127 @@ backend options after inspecting a proposal. Record specific checked evidence
 in the feedback. Post Task 2 to the same group after Task 1 reaches a terminal
 state and carry forward reviewed inputs before advancing the second root.
 
+### Tool policies for the three scenarios
+
+Each scenario has its own reviewed tool policy. Set `tool_policy` in that
+scenario's plan to the matching identifier; a different value is refused.
+
+| Scenario | `tool_policy` | Web search and retrieval | Python sandbox |
+| --- | --- | --- | --- |
+| `software-engineering` | `software-files-coordination-python-v1` | no | yes |
+| `newsroom` | `newsroom-files-coordination-web-v1` | yes | no |
+| `securities-fund` | `securities-files-coordination-web-python-v1` | yes | yes |
+
+All three share the coordination and file tools, the same limits and review by
+the trusted human. The software policy is unchanged. Pass `--docker-host` and
+`--image` only for a policy with the Python sandbox; the newsroom commands
+take neither and refuse them. `preflight` prints the policy and tool list
+and makes no model request. Only `advance` sends provider requests or runs
+tools. For the web policies, every command records retrieval with network
+permitted, because the run's recorded tool configuration must not change
+between commands; `preflight`, `review` and `reconcile` still dispatch no tool,
+so they make no search or retrieval request.
+
+The authorized budget is the request cap in the plan. Each root's
+reported-token stop is a runaway guard set to 11,250 tokens per request of its
+share, so 270,000 tokens for a 24-request root. That ratio is the one the
+retained HKGAI development plans used (180,000 tokens for 16 requests). With
+the earlier shared defaults a task would have stopped at 32,000 tokens, about
+six replies at the usage seen in retained runs. The request cap, the
+1,024-token output cap and the defaults used by other runs are unchanged, and
+`preflight` prints the thresholds. A root that already started keeps its
+original limits and refuses different ones, so the retained 2026-11-16 Task 1
+can still be inspected and exported but not advanced under the new values.
+
+Prepare **one plan copy per scenario run** in its own ignored `runs/...` input
+directory, beside the archive and manifest, with the model, `tool_policy`,
+budget and operator decisions set. Changing any plan value changes
+`plan_sha256`, and a state directory only opens with the plan it was
+initialized from. Do not edit the plan used by an existing state directory,
+including the retained 2026-11-16 software run.
+
+### Order, failure and continuity
+
+- When Task 1 reaches any terminal state (succeeded, failed or cancelled),
+  record its outcome, then post Task 2 to the same group. A failed Task 1
+  never silently omits Task 2.
+- The two roots have separate call allocations, so a failed Task 1 does not
+  spend Task 2's share.
+- `carry` works from a closed Task 1 tree, including a failed one, and only
+  with the exact reviewed SHA-256 of the file.
+- Whether a whole scenario may be repeated is the `repeat_policy` operator
+  decision. Every attempt is preserved and reported, including failed ones.
+- Known limitation: an agent's `read_messages` call returns at most the 20
+  most recent group messages, each cut to 2,048 characters. Older Task 1
+  dialogue is not reachable that way during Task 2. The full conversation is
+  still retained in the state directory and the evidence export.
+
+### Recovering an interrupted command
+
+If an `advance` or `review` process stops mid-request, for example from Ctrl-C,
+a closed terminal or a crash, later `advance` calls report `calling`,
+`processing`, `stopping` or `controller_reconciliation_or_busy` and make no
+progress. Task 2 cannot be posted until Task 1 is terminal. First confirm that
+no other `advance` or `review` process for this state is still running. Then
+use `reconcile` with the same container options as `advance`:
+
+```bash
+python -m agent_lab.evaluation.official_live \
+  --config runs/software-inputs/plan.json --state-dir runs/software-scenario --sequence 1 \
+  reconcile --task TASK_ID --action abort --reason "Terminal closed during the request" \
+  --confirm-stopped --docker-host "$DOCKER_SOCKET_URL" --image "$PINNED_PYTHON_IMAGE"
+```
+
+| Reported state | Action | Effect |
+| --- | --- | --- |
+| `calling` (no response stored) | `abort` | The task ends failed. The request is never re-sent, and its usage stays unknown. |
+| `processing` (response stored, tools interrupted) | `recover-tools` | Already committed tool results are rebuilt. Unstarted calls are marked not executed, and the task can continue. |
+| `processing` with a tool whose effect is unknown | `abort` | `recover-tools` refuses. Inspect the files first; the reserved tool stays recorded. |
+| `stopping` | `abort` | Finishes the interrupted stop. |
+| `controller_reconciliation_or_busy` only | `release-claim` | Clears the stale claim; the task is unchanged. |
+
+Each action is recorded as an `official_reconciliation_recorded` event with the
+operator's reason, and it sends no model request. An aborted Task 1 is a
+failed attempt: record it and post Task 2 to the same group, as above.
+
+### Evidence export
+
+After a scenario, or at any point during it, export its record for review into
+a new directory outside the state directory:
+
+```bash
+python -m agent_lab.evaluation.official_export \
+  --config runs/software-inputs/plan.json --state-dir runs/software-scenario \
+  --output runs/software-export
+```
+
+The exporter opens the database read-only, works on a temporary copy and never
+writes inside the state directory. It refuses an existing output directory. The
+export holds the plan fingerprint, original roles and prompts, both task
+statuses (including `not_posted`), the group conversation as JSON and Markdown,
+human questions, answers and review decisions, the task tree with stop reasons
+and timing, per-turn usage (unknown stays unknown), tool, retrieval and sandbox
+records, provider failure diagnostics, the task files with SHA-256, the recorded
+configuration and code identity. `manifest.json` lists every file with its
+hash. `evidence_class` marks a scripted offline run as synthetic so it cannot
+be mistaken for live evidence. Keep exports local: they contain conversation
+text.
+
 Official scoring still requires dialogue, outputs, observed models, total time,
 human waits and usage. Failed, blocked and unrun tasks must stay in the approved
 metrics' denominator.
 
 The following need review rather than invented defaults:
 
-- **Output format:** scenario 3 Task 2 asks for HTML slides, while the earlier
-  announcement limits documents to MD/TXT. The exact prompt and a format-conflict
-  blocker are retained; no rewritten task or widened runtime file policy is supplied.
+- **Output format:** documents are Markdown or plain text by convention. Scenario 3
+  Task 2 is the one exception: its prompt explicitly asks for HTML slides that open
+  and present slide by slide in a browser, so the team delivers HTML task files for
+  that task only. The plan template records this decision, the exact prompt is
+  unchanged, and no tool, file permission or acceptance check was widened. The
+  agents choose the presentation design. A plan whose `html_format_conflict` is
+  null still reports the format blocker on that task. Single-file delivery,
+  offline operation and a second-browser check are optional reviewer
+  observations, not acceptance criteria.
 - **Acceptance/scoring:** criteria are negotiated; no scoring rubric is supplied.
   File existence or an agent's claim of success is insufficient. Trusted review
   and its evidence must be recorded.

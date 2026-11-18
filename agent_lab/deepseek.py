@@ -13,12 +13,36 @@ import urllib.request
 from .protocol import strict_json
 
 
+# Fixed labels for a rejected completion: which structural rule refused it and
+# three bounded observations. Never a response value, tool argument or message text.
+PARSE_RULES = ("not_json", "missing_field", "choice_count", "finish_reason", "role", "content_type",
+               "reasoning_type", "tool_call_shape", "tool_call_limit", "duplicate_tool_call_id",
+               "finish_reason_mismatch", "required_tool_missing", "empty_text", "usage", "identity", "other")
+FINISH_REASON_LABELS = ("stop", "tool_calls", "length", "content_filter", "function_call")
+
+
+def _finish_label(value):
+    if not isinstance(value, str):
+        return "invalid"
+    return value if value in FINISH_REASON_LABELS else "other"
+
+
+def _valid_completion_check(check):
+    return (isinstance(check, dict) and set(check) == {"parse_rule", "finish_reason", "tool_calls", "content_present"}
+            and isinstance(check["parse_rule"], str) and check["parse_rule"] in PARSE_RULES
+            and (check["finish_reason"] is None or (isinstance(check["finish_reason"], str)
+                 and check["finish_reason"] in (*FINISH_REASON_LABELS, "other", "invalid")))
+            and (check["tool_calls"] is None or (type(check["tool_calls"]) is int
+                 and 0 <= check["tool_calls"] <= DeepSeekHTTP.max_bytes))
+            and (check["content_present"] is None or type(check["content_present"]) is bool))
+
+
 class ProviderError(Exception):
     """Sanitized protocol or transport failure; never contains HTTP response bodies."""
 
     def __init__(self, message, *, kind="provider_error", phase="unknown", request_bytes=None,
                  response_bytes=None, duration_seconds=None, http_status=None,
-                 request_may_have_been_processed=True):
+                 request_may_have_been_processed=True, completion_check=None):
         kinds = {"provider_error", "network_disabled", "invalid_request", "http_status", "unexpected_response",
                  "oversized_response", "timeout", "dns", "tls", "connection_closed", "connection_refused",
                  "http_protocol", "transport", "invalid_completion"}
@@ -28,16 +52,20 @@ class ProviderError(Exception):
                 or (duration_seconds is not None and (type(duration_seconds) not in (int, float)
                     or not math.isfinite(duration_seconds) or duration_seconds < 0))
                 or (http_status is not None and (type(http_status) is not int or not 100 <= http_status <= 599))
-                or type(request_may_have_been_processed) is not bool):
+                or type(request_may_have_been_processed) is not bool
+                or (completion_check is not None and (kind != "invalid_completion"
+                    or not _valid_completion_check(completion_check)))):
             raise ValueError("Invalid bounded provider diagnostic")
         super().__init__(message)
         self._diagnostic = {"kind": kind, "phase": phase, "request_bytes": request_bytes,
             "response_bytes": response_bytes, "duration_seconds": duration_seconds, "http_status": http_status,
             "request_may_have_been_processed": request_may_have_been_processed, "automatic_retry": False}
+        if completion_check is not None:
+            self._diagnostic["completion_check"] = dict(completion_check)
 
     def diagnostics(self):
         """A data-only copy; no raw reason, URL, header, body or credential."""
-        return dict(self._diagnostic)
+        return {key: dict(value) if isinstance(value, dict) else value for key, value in self._diagnostic.items()}
 
 
 def _transport_kind(error):
@@ -173,55 +201,87 @@ class DeepSeekClient:
         raw = self.transport(encoded)
         if not isinstance(raw, bytes) or len(raw) > DeepSeekHTTP.max_bytes:
             raise ProviderError("Invalid or oversized provider response")
+        # Each rejection path sets its fixed label first, so an unexpected
+        # shape is classified by the rule being checked. Accepted completions
+        # and the single sanitized error are unchanged.
+        check = {"parse_rule": "other", "finish_reason": None, "tool_calls": None, "content_present": None}
         try:
+            check["parse_rule"] = "not_json"
             data = strict_json(raw)
+            check["parse_rule"] = "missing_field"
             choices = data["choices"]
+            check["parse_rule"] = "choice_count"
             if not isinstance(choices, list) or len(choices) != 1:
                 raise ValueError()
+            check["parse_rule"] = "missing_field"
             choice = choices[0]
             reason, source = choice["finish_reason"], choice["message"]
-            if reason not in {"stop", "tool_calls"} or source["role"] != "assistant":
+            check["finish_reason"] = _finish_label(reason)
+            role, content = source["role"], source.get("content")
+            check["parse_rule"] = "finish_reason"
+            if not isinstance(reason, str) or reason not in {"stop", "tool_calls"}:
                 raise ValueError()
-            message = {"role": "assistant", "content": source.get("content")}
-            if message["content"] is not None and not isinstance(message["content"], str):
+            check["parse_rule"] = "role"
+            if role != "assistant":
                 raise ValueError()
+            check["parse_rule"] = "content_type"
+            message = {"role": "assistant", "content": content}
+            if content is not None and not isinstance(content, str):
+                raise ValueError()
+            check["content_present"] = bool(content and content.strip())
+            check["parse_rule"] = "reasoning_type"
             if "reasoning_content" in source:
                 if source["reasoning_content"] is not None and not isinstance(source["reasoning_content"], str):
                     raise ValueError()
                 message["reasoning_content"] = source["reasoning_content"]
+            check["parse_rule"] = "tool_call_shape"
             calls = source.get("tool_calls")
             if calls is None:
                 calls = []
-            if not isinstance(calls, list) or len(calls) > 16:
+            if not isinstance(calls, list):
+                raise ValueError()
+            check["tool_calls"] = len(calls)
+            check["parse_rule"] = "tool_call_limit"
+            if len(calls) > 16:
                 raise ValueError()
             identifiers = set()
             for call in calls:
+                check["parse_rule"] = "tool_call_shape"
                 if (not isinstance(call, dict) or set(call) != {"id", "type", "function"}
                         or not isinstance(call["id"], str) or not 1 <= len(call["id"]) <= 128
-                        or call["id"] in identifiers or call["type"] != "function"
+                        or call["type"] != "function"
                         or not isinstance(call["function"], dict)
                         or set(call["function"]) != {"name", "arguments"}
                         or not isinstance(call["function"]["name"], str)
                         or not isinstance(call["function"]["arguments"], str)):
                     raise ValueError()
+                check["parse_rule"] = "duplicate_tool_call_id"
+                if call["id"] in identifiers:
+                    raise ValueError()
                 identifiers.add(call["id"])
+            check["parse_rule"] = "finish_reason_mismatch"
             if bool(calls) != (reason == "tool_calls"):
                 raise ValueError()
+            check["parse_rule"] = "required_tool_missing"
             if self.tool_choice == "required" and not calls:
                 raise ValueError()
+            check["parse_rule"] = "empty_text"
             if calls:
                 message["tool_calls"] = calls
             elif not isinstance(message["content"], str) or not message["content"].strip():
                 raise ValueError()
+            check["parse_rule"] = "usage"
             usage = data["usage"]
             counts = {key: usage[key] for key in ("prompt_tokens", "completion_tokens", "total_tokens")}
             if any(type(value) is not int or value < 0 for value in counts.values()):
                 raise ValueError()
             if counts["total_tokens"] != counts["prompt_tokens"] + counts["completion_tokens"]:
                 raise ValueError()
+            check["parse_rule"] = "identity"
             if any(not isinstance(data[key], str) or not data[key] for key in ("id", "model")):
                 raise ValueError()
         except (ValueError, KeyError, TypeError, UnicodeError, RecursionError):
             raise ProviderError("Invalid, incomplete, or unsupported provider completion; no tools released",
-                kind="invalid_completion", phase="parsing", request_bytes=len(encoded), response_bytes=len(raw)) from None
+                kind="invalid_completion", phase="parsing", request_bytes=len(encoded), response_bytes=len(raw),
+                completion_check=check) from None
         return Completion(message, reason, counts, data["id"], data["model"])

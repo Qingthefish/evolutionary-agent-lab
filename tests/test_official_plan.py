@@ -25,10 +25,15 @@ class OfficialPlanTests(unittest.TestCase):
         guard.start()
         self.addCleanup(guard.stop)
 
-    def copy_plan(self, directory):
+    def copy_plan(self, directory, *, unresolved_html=False):
         destination = Path(directory) / "inputs"
         destination.mkdir()
         shutil.copyfile(TEMPLATE, destination / "plan.json")
+        if unresolved_html:
+            # The template records the format decision; keep the unresolved behaviour covered explicitly.
+            value = json.loads((destination / "plan.json").read_text())
+            value["operator_decisions"]["html_format_conflict"] = None
+            (destination / "plan.json").write_text(json.dumps(value))
         archive = destination / "Mid_Test.zip"
         write_archive(archive)
         (destination / "manifest.json").write_text(json.dumps(load_mid_test(archive)))
@@ -36,7 +41,7 @@ class OfficialPlanTests(unittest.TestCase):
 
     def test_inspection_has_all_tasks_and_no_runtime_or_credential_access(self):
         with tempfile.TemporaryDirectory() as temp:
-            config = self.copy_plan(temp)
+            config = self.copy_plan(temp, unresolved_html=True)
             before = sorted(str(path.relative_to(temp)) for path in Path(temp).rglob("*"))
             with patch("agent_lab.deepseek.DeepSeekHTTP.__call__", side_effect=AssertionError("no model")), \
                  patch("agent_lab.hkgai.HKGAIHTTP.__call__", side_effect=AssertionError("no model")), \
@@ -129,13 +134,33 @@ class OfficialPlanTests(unittest.TestCase):
 
     def test_unresolved_html_format_only_affects_the_html_task(self):
         with tempfile.TemporaryDirectory() as temp:
-            config = self.copy_plan(temp)
+            config = self.copy_plan(temp, unresolved_html=True)
             report = OfficialMidTestPlan(config).inspect()
             self.assertIn("operator_decisions.html_format_conflict", report["unresolved_choices"])
             html_tasks = [task["id"] for task in report["tasks"]
                           if any("HTML" in blocker or "html_format_conflict" in blocker
                                  for blocker in task["blockers"])]
             self.assertEqual(html_tasks, ["scenario-3-task-2"])
+
+    def test_recorded_template_decision_removes_only_the_html_blocker(self):
+        with tempfile.TemporaryDirectory() as temp:
+            decided = OfficialMidTestPlan(self.copy_plan(temp)).inspect()
+        with tempfile.TemporaryDirectory() as temp:
+            unresolved = OfficialMidTestPlan(self.copy_plan(temp, unresolved_html=True)).inspect()
+        template = json.loads(TEMPLATE.read_text())
+        decision = template["operator_decisions"].pop("html_format_conflict")
+        self.assertIn("that task only", decision)
+        self.assertIn("No tool, file permission or acceptance check is widened", decision)
+        self.assertTrue(all(value is None for value in template["operator_decisions"].values()))
+        self.assertEqual(set(unresolved["unresolved_choices"]) - set(decided["unresolved_choices"]),
+                         {"operator_decisions.html_format_conflict"})
+        for before, after in zip(unresolved["tasks"], decided["tasks"]):
+            removed = [blocker for blocker in before["blockers"] if blocker not in after["blockers"]]
+            self.assertEqual(after["blockers"], [b for b in before["blockers"] if b not in removed])
+            self.assertEqual(len(removed), 1 if before["id"] == "scenario-3-task-2" else 0, before["id"])
+            self.assertTrue(all("HTML" in blocker for blocker in removed))
+        self.assertTrue(decided["tasks"][-1]["blockers"])  # Model, budget and protocol choices stay open.
+        self.assertNotEqual(decided["plan_sha256"], unresolved["plan_sha256"])
 
     def test_unknown_fields_provider_substitution_and_literal_credentials_refused(self):
         with tempfile.TemporaryDirectory() as temp:
