@@ -88,11 +88,17 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 
 class TaskRunner:
     def __init__(self, gateway, client, *, mode, constraints, limits=Limits(),
-                 verifier=None, verifier_id=None, role=None, allow_html=False):
+                 verifier=None, verifier_id=None, role=None, allow_html=False, budget_visible=False):
         self.gateway, self.client = gateway, client
         self.workflow, self.task, self.actor = gateway.workflow, gateway.task, gateway.actor
         self.limits, self.mode, self.verifier = limits, mode, verifier
         self.budget_context = gateway.delegation_rules is not None
+        # Proposed 2026-11-18: official runs show remaining local limits without the
+        # declared-contract prompt. Live parents spent their last requests on new
+        # optional checks after the delivered work was accepted.
+        if type(budget_visible) is not bool:
+            raise RunnerError("Budget visibility requires an explicit trusted setting")
+        self.budget_visible = budget_visible
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
         self.require_tool_actions = client.tool_choice == 'required'
@@ -147,6 +153,8 @@ class TaskRunner:
                         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest()}
         if self.budget_context:
             settings['budget_context'] = 'local-reservations-v1'
+        elif budget_visible:
+            settings['budget_context'] = 'local-reservations-shared-v1'
         if self.budget_context or self.require_tool_actions or allow_html:
             settings['model_context'] = model_context_conditions(
                 self.budget_context, require_tool_actions=self.require_tool_actions, allow_html=allow_html)
@@ -298,6 +306,12 @@ class TaskRunner:
                 'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
                 'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
                 'seconds_left': max(0, limits['duration_seconds'] - (now - scope['created']))}
+            left = data['shared']['model_attempts_left_after_current']
+            if self.budget_visible and left <= max(4, limits['model_attempts'] // 4):
+                data['shared']['low_shared_budget'] = True
+                data['shared']['instruction'] = ('Few requests remain for the whole task tree. Prefer handing over '
+                    'and proposing work that is already done and checked over starting new optional subtasks or '
+                    'repeat checks. Never skip required work or approval.')
         if 'submit_for_verification' in self.gateway.allowed:
             remaining = min(data['task']['model_attempts_left_after_current'],
                             data['shared']['model_attempts_left_after_current'] if data['shared'] is not None
@@ -417,7 +431,7 @@ class TaskRunner:
             if reason is None:
                 transcript = self._append_input_offers(self._append_child_results(self._append_human_responses(session)))
                 number = session["attempts"] + 1
-                if self.budget_context:
+                if self.budget_context or self.budget_visible:
                     transcript = self._budget_context(transcript, session, number)
                 self.workflow.db.execute(
                     "INSERT INTO runner_turns(task,number,status,request,started) VALUES(?,?,'calling',?,?)",

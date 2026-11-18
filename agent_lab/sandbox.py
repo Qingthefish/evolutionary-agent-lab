@@ -57,16 +57,20 @@ os.execv(sys.executable, [sys.executable, '-B', '-u', '/work/' + job['entrypoint
 
 _EXPORT = """
 import json, os, stat, sys
-result = {}
+result, missing = {}, []
 for name in json.loads(sys.argv[1]):
     directory = os.open('/work', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     try:
         parts = name.split('/')
-        for part in parts[:-1]:
-            following = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
-            os.close(directory)
-            directory = following
-        descriptor = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        try:
+            for part in parts[:-1]:
+                following = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+                os.close(directory)
+                directory = following
+            descriptor = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        except FileNotFoundError:
+            missing.append(name)
+            continue
         try:
             info = os.fstat(descriptor)
             if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > 65536:
@@ -84,6 +88,9 @@ for name in json.loads(sys.argv[1]):
             os.close(descriptor)
     finally:
         os.close(directory)
+if missing:
+    sys.stderr.write(json.dumps({"missing_outputs": missing}))
+    sys.exit(3)
 print(json.dumps(result, ensure_ascii=True))
 """
 
@@ -468,10 +475,22 @@ class DockerPythonExecutor:
                                    "stderr_sha256": hashlib.sha256(execution.stderr).hexdigest()}
             if execution.returncode == 0 and not execution.interrupted and outputs and active():
                 result["phase"] = "artifact_export"
-                raw = self._checked(["container", "exec", "--user", "65533:65533", name,
-                                     "/usr/local/bin/python3", "-I", "-c", _EXPORT, json.dumps(outputs)],
-                                    seconds=min(5, remaining()), output_bytes=2 * 1024 * 1024,
-                                    keep_running=active)
+                export = self._invoke(["container", "exec", "--user", "65533:65533", name,
+                                       "/usr/local/bin/python3", "-I", "-c", _EXPORT, json.dumps(outputs)],
+                                      seconds=min(5, remaining()), output_bytes=2 * 1024 * 1024,
+                                      keep_running=active)
+                if export.returncode == 3 and not export.interrupted:
+                    try:
+                        missing = strict_json(export.stderr).get("missing_outputs")
+                    except (ValueError, AttributeError, TypeError):
+                        missing = None
+                    if isinstance(missing, list) and missing and set(missing) <= set(outputs):
+                        # Proposed 2026-11-18: name the declared paths the program did not write.
+                        raise SandboxError("Declared outputs were not produced under /work: " + ", ".join(sorted(missing))
+                                           + "; write them at exactly these paths. Nothing was imported")
+                if export.returncode != 0 or export.interrupted:
+                    raise SandboxError("Docker operation failed or exceeded its limit; no host-code fallback")
+                raw = export.stdout
                 exported = strict_json(raw)
                 if (not isinstance(exported, dict) or set(exported) != set(outputs)
                         or any(not isinstance(text, str) or len(text.encode("utf-8")) > 65536 for text in exported.values())):

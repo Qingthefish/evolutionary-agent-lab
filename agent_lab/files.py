@@ -125,6 +125,9 @@ class FileTools:
         try:
             with self.workflow._transaction(), self._task_directory(task, actor) as directory:
                 yield directory
+        except FileNotFoundError as error:
+            # Proposed 2026-11-18: a live parent re-read a missing path three times after a generic refusal.
+            raise FileToolError("No such file or directory at this task path; check the path or create it first") from error
         except (OSError, UnicodeError) as error:
             raise FileToolError("File request rejected; inspect the task path, content, and file type") from error
 

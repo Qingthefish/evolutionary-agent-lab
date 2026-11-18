@@ -167,7 +167,7 @@ def make_scheduler(session, root, files, live, services):
         clients=live_clients(live, roles), mode="live", constraints=constraints,
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
-        child_retries=CHILD_REPLACEMENTS)
+        child_retries=CHILD_REPLACEMENTS, budget_visible=True)
 
 
 def _review_boundaries(scheduler):
