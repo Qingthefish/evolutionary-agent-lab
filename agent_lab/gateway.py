@@ -226,7 +226,7 @@ class ToolGateway:
                 or not arguments.keys() <= properties.keys()):
             raise ToolRequestError("Missing or unknown tool arguments")
         for key, value in arguments.items():
-            self._validate_value(value, properties[key])
+            self._validate_value(value, properties[key], key)
         if name in {"delegate_task", "delegate_with_inputs"} and arguments["assignee"] not in self.delegates:
             raise ToolRequestError("Assignee is not an eligible delegate")
         if (name in {"delegate_task", "delegate_with_inputs"} and self.delegation_rules is not None
@@ -265,33 +265,46 @@ class ToolGateway:
             raise ToolRequestError(str(error)) from None
 
     @classmethod
-    def _validate_value(cls, value, spec):
+    def _validate_value(cls, value, spec, label="argument"):
+        # Name the argument and the rule it broke, never its value (proposed 2026-11-19):
+        # a live lead's two submissions were 2,134 and 2,034 characters against a 2,000 limit
+        # and saw only "Invalid string tool argument".
         kind = spec["type"]
         if kind == "string":
-            if (not isinstance(value, str) or not spec.get("minLength", 1) <= len(value) <= spec.get("maxLength", 65536)
-                    or (spec.get("minLength", 1) and not value.strip())
-                    or ("pattern" in spec and re.fullmatch(spec["pattern"], value) is None)):
-                raise ToolRequestError("Invalid string tool argument")
+            minimum, maximum = spec.get("minLength", 1), spec.get("maxLength", 65536)
+            if not isinstance(value, str):
+                raise ToolRequestError(f"Tool argument '{label}' must be a string")
+            if len(value) > maximum:
+                raise ToolRequestError(f"Tool argument '{label}' has {len(value)} characters; the maximum is "
+                                       f"{maximum}. Shorten it and call the tool again")
+            if len(value) < minimum or (minimum and not value.strip()):
+                raise ToolRequestError(f"Tool argument '{label}' must not be empty" if minimum <= 1 else
+                                       f"Tool argument '{label}' needs at least {minimum} characters")
+            if "pattern" in spec and re.fullmatch(spec["pattern"], value) is None:
+                raise ToolRequestError(f"Tool argument '{label}' does not match its required format")
             try:
                 value.encode("utf-8")
             except UnicodeError:
                 raise ToolRequestError("Argument is not valid UTF-8") from None
         elif kind == "integer":
             if type(value) is not int or not spec["minimum"] <= value <= spec["maximum"]:
-                raise ToolRequestError("Invalid integer tool argument")
+                raise ToolRequestError(f"Tool argument '{label}' must be an integer from "
+                                       f"{spec['minimum']} to {spec['maximum']}")
         elif kind == "array":
             if not isinstance(value, list) or not spec.get("minItems", 0) <= len(value) <= spec["maxItems"]:
-                raise ToolRequestError("Invalid bounded list tool argument")
+                raise ToolRequestError(f"Tool argument '{label}' must be a list of {spec.get('minItems', 0)} to "
+                                       f"{spec['maxItems']} items")
             for item in value:
-                cls._validate_value(item, spec["items"])
+                cls._validate_value(item, spec["items"], f"{label} item")
             if spec.get("uniqueItems") and len({json.dumps(item, sort_keys=True) for item in value}) != len(value):
                 raise ToolRequestError("List tool arguments must be distinct")
         elif kind == "object":
             if not isinstance(value, dict) or not spec["minProperties"] <= len(value) <= spec["maxProperties"]:
-                raise ToolRequestError("Invalid bounded object tool argument")
+                raise ToolRequestError(f"Tool argument '{label}' must be an object with {spec['minProperties']} to "
+                                       f"{spec['maxProperties']} entries")
             for key, item in value.items():
-                cls._validate_value(key, spec["propertyNames"])
-                cls._validate_value(item, spec["additionalProperties"])
+                cls._validate_value(key, spec["propertyNames"], f"{label} key")
+                cls._validate_value(item, spec["additionalProperties"], f"{label} value")
         else:
             raise ToolRequestError("Unsupported tool argument schema")
 
