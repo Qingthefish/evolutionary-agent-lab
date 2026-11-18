@@ -1,5 +1,17 @@
 # Instructor mid-test input adapter (C06)
 
+The reviewed S01 commands cover all three mid-test scenario policies. A real
+software Task 1 trial stopped after two HKGAI requests on November 16. The first
+completed group/task reads. The second failed completion parsing before any
+tool effect. Its failed record is retained. The new diagnostic labels will
+identify the failed structural check in a future reply. All six tasks still
+need complete live execution and independent outcome review.
+
+The November 18 integration review checked the later interrupted-state recovery
+command as well. It tightened file export against linked task directories,
+added full runner transcripts to the local export and bound HTML permission in
+the system prompt to the securities scenario's second root and its descendants.
+
 Download the instructor's November 15, 2026 [Mid_Test.zip from Canvas](https://canvas.ust.hk/courses/73253/modules/items/1916529).
 Keep the archive, generated manifest and prepared prompts in the ignored
 `runs/` directory. The adapter records the SHA-256 of the archive and each

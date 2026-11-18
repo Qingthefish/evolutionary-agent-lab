@@ -200,6 +200,29 @@ class ScenarioExport(unittest.TestCase):
                          (["not_posted", "not_posted"], "no_model_turns"))
         self.assertEqual(snapshot(self.state), before)
 
+    def test_symlinked_task_root_cannot_export_other_private_files(self):
+        _, root = self.build()
+        source = self.state / "files/tasks" / hashlib.sha256(root.encode()).hexdigest()
+        source.rename(source.with_name(source.name + "-retained"))
+        outside = self.root / "another-task"
+        outside.mkdir()
+        (outside / "private.txt").write_text("other-task-fixture")
+        source.symlink_to(outside, target_is_directory=True)
+        output = self.root / "unsafe-export"
+        self.export(output, fails=True)
+        self.assertFalse(output.exists())
+        self.assertEqual((outside / "private.txt").read_text(), "other-task-fixture")
+
+    def test_runner_dialogue_is_exported_without_the_display_text_limit(self):
+        _, root = self.build()
+        output = self.root / "full-export"
+        self.export(output)
+        records = json.loads((output / "runner-sessions.json").read_text())
+        self.assertEqual([record["task"] for record in records], [root])
+        messages = records[0]["transcript"]
+        self.assertTrue(any(message["role"] == "tool" for message in messages))
+        self.assertTrue(any("Synthetic fixture answer" in (message["content"] or "") for message in messages))
+
 
 if __name__ == "__main__":
     unittest.main()

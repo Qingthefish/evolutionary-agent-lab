@@ -7,7 +7,7 @@ reports what was recorded: it does not score, repair or complete anything.
 """
 
 import argparse
-from contextlib import closing
+from contextlib import closing, ExitStack
 import hashlib
 import json
 import os
@@ -20,6 +20,7 @@ import tempfile
 
 from ..budget import descendants
 from ..core import Workflow, WorkflowError
+from ..files import FileTools
 from ..queries import WorkflowQueries, redact
 from .official import OfficialMidTestPlan
 from .official_session import DATABASE, OfficialScenarioSession
@@ -72,23 +73,41 @@ def _code_identity():
 
 def _copy_files(state, task, target):
     """Copy one task's files without following links; report what was skipped."""
-    source = state / "files" / "tasks" / _sha(task.encode())
     copied, skipped = [], []
-    if not source.is_dir():
-        return copied, skipped
-    for directory, names, files in os.walk(source, followlinks=False):
-        names.sort()
-        for name in sorted(files):
-            path = Path(directory) / name
-            relative = path.relative_to(source).as_posix()
-            if not stat.S_ISREG(path.lstat().st_mode):
-                skipped.append(relative)
-                continue
-            data = path.read_bytes()
-            destination = target / relative
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_bytes(data)
-            copied.append({"path": relative, "sha256": _sha(data), "bytes": len(data)})
+    # Anchor every directory and file read to open descriptors as the broker
+    # does. The task directory itself may have been replaced after execution.
+    with ExitStack() as opened:
+        fd = os.open(state, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        opened.callback(os.close, fd)
+        for name in ("files", "tasks", _sha(task.encode())):
+            try:
+                fd = FileTools._directory(fd, name)
+            except FileNotFoundError:
+                return copied, skipped
+            opened.callback(os.close, fd)
+        reader = object.__new__(FileTools)
+        reader.max_bytes = 1024 * 1024
+
+        def walk(directory, prefix=""):
+            for name in sorted(os.listdir(directory)):
+                relative = prefix + name
+                info = os.stat(name, dir_fd=directory, follow_symlinks=False)
+                if stat.S_ISDIR(info.st_mode):
+                    child = FileTools._directory(directory, name)
+                    try:
+                        walk(child, relative + "/")
+                    finally:
+                        os.close(child)
+                elif stat.S_ISREG(info.st_mode):
+                    data = reader._read(directory, name)
+                    destination = target / relative
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.write_bytes(data)
+                    copied.append({"path": relative, "sha256": _sha(data), "bytes": len(data)})
+                else:
+                    skipped.append(relative)
+
+        walk(fd)
     return copied, skipped
 
 
@@ -102,11 +121,13 @@ def _write(output, name, value, manifest):
 def export(config, state_dir, output):
     """Write a new export directory; a failed export leaves no partial directory behind."""
     created = Path(output).resolve()
-    existed = created.exists()
+    if created == Path(state_dir).resolve() or Path(state_dir).resolve() in created.parents:
+        raise WorkflowError("Write the export outside the state directory")
+    created.mkdir(parents=True, exist_ok=False, mode=0o700)
     try:
-        return _export(config, state_dir, output)
+        return _export(config, state_dir, created)
     except BaseException:
-        if not existed and created.is_dir():
+        if created.is_dir():
             shutil.rmtree(created)
         raise
 
@@ -119,7 +140,6 @@ def _export(config, state_dir, output):
         raise WorkflowError("Scenario workflow database is missing")
     if output == state or state in output.parents:
         raise WorkflowError("Write the export outside the state directory")
-    output.mkdir(parents=True, exist_ok=False, mode=0o700)  # Refuse reuse.
     manifest = []
     with tempfile.TemporaryDirectory(prefix="official-export-") as scratch:
         copy = Path(scratch) / DATABASE
@@ -127,6 +147,7 @@ def _export(config, state_dir, output):
              closing(sqlite3.connect(copy)) as target:
             source.execute("PRAGMA query_only=ON")
             source.backup(target)
+        snapshot_database_sha256 = _sha(copy.read_bytes())
         database_sha256 = _sha(database.read_bytes())
         workflow = Workflow(copy)
         try:
@@ -174,6 +195,7 @@ def _export(config, state_dir, output):
             scenario = {
                 "schema": SCHEMA, "plan_sha256": plan.sha256, "scenario": status["scenario"],
                 "group": status["group"], "human": status["human"], "source_database_sha256": database_sha256,
+                "snapshot_database_sha256": snapshot_database_sha256,
                 "evidence_class": evidence, "synthetic": "synthetic" in modes, "benchmark_valid": False,
                 "roles": session.scenario["roles"],
                 "tasks": [{"id": task["id"], "sequence": task["sequence"], "prompt": task["prompt"],
@@ -193,6 +215,7 @@ def _export(config, state_dir, output):
                 "reviews": [review for tree in trees for member in tree["tasks"] for review in member["reviews"]]},
                 manifest)
             _write(output, "tool-calls.json", _rows(db, "tool_calls", tasks) if tasks else [], manifest)
+            _write(output, "runner-sessions.json", _rows(db, "runner_sessions", tasks) if tasks else [], manifest)
             _write(output, "retrieval.json", _rows(db, "retrieval_records", tasks) if tasks else [], manifest)
             _write(output, "sandbox.json", _rows(db, "sandbox_runs", tasks) if tasks else [], manifest)
             _write(output, "files.json", files, manifest)

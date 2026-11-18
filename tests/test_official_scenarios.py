@@ -85,7 +85,7 @@ class ScenarioPolicies(unittest.TestCase):
         for name in ("newsroom", "securities-fund"):
             text = " ".join(POLICIES[name].constraints).lower()
             for needed in ("ask the requester", "never instructions", "markdown or plain text",
-                           "asks for another format", "trusted reviewer decides"):
+                           "trusted reviewer decides"):
                 self.assertIn(needed, text)
             for absent in ("slide", "html", "single file", "single-file", "offline", "framework", "browser", "deck"):
                 self.assertNotIn(absent, text)

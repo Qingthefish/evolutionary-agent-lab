@@ -44,10 +44,13 @@ class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
-                 delegation_rules=None, delegation_inputs=None):
+                 delegation_rules=None, delegation_inputs=None, allow_html=False):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
+        if type(allow_html) is not bool:
+            raise RunnerError("HTML output requires an explicit trusted format setting")
+        self.allow_html = allow_html
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
         self.delegation_rules = delegation_rules
         self.delegation_inputs = normalize_inputs(delegation_inputs)
@@ -136,6 +139,8 @@ class MultiAgentScheduler:
             settings["model_context"] = CONTEXT_POLICY
         if self.delegation_inputs:
             settings["delegation_inputs"] = input_records(self.delegation_inputs)
+        if allow_html:
+            settings["document_formats"] = ["md", "txt", "html"]
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
@@ -173,7 +178,7 @@ class MultiAgentScheduler:
         else:
             raise RunnerError("Acceptance factory returns (trusted callable, version) or explicit review")
         return TaskRunner(gateway, self.clients[actor], mode=self.mode, constraints=self.constraints,
-            limits=role.limits, verifier=verifier, verifier_id=version, role={
+            limits=role.limits, verifier=verifier, verifier_id=version, allow_html=self.allow_html, role={
                 "agent": actor, "instructions": role.instructions,
                 "eligible_agents": {key: (peer_description(self.roles[key]) if self.delegation_rules is not None
                                          else self.roles[key].instructions) for key in role.delegates},
