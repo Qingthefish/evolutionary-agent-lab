@@ -350,6 +350,46 @@ class CompletionProtocol(unittest.TestCase):
         self.drive()
         self.assertEqual(self.events("completion_proposed", self.root)[0][0], self.root)
 
+    # 7b. Operator-resent provider failures do not consume the request cap; the record stays truthful.
+    def test_resent_provider_failures_are_refunded_up_to_the_limit(self):
+        def dev(payload, n, state):
+            if n <= 7:  # Seven HTTP 502 replies in a row, each resent by the operator.
+                return ProviderError("Provider HTTP status 502; no automatic retry", kind="http_status",
+                                     phase="opening", http_status=502)
+            return writer(lambda p, s: len(tool_results(p)) >= 1, offer_and_submit())(payload, n, state)
+
+        dev_agent = Agent(dev)
+        self.build({"lead": Agent(lead_finisher()), "dev": dev_agent}, cap=20)
+        for _ in range(7):
+            state = self.drive()
+            (dev_task,) = self.task_of("dev")
+            self.assertEqual(state["needs"][0]["runner_state"], "provider_uncertain")
+            reconcile(self.scheduler, dev_task["id"], "resend", "Operator: HKGAI returned 502", human="user")
+        state = self.drive()
+        self.assertEqual(state["needs"][0], {"task": dev_task["id"], "kind": "independent_verification"})
+        status = budget.status(self.workflow, self.root)
+        self.assertEqual((status["attempts"], status["refunded_attempts"]), (10, budget.MAX_PROVIDER_REFUNDS))
+        self.assertEqual(self.scheduler.runner(dev_task["id"]).status()["unknown_usage_attempts"], 7)  # Still recorded.
+        refunded = [n for _, detail in self.events("provider_failures_refunded", dev_task["id"]) for n in detail["numbers"]]
+        self.assertEqual(refunded, [1, 2, 3, 4, 5])  # The sixth and seventh failures count toward the cap.
+        info = budget.finish_budget(self.workflow, self.root)
+        self.assertEqual(info["shared_left"], 20 - (10 - budget.MAX_PROVIDER_REFUNDS))
+
+    def test_without_the_protocol_resent_failures_still_count(self):
+        def dev(payload, n, state):
+            if n == 1:
+                return ProviderError("Provider HTTP status 502; no automatic retry", kind="http_status",
+                                     phase="opening", http_status=502)
+            return reply(("submit_for_verification", {"summary": "Done"}))
+
+        self.build({"lead": Agent(lead_finisher()), "dev": Agent(dev)}, cap=20, policy=None, show=False)
+        self.drive()
+        (dev_task,) = self.task_of("dev")
+        reconcile(self.scheduler, dev_task["id"], "resend", "Operator: HKGAI returned 502", human="user")
+        self.drive()
+        self.assertEqual(budget.status(self.workflow, self.root)["refunded_attempts"], 0)
+        self.assertEqual(self.events("provider_failures_refunded"), [])
+
     # 8. Without the protocol, behaviour and tools are unchanged.
     def test_disabled_protocol_keeps_existing_behaviour(self):
         def qa(payload, n, state):
