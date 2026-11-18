@@ -261,6 +261,12 @@ state and the shared request cap:
 The defaults (3, 2, 10, 0.25) come from the live software roots: accepted
 children used 10-25 requests and leads needed 2-5 after their last child.
 
+With the protocol on, an operator `resend` after a provider failure (see
+below) also returns that task's failed, response-less requests to the request
+cap, at most 5 per root. The requests stay recorded as made with unknown usage,
+and a `provider_failures_refunded` event lists them. Without the protocol,
+failed requests count as before.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,
@@ -284,6 +290,7 @@ python -m agent_lab.evaluation.official_live \
 | `processing` with a tool whose effect is unknown | `abort` | `recover-tools` refuses. Inspect the files first; the reserved tool stays recorded. |
 | `stopping` | `abort` | Finishes the interrupted stop. |
 | `controller_reconciliation_or_busy` only | `release-claim` | Clears the stale claim; the task is unchanged. |
+| `provider_uncertain` (transport failure or HTTP 5xx) | `resend` or `abort` | Nothing is retried automatically. `resend` releases one new counted request with the same transcript; `abort` ends the task failed. |
 
 Each action is recorded as an `official_reconciliation_recorded` event with the
 operator's reason, and it sends no model request. An aborted Task 1 is a
