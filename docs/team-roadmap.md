@@ -651,7 +651,9 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 3. Freeze a tested revision and its runtime configuration under A07. Reproduce the demo and retain an export and presentation fallback from that revision.
 4. Complete S02's architecture, performance/failure/memory discussion, four-member contribution screenshots and week-13 presentation. Apply the instructor's final test and exact submission dates when issued.
 
-November 18 Outlook searches found the November 15 mid-test release and no later project notice. Canvas access was interrupted during this review, so the exact presentation slot, final release and submission dates remain unverified. Target a development freeze on November 19 after live validation; the target is a team plan.
+November 18 Outlook and Canvas announcement checks found the November 15 mid-test release as the latest project notice. General Information contained `Mid_Test.zip` and no listed Final Test archive. The original announcement still specifies a week-13 presentation and a report after week 13, with conflicting “3 weeks” and “3/1 weeks” release wording. The exact presentation slot, final release and submission dates remain unverified. Target a development freeze after live validation.
+
+- **2026-11-19 continuation:** Integrated #59/#60 and review corrections through [PR #61](https://github.com/Qingthefish/evolutionary-agent-lab/pull/61), merge `fd52188`. Its three GitHub checks passed. The local checkout synchronized through the computer's existing proxy configuration. Two new real software roots each used two requests and failed on the second reply with `finish_reason=length`; the compact-action prompt in the second trial did not resolve truncation. Both terminal records and unknown usage remain under ignored `runs/continuation-20261119/`. A larger per-request output ceiling requires the owner's explicit budget selection. Default limits and all original failures are retained.
 
 ### S02
 

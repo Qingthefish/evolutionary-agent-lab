@@ -33,13 +33,15 @@ class OfficialFormatScope(TestCase):
                 _root=lambda number: {"root": "second-root"},
             )
             root = "second-root" if sequence == 2 else "first-root"
-            live = SimpleNamespace(role_limits=Limits(), tree_limits=TreeLimits(), tool_calls=32)
+            live = SimpleNamespace(role_limits=Limits(), tree_limits=TreeLimits(), tool_calls=32,
+                                   max_output_tokens=1024)
             services = SimpleNamespace(executor=None, retrieval=None)
             with (patch.object(official_live, "live_clients", return_value={}),
                   patch.object(official_live, "MultiAgentScheduler") as factory):
                 official_live.make_scheduler(session, root, None, live, services)
             self.assertEqual(factory.call_args.kwargs["allow_html"], enabled)
             self.assertEqual("HTML slides" in " ".join(factory.call_args.kwargs["constraints"]), enabled)
+            self.assertIn("output limit of 1024 tokens", factory.call_args.kwargs["constraints"][-1])
 
     def test_scheduler_passes_html_setting_into_real_runner_context(self):
         from agent_lab.deepseek import DeepSeekClient

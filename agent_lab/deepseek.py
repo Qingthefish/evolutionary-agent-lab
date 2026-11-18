@@ -218,6 +218,13 @@ class DeepSeekClient:
             reason, source = choice["finish_reason"], choice["message"]
             check["finish_reason"] = _finish_label(reason)
             role, content = source["role"], source.get("content")
+            observed_calls = source.get("tool_calls")
+            if isinstance(observed_calls, list):
+                check["tool_calls"] = len(observed_calls)
+            elif observed_calls is None:
+                check["tool_calls"] = 0
+            if content is None or isinstance(content, str):
+                check["content_present"] = bool(content and content.strip())
             check["parse_rule"] = "finish_reason"
             if not isinstance(reason, str) or reason not in {"stop", "tool_calls"}:
                 raise ValueError()

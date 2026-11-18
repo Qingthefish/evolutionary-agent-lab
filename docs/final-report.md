@@ -171,3 +171,34 @@ The announcement requires a week-13 presentation; confirm its exact date/format.
 | Final revision/configuration and authorized evaluation budget | To freeze for the official run |
 | Official completion rate, execution time and failure/memory analysis | No official results claimed |
 | Presentation/report deadlines and delivery evidence | Confirm actual dates and requirements |
+
+## 11. Mid-test execution record, 19 November
+
+The mid-test has three four-agent scenarios and six ordered tasks. The retained
+16 November software attempt failed after two requests. On 19 November two new
+software Task 1 attempts also stopped after two requests each. Both new failures
+record `finish_reason=length` at the 1,024 output-token limit, before any tool
+from the rejected replies was released. Compact action guidance in the second
+new attempt did not complete the task. The two new trials have 6,345 known
+provider-reported tokens in total, plus unknown usage for the two rejected
+completions. These counts cover the two new trials only.
+
+| Scenario | Task 1 | Task 2 |
+| --- | --- | --- |
+| Software development | Failed attempts retained; no delivered booking system in these trials | Unrun |
+| Newsroom | Unrun | Unrun |
+| Securities fund | Unrun | Unrun |
+
+Each new failure has a local read-only export containing the original prompt
+and roles, full recorded runner dialogue, task state, tool calls, diagnostics
+and configuration. The source databases remain preserved. Source versions and
+the cumulative request allowance are recorded in the local round ledger.
+The current six-task completion rate and final course score remain unreported.
+Further runs need to verify the configured output ceiling, retain the same
+group within each pair and undergo actual outcome review.
+
+The original announcement specifies presentation in week 13 and the final
+report after week 13. The 18 November Canvas check found the 15 November
+mid-test release as the latest project notice and listed only `Mid_Test.zip`
+under General Information. Exact final-test and submission dates still need
+confirmation. [Course announcements](https://canvas.ust.hk/courses/73253/announcements)
