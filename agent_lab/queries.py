@@ -326,7 +326,7 @@ class WorkflowQueries:
         found = []
         if self._table("runner_sessions"):
             for row in self.db.execute(
-                    "SELECT task,status FROM runner_sessions WHERE status IN ('calling','processing','stopping')"):
+                    "SELECT task,status FROM runner_sessions WHERE status IN ('calling','processing','stopping','provider_uncertain')"):
                 if row["task"] in visible:
                     found.append({"task": row["task"], "kind": "runner_" + row["status"],
                                   "detail": "Provider/tool turn interrupted; inspect evidence before abort or recovery"})

@@ -93,7 +93,7 @@ def availability(workflow, parent, failed, *, require_running=True):
     if workflow.db.execute(f"SELECT 1 FROM requests WHERE task IN ({marks}) AND (approved=0 OR (approved=1 AND consumed=0))", ids).fetchone():
         raise WorkflowError("Denied or unreleased actions prevent automatic child replacement")
     for table, predicate in (
-        ('runner_sessions', "status IN ('calling','processing','stopping')"),
+        ('runner_sessions', "status IN ('calling','processing','stopping','provider_uncertain')"),
         ('runner_turns', "status != 'settled'"),
         ('tool_calls', "status='reserved'"),
         ('sandbox_runs', "status NOT IN ('cleaned','reconciled')"),

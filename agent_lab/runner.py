@@ -14,6 +14,13 @@ from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLI
 from . import budget
 
 
+# Transport failures return no completion, so no tool can have been released.
+# The task pauses for an explicit operator decision instead of failing; nothing
+# is resent automatically. Proposed 2026-11-18, pending owner review.
+# A malformed HTTP reply (http_protocol) and HTTP status errors still fail the task.
+TRANSPORT_FAILURES = frozenset({"timeout", "dns", "tls", "connection_closed", "connection_refused", "transport"})
+
+
 class RunnerError(WorkflowError):
     """Invalid trusted setup or an interrupted turn requiring reconciliation."""
 
@@ -227,6 +234,24 @@ class TaskRunner:
             self.workflow.db.execute("UPDATE runner_sessions SET status='stopped' WHERE task=?", (self.task,))
         return self.status()
 
+    def resend_after_transport_failure(self, reason):
+        """Trusted operator only. Release one new, counted attempt after a transport failure.
+
+        The failed request stays recorded with unknown usage. The next scheduler
+        step reserves a new attempt against the same limits; nothing runs here.
+        """
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
+            raise RunnerError("Provide a concrete bounded operator reason")
+        with self.workflow._transaction():
+            session = self._session()
+            task = self.workflow.task(self.task, self.actor)
+            if session["status"] != "provider_uncertain" or task["state"] != "running":
+                raise RunnerError("Only a running task paused after a transport failure can be resent")
+            self.workflow.db.execute("UPDATE runner_sessions SET status='ready' WHERE task=?", (self.task,))
+            self.workflow._event(self.task, self.actor, "provider_resend_released", {
+                "after_attempt": session["attempts"], "reason": reason, "automatic_retry": False})
+        return self.status()
+
     def abort(self, reason):
         """Trusted controller only. Stop an uncertain turn; never replay its effects."""
         if not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
@@ -412,6 +437,14 @@ class TaskRunner:
                 self.workflow._event(self.task, self.actor, "provider_request_failed",
                     {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
                 if self._session()["status"] != "calling":
+                    return self.status()
+                if error.diagnostics()["kind"] in TRANSPORT_FAILURES:
+                    # Usage stays unknown (no response). The operator chooses resend or abort.
+                    self.workflow.db.execute("UPDATE runner_sessions SET status='provider_uncertain' WHERE task=?",
+                                             (self.task,))
+                    self.workflow._event(self.task, self.actor, "provider_decision_required", {
+                        "number": number, "kind": error.diagnostics()["kind"], "automatic_retry": False,
+                        "tools_released": 0, "options": ["resend", "abort"]})
                     return self.status()
             return self._stop("Provider attempt failed; usage may be unknown; reconcile before retry")
         response = {"message": result.message, "finish_reason": result.finish_reason,

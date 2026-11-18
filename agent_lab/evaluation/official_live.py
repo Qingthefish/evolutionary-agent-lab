@@ -181,7 +181,7 @@ def _review_boundaries(scheduler):
             needs.append({"task": task["id"], "kind": task["state"], "requests": pending})
         elif has_sessions:
             row = workflow.db.execute("SELECT status FROM runner_sessions WHERE task=?", (task["id"],)).fetchone()
-            if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping"}:
+            if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping", "provider_uncertain"}:
                 needs.append({"task": task["id"], "kind": row["status"]})
     return needs
 
@@ -227,8 +227,11 @@ def review_proposal(scheduler, task_id, decision, feedback):
 # Which recorded state each operator action may resolve. None of them sends a
 # model request or re-runs a tool; an unknown provider response stays unknown.
 RECONCILE = {"release-claim": {"ready", "paused", "awaiting_verification", None},
-             "abort": {"calling", "processing", "stopping"},
-             "recover-tools": {"processing"}}
+             "abort": {"calling", "processing", "stopping", "provider_uncertain"},
+             "recover-tools": {"processing"},
+             # Proposed 2026-11-18: after a transport failure, release one new counted
+             # attempt. This command itself sends nothing; the next advance does.
+             "resend": {"provider_uncertain"}}
 
 
 def reconcile(scheduler, task_id, action, reason, *, human):
@@ -238,6 +241,8 @@ def reconcile(scheduler, task_id, action, reason, *, human):
     interrupted task without replay, so it ends failed with its partial record.
     `recover-tools` rebuilds already committed results of the stored response
     and leaves unstarted calls unexecuted; an uncertain tool effect refuses.
+    `resend` applies only after a transport failure: it releases one new counted
+    attempt for the next advance, and the failed request keeps unknown usage.
     """
     if action not in RECONCILE or not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
         raise WorkflowError("Choose a reconciliation action and give a concrete operator reason")
@@ -259,6 +264,8 @@ def reconcile(scheduler, task_id, action, reason, *, human):
         scheduler.runner(task_id).abort("Operator reconciliation without replay: " + reason)
     elif action == "recover-tools":
         scheduler.runner(task_id).recover_tools()
+    elif action == "resend":
+        scheduler.runner(task_id).resend_after_transport_failure(reason)
     with workflow._transaction():
         workflow._event(task_id, human, "official_reconciliation_recorded", {
             "action": action, "reason": reason, "runner_state_before": before,
