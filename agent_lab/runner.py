@@ -17,8 +17,17 @@ from . import budget
 # Transport failures return no completion, so no tool can have been released.
 # The task pauses for an explicit operator decision instead of failing; nothing
 # is resent automatically. Proposed 2026-11-18, pending owner review.
-# A malformed HTTP reply (http_protocol) and HTTP status errors still fail the task.
+# A provider server error (HTTP 5xx) also returns no completion and pauses the same
+# way (proposed 2026-11-18 after live HTTP 500 and 502 replies). A malformed HTTP
+# reply (http_protocol) and HTTP 4xx (authentication, quota, rate limit) still fail.
 TRANSPORT_FAILURES = frozenset({"timeout", "dns", "tls", "connection_closed", "connection_refused", "transport"})
+
+
+def operator_decision_failure(diagnostics):
+    """True when a failed request returned no completion and a resend may help."""
+    status = diagnostics.get("http_status")
+    return diagnostics["kind"] in TRANSPORT_FAILURES or (
+        diagnostics["kind"] == "http_status" and type(status) is int and 500 <= status <= 599)
 
 
 class RunnerError(WorkflowError):
@@ -235,7 +244,7 @@ class TaskRunner:
         return self.status()
 
     def resend_after_transport_failure(self, reason):
-        """Trusted operator only. Release one new, counted attempt after a transport failure.
+        """Trusted operator only. Release one new, counted attempt after a transport or HTTP 5xx failure.
 
         The failed request stays recorded with unknown usage. The next scheduler
         step reserves a new attempt against the same limits; nothing runs here.
@@ -438,12 +447,13 @@ class TaskRunner:
                     {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
                 if self._session()["status"] != "calling":
                     return self.status()
-                if error.diagnostics()["kind"] in TRANSPORT_FAILURES:
+                if operator_decision_failure(error.diagnostics()):
                     # Usage stays unknown (no response). The operator chooses resend or abort.
                     self.workflow.db.execute("UPDATE runner_sessions SET status='provider_uncertain' WHERE task=?",
                                              (self.task,))
                     self.workflow._event(self.task, self.actor, "provider_decision_required", {
-                        "number": number, "kind": error.diagnostics()["kind"], "automatic_retry": False,
+                        "number": number, "kind": error.diagnostics()["kind"],
+                        "http_status": error.diagnostics().get("http_status"), "automatic_retry": False,
                         "tools_released": 0, "options": ["resend", "abort"]})
                     return self.status()
             return self._stop("Provider attempt failed; usage may be unknown; reconcile before retry")

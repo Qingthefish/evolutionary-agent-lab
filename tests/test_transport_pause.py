@@ -16,7 +16,7 @@ from agent_lab.evaluation.official_live import RECONCILE, reconcile
 from agent_lab.files import FileTools
 from agent_lab.gateway import ToolGateway
 from agent_lab.hkgai import HKGAIClient, HKGAIHTTP
-from agent_lab.runner import TRANSPORT_FAILURES, RunnerError, TaskRunner
+from agent_lab.runner import TRANSPORT_FAILURES, RunnerError, TaskRunner, operator_decision_failure
 from agent_lab.scheduler import MultiAgentScheduler, Role
 from test_provider_diagnostics import loopback
 
@@ -131,10 +131,34 @@ class TransportPause(unittest.TestCase):
         state = runner.abort("Operator chose to stop after connection_closed")
         self.assertEqual((state["task_state"], state["runner_state"], transport.calls), ("failed", "stopped", 1))
 
+    def test_provider_server_errors_pause_and_can_be_resent(self):
+        for status in (500, 502, 503, 504):
+            with self.subTest(status=status):
+                error = ProviderError(f"Provider HTTP status {status}; no automatic retry", kind="http_status",
+                                      phase="opening", http_status=status)
+                transport = Scripted(error, write_reply(), stop_reply())
+                task, runner = self.runner(transport)
+                state = runner.step()
+                self.assertEqual((state["task_state"], state["runner_state"]), ("running", "provider_uncertain"))
+                self.assertEqual(runner.step()["runner_state"], "provider_uncertain")  # Nothing resent alone.
+                self.assertEqual(transport.calls, 1)
+                (decision,) = self.events(task, "provider_decision_required")
+                self.assertEqual((decision["kind"], decision["http_status"]), ("http_status", status))
+                runner.resend_after_transport_failure(f"Operator chose one resend after HTTP {status}")
+                state = runner.run()
+                self.assertEqual((transport.calls, state["unknown_usage_attempts"]), (3, 1))
+
     def test_other_provider_failures_still_fail_immediately(self):
+        for diagnostics, expected in (({"kind": "http_status", "http_status": 503}, True),
+                                      ({"kind": "http_status", "http_status": 429}, False),
+                                      ({"kind": "http_status", "http_status": 401}, False),
+                                      ({"kind": "http_status", "http_status": None}, False),
+                                      ({"kind": "http_protocol"}, False), ({"kind": "connection_closed"}, True)):
+            self.assertEqual(operator_decision_failure(diagnostics), expected, diagnostics)
         self.assertNotIn("http_status", TRANSPORT_FAILURES)
         self.assertNotIn("http_protocol", TRANSPORT_FAILURES)
         for error in (ProviderError("HTTP 429", kind="http_status", phase="reading", http_status=429),
+                      ProviderError("HTTP 401", kind="http_status", phase="opening", http_status=401),
                       ProviderError("bad", kind="invalid_completion", phase="parsing")):
             with self.subTest(kind=error.diagnostics()["kind"]):
                 task, runner = self.runner(Scripted(error))
