@@ -98,7 +98,7 @@ class TruncatedReply(DelegationFixture):
             return json.dumps({"id": "synthetic-length", "model": "offline-delegation-fixture",
                                "usage": {"prompt_tokens": 5, "completion_tokens": 1024, "total_tokens": 1029},
                                "choices": [{"message": {"role": "assistant", "content": "partial"},
-                                            "finish_reason": "length"}]}).encode()
+                                            "finish_reason": "content_filter"}]}).encode()  # A length stop is now recoverable
         return super().__call__(payload)
 
 

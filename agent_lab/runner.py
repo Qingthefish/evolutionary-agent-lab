@@ -6,7 +6,7 @@ import json
 import math
 
 from .core import WorkflowError
-from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError
+from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError, TruncatedCompletion
 from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolBudgetError, ToolRequestError
 from .files import INPUT_PROTOCOL
@@ -403,6 +403,8 @@ class TaskRunner:
             return self._stop(reason)
         try:
             result = self.client.complete(transcript, tools=self.gateway.tools())
+        except TruncatedCompletion as error:
+            return self._output_limit(number, transcript, error)
         except ProviderError as error:
             with self.workflow._transaction():
                 self.workflow.db.execute("UPDATE runner_turns SET status='provider_error',error=?,ended=? WHERE task=? AND number=?",
@@ -460,6 +462,57 @@ class TaskRunner:
         if self._expired():
             return self._stop("Task duration budget exhausted after tools; partial artifacts retained")
         return self._settle(number, calls, outcomes)
+
+    def _output_limit(self, number, transcript, error):
+        """A response that stopped at the output limit (proposed 2026-11-18, pending owner review).
+
+        The provider reply was received in full, so its usage is known and
+        counted. Its message and tool calls are discarded unread and nothing
+        runs. The task continues once, with a notice in a later counted
+        attempt; a second consecutive truncation stops the task as before.
+        """
+        response = {"message": {"role": "assistant", "content": None, "tool_calls": []}, "finish_reason": "length",
+                    "usage": error.usage, "response_id": error.response_id, "model": error.model,
+                    "discarded_unread": True}
+        with self.workflow._transaction():
+            current = self._session()
+            previous = self.workflow.db.execute("SELECT response FROM runner_turns WHERE task=? AND number=?",
+                                                (self.task, number - 1)).fetchone()
+            consecutive = bool(previous and previous["response"]
+                               and json.loads(previous["response"]).get("finish_reason") == "length")
+            self.workflow.db.execute(
+                "UPDATE runner_turns SET status='settled',response=?,error=?,ended=? WHERE task=? AND number=?",
+                (_json(response), str(error), self.workflow.clock(), self.task, number))
+            self.workflow.db.execute("UPDATE runner_sessions SET tokens=tokens+? WHERE task=?",
+                                     (error.usage["total_tokens"], self.task))
+            budget.record_tokens(self.workflow, self.task, error.usage["total_tokens"])
+            self.workflow._event(self.task, self.actor, "provider_request_failed",
+                                 {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
+            self.workflow._event(self.task, self.actor, "output_limit_reached",
+                                 {"number": number, "usage": error.usage, "consecutive": consecutive,
+                                  "task_continues": not consecutive, "tools_released": 0})
+            if current["status"] != "calling" or current["attempts"] != number:
+                return self.status()
+            if not consecutive:
+                transcript.append({"role": "user", "content": _json({
+                    "kind": "output_limit_notice", "max_output_tokens": self.client.max_tokens,
+                    "instruction": "Your previous response reached the output-token limit and was discarded unread; "
+                        "none of its tool calls ran. Continue the same task. Keep each response within the limit: "
+                        "use fewer tool calls per response and brief arguments, and split long documents across "
+                        "several smaller files."})})
+                task_state = self.workflow.task(self.task, self.actor)["state"]
+                self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
+                                         ("paused" if task_state.startswith("waiting_") else "ready",
+                                          _json(transcript), self.task))
+        if consecutive:
+            return self._stop("Provider output reached the output-token limit on consecutive attempts; no tools released")
+        if self._expired() or self._session()["tokens"] > self.limits.reported_tokens:
+            return self._stop("Provider response exceeded duration or reported token budget; no tools released")
+        try:
+            budget.check(self.workflow, self.task, after_response=True)
+        except budget.TreeBudgetError as error:
+            return self._stop(str(error))
+        return self.status()
 
     @staticmethod
     def _tool_error(call, message):

@@ -318,8 +318,9 @@ class WebRetrieval:
         return result
 
     def search_web(self, task, actor, *, query, limit):
-        if not isinstance(query, str) or not query.strip() or len(query) > 1000 or type(limit) is not int or not 1 <= limit <= 10:
-            raise RetrievalError("Supply a query up to 1000 characters and one to ten results")
+        if not isinstance(query, str) or not query.strip() or len(query) > 1000 or type(limit) is not int or not 1 <= limit <= 5:
+            # Matches the five-result tool schema (proposed 2026-11-18).
+            raise RetrievalError("Supply a query up to 1000 characters and one to five results")
         module = _PYTHON_MODULE_QUERY.fullmatch(query.strip()) if self.enable_python_docs_search else None
 
         def search():

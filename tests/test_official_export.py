@@ -81,6 +81,8 @@ class ScenarioExport(unittest.TestCase):
             replies = [reply([("create_text", {"path": "notes/draft.txt", "content": DRAFT}),
                               ("ask_human", {"prompt": "Synthetic fixture question?"})]),
                        reply(),
+                       reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length"),
+                       # one truncation continues; the second consecutive one fails the task.
                        reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length")]
             roles = {role["id"]: Role(role["prompt"], ("ask_human", "create_text", "post_message"))
                      for role in session.scenario["roles"]}
@@ -142,14 +144,15 @@ class ScenarioExport(unittest.TestCase):
         self.assertEqual((second["state"], second["tasks"]), ("not_posted", []))
         (task,) = first["tasks"]
         self.assertEqual((first["root"], task["task"]["state"]), (root, "failed"))
-        self.assertIn("Provider attempt failed", task["stop_reason"])
+        self.assertIn("output-token limit on consecutive attempts", task["stop_reason"])
         self.assertGreaterEqual(first["elapsed_seconds"], 0)
         self.assertGreaterEqual(first["human_wait_seconds"], 0)
         usage = [turn["usage"] for turn in task["runner"]["turns"]]
         self.assertEqual(usage[:2], [{"prompt_tokens": 4, "completion_tokens": 2, "total_tokens": 6}] * 2)
-        self.assertIsNone(usage[2])  # Unknown usage stays unknown.
-        (failure,) = task["provider_failures"]
-        self.assertEqual(failure["detail"]["diagnostics"]["completion_check"]["finish_reason"], "length")
+        # truncated replies were received in full, so their usage is known.
+        self.assertEqual(usage[2:], [{"prompt_tokens": 4, "completion_tokens": 2, "total_tokens": 6}] * 2)
+        self.assertEqual([f["detail"]["diagnostics"]["completion_check"]["finish_reason"]
+                          for f in task["provider_failures"]], ["length", "length"])
 
         human = load("human.json")
         self.assertEqual([(r["prompt"], r["response"]) for r in human["requests"]],
