@@ -31,7 +31,7 @@ CLASSES = {
                    "retrieve_text", "git_status", "git_diff", "git_log", "git_commit", "git_push"},
     "coordination": {"delegate_task", "delegate_with_inputs", "post_message", "read_messages", "list_tasks"},
     "handoff": {"offer_artifact", "accept_artifact"},
-    "completion": {"submit_for_verification"},
+    "completion": {"submit_for_verification", "report_blocker"},
     "recovery": {"retry_failed_task"},
     "human": {"ask_human"},
     "memory": {"search_memory", "select_memory", "record_lesson"},

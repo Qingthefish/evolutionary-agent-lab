@@ -29,6 +29,10 @@ _CONTENT = _text("UTF-8 text or source code", maximum=65536, empty=True)
 _SPECS = {
     "submit_for_verification": ("Propose completion for independent checks after your deliverables and offers. Must be the last tool in a batch. This does not set success, approve actions or supply criteria", {
         "summary": _text("Brief description of the deliverable submitted for independent verification", maximum=2000)}),
+    "report_blocker": ("Report that required work cannot be completed in this task. Ends this task as failed with your "
+                       "summary of what is done and what is missing. Must be the last tool in a batch; it is the honest "
+                       "alternative to submitting incomplete work", {
+        "summary": _text("What is done, what is missing and why it cannot be finished here", maximum=2000)}),
     "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
         "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
@@ -163,6 +167,7 @@ class ToolGateway:
         if self.allowed & {"delegate_task", "delegate_with_inputs"} and not self.delegates:
             raise ToolRequestError("Delegation requires explicit eligible agents")
         self.chat = row["chat"]
+        self.restricted = None  # Finish Mode: the runner offers only these tools for the current turn.
         workflow.db.executescript("""
             CREATE TABLE IF NOT EXISTS tool_budgets (
                 task TEXT PRIMARY KEY REFERENCES tasks(id), maximum INTEGER NOT NULL
@@ -181,7 +186,7 @@ class ToolGateway:
 
     def tools(self):
         result = []
-        for name in sorted(self.allowed):
+        for name in sorted(self.allowed if self.restricted is None else self.allowed & self.restricted):
             description, properties = _SPECS[name]
             # JSON copy keeps callers from mutating the validator's specification.
             properties = json.loads(json.dumps(properties))
@@ -215,6 +220,11 @@ class ToolGateway:
         name, raw = call["function"]["name"], call["function"]["arguments"]
         if not isinstance(name, str) or name not in self.allowed:
             raise ToolRequestError("Tool is not available to this task")
+        if self.restricted is not None and name not in self.restricted:
+            available = ", ".join(sorted(self.allowed & self.restricted))
+            raise ToolRequestError(f"Finish Mode: {name} is not available now. Available: {available}. Submit the work "
+                                   "that is done with submit_for_verification, or call report_blocker if required work "
+                                   "is missing")
         if not isinstance(raw, str) or len(raw) > 128 * 1024:
             raise ToolRequestError("Arguments must be a bounded JSON string")
         try:
@@ -275,8 +285,10 @@ class ToolGateway:
             if not isinstance(value, str):
                 raise ToolRequestError(f"Tool argument '{label}' must be a string")
             if len(value) > maximum:
-                raise ToolRequestError(f"Tool argument '{label}' has {len(value)} characters; the maximum is "
-                                       f"{maximum}. Shorten it and call the tool again")
+                hint = (" Keep detailed evidence in a task file and name that file in the summary."
+                        if label == "summary" else "")
+                raise ToolRequestError(f"{label} exceeds maximum length: {len(value):,} characters; limit: "
+                                       f"{maximum:,}. Shorten the {label} and retry.{hint}")
             if len(value) < minimum or (minimum and not value.strip()):
                 raise ToolRequestError(f"Tool argument '{label}' must not be empty" if minimum <= 1 else
                                        f"Tool argument '{label}' needs at least {minimum} characters")
@@ -320,10 +332,25 @@ class ToolGateway:
         if not isinstance(calls, list) or not 1 <= len(calls) <= 16:
             raise ToolRequestError("Supply between one and sixteen tool proposals")
         for call in calls:
-            self._validate(call)
+            try:
+                self._validate(call)
+            except ToolBudgetError:
+                raise
+            except ToolRequestError as error:
+                name = call.get("function", {}).get("name") if isinstance(call, dict) else None
+                raise ToolRequestError(f"{name}: {str(error).rstrip('.')}. No call in this batch ran" if isinstance(name, str)
+                                       else str(error)) from None
         submissions = [i for i, call in enumerate(calls) if call['function']['name'] == 'submit_for_verification']
-        if submissions and submissions != [len(calls) - 1]:
+        blockers = [i for i, call in enumerate(calls) if call['function']['name'] == 'report_blocker']
+        if submissions and (submissions != [len(calls) - 1] or blockers):
             raise ToolRequestError('Submit for verification exactly once as the last tool; no batch effects started')
+        if blockers and blockers != [len(calls) - 1]:
+            raise ToolRequestError('Report a blocker exactly once as the last tool; no batch effects started')
+        if calls[-1]['function']['name'] == 'submit_for_verification':
+            from .completion import submission_refusal
+            refusal = submission_refusal(self.workflow, self.task)
+            if refusal:
+                raise ToolRequestError(refusal.rstrip(".") + ". No call in this batch ran")
         ids = [call["id"] for call in calls]
         if len(set(ids)) != len(ids):
             raise ToolRequestError("Duplicate tool call identifiers")
@@ -392,6 +419,9 @@ class ToolGateway:
         if name == 'submit_for_verification':
             # Only the runner can apply its separately configured verifier.
             return {'status': 'verification_requested', 'summary': args['summary']}
+        if name == 'report_blocker':
+            self.workflow.finish_task(self.task, self.actor, error="Blocker reported by the agent: " + args['summary'])
+            return {'status': 'task_failed_with_reported_blocker', 'summary': args['summary']}
         if name in {"delegate_task", "delegate_with_inputs", "retry_failed_task"}:
             self._check_delegation_inputs(name, args)  # Recheck after reservation, before child creation.
         if name in {"search_web", "retrieve_text"}:
@@ -437,7 +467,8 @@ class ToolGateway:
                     "tasks": [dict(row) for row in rows[:args["limit"]]], "truncated": len(rows) > args["limit"],
                     "authority": "Task metadata only; no file access, approval or human response granted"}
         if name in {"delegate_task", "delegate_with_inputs", "retry_failed_task"}:
-            refusal = budget.delegation_refusal(self.workflow, self.task)
+            from .completion import delegation_refusal
+            refusal = delegation_refusal(self.workflow, self.task)
             if refusal:  # A plain tool error: the caller keeps its turn and decides how to finish.
                 raise ToolRequestError(refusal)
         if name == "retry_failed_task":

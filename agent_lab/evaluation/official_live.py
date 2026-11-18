@@ -2,12 +2,12 @@
 
 import argparse
 from contextlib import ExitStack
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 import json
 import os
 from pathlib import Path
 
-from ..budget import TreeLimits, descendants
+from ..budget import FinishPolicy, TreeLimits, descendants
 from ..core import WorkflowError
 from ..files import FileTools
 from ..runner import Limits
@@ -152,13 +152,22 @@ def tools_for_role(scenario, agent, tools):
     return tools
 
 
-# Proposed 2026-11-19: each parent keeps 3 shared requests for its own finish, and a new
-# subtask needs at least 10 (accepted live children used 10-25). In 4 of 5 live software
-# roots the lead's last action was a delegation whose child spent every remaining request.
-FINISH_RESERVE = (3, 10)
+# Proposed 2026-11-19: completion protocol defaults (agent_lab.budget.FinishPolicy). In 4 of
+# 5 live software roots the lead's last action was a delegation whose child spent every
+# remaining request; accepted live children used 10-25 requests and leads needed 2-5 after
+# their last child. Each value is an operator option on the CLI.
+FINISH_POLICY = FinishPolicy()
 
 
-def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, reserve_finish=False):
+def with_completion_tools(tools):
+    """Every role can report a blocker; submit_for_verification stays the last tool."""
+    if "report_blocker" in tools:
+        return tools
+    return (*tools[:-1], "report_blocker", tools[-1]) if tools and tools[-1] == "submit_for_verification" \
+        else (*tools, "report_blocker")
+
+
+def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, finish_policy=None):
     policy = scenario_policy(session)
     second = session._root(2)
     allow_html = session.scenario["id"] == "securities-fund" and second is not None and second["root"] == root
@@ -172,7 +181,11 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         "that fit individual file writes, write any longer file in parts with create_text then append_text, "
         "and delegate focused deliverables to eligible peers."
     )
-    roles = {entry["id"]: Role(entry["prompt"], tools_for_role(session.scenario["id"], entry["id"], policy.tools),
+    def role_tools(agent):
+        tools = tools_for_role(session.scenario["id"], agent, policy.tools)
+        return with_completion_tools(tools) if finish_policy is not None else tools
+
+    roles = {entry["id"]: Role(entry["prompt"], role_tools(entry["id"]),
                 tuple(agent for agent in session.agents if agent != entry["id"]),
                 live.role_limits, live.tool_calls) for entry in session.scenario["roles"]}
     return MultiAgentScheduler(session.workflow, files, root, human=session.human, roles=roles,
@@ -180,7 +193,7 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
         show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS,
-        finish_reserve=FINISH_RESERVE if reserve_finish else None)
+        finish_policy=finish_policy)
 
 
 def _review_boundaries(scheduler):
@@ -308,8 +321,17 @@ def main(argv=None):
                              help="Explicitly authorized per-request output ceiling; default 1024")
         command.add_argument("--show-execution-budget", action="store_true",
                              help="Expose current local limits without fixing a workflow; select consistently for a fresh run")
-        command.add_argument("--reserve-finish", action="store_true",
-                             help="Keep shared requests for each parent's own finish; requires --show-execution-budget")
+        command.add_argument("--finish-protocol", action="store_true",
+                             help="Completion protocol: hierarchical finish reserves, Finish Mode and report_blocker; "
+                                  "requires --show-execution-budget")
+        command.add_argument("--parent-reserve", type=int, default=FINISH_POLICY.parent_reserve,
+                             help="Requests each parent keeps for its own finish while subtasks run")
+        command.add_argument("--submit-reserve", type=int, default=FINISH_POLICY.submit_reserve,
+                             help="Requests any task keeps for its own submission (Finish Mode inside it)")
+        command.add_argument("--min-child-requests", type=int, default=FINISH_POLICY.min_child,
+                             help="Minimum requests a new subtask needs beyond the caller's reserve")
+        command.add_argument("--ready-fraction", type=float, default=FINISH_POLICY.ready_fraction,
+                             help="Share of the tree cap at which Finish Mode starts once deliverables look ready")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
         elif name == "review":
@@ -350,18 +372,21 @@ def main(argv=None):
                     stack.callback(files.close)
                     services = runtime_services(workflow, files, live)
                     stack.callback(services.close)
-                    if args.reserve_finish and not args.show_execution_budget:
-                        raise WorkflowError("--reserve-finish requires --show-execution-budget")
+                    if args.finish_protocol and not args.show_execution_budget:
+                        raise WorkflowError("--finish-protocol requires --show-execution-budget")
+                    finish_policy = FinishPolicy(parent_reserve=args.parent_reserve, submit_reserve=args.submit_reserve,
+                                                 min_child=args.min_child_requests,
+                                                 ready_fraction=args.ready_fraction) if args.finish_protocol else None
                     scheduler = make_scheduler(session, root, files, live, services,
                                                show_execution_budget=args.show_execution_budget,
-                                               reserve_finish=args.reserve_finish)
+                                               finish_policy=finish_policy)
                     if args.command == "preflight":
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
                                                        "tool_policy": policy.identifier, "tools": list(policy.tools),
                                                        "role_tools": {actor: list(role.tools) for actor, role in scheduler.roles.items()},
                                                        "show_execution_budget": args.show_execution_budget,
-                                                       "reserve_finish": args.reserve_finish,
+                                                       "finish_policy": asdict(finish_policy) if finish_policy else None,
                                                        "configuration": services.configuration()}
                     elif args.command == "advance":
                         result = advance(scheduler, args.turns)

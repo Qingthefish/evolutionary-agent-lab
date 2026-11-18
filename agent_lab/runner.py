@@ -11,7 +11,7 @@ from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolBudgetError, ToolRequestError
 from .files import INPUT_PROTOCOL
 from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
-from . import budget
+from . import budget, completion
 
 
 # Transport failures return no completion, so no tool can have been released.
@@ -97,6 +97,7 @@ class TaskRunner:
         declared = gateway.delegation_rules is not None
         self.budget_context = declared or show_execution_budget
         self.show_execution_budget = show_execution_budget
+        self._phase = None
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
         self.require_tool_actions = client.tool_choice == 'required'
@@ -331,15 +332,16 @@ class TaskRunner:
         return transcript
 
     def _shared_view(self, data, cap):
-        """Consistent remaining requests for open workflows (proposed 2026-11-19).
+        """Consistent remaining requests and the completion contract (proposed 2026-11-19).
 
         The role limit equals the tree cap, so the per-task count alone overstated what
         was left: a live lead saw 43 for itself beside 15 shared. Show what this task can
-        actually use after any parent finish reserve, one low-budget threshold, and
-        whether a new subtask is still possible. Nothing here completes or stops a task.
+        actually use after its ancestors' finish reserve, one low-budget threshold, and,
+        with a finish policy, the completion contract and Finish Mode. Nothing here
+        completes or stops a task.
         """
         shared = data['shared']
-        info = budget.finish_reserve(self.workflow, self.task)
+        info = budget.finish_budget(self.workflow, self.task)
         available = info['available'] if info else shared['model_attempts_left_after_current']
         data['task']['model_attempts_left_after_current'] = min(data['task']['model_attempts_left_after_current'], available)
         shared['available_to_this_task_after_current'] = available
@@ -349,14 +351,22 @@ class TaskRunner:
                 'already done and checked over starting new optional subtasks or repeat checks. '
                 'Never skip required work or approval.')
         if info:
+            policy = info['policy']
             shared['reserved_for_parent_finish'] = info['reserved_for_ancestors']
-            shared['delegation'] = {'kept_for_your_own_finish': info['reserve'], 'new_subtask_minimum': info['min_child'],
-                                    'new_subtask_possible': available >= info['reserve'] + info['min_child']}
-            if info['depth'] > 0 and available <= 2:
-                shared['final_requests'] = True
-                shared['instruction'] = (f'This subtask has {available + 1} request(s) left, including this one, '
-                    "before the parent task's reserved finish. Submit what is done now with submit_for_verification "
-                    'and list any gaps; when they run out this subtask stops unfinished.')
+            shared['delegation'] = {'kept_for_your_own_finish': policy.parent_reserve,
+                                    'new_subtask_minimum': policy.min_child,
+                                    'new_subtask_possible': available >= policy.parent_reserve + policy.min_child}
+            data['completion'] = completion.contract(self.workflow, self.task, self._phase, self.gateway.allowed)
+
+    def _enter_phase(self):
+        """Derive this turn's phase; Finish Mode narrows the offered tools and is recorded once."""
+        self._phase = completion.phase(self.workflow, self.task) if self.show_execution_budget else None
+        self.gateway.restricted = completion.offered_tools(self.gateway.allowed, self._phase)
+        if self.gateway.restricted is not None and not self.workflow.db.execute(
+                "SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'", (self.task,)).fetchone():
+            self.workflow._event(self.task, self.actor, "finish_mode_entered", {
+                "reason": self._phase["reason"], "available": self._phase["available"],
+                "tools": sorted(self.gateway.restricted)})
 
     def _append_delivery_phase(self, transcript, added):
         """When every child of this task is accepted, ask for a finish decision (proposed 2026-11-19).
@@ -364,7 +374,7 @@ class TaskRunner:
         Only with a configured finish reserve. It never marks success: the task still
         decides whether the original request is met and proposes completion itself.
         """
-        if not added or budget.finish_reserve(self.workflow, self.task) is None:
+        if not added or budget.finish_budget(self.workflow, self.task) is None:
             return transcript
         from .recovery import links
         replaced = links(self.workflow)
@@ -475,11 +485,13 @@ class TaskRunner:
             if reason is None:
                 transcript = self._append_input_offers(self._append_child_results(self._append_human_responses(session)))
                 number = session["attempts"] + 1
+                self._enter_phase()
                 if self.budget_context:
                     transcript = self._budget_context(transcript, session, number)
                 self.workflow.db.execute(
                     "INSERT INTO runner_turns(task,number,status,request,started) VALUES(?,?,'calling',?,?)",
                     (self.task, number, _json({"messages": transcript, "tools": self.gateway.tools(),
+                     "finish_mode": self.gateway.restricted is not None,
                      "event_floor": self.workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events").fetchone()[0]}),
                      self.workflow.clock()),
                 )

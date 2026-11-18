@@ -55,8 +55,9 @@ class ArgumentErrors(unittest.TestCase):
     def test_the_live_oversized_summary_names_its_length_and_limit(self):
         for size in (2134, 2034):
             message = self.refusal("submit_for_verification", summary="x" * size)
-            self.assertEqual(message, f"Tool argument 'summary' has {size} characters; the maximum is 2000. "
-                                      "Shorten it and call the tool again")
+            self.assertEqual(message, f"submit_for_verification: summary exceeds maximum length: {size:,} characters; "
+                                      "limit: 2,000. Shorten the summary and retry. Keep detailed evidence in a task "
+                                      "file and name that file in the summary. No call in this batch ran")
         self.gateway.validate_batch([call("submit_for_verification", summary="x" * 2000)])  # At the limit: fine.
 
     def test_other_rules_name_the_argument_but_never_echo_its_value(self):
@@ -81,7 +82,7 @@ class ArgumentErrors(unittest.TestCase):
             errors = [json.loads(m["content"]).get("error", "") for m in sent[-1]["messages"] if m["role"] == "tool"]
             if not errors:
                 return reply(call("submit_for_verification", summary="Delivered the booking tool. " + "detail " * 300))
-            limit = int(errors[-1].split("the maximum is ")[1].split(".")[0])  # A model can act on the stated limit.
+            limit = int(errors[-1].split("limit: ")[1].split(".")[0].replace(",", ""))  # Actionable limit.
             return reply(call("submit_for_verification", summary="Delivered the booking tool."[:limit]))
 
         runner = TaskRunner(self.gateway, DeepSeekClient("synthetic-arguments", transport),
@@ -89,7 +90,7 @@ class ArgumentErrors(unittest.TestCase):
         state = runner.run()
         self.assertEqual(len(sent), 2)
         first_error = json.loads([m for m in sent[1]["messages"] if m["role"] == "tool"][-1]["content"])["error"]
-        self.assertIn("'summary' has 2128 characters; the maximum is 2000", first_error)
+        self.assertIn("summary exceeds maximum length: 2,128 characters; limit: 2,000", first_error)
         self.assertEqual(state["runner_state"], "awaiting_verification")  # Its own proposal, for a human to review.
         self.assertEqual(self.workflow.task(self.task, "user")["state"], "running")
 

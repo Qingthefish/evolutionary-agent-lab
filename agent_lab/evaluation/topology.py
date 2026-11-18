@@ -44,7 +44,7 @@ CAPABILITY_CLASSES = {
     "coordination": COORDINATION_TOOLS,
     # Proposes the agent's own task for independent verification; required
     # whenever the runtime enforces tool actions, so both topologies keep it.
-    "completion": frozenset({"submit_for_verification"}),
+    "completion": frozenset({"submit_for_verification", "report_blocker"}),
 }
 
 SINGLE_INSTRUCTIONS = (

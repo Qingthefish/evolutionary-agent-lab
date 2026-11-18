@@ -237,6 +237,30 @@ including the retained 2026-11-16 software run.
   dialogue is not reachable that way during Task 2. The full conversation is
   still retained in the state directory and the evidence export.
 
+### Completion protocol (proposed, opt-in)
+
+`--show-execution-budget --finish-protocol` turns on a completion protocol for
+every role. Task states do not change; each turn derives a phase from recorded
+state and the shared request cap:
+
+- **working**, **ready** (a subtask has offered files to its parent, or every
+  subtask a parent delegated was accepted) and **finish**. Ready never means
+  succeeded.
+- **Finish Mode** starts when a task's available requests reach its own reserve,
+  or when it looks ready and few requests remain. Only finishing tools are then
+  offered and accepted: submit, `report_blocker`, offer/accept, read, message
+  and ask the requester. Submission still waits for the human review;
+  `report_blocker` ends the task as an honest failure.
+- Each ancestor keeps `--parent-reserve` requests while descendants run, any
+  task keeps `--submit-reserve` for its own submission, and a new subtask needs
+  `--min-child-requests` beyond the caller's reserve. `--ready-fraction` sets
+  the early Finish Mode window as a share of the tree cap.
+- A proposal over a failed, unreplaced subtask is refused before review, and
+  argument errors name the argument, its actual size and the limit.
+
+The defaults (3, 2, 10, 0.25) come from the live software roots: accepted
+children used 10-25 requests and leads needed 2-5 after their last child.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,
