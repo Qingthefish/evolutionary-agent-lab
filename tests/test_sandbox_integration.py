@@ -142,6 +142,14 @@ class DockerIntegrationTests(unittest.TestCase):
         self.assertEqual(self.workflow.task(self.task, "user")["state"], "running")
         self.files.complete_from_text(self.task, "coder", {"result.txt": "Checked actual execution\n"})
 
+    def test_missing_declared_output_is_diagnosed_after_successful_execution(self):
+        result = self.run_code("print('ran without writing an output')\n", outputs=["absent.txt"])
+        self.assertEqual(result["execution"]["exit_code"], 0)
+        self.assertEqual(result["export_diagnostics"]["kind"], "missing_output")
+        self.assertFalse(result["export_diagnostics"]["automatic_retry"])
+        self.assertEqual(result["artifacts"], [])
+        self.assertEqual(self.workflow.task(self.task, "user")["state"], "running")
+
     def test_bad_code_has_real_nonzero_exit_and_no_export(self):
         result = self.run_code("assert 1 == 2, 'independent fixture check failed'\n", outputs=["result.txt"])
         self.assertNotEqual(result["execution"]["exit_code"], 0)

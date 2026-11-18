@@ -185,7 +185,7 @@ completions. These counts cover the two new trials only.
 
 | Scenario | Task 1 | Task 2 |
 | --- | --- | --- |
-| Software development | Failed attempts retained; no delivered booking system in these trials | Unrun |
+| Software development | Three truncated Nov 19 attempts retained; fourth partial has an independently checked booking implementation, without completed parent delivery | Unrun |
 | Newsroom | Unrun | Unrun |
 | Securities fund | Unrun | Unrun |
 
@@ -196,6 +196,31 @@ the cumulative request allowance are recorded in the local round ledger.
 The current six-task completion rate and final course score remain unreported.
 Further runs need to verify the configured output ceiling, retain the same
 group within each pair and undergo actual outcome review.
+
+The authorized 4,096-output-token trial also stopped on its second reply with
+`finish_reason=length`. A distinct fourth root limited the lead to coordination
+and left implementation/execution with the original specialists. In 20 requests
+it observed real lead-to-developer and developer-to-QA assignment, source
+handoffs and actual execution. The developer's first script and QA's first
+script exited zero but omitted declared export files; QA subsequently wrote and
+exported its transcript. These failed exports remain in the record.
+
+A separate reviewer-written script tested the exact current developer source
+in the fixed no-network container. All 26 checks passed, including cross-process
+persistence, five overlap shapes, cancellation/history/rebooking and two
+concurrent bookers with exactly one winner. These are core behavior checks,
+not an instructor rubric or proof of full delivery. The parent and its children
+are still running, with no accepted completion proposal. The controller paused
+at 20/22 requests and 242,924/247,500 reported tokens rather than reset limits
+or force another request. This whole Nov 19 round has 26 requests across four
+allocated roots, 252,542 known reported tokens and unknown usage on three
+rejected replies. The three truncated roots remain failed; the partial root
+does not count as a completed official task. [Selected evidence](../evaluation/evidence/development-summary.json)
+
+Follow-up engineering adds optional current-budget guidance without fixed
+delegation recipes, and sanitized missing-output export diagnostics. These
+corrections need their own future live validation; no learning benefit, final
+score or provider account balance is inferred from this rehearsal.
 
 The original announcement specifies presentation in week 13 and the final
 report after week 13. The 18 November Canvas check found the 15 November

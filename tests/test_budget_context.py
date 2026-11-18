@@ -22,11 +22,27 @@ class BudgetContextTests(unittest.TestCase):
         self.root=self.w.create_task(self.chat,'human','writer','Deliver checked note');self.w.start_task(self.root,'writer')
         self.f=FileTools(self.w,self.path/'files');self.addCleanup(self.f.close)
 
-    def runner(self, task, actor, script, strict=True, limits=Limits(model_attempts=3)):
+    def runner(self, task, actor, script, strict=True, limits=Limits(model_attempts=3), show_execution_budget=False):
         gateway=ToolGateway(self.w,self.f,task,actor,human='human',allowed=('create_text',),max_calls=4,
             delegation_rules=(('reviewer','Check note'),) if strict else None)
         return TaskRunner(gateway,DeepSeekClient('explicit-synthetic',script),mode='offline_fixture',limits=limits,
-            constraints=['Keep the original constraint'],verifier=self.f.text_verifier(task,actor,{'note.txt':'Hello\n'}),verifier_id='checked-note-v1')
+            constraints=['Keep the original constraint'],verifier=self.f.text_verifier(task,actor,{'note.txt':'Hello\n'}),verifier_id='checked-note-v1',
+            show_execution_budget=show_execution_budget)
+
+    def test_open_workflow_gets_remaining_budget_without_declaring_a_task_recipe(self):
+        configure(self.w, self.root, TreeLimits(model_attempts=7, tasks=4))
+        script = Script([response([tool()])])
+        runner = self.runner(self.root, 'writer', script, strict=False, show_execution_budget=True)
+        runner.step()
+        context = json.loads(script.requests[0]['messages'][1]['content'])
+        self.assertEqual(context['execution_budget']['shared']['model_attempts_left_after_current'], 6)
+        self.assertEqual(context['constraints'], ['Keep the original constraint'])
+        self.assertIsNone(runner.gateway.delegation_rules)
+        self.assertNotIn('On action turns', script.requests[0]['messages'][0]['content'])
+        self.assertEqual(status(self.w, self.root)['attempts'], 1)
+        with self.assertRaisesRegex(WorkflowError, 'Persisted model'):
+            self.runner(self.root, 'writer', script, strict=False, show_execution_budget=False)
+        self.assertEqual(len(script.requests), 1)
 
     def test_local_counts_refresh_across_restart_without_new_messages_or_tools(self):
         script=Script([response([tool()]),response()]);runner=self.runner(self.root,'writer',script)

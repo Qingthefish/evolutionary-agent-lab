@@ -29,7 +29,7 @@ class ModelContextTests(unittest.TestCase):
         self.root = self.w.create_task(self.chat, 'human', 'coordinator', 'Preserve exact source and check result')
         self.f = FileTools(self.w, self.path / 'files'); self.addCleanup(self.f.close)
 
-    def scheduler(self, declared=True):
+    def scheduler(self, declared=True, show_execution_budget=False):
         roles = {'coordinator': Role('Coordinate. ' + 'Shared guidance. ' * 60, ('delegate_task',), ('coder',)),
                  'coder': Role('Implement and test. ' + 'Private operating instructions. ' * 60,
                                ('create_text', 'read_text', 'offer_artifact'))}
@@ -37,7 +37,21 @@ class ModelContextTests(unittest.TestCase):
             clients={a: DeepSeekClient('synthetic', Script([])) for a in roles}, mode='offline_fixture',
             constraints=['Preserve Unicode and whitespace', 'Never invent authorization'],
             verifier_factory=lambda task: None, acceptance_id='synthetic-view-test-v1',
-            delegation_rules=(('coder', 'Implement and test'),) if declared else None)
+            delegation_rules=(('coder', 'Implement and test'),) if declared else None,
+            show_execution_budget=show_execution_budget)
+
+    def test_scheduler_pins_open_workflow_budget_guidance_without_rewriting_roles(self):
+        scheduler = self.scheduler(False, show_execution_budget=True)
+        self.w.start_task(self.root, 'coordinator')
+        runner = scheduler.runner(self.root)
+        self.assertTrue(runner.budget_context)
+        self.assertIsNone(runner.gateway.delegation_rules)
+        config = json.loads(self.w.db.execute('SELECT config FROM runner_sessions').fetchone()[0])
+        self.assertEqual(config['context']['role']['instructions'], scheduler.roles['coordinator'].instructions)
+        self.assertEqual(config['context']['role']['eligible_agents']['coder'], scheduler.roles['coder'].instructions)
+        self.assertEqual(runner.status()['protocol_attempts'], 0)
+        with self.assertRaisesRegex(WorkflowError, 'Persisted scheduler'):
+            self.scheduler(False)
 
     def test_declared_peer_view_preserves_own_role_constraints_and_identities(self):
         scheduler = self.scheduler(); self.w.start_task(self.root, 'coordinator')

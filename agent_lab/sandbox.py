@@ -55,7 +55,7 @@ os.dup2(os.open('/dev/null', os.O_RDONLY), 0)
 os.execv(sys.executable, [sys.executable, '-B', '-u', '/work/' + job['entrypoint'], *job['arguments']])
 """
 
-_EXPORT = """
+_EXPORT_FILES = """
 import json, os, stat, sys
 result = {}
 for name in json.loads(sys.argv[1]):
@@ -85,6 +85,25 @@ for name in json.loads(sys.argv[1]):
     finally:
         os.close(directory)
 print(json.dumps(result, ensure_ascii=True))
+"""
+
+# Only these labels cross the host boundary. Do not expose arbitrary Docker
+# stderr, and do not turn an unsuccessful export into a successful execution.
+_EXPORT_ERRORS = {
+    "missing_output": "A declared output is missing; write every requested output under the working directory before export",
+    "unreadable_output": "A declared output is unreadable by the isolated export supervisor",
+    "invalid_output": "A declared output is not a bounded regular single-link UTF-8 file",
+    "unsafe_output": "A declared output cannot be opened safely; inspect its path and file type",
+}
+_EXPORT = "import sys\ntry:\n" + "".join("    " + line + "\n" for line in _EXPORT_FILES.splitlines()) + """
+except FileNotFoundError:
+    sys.stderr.write('agent_lab_export:missing_output\\n'); sys.exit(65)
+except PermissionError:
+    sys.stderr.write('agent_lab_export:unreadable_output\\n'); sys.exit(65)
+except (ValueError, UnicodeError):
+    sys.stderr.write('agent_lab_export:invalid_output\\n'); sys.exit(65)
+except OSError:
+    sys.stderr.write('agent_lab_export:unsafe_output\\n'); sys.exit(65)
 """
 
 _WORK_OPTIONS = "rw,nosuid,nodev,noexec,size=16m,nr_inodes=1024,uid=65534,gid=65534,mode=0755"
@@ -468,11 +487,18 @@ class DockerPythonExecutor:
                                    "stderr_sha256": hashlib.sha256(execution.stderr).hexdigest()}
             if execution.returncode == 0 and not execution.interrupted and outputs and active():
                 result["phase"] = "artifact_export"
-                raw = self._checked(["container", "exec", "--user", "65533:65533", name,
-                                     "/usr/local/bin/python3", "-I", "-c", _EXPORT, json.dumps(outputs)],
-                                    seconds=min(5, remaining()), output_bytes=2 * 1024 * 1024,
-                                    keep_running=active)
-                exported = strict_json(raw)
+                export = self._invoke(["container", "exec", "--user", "65533:65533", name,
+                                       "/usr/local/bin/python3", "-I", "-c", _EXPORT, json.dumps(outputs)],
+                                      seconds=min(5, remaining()), output_bytes=2 * 1024 * 1024,
+                                      keep_running=active)
+                if export.returncode != 0 or export.interrupted:
+                    labels = {("agent_lab_export:" + label + "\n").encode(): label for label in _EXPORT_ERRORS}
+                    label = labels.get(export.stderr)
+                    if export.returncode == 65 and not export.interrupted and label in _EXPORT_ERRORS:
+                        result["export_diagnostics"] = {"kind": label, "automatic_retry": False}
+                        raise SandboxError(_EXPORT_ERRORS[label])
+                    raise SandboxError("Docker export failed or exceeded its limit; inspect the retained execution result")
+                exported = strict_json(export.stdout)
                 if (not isinstance(exported, dict) or set(exported) != set(outputs)
                         or any(not isinstance(text, str) or len(text.encode("utf-8")) > 65536 for text in exported.values())):
                     raise SandboxError("Invalid exported artifact data")

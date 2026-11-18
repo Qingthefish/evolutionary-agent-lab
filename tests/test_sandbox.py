@@ -26,6 +26,7 @@ class FakeDocker:
         self.engine_id = "test-engine"
         self.execution = ProcessResult(0, b"42\n", b"")
         self.exports = {"result.txt": "42\n"}
+        self.export_error = None
 
     def __call__(self, args, **kwargs):
         self.commands.append((args, kwargs))
@@ -60,6 +61,8 @@ class FakeDocker:
         elif args[:2] == ["container", "exec"]:
             if "65534:65534" in args:
                 return self.execution
+            if self.export_error is not None:
+                return self.export_error
             output = json.dumps(self.exports).encode()
         elif args[:2] == ["container", "ls"]:
             output = b"b" * 64 + b"\n" if self.created else b""
@@ -173,6 +176,20 @@ class SandboxTests(unittest.TestCase):
         self.assertIn("Invalid exported", result["error"])
         self.assertFalse((self.root / "escape.txt").exists())
         self.assertEqual(result["artifacts"], [])
+
+    def test_missing_export_has_actionable_diagnostic_without_success_or_stderr_leak(self):
+        self.fake.export_error = ProcessResult(65, b"", b"agent_lab_export:missing_output\n")
+        result = self.run_job()
+        self.assertEqual(result["execution"]["exit_code"], 0)
+        self.assertEqual(result["export_diagnostics"], {"kind": "missing_output", "automatic_retry": False})
+        self.assertIn("write every requested output", result["error"])
+        self.assertEqual(result["artifacts"], [])
+        self.assertTrue(result["cleanup_confirmed"])
+        self.assertEqual(self.workflow.task(self.task, "user")["state"], "running")
+        self.fake.export_error = ProcessResult(65, b"", b"untrusted private stderr")
+        other = self.run_job()
+        self.assertNotIn("export_diagnostics", other)
+        self.assertNotIn("untrusted private stderr", json.dumps(other))
 
     def test_cleanup_failure_blocks_further_execution_until_trusted_reconciliation(self):
         self.fake.cleanup_fails = True

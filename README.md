@@ -49,13 +49,17 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
-**Current integration review (2026-11-18).** The S01 entry now has separate
-software, newsroom and securities policies, rejected-completion diagnostics,
-explicit interrupted-run reconciliation and local evidence export. Review bound
-HTML output to the securities second task and protected export file reads.
-The latest retained real course trial stopped at Task 1 after two requests.
-Complete live outcomes for the six mid-test tasks, GitHub runtime evidence,
-release freeze and final submission materials remain open.
+**Current software rehearsal (2026-11-19).** The real lead delegated to the
+developer, who wrote and executed a booking CLI and delegated its QA. Independent
+review of the current developer source passed 26 actual-container checks,
+including overlap rejection, persistent cancellation, rebooking and concurrent
+same-slot attempts. The parent workflow is **unfinished**: QA/report acceptance,
+final delivery and Task 2 are not complete. This round retains three truncated
+roots and one partial root, with 26 actual requests in total; no six-task score
+is claimed. New opt-in local-budget guidance and actionable export errors are
+engineering corrections, not yet validated in another model run. Complete live
+outcomes for the six mid-test tasks, GitHub runtime evidence, release freeze and
+final submission materials remain open.
 [Current S01 record](docs/team-roadmap.md#s01)
 
 **Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)

@@ -44,13 +44,16 @@ class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
-                 delegation_rules=None, delegation_inputs=None, allow_html=False):
+                 delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
         if type(allow_html) is not bool:
             raise RunnerError("HTML output requires an explicit trusted format setting")
         self.allow_html = allow_html
+        if type(show_execution_budget) is not bool:
+            raise RunnerError("Execution-budget guidance requires an explicit boolean setting")
+        self.show_execution_budget = show_execution_budget
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
         self.delegation_rules = delegation_rules
         self.delegation_inputs = normalize_inputs(delegation_inputs)
@@ -119,6 +122,8 @@ class MultiAgentScheduler:
             "executor": executor.configuration() if executor is not None else None}
         if mode == "live" and type(next(iter(self.clients.values())).transport) is HKGAIHTTP:
             settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
+        if show_execution_budget:
+            settings["show_execution_budget"] = True
         if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
             settings["git"] = git.configuration()
         if retrieval is not None:
@@ -178,7 +183,8 @@ class MultiAgentScheduler:
         else:
             raise RunnerError("Acceptance factory returns (trusted callable, version) or explicit review")
         return TaskRunner(gateway, self.clients[actor], mode=self.mode, constraints=self.constraints,
-            limits=role.limits, verifier=verifier, verifier_id=version, allow_html=self.allow_html, role={
+            limits=role.limits, verifier=verifier, verifier_id=version, allow_html=self.allow_html,
+            show_execution_budget=self.show_execution_budget, role={
                 "agent": actor, "instructions": role.instructions,
                 "eligible_agents": {key: (peer_description(self.roles[key]) if self.delegation_rules is not None
                                          else self.roles[key].instructions) for key in role.delegates},
