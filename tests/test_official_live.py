@@ -5,10 +5,18 @@ import tempfile
 import unittest
 
 from agent_lab.core import Workflow, WorkflowError
-from agent_lab.evaluation.official_live import TOOL_POLICY, advance, runtime_config
+from agent_lab.evaluation.official_live import TOOL_POLICY, TOOLS, advance, runtime_config, tools_for_role
 
 
 class OfficialLiveTests(unittest.TestCase):
+    def test_software_lead_coordinates_and_specialists_keep_implementation_tools(self):
+        lead = tools_for_role("software-engineering", "lead", TOOLS)
+        self.assertTrue({"ask_human", "delegate_task", "accept_artifact", "offer_artifact", "read_text"} <= set(lead))
+        self.assertFalse({"create_text", "update_text", "run_python"} & set(lead))
+        self.assertEqual(tools_for_role("software-engineering", "dev", TOOLS), TOOLS)
+        self.assertEqual(tools_for_role("software-engineering", "qa", TOOLS), TOOLS)
+        self.assertEqual(tools_for_role("newsroom", "chief_editor", TOOLS), TOOLS)
+
     def test_larger_output_ceiling_needs_explicit_operator_selection(self):
         session = SimpleNamespace(scenario={"id": "software-engineering"})
         settings = {"provider": "hkgai", "tool_policy": TOOL_POLICY, "model": "issued-model",

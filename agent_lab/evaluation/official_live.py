@@ -135,6 +135,12 @@ def _posted_root(session, sequence):
     return posted["root"]
 
 
+def tools_for_role(scenario, agent, tools):
+    if scenario == "software-engineering" and agent == "lead":
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "run_python"})
+    return tools
+
+
 def make_scheduler(session, root, files, live, services):
     policy = scenario_policy(session)
     second = session._root(2)
@@ -148,7 +154,7 @@ def make_scheduler(session, root, files, live, services):
         "Use a small batch of short tool calls per turn. Divide source into small modules "
         "that fit individual file writes, and delegate focused deliverables to eligible peers."
     )
-    roles = {entry["id"]: Role(entry["prompt"], policy.tools,
+    roles = {entry["id"]: Role(entry["prompt"], tools_for_role(session.scenario["id"], entry["id"], policy.tools),
                 tuple(agent for agent in session.agents if agent != entry["id"]),
                 live.role_limits, live.tool_calls) for entry in session.scenario["roles"]}
     return MultiAgentScheduler(session.workflow, files, root, human=session.human, roles=roles,
@@ -318,6 +324,7 @@ def main(argv=None):
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
                                                        "tool_policy": policy.identifier, "tools": list(policy.tools),
+                                                       "role_tools": {actor: list(role.tools) for actor, role in scheduler.roles.items()},
                                                        "configuration": services.configuration()}
                     elif args.command == "advance":
                         result = advance(scheduler, args.turns)
