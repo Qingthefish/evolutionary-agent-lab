@@ -219,7 +219,7 @@ class MultiAgentScheduler:
                 ) SELECT s.task,s.status FROM runner_sessions s JOIN tree ON tree.id=s.task
             """, (self.root,))}
         uncertain = [{"task": key, "kind": "reconciliation", "runner_state": row["status"]}
-                     for key, row in sessions.items() if row["status"] in {"calling", "processing", "stopping"}]
+                     for key, row in sessions.items() if row["status"] in {"calling", "processing", "stopping", "provider_uncertain"}]
         if uncertain:
             return self.status() | {"state": "blocked", "needs": uncertain}
         active = recovery.active_tasks(self.workflow, tasks)

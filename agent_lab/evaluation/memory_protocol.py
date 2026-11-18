@@ -85,7 +85,7 @@ class MemorySeed:
         if w.db.execute('SELECT 1 FROM requests WHERE approved=1 AND consumed=0').fetchone():
             raise WorkflowError('Unreleased approval prevents training freeze')
         for table, predicate in (
-                ('runner_sessions', "status IN ('calling','processing','stopping')"),
+                ('runner_sessions', "status IN ('calling','processing','stopping','provider_uncertain')"),
                 ('runner_turns', "status!='settled'"), ('tool_calls', "status='reserved'"),
                 ('sandbox_runs', "status NOT IN ('cleaned','reconciled')"),
                 ('git_operations', "status IN ('started','uncertain','unknown')"),
