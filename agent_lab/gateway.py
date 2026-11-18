@@ -423,6 +423,10 @@ class ToolGateway:
             return {"root_task_id": root["id"], "current_task_id": self.task,
                     "tasks": [dict(row) for row in rows[:args["limit"]]], "truncated": len(rows) > args["limit"],
                     "authority": "Task metadata only; no file access, approval or human response granted"}
+        if name in {"delegate_task", "delegate_with_inputs", "retry_failed_task"}:
+            refusal = budget.delegation_refusal(self.workflow, self.task)
+            if refusal:  # A plain tool error: the caller keeps its turn and decides how to finish.
+                raise ToolRequestError(refusal)
         if name == "retry_failed_task":
             from .recovery import replace_failed
             for path, expected in args["input_files"].items():

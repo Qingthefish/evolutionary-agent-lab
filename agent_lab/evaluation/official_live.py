@@ -148,11 +148,17 @@ def _posted_root(session, sequence):
 
 def tools_for_role(scenario, agent, tools):
     if scenario == "software-engineering" and agent == "lead":
-        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "run_python"})
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text", "run_python"})
     return tools
 
 
-def make_scheduler(session, root, files, live, services, *, show_execution_budget=False):
+# Proposed 2026-11-19: each parent keeps 3 shared requests for its own finish, and a new
+# subtask needs at least 10 (accepted live children used 10-25). In 4 of 5 live software
+# roots the lead's last action was a delegation whose child spent every remaining request.
+FINISH_RESERVE = (3, 10)
+
+
+def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, reserve_finish=False):
     policy = scenario_policy(session)
     second = session._root(2)
     allow_html = session.scenario["id"] == "securities-fund" and second is not None and second["root"] == root
@@ -173,7 +179,8 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         clients=live_clients(live, roles), mode="live", constraints=constraints,
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
-        show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS)
+        show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS,
+        finish_reserve=FINISH_RESERVE if reserve_finish else None)
 
 
 def _review_boundaries(scheduler):
@@ -301,6 +308,8 @@ def main(argv=None):
                              help="Explicitly authorized per-request output ceiling; default 1024")
         command.add_argument("--show-execution-budget", action="store_true",
                              help="Expose current local limits without fixing a workflow; select consistently for a fresh run")
+        command.add_argument("--reserve-finish", action="store_true",
+                             help="Keep shared requests for each parent's own finish; requires --show-execution-budget")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
         elif name == "review":
@@ -341,14 +350,18 @@ def main(argv=None):
                     stack.callback(files.close)
                     services = runtime_services(workflow, files, live)
                     stack.callback(services.close)
+                    if args.reserve_finish and not args.show_execution_budget:
+                        raise WorkflowError("--reserve-finish requires --show-execution-budget")
                     scheduler = make_scheduler(session, root, files, live, services,
-                                               show_execution_budget=args.show_execution_budget)
+                                               show_execution_budget=args.show_execution_budget,
+                                               reserve_finish=args.reserve_finish)
                     if args.command == "preflight":
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
                                                        "tool_policy": policy.identifier, "tools": list(policy.tools),
                                                        "role_tools": {actor: list(role.tools) for actor, role in scheduler.roles.items()},
                                                        "show_execution_budget": args.show_execution_budget,
+                                                       "reserve_finish": args.reserve_finish,
                                                        "configuration": services.configuration()}
                     elif args.command == "advance":
                         result = advance(scheduler, args.turns)

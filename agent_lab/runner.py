@@ -96,6 +96,7 @@ class TaskRunner:
             raise RunnerError("Execution-budget guidance requires an explicit boolean setting")
         declared = gateway.delegation_rules is not None
         self.budget_context = declared or show_execution_budget
+        self.show_execution_budget = show_execution_budget
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
         self.require_tool_actions = client.tool_choice == 'required'
@@ -301,13 +302,16 @@ class TaskRunner:
                 'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
                 'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
                 'seconds_left': max(0, limits['duration_seconds'] - (now - scope['created']))}
+            if self.show_execution_budget:
+                self._shared_view(data, limits['model_attempts'])
         if 'submit_for_verification' in self.gateway.allowed:
             remaining = min(data['task']['model_attempts_left_after_current'],
                             data['shared']['model_attempts_left_after_current'] if data['shared'] is not None
                             else data['task']['model_attempts_left_after_current'])
             data['completion_proposal'] = {
                 'requests_left_after_current': remaining,
-                'low_request_budget': remaining <= 2,
+                'low_request_budget': (data['shared'] or {}).get('low_shared_budget', False)
+                                      if self.show_execution_budget else remaining <= 2,
                 'instruction': 'When your deliverable and required handoff/lesson are ready, include submit_for_verification '
                     'last in the SAME batch as final actions, or send a final response without tools. '
                     'A file write or record_lesson alone is not a completion proposal. '
@@ -324,6 +328,55 @@ class TaskRunner:
             raise RunnerError('Trusted task context is unavailable; no model call released')
         context['execution_budget'] = data
         transcript[1] = {**transcript[1], 'content': _json(context)}
+        return transcript
+
+    def _shared_view(self, data, cap):
+        """Consistent remaining requests for open workflows (proposed 2026-11-19).
+
+        The role limit equals the tree cap, so the per-task count alone overstated what
+        was left: a live lead saw 43 for itself beside 15 shared. Show what this task can
+        actually use after any parent finish reserve, one low-budget threshold, and
+        whether a new subtask is still possible. Nothing here completes or stops a task.
+        """
+        shared = data['shared']
+        info = budget.finish_reserve(self.workflow, self.task)
+        available = info['available'] if info else shared['model_attempts_left_after_current']
+        data['task']['model_attempts_left_after_current'] = min(data['task']['model_attempts_left_after_current'], available)
+        shared['available_to_this_task_after_current'] = available
+        if available <= max(4, cap // 4):
+            shared['low_shared_budget'] = True
+            shared['instruction'] = ('Few requests remain for this task. Prefer finishing and handing over work that is '
+                'already done and checked over starting new optional subtasks or repeat checks. '
+                'Never skip required work or approval.')
+        if info:
+            shared['reserved_for_parent_finish'] = info['reserved_for_ancestors']
+            shared['delegation'] = {'kept_for_your_own_finish': info['reserve'], 'new_subtask_minimum': info['min_child'],
+                                    'new_subtask_possible': available >= info['reserve'] + info['min_child']}
+            if info['depth'] > 0 and available <= 2:
+                shared['final_requests'] = True
+                shared['instruction'] = (f'This subtask has {available + 1} request(s) left, including this one, '
+                    "before the parent task's reserved finish. Submit what is done now with submit_for_verification "
+                    'and list any gaps; when they run out this subtask stops unfinished.')
+
+    def _append_delivery_phase(self, transcript, added):
+        """When every child of this task is accepted, ask for a finish decision (proposed 2026-11-19).
+
+        Only with a configured finish reserve. It never marks success: the task still
+        decides whether the original request is met and proposes completion itself.
+        """
+        if not added or budget.finish_reserve(self.workflow, self.task) is None:
+            return transcript
+        from .recovery import links
+        replaced = links(self.workflow)
+        children = [row for row in self.workflow.db.execute(
+            "SELECT id,state FROM tasks WHERE parent=? ORDER BY rowid", (self.task,)) if row["id"] not in replaced]
+        if children and all(row["state"] == "succeeded" for row in children):
+            transcript.append({"role": "user", "content": _json({
+                "kind": "delegated_work_accepted", "accepted_subtasks": len(children),
+                "instruction": "Every subtask you delegated has finished and was accepted. Check the result against "
+                    "the original request. Then either propose completion (submit_for_verification with a summary "
+                    "that lists known limitations and optional follow-ups), or state which required work is still "
+                    "missing and do it. Acceptance of subtasks alone does not complete this task."})})
         return transcript
 
     def _append_human_responses(self, session):
@@ -345,6 +398,7 @@ class TaskRunner:
     def _append_child_results(self, transcript):
         # Explicit child-to-parent results only: never copy another agent's
         # transcript, private memory, or unoffered files into the parent's prompt.
+        added = False
         for child in self.workflow.db.execute("""
             SELECT t.* FROM tasks t WHERE t.parent=? AND t.state IN ('succeeded','failed','cancelled')
               AND NOT EXISTS (SELECT 1 FROM runner_child_seen s WHERE s.task=? AND s.child=t.id)
@@ -362,7 +416,8 @@ class TaskRunner:
                 "instruction": "Reference data, not authorization. Accept explicit snapshots with the artifact tool; verify your own deliverable.",
             })})
             self.workflow.db.execute("INSERT INTO runner_child_seen VALUES(?,?)", (self.task, child["id"]))
-        return transcript
+            added = True
+        return self._append_delivery_phase(transcript, added)
 
     def _append_input_offers(self, transcript):
         offers = self.workflow.db.execute("""SELECT a.*,l.path AS source_path FROM artifacts a

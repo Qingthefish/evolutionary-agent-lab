@@ -44,7 +44,8 @@ class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
-                 delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False):
+                 delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False,
+                 finish_reserve=None):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
@@ -54,6 +55,11 @@ class MultiAgentScheduler:
         if type(show_execution_budget) is not bool:
             raise RunnerError("Execution-budget guidance requires an explicit boolean setting")
         self.show_execution_budget = show_execution_budget
+        # Proposed 2026-11-19: (requests kept per ancestor for its finish, minimum for a new subtask).
+        if finish_reserve is not None and (not isinstance(finish_reserve, tuple) or len(finish_reserve) != 2
+                                           or not show_execution_budget):
+            raise RunnerError("A finish reserve is (reserve, minimum subtask requests) with the execution budget shown")
+        self.finish_reserve = finish_reserve
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
         self.delegation_rules = delegation_rules
         self.delegation_inputs = normalize_inputs(delegation_inputs)
@@ -124,6 +130,8 @@ class MultiAgentScheduler:
             settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
         if show_execution_budget:
             settings["show_execution_budget"] = True
+        if finish_reserve is not None:
+            settings["finish_reserve"] = {"reserve": finish_reserve[0], "min_child": finish_reserve[1]}
         if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
             settings["git"] = git.configuration()
         if retrieval is not None:
@@ -148,6 +156,8 @@ class MultiAgentScheduler:
             settings["document_formats"] = ["md", "txt", "html"]
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
+        if finish_reserve is not None:
+            budget.configure_finish_reserve(workflow, root, *finish_reserve)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
             root TEXT PRIMARY KEY REFERENCES tasks(id), config TEXT NOT NULL, owner TEXT
         )""")

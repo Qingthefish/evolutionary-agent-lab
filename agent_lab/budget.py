@@ -66,12 +66,69 @@ def check(workflow, task, *, reserve=None, after_response=False):
         maximum = limits["model_attempts" if reserve == "attempts" else "tool_calls"]
         if scope[reserve] >= maximum:
             raise TreeBudgetError("Shared task-tree " + reserve + " budget exhausted; partial artifacts retained")
+        held = _reserve_row(workflow, scope)
+        if reserve == "attempts" and held is not None and scope["depth"] > 0 and (
+                maximum - scope[reserve] <= held["reserve"] * scope["depth"]):
+            raise TreeBudgetError("Remaining shared requests are kept for the parent task's finish; "
+                                  "this subtask stops and its artifacts are retained")
         workflow.db.execute(f"UPDATE tree_budgets SET {reserve}={reserve}+1 WHERE root=?", (scope["root"],))
     elif reserve == "child":
         if scope["depth"] >= limits["depth"] or len(descendants(workflow, scope["root"])) >= limits["tasks"]:
             raise TreeBudgetError("Shared task-tree task count or delegation depth limit reached")
     elif reserve is not None:
         raise TreeBudgetError("Unknown shared budget reservation")
+
+
+def configure_finish_reserve(workflow, root, reserve, min_child):
+    """Keep `reserve` shared requests per ancestor for its own finish (proposed 2026-11-19).
+
+    A subtask may not reserve a request that would cut into what its ancestors
+    keep, and a new subtask needs `min_child` requests beyond the caller's own
+    reserve. Nothing is completed or retried automatically.
+    """
+    if (type(reserve) is not int or type(min_child) is not int
+            or not 1 <= reserve <= 16 or not 1 <= min_child <= 64):
+        raise TreeBudgetError("Use small positive finish-reserve settings")
+    workflow.db.execute("""CREATE TABLE IF NOT EXISTS finish_reserves (
+        root TEXT PRIMARY KEY REFERENCES tasks(id), reserve INTEGER NOT NULL, min_child INTEGER NOT NULL
+    )""")
+    with workflow._transaction():
+        workflow._row("tasks", root)
+        row = workflow.db.execute("SELECT reserve,min_child FROM finish_reserves WHERE root=?", (root,)).fetchone()
+        if row is None:
+            workflow.db.execute("INSERT INTO finish_reserves VALUES(?,?,?)", (root, reserve, min_child))
+        elif (row["reserve"], row["min_child"]) != (reserve, min_child):
+            raise TreeBudgetError("Finish reserve must match the original root configuration")
+
+
+def _reserve_row(workflow, scope):
+    if scope is None or not workflow.db.execute(
+            "SELECT 1 FROM sqlite_master WHERE name='finish_reserves' AND type='table'").fetchone():
+        return None
+    return workflow.db.execute("SELECT reserve,min_child FROM finish_reserves WHERE root=?", (scope["root"],)).fetchone()
+
+
+def finish_reserve(workflow, task):
+    """Shared requests left for `task` after what its ancestors keep, or None when unconfigured."""
+    scope = _scope(workflow, task)
+    row = _reserve_row(workflow, scope)
+    if row is None:
+        return None
+    shared_left = max(0, json.loads(scope["limits"])["model_attempts"] - scope["attempts"])
+    held = row["reserve"] * scope["depth"]
+    return {"reserve": row["reserve"], "min_child": row["min_child"], "depth": scope["depth"],
+            "shared_left": shared_left, "reserved_for_ancestors": held, "available": max(0, shared_left - held)}
+
+
+def delegation_refusal(workflow, task):
+    """A plain refusal message when a new subtask would leave no finish for the caller."""
+    info = finish_reserve(workflow, task)
+    if info is None or info["available"] >= info["reserve"] + info["min_child"]:
+        return None
+    return (f"Only {info['available']} shared requests remain for this task; {info['reserve']} are kept for your "
+            f"own finish and a new subtask needs at least {info['min_child']}. No subtask was created. Finish with "
+            "what is done: submit_for_verification with a summary that lists known limitations, or do the "
+            "remaining required step yourself.")
 
 
 def record_tokens(workflow, task, count):
