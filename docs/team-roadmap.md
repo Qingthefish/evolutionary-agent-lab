@@ -673,6 +673,14 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   reservations without prescribing task titles or a workflow. The setting is
   pinned and incompatible resumes are refused. These corrections have no new
   model-run success claim. [Mid-test behavior/evidence](final-report.md#11-mid-test-execution-record-19-november)
+- **Review package:** [PR #63](https://github.com/Qingthefish/evolutionary-agent-lab/pull/63),
+  implementation source `6f1cc79`: 16 clean Python 3.12 setup commands and
+  664 passing core checks, with 30 explicit container/UI skips; separately,
+  all 18 actual-container integration checks passed. Publication review checked
+  238 local links/anchors, retained historical evidence and raw identities,
+  and found no local course key in tracked files. Initial restricted loopback
+  failures and the successful permitted-environment reproduction are both
+  retained. Required remote checks and merge status are visible on that PR.
 
 ### S02
 
