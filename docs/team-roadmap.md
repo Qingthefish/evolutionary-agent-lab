@@ -682,6 +682,30 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   failures and the successful permitted-environment reproduction are both
   retained. Required remote checks and merge status are visible on that PR.
 
+- **2026-11-19 PR #64 review:** Reviewed the contributor's completion-protocol
+  branch at `a1aeda0` without changing the original branch. The parent request
+  reserves, completion-only phase, explicit blocker, append writes, parameter
+  diagnostics and operator-controlled provider pause are engineering proposals;
+  they are not evidence of a completed mid-test scenario. The contributor's
+  additional live databases are not on this reviewer machine, so screenshot
+  run counts and human-acceptance summaries are not independently certified.
+- **Review corrections:** A synthetic one-request cap allowed two transport
+  invocations after a failure credit. The correction counts every attempted
+  request against task/tree limits, including uncertain failures and explicit
+  resends; historical credit rows stay visible but grant no extra requests.
+  An incompatible protocol resume could also attach the new finish policy
+  before being refused; the compatibility guard now runs first. Regression
+  checks cover both findings, existing legacy credit rows, and the unchanged
+  original configuration after rejection. These corrections do not change any
+  old outcome or establish live success. Source `d189631`; raw review records
+  stay under ignored `runs/review-pr64-20261119/`.
+- **Verified checks:** Corrected runtime source `d189631` passed 724 engineering
+  checks with 21 actual-container checks included; nine optional Textual checks
+  were explicitly skipped. This makes zero course-model requests. The original
+  source independently passed 700 core checks with 30 container/UI skips. An
+  intermediate clean setup passed all 16 commands; final CI remains a separate
+  gate before integration. No teacher score or live completion is implied.
+
 ### S02
 
 **Finish submission materials**

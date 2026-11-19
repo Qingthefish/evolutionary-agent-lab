@@ -1504,5 +1504,35 @@
     "account_balance_and_pricing": "unknown",
     "known_limit": "The active root has 20/22 attempts and 242924/247500 reported tokens; configuration and counters were not reset.",
     "raw_http_capture": "Final root retains real provider bytes privately. Rejected replies in earlier roots retain unknown parsed usage."
+  },
+  "completion_protocol_review": {
+    "date": "2026-11-19",
+    "original_pr": 64,
+    "original_source": "a1aeda0614bee3e814b8b6c35b618485ad051551",
+    "corrected_runtime_source": "d189631",
+    "benchmark_valid": false,
+    "official_task_pass_claim": false,
+    "real_model_calls": 0,
+    "original_core_passed": 700,
+    "original_skipped": 30,
+    "corrected_passed": 724,
+    "corrected_skipped": 9,
+    "actual_container_checks": 21,
+    "review_findings": [
+      "Failed-request credits bypassed the actual-request cap",
+      "Rejected finish-policy resume modified the original task tree"
+    ],
+    "corrections": [
+      "Count all attempts and explicit resends; preserve legacy credit rows without subtracting them",
+      "Reject incompatible scheduler settings before attaching a finish policy"
+    ],
+    "original_cap_reproduction": {
+      "synthetic_only": true,
+      "declared_cap": 1,
+      "transport_invocations": 2
+    },
+    "live_limitation": "Contributor-only live records were not available for independent audit; no model or teacher score is inferred",
+    "raw_full_log_sha256": "28dba4762e1b70abafb97e7f12213b6c4ea53bc8e8ad2553b83a864f774627ad",
+    "raw_reproduction_sha256": "909aeaca10fe1a58faae816fb224a1fe86a496b745215a3c6ee1a6923ba1df82"
   }
 }
