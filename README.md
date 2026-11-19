@@ -49,24 +49,24 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
-**Current software rehearsal (2026-11-19).** The real lead delegated to the
-developer, who wrote and executed a booking CLI and delegated its QA. Independent
-review of the current developer source passed 26 actual-container checks,
-including overlap rejection, persistent cancellation, rebooking and concurrent
-same-slot attempts. The parent workflow is **unfinished**: QA/report acceptance,
-final delivery and Task 2 are not complete. This round retains three truncated
-roots and one partial root, with 26 actual requests in total; no six-task score
-is claimed. New opt-in local-budget guidance and actionable export errors are
-engineering corrections, not yet validated in another model run. Complete live
-outcomes for the six mid-test tasks, GitHub runtime evidence, release freeze and
-final submission materials remain open.
+**Current verified status (2026-11-19).** No complete instructor mid-test task
+has been independently established in the coordinator's records. A real
+developer's booking source passed 26 independent actual-container checks, but
+the parent workflow remained unfinished. Engineering checks and working child
+artifacts do not count as full scenario delivery.
+
+The reviewed completion protocol is integrated through PR #65, preserving the
+contributor's commits and correcting hard request limits and rejected-resume
+side effects. The corrected runtime passed 724 checks, including 21 actual
+container checks, with nine UI skips; all three required remote jobs passed.
+The latest live attempt on that fixed revision paused on its first HTTP 502,
+without tool execution or automatic resend. Its round has **five actual
+requests** including the earlier failed task and diagnostic; unknown usage is
+retained. Complete live outcomes for all six mid-test tasks, GitHub runtime
+evidence, release freeze and final submission materials remain open.
 [Current S01 record](docs/team-roadmap.md#s01)
 
-The later local Task 1 attempt failed after three requests at a developer
-output truncation; a separate one-request protocol diagnostic dispatched no
-tools. PR #64's completion protocol has undergone independent engineering
-review and corrections to request limits and resume compatibility. Those
-checks establish no completed mid-test task. [Review and limitations](docs/final-report.md#11-mid-test-execution-record-19-november)
+[Review and limitations](docs/final-report.md#11-mid-test-execution-record-19-november)
 
 **Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)
 

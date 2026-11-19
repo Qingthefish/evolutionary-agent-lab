@@ -706,6 +706,20 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   intermediate clean setup passed all 16 commands; final CI remains a separate
   gate before integration. No teacher score or live completion is implied.
 
+- **Integration / latest live boundary:** [PR #65](https://github.com/Qingthefish/evolutionary-agent-lab/pull/65)
+  merged as `0b1a63b` after all three required remote checks passed. The original
+  contributor commits are preserved. The new fixed-source root's first request
+  returned HTTP 502 after about 1.10 seconds; no model tool ran and no automatic
+  resend or budget credit followed. The local round now has five requests:
+  three in the failed Task 1, one read-only diagnostic and one uncertain 502.
+  The corrected root is paused, not successful; Task 2 was not posted. Both
+  source databases and read-only exports stay under ignored
+  `runs/software-pair-20261119/`. No complete mid-test task is independently
+  established by these local records. Next live gate: one complete, independently
+  checked Software Task 1 delivery, then its Task 2 in the same group. Any
+  further fresh-root allowance needs its own authorization; original failed
+  roots and current counters cannot be reset.
+
 ### S02
 
 **Finish submission materials**

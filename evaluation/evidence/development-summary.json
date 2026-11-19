@@ -1534,5 +1534,80 @@
     "live_limitation": "Contributor-only live records were not available for independent audit; no model or teacher score is inferred",
     "raw_full_log_sha256": "28dba4762e1b70abafb97e7f12213b6c4ea53bc8e8ad2553b83a864f774627ad",
     "raw_reproduction_sha256": "909aeaca10fe1a58faae816fb224a1fe86a496b745215a3c6ee1a6923ba1df82"
+  },
+  "software_followup_round": {
+    "date": "2026-11-19",
+    "benchmark_valid": false,
+    "complete_teacher_task_claim": false,
+    "source_before_correction": "7958723523014c2c2c02bc589c5195eff6bc00ce",
+    "corrected_source": "0b1a63bbe980b393f0cd950797d7fc0bf94b11da",
+    "integration_pr": 65,
+    "local_round_request_cap": 48,
+    "max_fresh_roots": 2,
+    "actual_requests": 5,
+    "diagnostic_requests": 1,
+    "roots": [
+      {
+        "evidence_key": "state",
+        "attempts": 3,
+        "parsed_reported_tokens": 9001,
+        "root_state": "failed",
+        "runner_states": [
+          "ready",
+          "stopped"
+        ],
+        "limits": {
+          "depth": 3,
+          "duration_seconds": 14400,
+          "model_attempts": 24,
+          "reported_tokens": 270000,
+          "tasks": 8,
+          "tool_calls": 128
+        },
+        "database_sha256": "63dd2a54ea05ade79c78c81e1dc62bf4887e61ab0385f64d59a42e0c763afd02"
+      },
+      {
+        "evidence_key": "corrected-state",
+        "attempts": 1,
+        "parsed_reported_tokens": 0,
+        "root_state": "running",
+        "runner_states": [
+          "provider_uncertain"
+        ],
+        "limits": {
+          "depth": 3,
+          "duration_seconds": 14400,
+          "model_attempts": 44,
+          "reported_tokens": 2200000,
+          "tasks": 8,
+          "tool_calls": 256
+        },
+        "database_sha256": "0d47a273271003b7fb8c4bc3c5c9108c775082e27b401335cb7abe6df0360ff7"
+      }
+    ],
+    "known_tokens": {
+      "parsed_replies": 9001,
+      "rejected_reply_observed_in_private_raw": 8142,
+      "read_only_diagnostic": 455,
+      "total": 17598,
+      "attempts_with_unknown_usage": 1
+    },
+    "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+    "observed_reply_models": [
+      "t2_hkgai-v3_fp8_1m_e10"
+    ],
+    "latest_boundary": {
+      "kind": "http_status",
+      "status": 502,
+      "duration_seconds": 1.097332542,
+      "request_may_have_been_processed": true,
+      "tools_released": 0,
+      "automatic_retry": false,
+      "request_credit_applied": false
+    },
+    "allocation_note": "The corrected scenario plan value 88 splits into 44 per root, but a separate pre-HTTP round guard authorizes only the one corrected root and caps cumulative reservations at 48 including the earlier failed root and diagnostic. It grants no third fresh root or new Task 2 allowance.",
+    "diagnostic_limit": "thinking.type=disabled still reported 37 reasoning tokens on one small no-tool-execution probe; support or effectiveness is not established.",
+    "provider_total_quota_pricing_balance": "unknown",
+    "task_2": "not_posted"
   }
 }
