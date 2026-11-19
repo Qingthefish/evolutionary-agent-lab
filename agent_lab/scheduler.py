@@ -155,14 +155,16 @@ class MultiAgentScheduler:
             settings["document_formats"] = ["md", "txt", "html"]
         config = json.dumps(settings, sort_keys=True, allow_nan=False)
         budget.configure(workflow, root, limits)
-        if finish_policy is not None:
-            budget.configure_finish_policy(workflow, root, finish_policy)
         workflow.db.execute("""CREATE TABLE IF NOT EXISTS scheduler_runs (
             root TEXT PRIMARY KEY REFERENCES tasks(id), config TEXT NOT NULL, owner TEXT
         )""")
         previous = workflow.db.execute("SELECT * FROM scheduler_runs WHERE root=?", (root,)).fetchone()
         if previous and previous["config"] != config:
             raise RunnerError("Persisted scheduler roles, constraints, model, tools, or acceptance policy differ")
+        # An incompatible resume must not attach a finish policy to the old
+        # tree before it is rejected. Budget enforcement reads this binding.
+        if finish_policy is not None:
+            budget.configure_finish_policy(workflow, root, finish_policy)
         recovery.configure(workflow, root, child_retries)
         with workflow._transaction():
             previous = workflow.db.execute("SELECT * FROM scheduler_runs WHERE root=?", (root,)).fetchone()

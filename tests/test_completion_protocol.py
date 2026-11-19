@@ -350,10 +350,9 @@ class CompletionProtocol(unittest.TestCase):
         self.drive()
         self.assertEqual(self.events("completion_proposed", self.root)[0][0], self.root)
 
-    # 7b. Operator-resent provider failures do not consume the request cap; the record stays truthful.
-    def test_resent_provider_failures_are_refunded_up_to_the_limit(self):
+    def test_resent_provider_failures_keep_counting_with_the_finish_protocol(self):
         def dev(payload, n, state):
-            if n <= 7:  # Seven HTTP 502 replies in a row, each resent by the operator.
+            if n <= 7:
                 return ProviderError("Provider HTTP status 502; no automatic retry", kind="http_status",
                                      phase="opening", http_status=502)
             return writer(lambda p, s: len(tool_results(p)) >= 1, offer_and_submit())(payload, n, state)
@@ -361,19 +360,38 @@ class CompletionProtocol(unittest.TestCase):
         dev_agent = Agent(dev)
         self.build({"lead": Agent(lead_finisher()), "dev": dev_agent}, cap=20)
         for _ in range(7):
-            state = self.drive()
+            self.drive()
             (dev_task,) = self.task_of("dev")
-            self.assertEqual(state["needs"][0]["runner_state"], "provider_uncertain")
             reconcile(self.scheduler, dev_task["id"], "resend", "Operator: HKGAI returned 502", human="user")
-        state = self.drive()
-        self.assertEqual(state["needs"][0], {"task": dev_task["id"], "kind": "independent_verification"})
+        self.drive()
         status = budget.status(self.workflow, self.root)
-        self.assertEqual((status["attempts"], status["refunded_attempts"]), (10, budget.MAX_PROVIDER_REFUNDS))
-        self.assertEqual(self.scheduler.runner(dev_task["id"]).status()["unknown_usage_attempts"], 7)  # Still recorded.
-        refunded = [n for _, detail in self.events("provider_failures_refunded", dev_task["id"]) for n in detail["numbers"]]
-        self.assertEqual(refunded, [1, 2, 3, 4, 5])  # The sixth and seventh failures count toward the cap.
-        info = budget.finish_budget(self.workflow, self.root)
-        self.assertEqual(info["shared_left"], 20 - (10 - budget.MAX_PROVIDER_REFUNDS))
+        self.assertEqual((status["attempts"], status["refunded_attempts"]), (10, 0))
+        self.assertEqual(self.scheduler.runner(dev_task["id"]).status()["unknown_usage_attempts"], 7)
+        self.assertEqual(self.events("provider_failures_refunded"), [])
+        self.assertEqual(budget.finish_budget(self.workflow, self.root)["shared_left"], 10)
+
+    def test_resend_cannot_send_a_second_request_under_a_one_request_cap(self):
+        agent = Agent(lambda p, n, s: ProviderError("HTTP 502", kind="http_status", phase="opening", http_status=502))
+        self.build({"lead": agent}, cap=1)
+        self.drive()
+        reconcile(self.scheduler, self.root, "resend", "Operator requests one further counted attempt", human="user")
+        self.drive()
+        self.assertEqual(len(agent.requests), 1)
+        self.assertEqual(budget.status(self.workflow, self.root)["attempts"], 1)
+        self.assertEqual(self.workflow.task(self.root, "user")["state"], "failed")
+
+    def test_legacy_credits_remain_visible_but_cannot_enlarge_request_caps(self):
+        agent = Agent(lambda p, n, s: ProviderError("HTTP 502", kind="http_status", phase="opening", http_status=502))
+        self.build({"lead": agent}, cap=1)
+        self.drive()
+        self.workflow.db.execute("CREATE TABLE budget_refunds(root TEXT, task TEXT, number INTEGER, PRIMARY KEY(task,number))")
+        self.workflow.db.execute("INSERT INTO budget_refunds VALUES(?,?,1)", (self.root, self.root))
+        reconcile(self.scheduler, self.root, "resend", "Inspect legacy credits without deleting them", human="user")
+        self.assertEqual(budget.status(self.workflow, self.root)["refunded_attempts"], 1)
+        self.assertEqual(budget.finish_budget(self.workflow, self.root)["shared_left"], 0)
+        self.drive()
+        self.assertEqual(len(agent.requests), 1)
+        self.assertEqual(budget.status(self.workflow, self.root)["refunded_attempts"], 1)
 
     def test_without_the_protocol_resent_failures_still_count(self):
         def dev(payload, n, state):
@@ -407,6 +425,16 @@ class CompletionProtocol(unittest.TestCase):
         self.assertEqual(len(lead.requests) + len(qa_agent.requests), 12)  # QA spends the whole cap, as before.
         self.assertEqual(self.workflow.task(self.root, "user")["state"], "failed")
         self.assertFalse(self.workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='finish_policies'").fetchone())
+
+    def test_rejected_protocol_change_does_not_modify_an_existing_legacy_tree(self):
+        self.build({}, cap=20, policy=None, show=True)
+        original = self.workflow.db.execute("SELECT config FROM scheduler_runs WHERE root=?", (self.root,)).fetchone()[0]
+        with self.assertRaisesRegex(WorkflowError, "Persisted scheduler"):
+            self.build({}, cap=20, policy=FinishPolicy(), show=True)
+        self.assertFalse(self.workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='finish_policies'").fetchone())
+        self.build({}, cap=20, policy=None, show=True)
+        self.assertEqual(self.workflow.db.execute("SELECT config FROM scheduler_runs WHERE root=?", (self.root,)).fetchone()[0], original)
+        self.assertIsNone(budget.finish_budget(self.workflow, self.root))
 
     def test_every_agent_sees_its_completion_contract(self):
         lead = Agent(lead_finisher())

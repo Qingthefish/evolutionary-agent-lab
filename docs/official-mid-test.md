@@ -261,11 +261,12 @@ state and the shared request cap:
 The defaults (3, 2, 10, 0.25) come from the live software roots: accepted
 children used 10-25 requests and leads needed 2-5 after their last child.
 
-With the protocol on, an operator `resend` after a provider failure (see
-below) also returns that task's failed, response-less requests to the request
-cap, at most 5 per root. The requests stay recorded as made with unknown usage,
-and a `provider_failures_refunded` event lists them. Without the protocol,
-failed requests count as before.
+An operator `resend` after a provider failure consumes another request from the
+same actual-request cap. Failed or response-less requests keep counting and
+retain unknown usage. No local setting can refund a provider charge. Legacy
+`provider_failures_refunded` records are preserved as history, but their credits
+do not enlarge current limits or the remaining-budget view. There is no automatic
+resend, even when a request allowance remains.
 
 ### Recovering an interrupted command
 

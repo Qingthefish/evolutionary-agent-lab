@@ -64,7 +64,9 @@ def check(workflow, task, *, reserve=None, after_response=False):
         raise TreeBudgetError("Shared task-tree reported token budget exhausted; partial artifacts retained")
     if reserve in {"attempts", "tool_calls"}:
         maximum = limits["model_attempts" if reserve == "attempts" else "tool_calls"]
-        used = scope[reserve] - (refunded(workflow, scope["root"]) if reserve == "attempts" else 0)
+        # A failed or uncertain HTTP attempt can still be charged. Finish-policy
+        # credits must never relax the owner's actual-request ceiling.
+        used = scope[reserve]
         if used >= maximum:
             raise TreeBudgetError("Shared task-tree " + reserve + " budget exhausted; partial artifacts retained")
         policy = _policy(workflow, scope)
@@ -139,7 +141,7 @@ def finish_budget(workflow, task):
     if policy is None:
         return None
     cap = json.loads(scope["limits"])["model_attempts"]
-    shared_left = max(0, cap - (scope["attempts"] - refunded(workflow, scope["root"])))
+    shared_left = max(0, cap - scope["attempts"])
     held = policy.parent_reserve * scope["depth"]
     delegated = workflow.db.execute("SELECT 1 FROM tasks WHERE parent=? LIMIT 1", (task,)).fetchone() is not None
     return {"policy": policy, "depth": scope["depth"], "cap": cap, "shared_left": shared_left,
@@ -193,13 +195,8 @@ def status(workflow, root):
         "refunded_attempts": refunded(workflow, scope["root"])}
 
 
-# Proposed 2026-11-19: with a finish policy, a provider failure that returned no
-# completion (transport or HTTP 5xx) and that the operator chose to resend no longer
-# counts toward the task tree's request cap. The request stays recorded as made, with
-# unknown usage; only the cap check skips it. A root refunds at most this many.
-MAX_PROVIDER_REFUNDS = 5
-
-
+# Read legacy credits for audit only. No new credits are issued and neither
+# current nor historical credits alter a task/tree's real-request limit.
 def _refunds_table(workflow):
     return workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='budget_refunds' AND type='table'").fetchone()
 
@@ -208,28 +205,3 @@ def refunded(workflow, root):
     if not _refunds_table(workflow):
         return 0
     return workflow.db.execute("SELECT count(*) FROM budget_refunds WHERE root=?", (root,)).fetchone()[0]
-
-
-def refunded_for_task(workflow, task):
-    if not _refunds_table(workflow):
-        return 0
-    return workflow.db.execute("SELECT count(*) FROM budget_refunds WHERE task=?", (task,)).fetchone()[0]
-
-
-def refund_provider_failures(workflow, task, numbers):
-    """Caller holds the transaction. Refund these failed turns within the root's limit; return those refunded."""
-    scope = _scope(workflow, task)
-    if scope is None or _policy(workflow, scope) is None:
-        return []
-    workflow.db.execute("""CREATE TABLE IF NOT EXISTS budget_refunds (
-        root TEXT NOT NULL REFERENCES tasks(id), task TEXT NOT NULL REFERENCES tasks(id),
-        number INTEGER NOT NULL, PRIMARY KEY(task, number)
-    )""")
-    done = []
-    for number in numbers:
-        if refunded(workflow, scope["root"]) >= MAX_PROVIDER_REFUNDS:
-            break
-        if workflow.db.execute("INSERT OR IGNORE INTO budget_refunds VALUES(?,?,?)",
-                               (scope["root"], task, number)).rowcount:
-            done.append(number)
-    return done

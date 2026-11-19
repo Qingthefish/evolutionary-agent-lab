@@ -261,20 +261,6 @@ class TaskRunner:
             self.workflow.db.execute("UPDATE runner_sessions SET status='ready' WHERE task=?", (self.task,))
             self.workflow._event(self.task, self.actor, "provider_resend_released", {
                 "after_attempt": session["attempts"], "reason": reason, "automatic_retry": False})
-            # With a finish policy, the operator's resend also returns this task's provider
-            # failures (no completion, operator decision required) to the request cap.
-            failed = [row["number"] for row in self.workflow.db.execute(
-                "SELECT number FROM runner_turns WHERE task=? AND status='provider_error' AND response IS NULL "
-                "ORDER BY number", (self.task,))
-                if self.workflow.db.execute(
-                    "SELECT 1 FROM events WHERE task=? AND kind='provider_decision_required' AND "
-                    "json_extract(detail,'$.number')=?", (self.task, row["number"])).fetchone()]
-            refunded = budget.refund_provider_failures(self.workflow, self.task, failed)
-            if refunded:
-                self.workflow._event(self.task, self.actor, "provider_failures_refunded", {
-                    "numbers": refunded, "root_total": budget.refunded(self.workflow, budget._scope(
-                        self.workflow, self.task)["root"]), "limit": budget.MAX_PROVIDER_REFUNDS,
-                    "usage": "unknown; requests remain recorded as made"})
         return self.status()
 
     def abort(self, reason):
@@ -299,8 +285,7 @@ class TaskRunner:
         maximum = self.workflow.db.execute('SELECT maximum FROM tool_budgets WHERE task=?', (self.task,)).fetchone()[0]
         used = self.workflow.db.execute('SELECT count(*) FROM tool_calls WHERE task=?', (self.task,)).fetchone()[0]
         data = {'version': 1, 'current_request_already_reserved': True,
-            'task': {'model_attempts_left_after_current': max(0, self.limits.model_attempts - number
-                                                                  + budget.refunded_for_task(self.workflow, self.task)),
+            'task': {'model_attempts_left_after_current': max(0, self.limits.model_attempts - number),
                      'tool_calls_left': max(0, maximum - used), 'reported_tokens_observed': session['tokens'],
                      'reported_token_stop_threshold': self.limits.reported_tokens,
                      'seconds_left': max(0, self.limits.duration_seconds - (now - task['created']))},
@@ -314,7 +299,7 @@ class TaskRunner:
             shared = budget.status(self.workflow, scope['root'])
             limits = shared['limits']
             data['shared'] = {'model_attempts_left_after_current': max(
-                    0, limits['model_attempts'] - shared['attempts'] + shared['refunded_attempts']),
+                    0, limits['model_attempts'] - shared['attempts']),
                 'tool_calls_left': max(0, limits['tool_calls'] - shared['tool_calls']),
                 'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
                 'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
@@ -489,7 +474,7 @@ class TaskRunner:
                 (self.task, task["revision"]),
             ).fetchone():
                 return self.status() | {"needs": "trusted_action_release"}
-            elif session["attempts"] - budget.refunded_for_task(self.workflow, self.task) >= self.limits.model_attempts:
+            elif session["attempts"] >= self.limits.model_attempts:
                 reason = "Model attempt budget exhausted; partial artifacts retained"
             elif session["tokens"] >= self.limits.reported_tokens:
                 reason = "Reported token budget exhausted; partial artifacts retained"
