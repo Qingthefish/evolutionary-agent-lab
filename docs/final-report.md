@@ -245,3 +245,16 @@ legacy credit rows are retained, with no credit applied to current hard limits.
 The corrected source passed 724 engineering checks (including 21 real-container
 checks), with nine UI skips. Contributor-only live run records were not part of
 this review, and no scenario pass is claimed from the engineering checks.
+
+The reviewed package merged through [PR #65](https://github.com/Qingthefish/evolutionary-agent-lab/pull/65)
+as `0b1a63b`, after all three required remote jobs passed. A new development
+root ran that fixed source with the opt-in finish protocol and no mid-run source
+change. Its first request returned HTTP 502 after 1.10 seconds, before any tool
+was executed. It remains at `provider_uncertain`; no automatic resend or
+request credit was applied. This round's cumulative count is five actual
+requests: the earlier failed root's three, one read-only protocol diagnostic,
+and this uncertain request. Parsed valid replies report 9,001 tokens, the saved
+rejected length reply reports 8,142, and the diagnostic reports 455: 17,598
+known reported tokens, plus unknown usage for the 502. These figures are neither
+account balance nor money. The new root and Task 2 are not completed. The
+contributor's other live databases remain outside this local audit.
