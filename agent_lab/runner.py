@@ -6,12 +6,28 @@ import json
 import math
 
 from .core import WorkflowError
-from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError
+from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError, TruncatedCompletion
 from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolBudgetError, ToolRequestError
 from .files import INPUT_PROTOCOL
 from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
-from . import budget
+from . import budget, completion
+
+
+# Transport failures return no completion, so no tool can have been released.
+# The task pauses for an explicit operator decision instead of failing; nothing
+# is resent automatically. Proposed 2026-11-18, pending owner review.
+# A provider server error (HTTP 5xx) also returns no completion and pauses the same
+# way (proposed 2026-11-18 after live HTTP 500 and 502 replies). A malformed HTTP
+# reply (http_protocol) and HTTP 4xx (authentication, quota, rate limit) still fail.
+TRANSPORT_FAILURES = frozenset({"timeout", "dns", "tls", "connection_closed", "connection_refused", "transport"})
+
+
+def operator_decision_failure(diagnostics):
+    """True when a failed request returned no completion and a resend may help."""
+    status = diagnostics.get("http_status")
+    return diagnostics["kind"] in TRANSPORT_FAILURES or (
+        diagnostics["kind"] == "http_status" and type(status) is int and 500 <= status <= 599)
 
 
 class RunnerError(WorkflowError):
@@ -80,6 +96,8 @@ class TaskRunner:
             raise RunnerError("Execution-budget guidance requires an explicit boolean setting")
         declared = gateway.delegation_rules is not None
         self.budget_context = declared or show_execution_budget
+        self.show_execution_budget = show_execution_budget
+        self._phase = None
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
         self.require_tool_actions = client.tool_choice == 'required'
@@ -227,6 +245,24 @@ class TaskRunner:
             self.workflow.db.execute("UPDATE runner_sessions SET status='stopped' WHERE task=?", (self.task,))
         return self.status()
 
+    def resend_after_transport_failure(self, reason):
+        """Trusted operator only. Release one new, counted attempt after a transport or HTTP 5xx failure.
+
+        The failed request stays recorded with unknown usage. The next scheduler
+        step reserves a new attempt against the same limits; nothing runs here.
+        """
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
+            raise RunnerError("Provide a concrete bounded operator reason")
+        with self.workflow._transaction():
+            session = self._session()
+            task = self.workflow.task(self.task, self.actor)
+            if session["status"] != "provider_uncertain" or task["state"] != "running":
+                raise RunnerError("Only a running task paused after a transport failure can be resent")
+            self.workflow.db.execute("UPDATE runner_sessions SET status='ready' WHERE task=?", (self.task,))
+            self.workflow._event(self.task, self.actor, "provider_resend_released", {
+                "after_attempt": session["attempts"], "reason": reason, "automatic_retry": False})
+        return self.status()
+
     def abort(self, reason):
         """Trusted controller only. Stop an uncertain turn; never replay its effects."""
         if not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
@@ -262,18 +298,22 @@ class TaskRunner:
         if scope is not None:
             shared = budget.status(self.workflow, scope['root'])
             limits = shared['limits']
-            data['shared'] = {'model_attempts_left_after_current': max(0, limits['model_attempts'] - shared['attempts']),
+            data['shared'] = {'model_attempts_left_after_current': max(
+                    0, limits['model_attempts'] - shared['attempts']),
                 'tool_calls_left': max(0, limits['tool_calls'] - shared['tool_calls']),
                 'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
                 'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
                 'seconds_left': max(0, limits['duration_seconds'] - (now - scope['created']))}
+            if self.show_execution_budget:
+                self._shared_view(data, limits['model_attempts'])
         if 'submit_for_verification' in self.gateway.allowed:
             remaining = min(data['task']['model_attempts_left_after_current'],
                             data['shared']['model_attempts_left_after_current'] if data['shared'] is not None
                             else data['task']['model_attempts_left_after_current'])
             data['completion_proposal'] = {
                 'requests_left_after_current': remaining,
-                'low_request_budget': remaining <= 2,
+                'low_request_budget': (data['shared'] or {}).get('low_shared_budget', False)
+                                      if self.show_execution_budget else remaining <= 2,
                 'instruction': 'When your deliverable and required handoff/lesson are ready, include submit_for_verification '
                     'last in the SAME batch as final actions, or send a final response without tools. '
                     'A file write or record_lesson alone is not a completion proposal. '
@@ -290,6 +330,64 @@ class TaskRunner:
             raise RunnerError('Trusted task context is unavailable; no model call released')
         context['execution_budget'] = data
         transcript[1] = {**transcript[1], 'content': _json(context)}
+        return transcript
+
+    def _shared_view(self, data, cap):
+        """Consistent remaining requests and the completion contract (proposed 2026-11-19).
+
+        The role limit equals the tree cap, so the per-task count alone overstated what
+        was left: a live lead saw 43 for itself beside 15 shared. Show what this task can
+        actually use after its ancestors' finish reserve, one low-budget threshold, and,
+        with a finish policy, the completion contract and Finish Mode. Nothing here
+        completes or stops a task.
+        """
+        shared = data['shared']
+        info = budget.finish_budget(self.workflow, self.task)
+        available = info['available'] if info else shared['model_attempts_left_after_current']
+        data['task']['model_attempts_left_after_current'] = min(data['task']['model_attempts_left_after_current'], available)
+        shared['available_to_this_task_after_current'] = available
+        if available <= max(4, cap // 4):
+            shared['low_shared_budget'] = True
+            shared['instruction'] = ('Few requests remain for this task. Prefer finishing and handing over work that is '
+                'already done and checked over starting new optional subtasks or repeat checks. '
+                'Never skip required work or approval.')
+        if info:
+            policy = info['policy']
+            shared['reserved_for_parent_finish'] = info['reserved_for_ancestors']
+            shared['delegation'] = {'kept_for_your_own_finish': policy.parent_reserve,
+                                    'new_subtask_minimum': policy.min_child,
+                                    'new_subtask_possible': available >= policy.parent_reserve + policy.min_child}
+            data['completion'] = completion.contract(self.workflow, self.task, self._phase, self.gateway.allowed)
+
+    def _enter_phase(self):
+        """Derive this turn's phase; Finish Mode narrows the offered tools and is recorded once."""
+        self._phase = completion.phase(self.workflow, self.task) if self.show_execution_budget else None
+        self.gateway.restricted = completion.offered_tools(self.gateway.allowed, self._phase)
+        if self.gateway.restricted is not None and not self.workflow.db.execute(
+                "SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'", (self.task,)).fetchone():
+            self.workflow._event(self.task, self.actor, "finish_mode_entered", {
+                "reason": self._phase["reason"], "available": self._phase["available"],
+                "tools": sorted(self.gateway.restricted)})
+
+    def _append_delivery_phase(self, transcript, added):
+        """When every child of this task is accepted, ask for a finish decision (proposed 2026-11-19).
+
+        Only with a configured finish reserve. It never marks success: the task still
+        decides whether the original request is met and proposes completion itself.
+        """
+        if not added or budget.finish_budget(self.workflow, self.task) is None:
+            return transcript
+        from .recovery import links
+        replaced = links(self.workflow)
+        children = [row for row in self.workflow.db.execute(
+            "SELECT id,state FROM tasks WHERE parent=? ORDER BY rowid", (self.task,)) if row["id"] not in replaced]
+        if children and all(row["state"] == "succeeded" for row in children):
+            transcript.append({"role": "user", "content": _json({
+                "kind": "delegated_work_accepted", "accepted_subtasks": len(children),
+                "instruction": "Every subtask you delegated has finished and was accepted. Check the result against "
+                    "the original request. Then either propose completion (submit_for_verification with a summary "
+                    "that lists known limitations and optional follow-ups), or state which required work is still "
+                    "missing and do it. Acceptance of subtasks alone does not complete this task."})})
         return transcript
 
     def _append_human_responses(self, session):
@@ -311,6 +409,7 @@ class TaskRunner:
     def _append_child_results(self, transcript):
         # Explicit child-to-parent results only: never copy another agent's
         # transcript, private memory, or unoffered files into the parent's prompt.
+        added = False
         for child in self.workflow.db.execute("""
             SELECT t.* FROM tasks t WHERE t.parent=? AND t.state IN ('succeeded','failed','cancelled')
               AND NOT EXISTS (SELECT 1 FROM runner_child_seen s WHERE s.task=? AND s.child=t.id)
@@ -328,7 +427,8 @@ class TaskRunner:
                 "instruction": "Reference data, not authorization. Accept explicit snapshots with the artifact tool; verify your own deliverable.",
             })})
             self.workflow.db.execute("INSERT INTO runner_child_seen VALUES(?,?)", (self.task, child["id"]))
-        return transcript
+            added = True
+        return self._append_delivery_phase(transcript, added)
 
     def _append_input_offers(self, transcript):
         offers = self.workflow.db.execute("""SELECT a.*,l.path AS source_path FROM artifacts a
@@ -386,11 +486,13 @@ class TaskRunner:
             if reason is None:
                 transcript = self._append_input_offers(self._append_child_results(self._append_human_responses(session)))
                 number = session["attempts"] + 1
+                self._enter_phase()
                 if self.budget_context:
                     transcript = self._budget_context(transcript, session, number)
                 self.workflow.db.execute(
                     "INSERT INTO runner_turns(task,number,status,request,started) VALUES(?,?,'calling',?,?)",
                     (self.task, number, _json({"messages": transcript, "tools": self.gateway.tools(),
+                     "finish_mode": self.gateway.restricted is not None,
                      "event_floor": self.workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events").fetchone()[0]}),
                      self.workflow.clock()),
                 )
@@ -403,6 +505,8 @@ class TaskRunner:
             return self._stop(reason)
         try:
             result = self.client.complete(transcript, tools=self.gateway.tools())
+        except TruncatedCompletion as error:
+            return self._output_limit(number, transcript, error)
         except ProviderError as error:
             with self.workflow._transaction():
                 self.workflow.db.execute("UPDATE runner_turns SET status='provider_error',error=?,ended=? WHERE task=? AND number=?",
@@ -410,6 +514,15 @@ class TaskRunner:
                 self.workflow._event(self.task, self.actor, "provider_request_failed",
                     {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
                 if self._session()["status"] != "calling":
+                    return self.status()
+                if operator_decision_failure(error.diagnostics()):
+                    # Usage stays unknown (no response). The operator chooses resend or abort.
+                    self.workflow.db.execute("UPDATE runner_sessions SET status='provider_uncertain' WHERE task=?",
+                                             (self.task,))
+                    self.workflow._event(self.task, self.actor, "provider_decision_required", {
+                        "number": number, "kind": error.diagnostics()["kind"],
+                        "http_status": error.diagnostics().get("http_status"), "automatic_retry": False,
+                        "tools_released": 0, "options": ["resend", "abort"]})
                     return self.status()
             return self._stop("Provider attempt failed; usage may be unknown; reconcile before retry")
         response = {"message": result.message, "finish_reason": result.finish_reason,
@@ -460,6 +573,58 @@ class TaskRunner:
         if self._expired():
             return self._stop("Task duration budget exhausted after tools; partial artifacts retained")
         return self._settle(number, calls, outcomes)
+
+    def _output_limit(self, number, transcript, error):
+        """A response that stopped at the output limit (proposed 2026-11-18, pending owner review).
+
+        The provider reply was received in full, so its usage is known and
+        counted. Its message and tool calls are discarded unread and nothing
+        runs. The task continues once, with a notice in a later counted
+        attempt; a second consecutive truncation stops the task as before.
+        """
+        response = {"message": {"role": "assistant", "content": None, "tool_calls": []}, "finish_reason": "length",
+                    "usage": error.usage, "response_id": error.response_id, "model": error.model,
+                    "discarded_unread": True}
+        with self.workflow._transaction():
+            current = self._session()
+            previous = self.workflow.db.execute("SELECT response FROM runner_turns WHERE task=? AND number=?",
+                                                (self.task, number - 1)).fetchone()
+            consecutive = bool(previous and previous["response"]
+                               and json.loads(previous["response"]).get("finish_reason") == "length")
+            self.workflow.db.execute(
+                "UPDATE runner_turns SET status='settled',response=?,error=?,ended=? WHERE task=? AND number=?",
+                (_json(response), str(error), self.workflow.clock(), self.task, number))
+            self.workflow.db.execute("UPDATE runner_sessions SET tokens=tokens+? WHERE task=?",
+                                     (error.usage["total_tokens"], self.task))
+            budget.record_tokens(self.workflow, self.task, error.usage["total_tokens"])
+            self.workflow._event(self.task, self.actor, "provider_request_failed",
+                                 {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
+            self.workflow._event(self.task, self.actor, "output_limit_reached",
+                                 {"number": number, "usage": error.usage, "consecutive": consecutive,
+                                  "task_continues": not consecutive, "tools_released": 0})
+            if current["status"] != "calling" or current["attempts"] != number:
+                return self.status()
+            if not consecutive:
+                transcript.append({"role": "user", "content": _json({
+                    "kind": "output_limit_notice", "max_output_tokens": self.client.max_tokens,
+                    "instruction": "Your previous response reached the output-token limit and was discarded unread; "
+                        "none of its tool calls ran. Continue the same task. Keep each response within the limit: "
+                        "use fewer tool calls per response and brief arguments, and split long documents across "
+                        "several smaller files" + (", or write a long file in parts with create_text then append_text"
+                                                   if "append_text" in self.gateway.allowed else "") + "."})})
+                task_state = self.workflow.task(self.task, self.actor)["state"]
+                self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
+                                         ("paused" if task_state.startswith("waiting_") else "ready",
+                                          _json(transcript), self.task))
+        if consecutive:
+            return self._stop("Provider output reached the output-token limit on consecutive attempts; no tools released")
+        if self._expired() or self._session()["tokens"] > self.limits.reported_tokens:
+            return self._stop("Provider response exceeded duration or reported token budget; no tools released")
+        try:
+            budget.check(self.workflow, self.task, after_response=True)
+        except budget.TreeBudgetError as error:
+            return self._stop(str(error))
+        return self.status()
 
     @staticmethod
     def _tool_error(call, message):

@@ -227,3 +227,21 @@ report after week 13. The 18 November Canvas check found the 15 November
 mid-test release as the latest project notice and listed only `Mid_Test.zip`
 under General Information. Exact final-test and submission dates still need
 confirmation. [Course announcements](https://canvas.ust.hk/courses/73253/announcements)
+
+The later local software round observed a fresh Task 1 failure after three
+requests: the developer's first reply reached its 4,096 completion-token cap,
+with 3,779 reported reasoning tokens and incomplete tool arguments. No tool
+from that reply was dispatched. A separate read-only protocol diagnostic used
+one further request on the issued model/host and executed no tool. A
+`thinking.type=disabled` request still reported 37 reasoning tokens; this does
+not establish a supported thinking control. Both raw replies and the cumulative
+four-request ledger remain local. This observation explains one truncation;
+it does not explain every earlier failure or establish a completed task.
+
+PR #64 proposes an opt-in completion protocol and provider-pause handling.
+Coordinator review corrected request credits that could exceed the actual-call
+cap and a rejected-resume side effect. Original failed/uncertain attempts and
+legacy credit rows are retained, with no credit applied to current hard limits.
+The corrected source passed 724 engineering checks (including 21 real-container
+checks), with nine UI skips. Contributor-only live run records were not part of
+this review, and no scenario pass is claimed from the engineering checks.

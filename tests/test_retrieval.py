@@ -149,6 +149,16 @@ class RetrievalTests(unittest.TestCase):
             with patch.object(self.web.http,'fetch',return_value=self.page(body)), self.assertRaises(RetrievalError):
                 self.web.search_web(self.task,'researcher',query='docs',limit=1)
 
+    def test_search_returns_at_most_five_results(self):
+        # The schema and the backend both cap results at five.
+        items=b''.join(b'<item><title>Guide %d</title><link>https://docs.example.org/g%d</link></item>' % (n, n) for n in range(8))
+        body=b'<rss><channel><link>https://www.bing.com/search?q=guide</link>'+items+b'</channel></rss>'
+        with patch.object(self.web.http,'fetch',return_value=self.page(body)) as fetch:
+            self.assertEqual(len(self.web.search_web(self.task,'researcher',query='guide',limit=5)['results']),5)
+            for limit in (0, 6, 10):
+                with self.assertRaises(RetrievalError): self.web.search_web(self.task,'researcher',query='guide',limit=limit)
+            self.assertEqual(fetch.call_count,1)  # Refused limits send no request.
+
     def search_for_guide(self):
         body = b'''<rss><channel><link>https://www.bing.com/search?q=guide</link>
             <item><title>Guide</title><link>https://docs.example.org/guide</link></item>

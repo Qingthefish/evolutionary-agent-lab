@@ -64,14 +64,89 @@ def check(workflow, task, *, reserve=None, after_response=False):
         raise TreeBudgetError("Shared task-tree reported token budget exhausted; partial artifacts retained")
     if reserve in {"attempts", "tool_calls"}:
         maximum = limits["model_attempts" if reserve == "attempts" else "tool_calls"]
-        if scope[reserve] >= maximum:
+        # A failed or uncertain HTTP attempt can still be charged. Finish-policy
+        # credits must never relax the owner's actual-request ceiling.
+        used = scope[reserve]
+        if used >= maximum:
             raise TreeBudgetError("Shared task-tree " + reserve + " budget exhausted; partial artifacts retained")
+        policy = _policy(workflow, scope)
+        if reserve == "attempts" and policy is not None and scope["depth"] > 0 and (
+                maximum - used <= policy.parent_reserve * scope["depth"]):
+            raise TreeBudgetError("Remaining shared requests are kept for the parent task's finish; "
+                                  "this subtask stops and its artifacts are retained")
         workflow.db.execute(f"UPDATE tree_budgets SET {reserve}={reserve}+1 WHERE root=?", (scope["root"],))
     elif reserve == "child":
         if scope["depth"] >= limits["depth"] or len(descendants(workflow, scope["root"])) >= limits["tasks"]:
             raise TreeBudgetError("Shared task-tree task count or delegation depth limit reached")
     elif reserve is not None:
         raise TreeBudgetError("Unknown shared budget reservation")
+
+
+@dataclass(frozen=True)
+class FinishPolicy:
+    """Hierarchical completion budget for open workflows (proposed 2026-11-19).
+
+    parent_reserve: requests each ancestor keeps for its own finish while a
+        descendant runs (accept results, report, submit, one retry).
+    submit_reserve: requests any task keeps for its own submission; inside
+        it the task is in Finish Mode (finishing tools only).
+    min_child: requests a new subtask needs beyond the caller's own reserve.
+    ready_fraction: once deliverables look ready, Finish Mode starts when the
+        task's available requests fall to this share of the tree cap.
+    Live software roots: accepted children used 10-25 requests; leads needed
+    2-5 requests after their last child. Nothing is completed automatically.
+    """
+    parent_reserve: int = 3
+    submit_reserve: int = 2
+    min_child: int = 10
+    ready_fraction: float = 0.25
+
+    def __post_init__(self):
+        if (any(type(getattr(self, key)) is not int for key in ("parent_reserve", "submit_reserve", "min_child"))
+                or not 1 <= self.submit_reserve <= self.parent_reserve <= 16 or not 1 <= self.min_child <= 64
+                or type(self.ready_fraction) not in (int, float) or not 0 <= self.ready_fraction <= 0.5
+                or self.min_child <= self.submit_reserve):
+            raise TreeBudgetError("Use small positive finish-policy settings: 1 <= submit_reserve <= parent_reserve, "
+                                  "submit_reserve < min_child, 0 <= ready_fraction <= 0.5")
+
+
+def configure_finish_policy(workflow, root, policy):
+    if not isinstance(policy, FinishPolicy):
+        raise TreeBudgetError("Use an explicit finish policy")
+    workflow.db.execute("""CREATE TABLE IF NOT EXISTS finish_policies (
+        root TEXT PRIMARY KEY REFERENCES tasks(id), policy TEXT NOT NULL
+    )""")
+    config = json.dumps(asdict(policy), sort_keys=True, allow_nan=False)
+    with workflow._transaction():
+        workflow._row("tasks", root)
+        row = workflow.db.execute("SELECT policy FROM finish_policies WHERE root=?", (root,)).fetchone()
+        if row is None:
+            workflow.db.execute("INSERT INTO finish_policies VALUES(?,?)", (root, config))
+        elif row["policy"] != config:
+            raise TreeBudgetError("Finish policy must match the original root configuration")
+
+
+def _policy(workflow, scope):
+    if scope is None or not workflow.db.execute(
+            "SELECT 1 FROM sqlite_master WHERE name='finish_policies' AND type='table'").fetchone():
+        return None
+    row = workflow.db.execute("SELECT policy FROM finish_policies WHERE root=?", (scope["root"],)).fetchone()
+    return FinishPolicy(**json.loads(row["policy"])) if row else None
+
+
+def finish_budget(workflow, task):
+    """Shared requests `task` may still use after what its ancestors keep, or None when unconfigured."""
+    scope = _scope(workflow, task)
+    policy = _policy(workflow, scope)
+    if policy is None:
+        return None
+    cap = json.loads(scope["limits"])["model_attempts"]
+    shared_left = max(0, cap - scope["attempts"])
+    held = policy.parent_reserve * scope["depth"]
+    delegated = workflow.db.execute("SELECT 1 FROM tasks WHERE parent=? LIMIT 1", (task,)).fetchone() is not None
+    return {"policy": policy, "depth": scope["depth"], "cap": cap, "shared_left": shared_left,
+            "reserved_for_ancestors": held, "available": max(0, shared_left - held),
+            "own_reserve": policy.parent_reserve if delegated else policy.submit_reserve}
 
 
 def record_tokens(workflow, task, count):
@@ -116,4 +191,17 @@ def configure(workflow, root, limits):
 def status(workflow, root):
     scope = _scope(workflow, root)
     return {key: scope[key] for key in ("attempts", "tokens", "tool_calls")} | {
-        "limits": json.loads(scope["limits"]), "tasks": len(descendants(workflow, root))}
+        "limits": json.loads(scope["limits"]), "tasks": len(descendants(workflow, root)),
+        "refunded_attempts": refunded(workflow, scope["root"])}
+
+
+# Read legacy credits for audit only. No new credits are issued and neither
+# current nor historical credits alter a task/tree's real-request limit.
+def _refunds_table(workflow):
+    return workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='budget_refunds' AND type='table'").fetchone()
+
+
+def refunded(workflow, root):
+    if not _refunds_table(workflow):
+        return 0
+    return workflow.db.execute("SELECT count(*) FROM budget_refunds WHERE root=?", (root,)).fetchone()[0]

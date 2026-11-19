@@ -125,6 +125,9 @@ class FileTools:
         try:
             with self.workflow._transaction(), self._task_directory(task, actor) as directory:
                 yield directory
+        except FileNotFoundError as error:
+            # A live parent re-read a missing path three times after a generic refusal.
+            raise FileToolError("No such file or directory at this task path; check the path or create it first") from error
         except (OSError, UnicodeError) as error:
             raise FileToolError("File request rejected; inspect the task path, content, and file type") from error
 
@@ -249,6 +252,31 @@ class FileTools:
         data = self._encode(content)
         with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
             self._expected(self._read(parent, name), expected_sha256)
+            temporary = ".write-" + uuid4().hex
+            self._create(parent, temporary, data)
+            try:
+                os.replace(temporary, name, src_dir_fd=parent, dst_dir_fd=parent)
+            finally:
+                try:
+                    os.unlink(temporary, dir_fd=parent)
+                except FileNotFoundError:
+                    pass
+            return self._receipt(task, actor, "file_updated", path, data)
+
+    def append_text(self, task, actor, path, content, *, expected_sha256):
+        """Append to the exact known version, so one file can be written in several responses.
+
+        Same version check and atomic replace as update_text; the combined file
+        keeps the byte limit. Recorded as an ordinary file update. Proposed 2026-11-18.
+        """
+        addition = self._encode(content)
+        with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
+            current = self._read(parent, name)
+            self._expected(current, expected_sha256)
+            data = current + addition
+            if len(data) > self.max_bytes:
+                raise FileToolError("File exceeds the configured byte limit")
+            bytes(data).decode("utf-8")
             temporary = ".write-" + uuid4().hex
             self._create(parent, temporary, data)
             try:

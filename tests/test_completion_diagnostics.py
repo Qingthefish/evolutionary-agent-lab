@@ -144,39 +144,62 @@ class CompletionClassification(unittest.TestCase):
 
 
 class TruncatedReplyStopsTheTask(unittest.TestCase):
-    def test_length_reply_fails_once_without_releasing_its_tool(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            workflow = Workflow(root / "state.sqlite3")
-            self.addCleanup(workflow.close)
-            for actor, kind in (("user", "human"), ("writer", "agent")):
-                workflow.register_actor(actor, kind)
-            chat = workflow.create_chat("group", ["user", "writer"])
-            task = workflow.create_task(chat, "user", "writer", "Write note.txt")
-            workflow.start_task(task, "writer")
-            files = FileTools(workflow, root / "files")
-            self.addCleanup(files.close)
-            requests = []
+    # A length stop discards the reply
+    # unread and counts its known usage; one continues, two in a row stop.
+    def run_task(self, replies):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        workflow = Workflow(root / "state.sqlite3")
+        self.addCleanup(workflow.close)
+        for actor, kind in (("user", "human"), ("writer", "agent")):
+            workflow.register_actor(actor, kind)
+        chat = workflow.create_chat("group", ["user", "writer"])
+        task = workflow.create_task(chat, "user", "writer", "Write note.txt")
+        workflow.start_task(task, "writer")
+        files = FileTools(workflow, root / "files")
+        self.addCleanup(files.close)
+        requests = []
 
-            def transport(payload):
-                requests.append(payload)
-                return json.dumps(reply(calls=[call()], reason="length")).encode()
+        def transport(payload):
+            requests.append(payload)
+            return json.dumps(replies.pop(0)).encode()
 
-            runner = TaskRunner(ToolGateway(workflow, files, task, "writer", human="user", allowed=["create_text"]),
-                                DeepSeekClient("synthetic-model", transport, max_tokens=128),
-                                mode="offline_fixture", constraints=[])
-            state = runner.run()
-            self.assertEqual(len(requests), 1)
-            self.assertEqual((state["task_state"], state["unknown_usage_attempts"]), ("failed", 1))
-            detail = json.loads(workflow.db.execute(
-                "SELECT detail FROM events WHERE task=? AND kind='provider_request_failed'", (task,)).fetchone()[0])
-            self.assertEqual(detail["diagnostics"]["completion_check"], {
-                "parse_rule": "finish_reason", "finish_reason": "length", "tool_calls": 1, "content_present": False})
-            self.assertEqual(workflow.db.execute("SELECT count(*) FROM tool_calls").fetchone()[0], 0)
-            self.assertEqual([p for p in (root / "files").rglob("*") if p.is_file()], [])
-            stored = "".join(str(value) for table in ("events", "runner_turns", "runner_sessions")
-                             for row in workflow.db.execute(f"SELECT * FROM {table}") for value in tuple(row))
-            self.assertNotIn(SENTINEL, stored)
+        runner = TaskRunner(ToolGateway(workflow, files, task, "writer", human="user", allowed=["create_text"]),
+                            DeepSeekClient("synthetic-model", transport, max_tokens=128),
+                            mode="offline_fixture", constraints=[])
+        return runner.run(), requests, workflow, task, root
+
+    def test_consecutive_length_replies_stop_without_releasing_tools(self):
+        state, requests, workflow, task, root = self.run_task(
+            [reply(calls=[call()], reason="length"), reply(calls=[call("call-2")], reason="length")])
+        self.assertEqual(len(requests), 2)
+        self.assertEqual((state["task_state"], state["unknown_usage_attempts"], state["reported_tokens"]), ("failed", 0, 10))
+        self.assertIn("output-token limit on consecutive attempts", state["stop_reason"])
+        details = [json.loads(row[0]) for row in workflow.db.execute(
+            "SELECT detail FROM events WHERE task=? AND kind='provider_request_failed' ORDER BY sequence", (task,))]
+        self.assertEqual([d["diagnostics"]["completion_check"] for d in details], [
+            {"parse_rule": "finish_reason", "finish_reason": "length", "tool_calls": 1, "content_present": False}] * 2)
+        notices = [json.loads(row[0]) for row in workflow.db.execute(
+            "SELECT detail FROM events WHERE task=? AND kind='output_limit_reached' ORDER BY sequence", (task,))]
+        self.assertEqual([(n["consecutive"], n["task_continues"]) for n in notices], [(False, True), (True, False)])
+        self.assertIn(b"output_limit_notice", requests[1])
+        self.assertNotIn(SENTINEL.encode(), requests[1])  # The discarded reply is never sent back.
+        self.assertEqual(workflow.db.execute("SELECT count(*) FROM tool_calls").fetchone()[0], 0)
+        self.assertEqual([p for p in (root / "files").rglob("*") if p.is_file()], [])
+        stored = "".join(str(value) for table in ("events", "runner_turns", "runner_sessions")
+                         for row in workflow.db.execute(f"SELECT * FROM {table}") for value in tuple(row))
+        self.assertNotIn(SENTINEL, stored)
+
+    def test_one_length_reply_is_counted_and_the_task_continues(self):
+        state, requests, workflow, task, root = self.run_task(
+            [reply(calls=[call()], reason="length"), reply(calls=[call("call-2")]), reply(content="Done.")])
+        self.assertEqual(len(requests), 3)
+        self.assertNotEqual(state["task_state"], "failed")
+        self.assertEqual((state["live_model_attempts"], state["protocol_attempts"], state["reported_tokens"]), (0, 3, 15))
+        self.assertEqual(workflow.db.execute("SELECT count(*) FROM tool_calls").fetchone()[0], 1)  # Only the later call ran.
+        self.assertEqual(workflow.db.execute(
+            "SELECT call_id FROM tool_calls").fetchone()[0], "call-2")
 
 
 if __name__ == "__main__":

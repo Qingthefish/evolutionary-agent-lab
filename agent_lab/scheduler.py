@@ -44,7 +44,8 @@ class MultiAgentScheduler:
     def __init__(self, workflow, files, root, *, human, roles, clients, mode,
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
-                 delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False):
+                 delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False,
+                 finish_policy=None):
         self.workflow, self.files, self.root = workflow, files, root
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
@@ -54,6 +55,10 @@ class MultiAgentScheduler:
         if type(show_execution_budget) is not bool:
             raise RunnerError("Execution-budget guidance requires an explicit boolean setting")
         self.show_execution_budget = show_execution_budget
+        # Proposed 2026-11-19: hierarchical completion budget and Finish Mode (agent_lab.completion).
+        if finish_policy is not None and (not isinstance(finish_policy, budget.FinishPolicy) or not show_execution_budget):
+            raise RunnerError("A finish policy is an explicit FinishPolicy with the execution budget shown")
+        self.finish_policy = finish_policy
         self.verifier_factory, self.acceptance_id = verifier_factory, acceptance_id
         self.delegation_rules = delegation_rules
         self.delegation_inputs = normalize_inputs(delegation_inputs)
@@ -124,6 +129,8 @@ class MultiAgentScheduler:
             settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
         if show_execution_budget:
             settings["show_execution_budget"] = True
+        if finish_policy is not None:
+            settings["finish_policy"] = {"version": "completion-protocol-v1", **asdict(finish_policy)}
         if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
             settings["git"] = git.configuration()
         if retrieval is not None:
@@ -154,6 +161,10 @@ class MultiAgentScheduler:
         previous = workflow.db.execute("SELECT * FROM scheduler_runs WHERE root=?", (root,)).fetchone()
         if previous and previous["config"] != config:
             raise RunnerError("Persisted scheduler roles, constraints, model, tools, or acceptance policy differ")
+        # An incompatible resume must not attach a finish policy to the old
+        # tree before it is rejected. Budget enforcement reads this binding.
+        if finish_policy is not None:
+            budget.configure_finish_policy(workflow, root, finish_policy)
         recovery.configure(workflow, root, child_retries)
         with workflow._transaction():
             previous = workflow.db.execute("SELECT * FROM scheduler_runs WHERE root=?", (root,)).fetchone()
@@ -225,7 +236,7 @@ class MultiAgentScheduler:
                 ) SELECT s.task,s.status FROM runner_sessions s JOIN tree ON tree.id=s.task
             """, (self.root,))}
         uncertain = [{"task": key, "kind": "reconciliation", "runner_state": row["status"]}
-                     for key, row in sessions.items() if row["status"] in {"calling", "processing", "stopping"}]
+                     for key, row in sessions.items() if row["status"] in {"calling", "processing", "stopping", "provider_uncertain"}]
         if uncertain:
             return self.status() | {"state": "blocked", "needs": uncertain}
         active = recovery.active_tasks(self.workflow, tasks)

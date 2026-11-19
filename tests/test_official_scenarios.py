@@ -34,8 +34,8 @@ from official_mid_fixture import README_SHA256, SCENARIOS, write_archive
 
 # Reviewed software values recorded from origin/main at 92c5039, not from this code.
 SOFTWARE_TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
-                  "create_text", "read_text", "update_text", "offer_artifact", "accept_artifact",
-                  "delegate_task", "delegate_with_inputs", "run_python", "submit_for_verification")
+                  "create_text", "read_text", "update_text", "append_text", "offer_artifact", "accept_artifact",
+                  "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
 SOFTWARE_CONSTRAINTS_SHA256 = "b9ca0bcae3a767500cfb3bcc1d03653e0e57514b62429482c92943e18f61a372"
 IMAGE = "python@sha256:" + "a" * 64
 KEY = "synthetic-fixture-key"
@@ -107,7 +107,7 @@ class ScenarioPolicies(unittest.TestCase):
         for name in POLICIES:
             other = next(policy.identifier for key, policy in POLICIES.items() if key != name)
             for changes in ({"tool_policy": other}, {"tool_policy": None}, {"max_output_tokens": 1025},
-                            {"per_scenario_model_attempts": 49}, {"per_scenario_model_attempts": 1},
+                            {"per_scenario_model_attempts": 97}, {"per_scenario_model_attempts": 1},
                             {"provider": "deepseek"}, {"model": None}):
                 with self.subTest(scenario=name, changes=changes), self.assertRaisesRegex(
                         WorkflowError, "bounded scenario budget"):
@@ -128,7 +128,7 @@ class TokenStopThresholds(unittest.TestCase):
     """The request cap is the budget; the reported-token stop only guards against runaway use."""
 
     def test_thresholds_scale_with_the_request_share_in_every_scenario(self):
-        self.assertEqual(TOKENS_PER_REQUEST, 11250)  # 180,000 / 16, as in the retained HKGAI development plans.
+        self.assertEqual(TOKENS_PER_REQUEST, 50000)  # Scaled to observed late-task newsroom requests.
         for name in POLICIES:
             for attempts, shares in ((48, (24, 24)), (47, (24, 23)), (2, (1, 1))):
                 session = SimpleNamespace(scenario={"id": name})
@@ -139,7 +139,7 @@ class TokenStopThresholds(unittest.TestCase):
                                           allow_network=False, environ={"COURSE_TEST_KEY": KEY})
                     self.assertEqual((live.tree_limits.model_attempts, live.role_limits.model_attempts), (share, share))
                     self.assertEqual((live.tree_limits.reported_tokens, live.role_limits.reported_tokens),
-                                     (share * 11250,) * 2)
+                                     (share * 50000,) * 2)
                     self.assertEqual((live.max_output_tokens, live.tool_calls, live.socket_timeout), (1024, 40, 90))
 
     def test_shared_defaults_used_elsewhere_are_unchanged(self):
@@ -186,8 +186,12 @@ class TokenStopThresholds(unittest.TestCase):
         self.assertNotIn("token", reason.lower())
         self.assertEqual(state["budget"]["tokens"], 24 * 5900)
         # Far above the ceiling: the guard still stops the task and releases no tools from the last reply.
-        state, requests, written, reason = self.run_task(live, 60000)
-        self.assertEqual((requests, written), (5, 4))
+        # 30,000 per reply, as observed late in live newsroom tasks, also reaches the cap.
+        state, requests, written, reason = self.run_task(live, 30000)
+        self.assertEqual((requests, written), (24, 24))
+        self.assertIn("attempt", reason)
+        state, requests, written, reason = self.run_task(live, 120000)
+        self.assertEqual((requests, written), (10, 9))
         self.assertIn("reported token budget", reason)
         self.assertEqual(state["task_state"], "failed")
 

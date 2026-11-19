@@ -2,12 +2,12 @@
 
 import argparse
 from contextlib import ExitStack
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 import json
 import os
 from pathlib import Path
 
-from ..budget import TreeLimits, descendants
+from ..budget import FinishPolicy, TreeLimits, descendants
 from ..core import WorkflowError
 from ..files import FileTools
 from ..runner import Limits
@@ -20,8 +20,15 @@ from .official_session import OfficialScenarioSession, TERMINAL, _workflow
 
 TOOL_POLICY = "software-files-coordination-python-v1"
 TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
-         "create_text", "read_text", "update_text", "offer_artifact", "accept_artifact",
-         "delegate_task", "delegate_with_inputs", "run_python", "submit_for_verification")
+         "create_text", "read_text", "update_text", "append_text", "offer_artifact", "accept_artifact",
+         "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
+# Proposed 2026-11-18 (owner-approved, pending merge): a parent may replace a failed
+# direct child, carrying explicitly offered snapshots, instead of the whole task
+# failing. Replacements share the same request cap; no budget is added.
+CHILD_REPLACEMENTS = 2
+# Proposed 2026-11-18 (owner-approved, pending merge): up to 48 requests per task.
+# Live software Task 1 used all 24 after its developer child was accepted.
+MAX_SCENARIO_ATTEMPTS = 96
 CONSTRAINTS = [
     "Use local files and the supplied Python sandbox with standard-library dependencies. "
     "Deliver runnable source and Markdown or plain-text instructions. No external services are configured.",
@@ -72,9 +79,11 @@ POLICIES = {
 
 # The owner-authorized budget is the request cap. The reported-token stop is a
 # runaway guard scaled to that cap, so it does not end a task long before its
-# requests are used. 11,250 per request matches the retained HKGAI development
-# plans (180,000 tokens for 16 requests). Global defaults are unchanged.
-TOKENS_PER_REQUEST = 11250
+# requests are used. Each request resends the whole transcript, so reported usage
+# grows with the task. Proposed 2026-11-18, pending owner review: 11,250 per
+# request stopped a live newsroom Task 1 at request 14 of 24; retained newsroom
+# requests reached 30,000-45,000 prompt tokens late in a task. Global defaults are unchanged.
+TOKENS_PER_REQUEST = 50000
 
 
 def scenario_policy(session):
@@ -94,7 +103,7 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
     if type(output_token_ceiling) is not int or output_token_ceiling not in (1024, 2048, 4096):
         raise WorkflowError("Use an explicitly authorized output ceiling of 1024, 2048 or 4096")
     if (config["provider"] != "hkgai" or config["tool_policy"] != policy.identifier or not config["model"]
-            or type(attempts) is not int or not 2 <= attempts <= 48
+            or type(attempts) is not int or not 2 <= attempts <= MAX_SCENARIO_ATTEMPTS
             or type(tokens) is not int or not 1 <= tokens <= output_token_ceiling):
         raise WorkflowError("Review the HKGAI model, this scenario's tool policy and bounded scenario budget first")
     if policy.python and (not docker_host or not image):
@@ -105,12 +114,14 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
     # not reclaim calls, and both roots retain their original allocation.
     root_attempts = (attempts + (sequence == 1)) // 2
     root_tokens = root_attempts * TOKENS_PER_REQUEST
+    # Tool-call caps grow with the request share; shares up to 24 keep the reviewed 40/128.
+    scale = -(-root_attempts // 24)
     key = (os.environ if environ is None else environ).get(config["api_key_env"], "")
     return LiveConfig(
         model=config["model"], api_key=key, provider="hkgai", allow_network=allow_network,
-        socket_timeout=90, max_output_tokens=tokens, tool_calls=40, require_tool_actions=True,
+        socket_timeout=90, max_output_tokens=tokens, tool_calls=40 * scale, require_tool_actions=True,
         tree_limits=TreeLimits(tasks=8, depth=3, model_attempts=root_attempts, duration_seconds=14400,
-                               reported_tokens=root_tokens),
+                               reported_tokens=root_tokens, tool_calls=128 * scale),
         role_limits=Limits(model_attempts=root_attempts, duration_seconds=14400, reported_tokens=root_tokens),
         docker_host=docker_host if policy.python else None, python_image=image if policy.python else None,
         enable_web=policy.web,
@@ -137,11 +148,26 @@ def _posted_root(session, sequence):
 
 def tools_for_role(scenario, agent, tools):
     if scenario == "software-engineering" and agent == "lead":
-        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "run_python"})
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text", "run_python"})
     return tools
 
 
-def make_scheduler(session, root, files, live, services, *, show_execution_budget=False):
+# Proposed 2026-11-19: completion protocol defaults (agent_lab.budget.FinishPolicy). In 4 of
+# 5 live software roots the lead's last action was a delegation whose child spent every
+# remaining request; accepted live children used 10-25 requests and leads needed 2-5 after
+# their last child. Each value is an operator option on the CLI.
+FINISH_POLICY = FinishPolicy()
+
+
+def with_completion_tools(tools):
+    """Every role can report a blocker; submit_for_verification stays the last tool."""
+    if "report_blocker" in tools:
+        return tools
+    return (*tools[:-1], "report_blocker", tools[-1]) if tools and tools[-1] == "submit_for_verification" \
+        else (*tools, "report_blocker")
+
+
+def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, finish_policy=None):
     policy = scenario_policy(session)
     second = session._root(2)
     allow_html = session.scenario["id"] == "securities-fund" and second is not None and second["root"] == root
@@ -152,16 +178,22 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
     constraints.append(
         f"Each response has an output limit of {live.max_output_tokens} tokens. "
         "Use a small batch of short tool calls per turn. Divide source into small modules "
-        "that fit individual file writes, and delegate focused deliverables to eligible peers."
+        "that fit individual file writes, write any longer file in parts with create_text then append_text, "
+        "and delegate focused deliverables to eligible peers."
     )
-    roles = {entry["id"]: Role(entry["prompt"], tools_for_role(session.scenario["id"], entry["id"], policy.tools),
+    def role_tools(agent):
+        tools = tools_for_role(session.scenario["id"], agent, policy.tools)
+        return with_completion_tools(tools) if finish_policy is not None else tools
+
+    roles = {entry["id"]: Role(entry["prompt"], role_tools(entry["id"]),
                 tuple(agent for agent in session.agents if agent != entry["id"]),
                 live.role_limits, live.tool_calls) for entry in session.scenario["roles"]}
     return MultiAgentScheduler(session.workflow, files, root, human=session.human, roles=roles,
         clients=live_clients(live, roles), mode="live", constraints=constraints,
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
-        show_execution_budget=show_execution_budget)
+        show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS,
+        finish_policy=finish_policy)
 
 
 def _review_boundaries(scheduler):
@@ -179,7 +211,7 @@ def _review_boundaries(scheduler):
             needs.append({"task": task["id"], "kind": task["state"], "requests": pending})
         elif has_sessions:
             row = workflow.db.execute("SELECT status FROM runner_sessions WHERE task=?", (task["id"],)).fetchone()
-            if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping"}:
+            if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping", "provider_uncertain"}:
                 needs.append({"task": task["id"], "kind": row["status"]})
     return needs
 
@@ -225,8 +257,11 @@ def review_proposal(scheduler, task_id, decision, feedback):
 # Which recorded state each operator action may resolve. None of them sends a
 # model request or re-runs a tool; an unknown provider response stays unknown.
 RECONCILE = {"release-claim": {"ready", "paused", "awaiting_verification", None},
-             "abort": {"calling", "processing", "stopping"},
-             "recover-tools": {"processing"}}
+             "abort": {"calling", "processing", "stopping", "provider_uncertain"},
+             "recover-tools": {"processing"},
+             # Proposed 2026-11-18: after a transport failure, release one new counted
+             # attempt. This command itself sends nothing; the next advance does.
+             "resend": {"provider_uncertain"}}
 
 
 def reconcile(scheduler, task_id, action, reason, *, human):
@@ -236,6 +271,8 @@ def reconcile(scheduler, task_id, action, reason, *, human):
     interrupted task without replay, so it ends failed with its partial record.
     `recover-tools` rebuilds already committed results of the stored response
     and leaves unstarted calls unexecuted; an uncertain tool effect refuses.
+    `resend` applies only after a transport failure: it releases one new counted
+    attempt for the next advance, and the failed request keeps unknown usage.
     """
     if action not in RECONCILE or not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
         raise WorkflowError("Choose a reconciliation action and give a concrete operator reason")
@@ -257,6 +294,8 @@ def reconcile(scheduler, task_id, action, reason, *, human):
         scheduler.runner(task_id).abort("Operator reconciliation without replay: " + reason)
     elif action == "recover-tools":
         scheduler.runner(task_id).recover_tools()
+    elif action == "resend":
+        scheduler.runner(task_id).resend_after_transport_failure(reason)
     with workflow._transaction():
         workflow._event(task_id, human, "official_reconciliation_recorded", {
             "action": action, "reason": reason, "runner_state_before": before,
@@ -282,6 +321,17 @@ def main(argv=None):
                              help="Explicitly authorized per-request output ceiling; default 1024")
         command.add_argument("--show-execution-budget", action="store_true",
                              help="Expose current local limits without fixing a workflow; select consistently for a fresh run")
+        command.add_argument("--finish-protocol", action="store_true",
+                             help="Completion protocol: hierarchical finish reserves, Finish Mode and report_blocker; "
+                                  "requires --show-execution-budget")
+        command.add_argument("--parent-reserve", type=int, default=FINISH_POLICY.parent_reserve,
+                             help="Requests each parent keeps for its own finish while subtasks run")
+        command.add_argument("--submit-reserve", type=int, default=FINISH_POLICY.submit_reserve,
+                             help="Requests any task keeps for its own submission (Finish Mode inside it)")
+        command.add_argument("--min-child-requests", type=int, default=FINISH_POLICY.min_child,
+                             help="Minimum requests a new subtask needs beyond the caller's reserve")
+        command.add_argument("--ready-fraction", type=float, default=FINISH_POLICY.ready_fraction,
+                             help="Share of the tree cap at which Finish Mode starts once deliverables look ready")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
         elif name == "review":
@@ -322,14 +372,21 @@ def main(argv=None):
                     stack.callback(files.close)
                     services = runtime_services(workflow, files, live)
                     stack.callback(services.close)
+                    if args.finish_protocol and not args.show_execution_budget:
+                        raise WorkflowError("--finish-protocol requires --show-execution-budget")
+                    finish_policy = FinishPolicy(parent_reserve=args.parent_reserve, submit_reserve=args.submit_reserve,
+                                                 min_child=args.min_child_requests,
+                                                 ready_fraction=args.ready_fraction) if args.finish_protocol else None
                     scheduler = make_scheduler(session, root, files, live, services,
-                                               show_execution_budget=args.show_execution_budget)
+                                               show_execution_budget=args.show_execution_budget,
+                                               finish_policy=finish_policy)
                     if args.command == "preflight":
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
                                                        "tool_policy": policy.identifier, "tools": list(policy.tools),
                                                        "role_tools": {actor: list(role.tools) for actor, role in scheduler.roles.items()},
                                                        "show_execution_budget": args.show_execution_budget,
+                                                       "finish_policy": asdict(finish_policy) if finish_policy else None,
                                                        "configuration": services.configuration()}
                     elif args.command == "advance":
                         result = advance(scheduler, args.turns)

@@ -32,7 +32,7 @@ COORDINATION_TOOLS = frozenset({"delegate_task", "delegate_with_inputs", "retry_
                                 "offer_artifact", "accept_artifact", "list_tasks"})
 CAPABILITY_CLASSES = {
     "filesystem_read": frozenset({"read_text"}),
-    "filesystem_write": frozenset({"create_text", "update_text"}),
+    "filesystem_write": frozenset({"create_text", "update_text", "append_text"}),
     "filesystem_delete": frozenset({"delete_text"}),
     "human": frozenset({"ask_human"}),
     "conversation": frozenset({"post_message", "read_messages"}),
@@ -44,7 +44,7 @@ CAPABILITY_CLASSES = {
     "coordination": COORDINATION_TOOLS,
     # Proposes the agent's own task for independent verification; required
     # whenever the runtime enforces tool actions, so both topologies keep it.
-    "completion": frozenset({"submit_for_verification"}),
+    "completion": frozenset({"submit_for_verification", "report_blocker"}),
 }
 
 SINGLE_INSTRUCTIONS = (

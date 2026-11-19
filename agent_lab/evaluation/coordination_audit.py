@@ -27,11 +27,11 @@ from .memory_protocol import tree_usage
 
 SCHEMA = "c07-coordination-audit-v1"
 CLASSES = {
-    "productive": {"create_text", "update_text", "read_text", "delete_text", "run_python", "search_web",
+    "productive": {"create_text", "update_text", "append_text", "read_text", "delete_text", "run_python", "search_web",
                    "retrieve_text", "git_status", "git_diff", "git_log", "git_commit", "git_push"},
     "coordination": {"delegate_task", "delegate_with_inputs", "post_message", "read_messages", "list_tasks"},
     "handoff": {"offer_artifact", "accept_artifact"},
-    "completion": {"submit_for_verification"},
+    "completion": {"submit_for_verification", "report_blocker"},
     "recovery": {"retry_failed_task"},
     "human": {"ask_human"},
     "memory": {"search_memory", "select_memory", "record_lesson"},

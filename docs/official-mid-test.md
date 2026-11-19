@@ -140,9 +140,12 @@ local because it contains conversation text. Use `--help` for options.
 For the software scenario, copy the operator plan into a fresh local input
 directory alongside its archive and manifest. Set the issued HKGAI model,
 `tool_policy` to `software-files-coordination-python-v1`, and set the authorized
-`per_scenario_model_attempts` (2–48) and `max_output_tokens` (1–1024). Inspect
+`per_scenario_model_attempts` (2–96, up to 48 per task) and `max_output_tokens`
+(1–1024 by default; up to 4096 with `--output-token-ceiling`). Inspect
 this plan before initializing the run. The two roots' call caps add up to
-the reviewed scenario budget. This path uses a 90-second socket timeout and
+the reviewed scenario budget. Shares above 24 requests scale the per-role and
+tree tool-call caps in the same proportion. Agents may write a file longer than
+one response in parts with `create_text` and then `append_text`. This path uses a 90-second socket timeout and
 requires the [existing isolated Python backend](sandbox.md).
 
 After posting Task 1, load the key through the plan's environment variable and
@@ -234,6 +237,37 @@ including the retained 2026-11-16 software run.
   dialogue is not reachable that way during Task 2. The full conversation is
   still retained in the state directory and the evidence export.
 
+### Completion protocol (proposed, opt-in)
+
+`--show-execution-budget --finish-protocol` turns on a completion protocol for
+every role. Task states do not change; each turn derives a phase from recorded
+state and the shared request cap:
+
+- **working**, **ready** (a subtask has offered files to its parent, or every
+  subtask a parent delegated was accepted) and **finish**. Ready never means
+  succeeded.
+- **Finish Mode** starts when a task's available requests reach its own reserve,
+  or when it looks ready and few requests remain. Only finishing tools are then
+  offered and accepted: submit, `report_blocker`, offer/accept, read, message
+  and ask the requester. Submission still waits for the human review;
+  `report_blocker` ends the task as an honest failure.
+- Each ancestor keeps `--parent-reserve` requests while descendants run, any
+  task keeps `--submit-reserve` for its own submission, and a new subtask needs
+  `--min-child-requests` beyond the caller's reserve. `--ready-fraction` sets
+  the early Finish Mode window as a share of the tree cap.
+- A proposal over a failed, unreplaced subtask is refused before review, and
+  argument errors name the argument, its actual size and the limit.
+
+The defaults (3, 2, 10, 0.25) come from the live software roots: accepted
+children used 10-25 requests and leads needed 2-5 after their last child.
+
+An operator `resend` after a provider failure consumes another request from the
+same actual-request cap. Failed or response-less requests keep counting and
+retain unknown usage. No local setting can refund a provider charge. Legacy
+`provider_failures_refunded` records are preserved as history, but their credits
+do not enlarge current limits or the remaining-budget view. There is no automatic
+resend, even when a request allowance remains.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,
@@ -257,6 +291,7 @@ python -m agent_lab.evaluation.official_live \
 | `processing` with a tool whose effect is unknown | `abort` | `recover-tools` refuses. Inspect the files first; the reserved tool stays recorded. |
 | `stopping` | `abort` | Finishes the interrupted stop. |
 | `controller_reconciliation_or_busy` only | `release-claim` | Clears the stale claim; the task is unchanged. |
+| `provider_uncertain` (transport failure or HTTP 5xx) | `resend` or `abort` | Nothing is retried automatically. `resend` releases one new counted request with the same transcript; `abort` ends the task failed. |
 
 Each action is recorded as an `official_reconciliation_recorded` event with the
 operator's reason, and it sends no model request. An aborted Task 1 is a
