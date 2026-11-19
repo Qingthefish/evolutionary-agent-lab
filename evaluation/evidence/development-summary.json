@@ -1354,5 +1354,155 @@
     "raw_clean_summary_sha256": "807ac7d024e403a800d9e9dd25fd22db9da81e025bb31cb7a24b68ff370d491d",
     "raw_replay_report_sha256": "6d275f5f52bf89821c1e84f36f2d76b013dc0070678e1bb7fa73b8b28be41ca3",
     "official_evaluation": false
+  },
+  "mid_test_followup": {
+    "date": "2026-11-19",
+    "purpose": "Development rehearsal on instructor mid-test software Task 1, not official grading",
+    "benchmark_valid": false,
+    "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+    "roots": [
+      {
+        "evidence_key": "software",
+        "root_state": "failed",
+        "attempts": 2,
+        "known_provider_reported_tokens": 3079,
+        "attempts_without_parsed_usage": 1,
+        "tool_calls": 2,
+        "tasks": [
+          {
+            "assignee": "lead",
+            "state": "failed"
+          }
+        ],
+        "observed_response_models": [
+          "t2_hkgai-v3_fp8_1m_e10"
+        ],
+        "database_sha256": "82b5f4f5a0eedfecb741711e05a1749043b4d5007a7074227ef559d757fabed4"
+      },
+      {
+        "evidence_key": "software-compact",
+        "root_state": "failed",
+        "attempts": 2,
+        "known_provider_reported_tokens": 3266,
+        "attempts_without_parsed_usage": 1,
+        "tool_calls": 2,
+        "tasks": [
+          {
+            "assignee": "lead",
+            "state": "failed"
+          }
+        ],
+        "observed_response_models": [
+          "t2_hkgai-v3_fp8_1m_e10"
+        ],
+        "database_sha256": "531f5581aef3e1fa4d4221b9809bfbee83614a62fb1efd1e891b0ff0357b7e4d"
+      },
+      {
+        "evidence_key": "software-4096",
+        "root_state": "failed",
+        "attempts": 2,
+        "known_provider_reported_tokens": 3273,
+        "attempts_without_parsed_usage": 1,
+        "tool_calls": 2,
+        "tasks": [
+          {
+            "assignee": "lead",
+            "state": "failed"
+          }
+        ],
+        "observed_response_models": [
+          "t2_hkgai-v3_fp8_1m_e10"
+        ],
+        "database_sha256": "59995ec96f74dc57c8c8fb936b2fc6f62f9c16771413a9c002899b095253a5b6"
+      },
+      {
+        "evidence_key": "software-specialists",
+        "root_state": "running",
+        "attempts": 20,
+        "known_provider_reported_tokens": 242924,
+        "attempts_without_parsed_usage": 0,
+        "tool_calls": 37,
+        "tasks": [
+          {
+            "assignee": "lead",
+            "state": "running"
+          },
+          {
+            "assignee": "dev",
+            "state": "running"
+          },
+          {
+            "assignee": "qa",
+            "state": "running"
+          }
+        ],
+        "observed_response_models": [
+          "t2_hkgai-v3_fp8_1m_e10"
+        ],
+        "database_sha256": "18a43a1c93bb0021663de45ebb47471a217e3339e8e27f0bfb948f4c2a1e07ec",
+        "source_commit": "b028936925d03012779579cd48b1e0cee47a976e",
+        "voluntary_pause_reason": "Preserve unfinished task before near reported-token stop; no claim of completion. Current call headroom is 2, token headroom 4576.",
+        "shared_limits": {
+          "depth": 3,
+          "duration_seconds": 14400,
+          "model_attempts": 22,
+          "reported_tokens": 247500,
+          "tasks": 8,
+          "tool_calls": 128
+        },
+        "known_sandbox_jobs": 3
+      }
+    ],
+    "actual_requests": 26,
+    "local_round_request_cap": 48,
+    "roots_allocated": 4,
+    "local_round_root_cap": 4,
+    "official_tasks_completed": 0,
+    "independent_technical_review": {
+      "model_calls": 0,
+      "checks": {
+        "help": true,
+        "rooms": true,
+        "create_persisted_booking": true,
+        "persist_across_processes": true,
+        "reject_overlap_equal": true,
+        "reject_overlap_contained": true,
+        "reject_overlap_containing": true,
+        "reject_overlap_left": true,
+        "reject_overlap_right": true,
+        "back_to_back": true,
+        "other_room_independent": true,
+        "other_day_independent": true,
+        "availability_before_cancel": true,
+        "cancel": true,
+        "cancel_not_active": true,
+        "cancel_history_retained": true,
+        "cancel_immediate_availability": true,
+        "rebook_cancelled_slot": true,
+        "repeat_cancel_rejected": true,
+        "equal_times": true,
+        "reverse_times": true,
+        "invalid_time": true,
+        "invalid_date": true,
+        "unknown_room": true,
+        "concurrent_same_slot_exactly_one_winner": true,
+        "concurrent_database_single_active_row": true
+      },
+      "all_passed": true,
+      "source_files": {
+        "booking_system/__init__.py": "988eff06bd8ab92df82ae011a45b0e07a1d12a7f5a1d35519d36ab0f8ec44263",
+        "booking_system/__main__.py": "4aab4d699328d6936162916b93fe8447f6266eaac048b6bf3c41ae188165bdec",
+        "booking_system/cli.py": "c80ba7d7e7d0c1e1df782c5b6a88650073d3ea85dcbc6ee6e2b2c78979a64012",
+        "booking_system/store.py": "77df3c7072a6fa2cd5aee095e27324009fd024abd902381c5a45794dbd79619c"
+      },
+      "script_sha256": "8c64376c7d5f3662503dd1370c7005bc9cb01cd89c3fd45abd3a02faf7e9689d",
+      "raw_review_sha256": "aa18af8cb8353bd6089e18fa0cc7257539219a58bc7795e8be0798e43b1c863b",
+      "sandbox_exit_code": 0,
+      "cleanup_confirmed": true,
+      "scope": "Current developer source snapshots only; not parent completion, QA report acceptance, release delivery or Task 2."
+    },
+    "account_balance_and_pricing": "unknown",
+    "known_limit": "The active root has 20/22 attempts and 242924/247500 reported tokens; configuration and counters were not reset.",
+    "raw_http_capture": "Final root retains real provider bytes privately. Rejected replies in earlier roots retain unknown parsed usage."
   }
 }

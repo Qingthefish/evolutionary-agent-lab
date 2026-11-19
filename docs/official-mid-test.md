@@ -174,8 +174,11 @@ scenario's plan to the matching identifier; a different value is refused.
 | `newsroom` | `newsroom-files-coordination-web-v1` | yes | no |
 | `securities-fund` | `securities-files-coordination-web-python-v1` | yes | yes |
 
-All three share the coordination and file tools, the same limits and review by
-the trusted human. The software policy is unchanged. Pass `--docker-host` and
+All three share coordination and file tools, the same limits and review by
+the trusted human. In the software policy the lead retains coordination,
+inspection and handoff tools; source writing/updating and Python execution
+belong to the specialist roles. The original role prompts remain intact, and
+agents still choose their tasks, criteria and delegation sequence. Pass `--docker-host` and
 `--image` only for a policy with the Python sandbox; the newsroom commands
 take neither and refuse them. `preflight` prints the policy and tool list
 and makes no model request. Only `advance` sends provider requests or runs
@@ -194,6 +197,19 @@ six replies at the usage seen in retained runs. The request cap, the
 `preflight` prints the thresholds. A root that already started keeps its
 original limits and refuses different ones, so the retained 2026-11-16 Task 1
 can still be inspected and exported but not advanced under the new values.
+
+For a **fresh run**, add `--show-execution-budget` consistently to `preflight`,
+`advance`, `review` and `reconcile` to show each role the current remaining local
+requests, tools, tokens and time. This adds no task recipe and changes no limit.
+The selection is persisted; a restart that changes it is refused before another
+model call. Existing runs remain on their recorded policy. These counts are not
+the teacher's balance or a guarantee about charges.
+
+An exit-zero sandbox run can still fail to export a declared output. The script
+must actually write each requested output under its working directory. A missing
+output now has the fixed `missing_output` diagnostic; raw Docker stderr is not
+exposed, no artifact is fabricated and no rerun is automatic. Inspect the
+retained execution and source before deciding on a corrected run.
 
 Prepare **one plan copy per scenario run** in its own ignored `runs/...` input
 directory, beside the archive and manifest, with the model, `tool_policy`,

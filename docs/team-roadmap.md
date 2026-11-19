@@ -655,6 +655,33 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
 
 - **2026-11-19 continuation:** Integrated #59/#60 and review corrections through [PR #61](https://github.com/Qingthefish/evolutionary-agent-lab/pull/61), merge `fd52188`. Its three GitHub checks passed. The local checkout synchronized through the computer's existing proxy configuration. Two new real software roots each used two requests and failed on the second reply with `finish_reason=length`; the compact-action prompt in the second trial did not resolve truncation. Both terminal records and unknown usage remain under ignored `runs/continuation-20261119/`. A larger per-request output ceiling requires the owner's explicit budget selection. Default limits and all original failures are retained.
 
+- **2026-11-19 specialist rehearsal:** The explicitly authorized larger-output
+  trial retained another second-reply truncation. A fourth root used original
+  role prompts with lead coordination and specialist source/execution tools.
+  It observed actual lead→dev→QA assignment, artifact receipt/read and isolated
+  execution. An independent reviewer script passed 26 core booking checks on
+  the current developer snapshots, including concurrency and cancellation
+  persistence. This does **not** accept the unfinished QA/dev/root proposals,
+  final handoff or Task 2. The root paused near its recorded token stop at
+  20/22 requests and 242,924/247,500 tokens; counters and limits were not reset.
+  Round total: 26/48 actual requests, four/four allocated roots, 252,542 known
+  reported tokens plus three rejected replies with unknown parsed usage.
+  Raw bytes, exports and independent review remain in the same ignored round.
+- **Follow-up review corrections:** Missing declared sandbox outputs now have
+  a sanitized actionable diagnostic, with original execution results and
+  cleanup preserved. Optional `--show-execution-budget` provides current local
+  reservations without prescribing task titles or a workflow. The setting is
+  pinned and incompatible resumes are refused. These corrections have no new
+  model-run success claim. [Mid-test behavior/evidence](final-report.md#11-mid-test-execution-record-19-november)
+- **Review package:** [PR #63](https://github.com/Qingthefish/evolutionary-agent-lab/pull/63),
+  implementation source `6f1cc79`: 16 clean Python 3.12 setup commands and
+  664 passing core checks, with 30 explicit container/UI skips; separately,
+  all 18 actual-container integration checks passed. Publication review checked
+  238 local links/anchors, retained historical evidence and raw identities,
+  and found no local course key in tracked files. Initial restricted loopback
+  failures and the successful permitted-environment reproduction are both
+  retained. Required remote checks and merge status are visible on that PR.
+
 ### S02
 
 **Finish submission materials**

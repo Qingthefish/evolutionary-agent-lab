@@ -135,7 +135,13 @@ def _posted_root(session, sequence):
     return posted["root"]
 
 
-def make_scheduler(session, root, files, live, services):
+def tools_for_role(scenario, agent, tools):
+    if scenario == "software-engineering" and agent == "lead":
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "run_python"})
+    return tools
+
+
+def make_scheduler(session, root, files, live, services, *, show_execution_budget=False):
     policy = scenario_policy(session)
     second = session._root(2)
     allow_html = session.scenario["id"] == "securities-fund" and second is not None and second["root"] == root
@@ -148,13 +154,14 @@ def make_scheduler(session, root, files, live, services):
         "Use a small batch of short tool calls per turn. Divide source into small modules "
         "that fit individual file writes, and delegate focused deliverables to eligible peers."
     )
-    roles = {entry["id"]: Role(entry["prompt"], policy.tools,
+    roles = {entry["id"]: Role(entry["prompt"], tools_for_role(session.scenario["id"], entry["id"], policy.tools),
                 tuple(agent for agent in session.agents if agent != entry["id"]),
                 live.role_limits, live.tool_calls) for entry in session.scenario["roles"]}
     return MultiAgentScheduler(session.workflow, files, root, human=session.human, roles=roles,
         clients=live_clients(live, roles), mode="live", constraints=constraints,
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
-        limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html)
+        limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
+        show_execution_budget=show_execution_budget)
 
 
 def _review_boundaries(scheduler):
@@ -273,6 +280,8 @@ def main(argv=None):
         command.add_argument("--image")
         command.add_argument("--output-token-ceiling", type=int, choices=(1024, 2048, 4096), default=1024,
                              help="Explicitly authorized per-request output ceiling; default 1024")
+        command.add_argument("--show-execution-budget", action="store_true",
+                             help="Expose current local limits without fixing a workflow; select consistently for a fresh run")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
         elif name == "review":
@@ -313,11 +322,14 @@ def main(argv=None):
                     stack.callback(files.close)
                     services = runtime_services(workflow, files, live)
                     stack.callback(services.close)
-                    scheduler = make_scheduler(session, root, files, live, services)
+                    scheduler = make_scheduler(session, root, files, live, services,
+                                               show_execution_budget=args.show_execution_budget)
                     if args.command == "preflight":
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
                                                        "tool_policy": policy.identifier, "tools": list(policy.tools),
+                                                       "role_tools": {actor: list(role.tools) for actor, role in scheduler.roles.items()},
+                                                       "show_execution_budget": args.show_execution_budget,
                                                        "configuration": services.configuration()}
                     elif args.command == "advance":
                         result = advance(scheduler, args.turns)

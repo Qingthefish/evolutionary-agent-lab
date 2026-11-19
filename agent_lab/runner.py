@@ -72,11 +72,14 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 
 class TaskRunner:
     def __init__(self, gateway, client, *, mode, constraints, limits=Limits(),
-                 verifier=None, verifier_id=None, role=None, allow_html=False):
+                 verifier=None, verifier_id=None, role=None, allow_html=False, show_execution_budget=False):
         self.gateway, self.client = gateway, client
         self.workflow, self.task, self.actor = gateway.workflow, gateway.task, gateway.actor
         self.limits, self.mode, self.verifier = limits, mode, verifier
-        self.budget_context = gateway.delegation_rules is not None
+        if type(show_execution_budget) is not bool:
+            raise RunnerError("Execution-budget guidance requires an explicit boolean setting")
+        declared = gateway.delegation_rules is not None
+        self.budget_context = declared or show_execution_budget
         if not isinstance(limits, Limits) or not isinstance(client, DeepSeekClient):
             raise RunnerError("Use explicit limits and the supported provider client")
         self.require_tool_actions = client.tool_choice == 'required'
@@ -84,7 +87,7 @@ class TaskRunner:
             raise RunnerError("Required-action runners need the independent verification proposal tool")
         if type(allow_html) is not bool:
             raise RunnerError("HTML output requires an explicit trusted format setting")
-        prompt = effective_prompt(self.budget_context, require_tool_actions=self.require_tool_actions,
+        prompt = effective_prompt(declared, require_tool_actions=self.require_tool_actions,
                                   allow_html=allow_html)
         if mode not in {"offline_fixture", "live"}:
             raise RunnerError("Explicitly label offline fixture or live mode")
@@ -133,7 +136,7 @@ class TaskRunner:
             settings['budget_context'] = 'local-reservations-v1'
         if self.budget_context or self.require_tool_actions or allow_html:
             settings['model_context'] = model_context_conditions(
-                self.budget_context, require_tool_actions=self.require_tool_actions, allow_html=allow_html)
+                declared, require_tool_actions=self.require_tool_actions, allow_html=allow_html)
         if self.require_tool_actions:
             settings['provider_action_protocol'] = REQUIRED_ACTION_POLICY
         if 'submit_for_verification' in gateway.allowed:

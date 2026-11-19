@@ -5,10 +5,52 @@ import tempfile
 import unittest
 
 from agent_lab.core import Workflow, WorkflowError
-from agent_lab.evaluation.official_live import TOOL_POLICY, advance, runtime_config
+from agent_lab.files import FileTools
+from agent_lab.gateway import ToolGateway, ToolRequestError
+import json
+from pathlib import Path
+from agent_lab.evaluation.official_live import TOOL_POLICY, TOOLS, advance, runtime_config, tools_for_role
 
 
 class OfficialLiveTests(unittest.TestCase):
+    def test_lead_cannot_write_source_but_can_delegate_through_the_gateway(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workflow = Workflow(Path(directory) / "workflow.sqlite3")
+            self.addCleanup(workflow.close)
+            for actor in ("lead", "dev", "qa", "release"):
+                workflow.register_actor(actor, "agent")
+            workflow.register_actor("operator", "human")
+            chat = workflow.create_chat("group", ["operator", "lead", "dev", "qa", "release"])
+            root = workflow.create_task(chat, "operator", "lead", "Synthetic implementation task")
+            workflow.start_task(root, "lead")
+            files = FileTools(workflow, Path(directory) / "files")
+            self.addCleanup(files.close)
+            gateway = ToolGateway(workflow, files, root, "lead", human="operator",
+                                  allowed=tools_for_role("software-engineering", "lead", TOOLS),
+                                  delegates=("dev", "qa", "release"))
+
+            def call(name, arguments):
+                return {"id": "fixture-" + name, "type": "function",
+                        "function": {"name": name, "arguments": json.dumps(arguments)}}
+
+            with self.assertRaises(ToolRequestError):
+                gateway.dispatch(call("create_text", {"path": "main.py", "content": "print('fixture')"}))
+            self.assertEqual(workflow.db.execute(
+                "SELECT count(*) FROM events WHERE kind='file_created'").fetchone()[0], 0)
+            response = json.loads(gateway.dispatch(call(
+                "delegate_task", {"assignee": "dev", "title": "Synthetic focused implementation"}))["content"])
+            self.assertTrue(response["ok"])
+            child = workflow.task(response["result"]["task_id"], "operator")
+            self.assertEqual((child["assignee"], child["parent"]), ("dev", root))
+
+    def test_software_lead_coordinates_and_specialists_keep_implementation_tools(self):
+        lead = tools_for_role("software-engineering", "lead", TOOLS)
+        self.assertTrue({"ask_human", "delegate_task", "accept_artifact", "offer_artifact", "read_text"} <= set(lead))
+        self.assertFalse({"create_text", "update_text", "run_python"} & set(lead))
+        self.assertEqual(tools_for_role("software-engineering", "dev", TOOLS), TOOLS)
+        self.assertEqual(tools_for_role("software-engineering", "qa", TOOLS), TOOLS)
+        self.assertEqual(tools_for_role("newsroom", "chief_editor", TOOLS), TOOLS)
+
     def test_larger_output_ceiling_needs_explicit_operator_selection(self):
         session = SimpleNamespace(scenario={"id": "software-engineering"})
         settings = {"provider": "hkgai", "tool_policy": TOOL_POLICY, "model": "issued-model",
