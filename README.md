@@ -62,6 +62,12 @@ outcomes for the six mid-test tasks, GitHub runtime evidence, release freeze and
 final submission materials remain open.
 [Current S01 record](docs/team-roadmap.md#s01)
 
+The later local Task 1 attempt failed after three requests at a developer
+output truncation; a separate one-request protocol diagnostic dispatched no
+tools. PR #64's completion protocol has undergone independent engineering
+review and corrections to request limits and resume compatibility. Those
+checks establish no completed mid-test task. [Review and limitations](docs/final-report.md#11-mid-test-execution-record-19-november)
+
 **Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)
 
 **Accepted required-action milestone:** an explicit opt-in `require_tool_actions` mode requests actual tool calls and uses the existing independent-verification proposal for completion. In the issued HKGAI trial, **all 43 replies were tool calls with no free-text narration or truncation**. Both changed-input JSONL probes completed their full independently audited contracts: current code/input, real isolated execution, correct output, actual handoff/read, report and final verification. The ON probe used 14 requests and selected a prior coordinator failure observation; OFF used 13. Both succeeded, with ON slower and more costly in reported tokens: **no learning advantage is claimed**.
