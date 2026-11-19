@@ -162,6 +162,28 @@ The announcement requires a week-13 presentation; confirm its exact date/format.
 5. Demonstration and limitations: label recorded traces and scripted fixtures clearly; never present them as a new live model run.
 6. Official test results and remaining failure analysis, to be filled only after the prescribed evaluation.
 
+### Recorded-artifact fallback
+
+If live service is unavailable during presentation, label the demonstration as
+reproduction of a previously generated artifact. On 19 November, the exact
+developer booking snapshot from runtime `b028936` was copied from its retained
+export without editing. The configured digest-pinned, no-network Python
+container reproduced all 26 independent behavior checks and the ten original
+generated unit tests, with successful cleanup. The independent checks cover
+booking conflicts, adjacency, separate rooms/dates, cancellation/rebooking,
+cross-process persistence and exactly one winner for concurrent same-slot
+requests. The generated tests are supplementary, not an independent oracle.
+
+The local demonstration package includes provenance, a hash-verifying launcher,
+actual command/output transcript, result records and a short presentation
+script. A changed-source negative control was refused before execution. No new
+model request was made, and generated source was never run on the host. The
+source package remains local rather than becoming a hard-coded platform
+solution. Public hashes and scope are in the [evidence summary](../evaluation/evidence/development-summary.json).
+This fallback proves artifact reproducibility only: it does not complete the
+parent handoff, accept Software Task 1, exercise Task 2, establish a learning
+gain or supply a teacher score.
+
 ## 10. Official-results fields — not yet filled
 
 | Field | Status |
@@ -258,3 +280,17 @@ rejected length reply reports 8,142, and the diagnostic reports 455: 17,598
 known reported tokens, plus unknown usage for the 502. These figures are neither
 account balance nor money. The new root and Task 2 are not completed. The
 contributor's other live databases remain outside this local audit.
+
+Later that evening, one explicitly released, counted resend on the same
+unexpired root again returned HTTP 502. A separate minimal plain-chat request
+with no tools also returned 502. The latest cumulative snapshot is **seven
+actual requests**, including two diagnostics, and usage is unknown for three
+attempts; the known 17,598 tokens are unchanged. The five-request snapshot
+above and its original database hash are preserved. Neither request executed
+a model tool, and no automatic retry or request credit followed. These
+observations suggest the failure is not specific to the large tool payload;
+they do not diagnose the service/account route or establish a provider-wide
+outage. The current course API page still lists the same endpoint/model. The
+root's original deadline is 20 November 00:38:23 Hong Kong time; quota recovery
+does not extend it or authorize replay. The [recorded-artifact fallback](#recorded-artifact-fallback)
+is available independently of that paused live run.

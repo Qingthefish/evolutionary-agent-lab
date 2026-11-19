@@ -720,6 +720,18 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   further fresh-root allowance needs its own authorization; original failed
   roots and current counters cannot be reset.
 
+- **Later November 19 snapshot:** The owner explicitly released one counted
+  resend on the still-unexpired corrected root; it again returned HTTP 502.
+  A distinct minimal plain-chat control with no tools also returned 502. The
+  round now records seven actual requests and two allocated roots, with three
+  unknown usage observations and unchanged 17,598 known tokens. No model tool
+  ran in these requests, and no automatic retry or budget credit followed.
+  The earlier five-request snapshot/hash remains preserved. Same-day Canvas
+  and Outlook checks found no newer project API notice; the listed endpoint
+  and model were unchanged. This does not establish a provider-wide outage.
+  The corrected root expires at 00:38:23 Hong Kong time on November 20 and
+  cannot be automatically replayed or extended when Codex quota refreshes.
+
 ### S02
 
 **Finish submission materials**
@@ -738,6 +750,19 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
 - **2026-10-30 draft result:** Added the required [report and presentation-outline draft](final-report.md) plus a whitelisted [development evidence JSON](../evaluation/evidence/development-summary.json), with source/configuration identities, raw-record hashes, negative/unrun outcomes and unknown usage retained. Selected code/experience records cover 129 reserved attempts with one missing provider-usage observation; this is explicitly not all-time account usage. Two earlier complete memory probes are reported alongside failed training parents and later incomplete cases, without a general gain claim. Architecture, input/proposal boundaries, automated clean setup and required live/official/contribution gaps are explicit; no member contribution, official dataset, grade, date or screenshot is invented. This is submission material rather than a second progress register. Link/schema/privacy/metric consistency checks precede publication; final S02 delivery remains open.
 
 - **2026-10-30 publication acceptance:** Code/plan source accepted through [PR #35](https://github.com/Qingthefish/evolutionary-agent-lab/pull/35), merge `e898ce2`, matching tested `01700a4`. Draft/report/evidence synchronization accepted through [PR #36](https://github.com/Qingthefish/evolutionary-agent-lab/pull/36), merge `fa881bd`, matching reviewed `91f87ba`; runtime/test source is unchanged by the documentation PR. Checked **171 local links/anchors**, public schema/totals/raw-record identities and publication files against the local credential without disclosure. Main now carries both scoped packages, with no Actions or teammate-review claim. The current allowance is closed at **36/48 requests and three/three roots**, with twelve requests unused; the original failed/unrun trials and all private raw evidence remain preserved. This accepts the engineering/preparation/draft scope only; A03/A04/A05/C05, another member's D04 reproduction and final S02/official delivery remain open.
+
+- **2026-11-19 recorded-artifact fallback:** Qingthefish, owner-requested
+  Codex-assisted continuation; branch `docs/S02-recorded-demo-20261119`.
+  Retained the real developer source unchanged from its frozen export and
+  prepared a local-only hash-verifying demonstration, transcript and short
+  presentation script. The actual no-network container run passed 26
+  independent booking checks plus ten generated unit tests and cleaned up;
+  a source-tampering control was rejected before execution. Zero new model
+  requests. Public provenance/record hashes and limits are in the existing
+  evidence summary; source/records remain under ignored
+  `runs/booking-artifact-demo-20261119/`. This accepts a presentation fallback,
+  not the parent workflow, an official task, learning benefit or final S02
+  delivery. [Demonstration scope](final-report.md#recorded-artifact-fallback)
 
 ## Starting a Codex session
 

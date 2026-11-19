@@ -1608,6 +1608,77 @@
     "allocation_note": "The corrected scenario plan value 88 splits into 44 per root, but a separate pre-HTTP round guard authorizes only the one corrected root and caps cumulative reservations at 48 including the earlier failed root and diagnostic. It grants no third fresh root or new Task 2 allowance.",
     "diagnostic_limit": "thinking.type=disabled still reported 37 reasoning tokens on one small no-tool-execution probe; support or effectiveness is not established.",
     "provider_total_quota_pricing_balance": "unknown",
-    "task_2": "not_posted"
+    "task_2": "not_posted",
+    "snapshot_note": "Five-request snapshot retained from PR #66; later observations are appended separately."
+  },
+  "software_followup_later_snapshot": {
+    "date": "2026-11-19",
+    "runtime_source": "0b1a63bbe980b393f0cd950797d7fc0bf94b11da",
+    "actual_requests": 7,
+    "diagnostic_requests": 2,
+    "roots_allocated": 2,
+    "local_round_request_cap": 48,
+    "known_reported_tokens": 17598,
+    "attempts_with_unknown_usage": 3,
+    "corrected_root_attempts": 2,
+    "corrected_root_runner_state": "provider_uncertain",
+    "additional_results": [
+      "Explicitly released counted resend on original unexpired root returned HTTP 502",
+      "Minimal 134-byte plain-chat control, with no tools, returned HTTP 502"
+    ],
+    "new_model_tool_effects": 0,
+    "automatic_retry": false,
+    "request_credit_applied": false,
+    "original_deadline_hong_kong": "2026-11-20T00:38:23+08:00",
+    "quota_recovery_extends_deadline": false,
+    "complete_teacher_task_claim": false,
+    "benchmark_valid": false,
+    "course_configuration_check": {
+      "date": "2026-11-19",
+      "canvas_announcements_count": 3,
+      "latest_project_notice": "2026-11-15 mid-test release",
+      "api_address_unchanged": true,
+      "api_model_unchanged": true,
+      "new_api_email_found": false,
+      "credential_comparison": "not performed or disclosed"
+    },
+    "limitation": "Neither provider-wide outage nor account-route cause established; no key or account balance published."
+  },
+  "recorded_booking_artifact_fallback": {
+    "date": "2026-11-19",
+    "kind": "recorded_artifact_rehearsal",
+    "source_commit": "b028936925d03012779579cd48b1e0cee47a976e",
+    "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+    "observed_model": "t2_hkgai-v3_fp8_1m_e10",
+    "source_modified": false,
+    "source_files": {
+      "booking_system/__init__.py": "988eff06bd8ab92df82ae011a45b0e07a1d12a7f5a1d35519d36ab0f8ec44263",
+      "booking_system/__main__.py": "4aab4d699328d6936162916b93fe8447f6266eaac048b6bf3c41ae188165bdec",
+      "booking_system/cli.py": "c80ba7d7e7d0c1e1df782c5b6a88650073d3ea85dcbc6ee6e2b2c78979a64012",
+      "booking_system/store.py": "77df3c7072a6fa2cd5aee095e27324009fd024abd902381c5a45794dbd79619c",
+      "tests/__init__.py": "a123d3d8e35b0b7bd96ebf1fef1b7cf2fcc50d6aabab4e0ab686a12fa5ab3952",
+      "tests/test_store.py": "500c3a6f4205b52080d18f3049779e604eb540db8df4390ca2c636276843a206",
+      "README.md": "4bd4d8e0bad6567f5d5ac9141fc9ec057c2f84c7cf092e77a9039d9fb62eef0c"
+    },
+    "manifest_sha256": "fd00b5525b36630a55e510bd3445f36f3d0598ea077d29596454e9c38c492582",
+    "export_manifest_sha256": "367d97b963ee5047cea097a31047af0d6d9dc3cb77ad61934c56e836d5a192d0",
+    "independent_checks": 26,
+    "independent_checks_passed": true,
+    "original_generated_unit_tests": 10,
+    "generated_test_exit_code": 0,
+    "sandbox": "Configured digest-pinned no-network Python container; no host execution or mounts",
+    "container_cleanup_confirmed": true,
+    "changed_source_refused_before_execution": true,
+    "new_model_requests": 0,
+    "benchmark_valid": false,
+    "complete_teacher_task_claim": false,
+    "parent_workflow_accepted": false,
+    "teacher_score": null,
+    "record_sha256": {
+      "execution": "f325f0aba528d98befb070cf03019b4a39818ca01c4c813f14e555de18df9c09",
+      "transcript": "0258dace80d6d36fb4ad44c5d0ce88c6876f6ef701563791fa00dcd30fa1fe3d",
+      "independent_review": "bc621b6e035d5e35301e0ecd75a5944cbbd119459b984e6f0794a8543fdc0aab"
+    },
+    "scope": "Recorded source behavior and presentation reproducibility only. No live coordination, final handoff, Task 2, memory gain or official outcome."
   }
 }
