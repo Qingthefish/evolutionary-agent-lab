@@ -184,6 +184,12 @@ Repository history preserves actual authors and reviews. The accepted contributi
 
 Jingran (jingran-jupiter) contributed the C06 instructor mid-test adapter, including input parsing, same-group preparation and automated checks. The coordinator adapted it to use a local course archive while keeping his authorship. [C06 source PR #54](https://github.com/Qingthefish/evolutionary-agent-lab/pull/54) · [Review evidence](team-roadmap.md#c06)
 
+Jingran also contributed the [ordinary batch audit, PR #58](https://github.com/Qingthefish/evolutionary-agent-lab/pull/58)
+and [memory evidence/effect reader, PR #67](https://github.com/Qingthefish/evolutionary-agent-lab/pull/67).
+Coordinator review retained his commits and added the outer snapshot/accounting
+stop correction. These are evaluation-engineering contributions, not evidence
+of a learning gain or an official task pass.
+
 ## 9. Proposed presentation outline
 
 The announcement requires a week-13 presentation; confirm its exact date/format. This outline and its length are our proposal:
