@@ -22,6 +22,10 @@ COMPLETION_TOOLS = frozenset({"submit_for_verification", "report_blocker"})
 # Tools a task keeps in Finish Mode: hand over, inspect, communicate and complete.
 FINISH_TOOLS = COMPLETION_TOOLS | frozenset({"offer_artifact", "accept_artifact", "read_text", "post_message",
                                              "read_messages", "ask_human", "list_tasks"})
+# The last requests (at or below the submission reserve) keep only completion and
+# handoff: in live Software run 2026-11-21, QA and the lead spent their final Finish
+# Mode requests on read_text and ended without a submission or a blocker report.
+FINAL_TOOLS = COMPLETION_TOOLS | frozenset({"offer_artifact", "accept_artifact"})
 SUMMARY_LIMIT = 2000
 
 
@@ -59,15 +63,16 @@ def phase(workflow, task):
         name, reason = "finish", f"{ready} and {available} request(s) left"
     else:
         name, reason = ("ready", ready) if ready else ("working", None)
-    return {"phase": name, "reason": reason, "available": available, "own_reserve": own, "finish_window": window,
+    final = name == "finish" and available <= policy.submit_reserve
+    return {"phase": name, "reason": reason, "final": final, "available": available, "own_reserve": own, "finish_window": window,
             "depth": info["depth"], "reserved_for_ancestors": info["reserved_for_ancestors"], "policy": policy}
 
 
 def offered_tools(allowed, state):
-    """Finish Mode offers only finishing tools the task already has."""
+    """Finish Mode offers only finishing tools the task already has; its last requests only complete or hand over."""
     if state is None or state["phase"] != "finish":
         return None
-    return frozenset(allowed) & FINISH_TOOLS
+    return frozenset(allowed) & (FINAL_TOOLS if state.get("final") else FINISH_TOOLS)
 
 
 def contract(workflow, task, state, allowed):
@@ -94,11 +99,20 @@ def contract(workflow, task, state, allowed):
             "finish_mode_starts_at": {"requests_left": state["own_reserve"],
                                       "or_when_ready_with_requests_left": state["finish_window"]},
             "completion_tool": "submit_for_verification", "rules": rules,
-            "finish_mode": {"active": finish, "tools": sorted(offered_tools(allowed, state) or ()) if finish else None,
-                            "instruction": ("Finish Mode: submit the work that is done now, or report a blocker if "
-                                            "required work is missing. Do not start optional tests, rewrites, "
-                                            "packaging or improvements. A genuine critical defect can be reported "
-                                            "in the summary or raised with the requester.") if finish else None}}
+            "finish_mode": {"active": finish, "final_requests": bool(finish and state.get("final")),
+                            "tools": sorted(offered_tools(allowed, state) or ()) if finish else None,
+                            "instruction": _finish_instruction(state) if finish else None}}
+
+
+def _finish_instruction(state):
+    if state.get("final"):
+        return (f"Final requests: {state['available']} left after this one. Reading, messaging and new work are no "
+                "longer available. In this batch, call submit_for_verification with the work that is done (offer or "
+                "accept deliverables first in the same batch if needed), or report_blocker if required work is "
+                "missing.")
+    return ("Finish Mode: submit the work that is done now, or report a blocker if required work is missing. Do not "
+            "start optional tests, rewrites, packaging or improvements. A genuine critical defect can be reported in "
+            "the summary or raised with the requester.")
 
 
 def delegation_refusal(workflow, task):

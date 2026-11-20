@@ -251,6 +251,10 @@ state and the shared request cap:
   offered and accepted: submit, `report_blocker`, offer/accept, read, message
   and ask the requester. Submission still waits for the human review;
   `report_blocker` ends the task as an honest failure.
+- On its **final requests** (at most `--submit-reserve` left), Finish Mode
+  offers only submit, `report_blocker` and offer/accept for the handoff. In the
+  2026-11-21 live Software run, QA and the lead spent their last Finish Mode
+  requests rereading files and ended with neither a submission nor a blocker.
 - Each ancestor keeps `--parent-reserve` requests while descendants run, any
   task keeps `--submit-reserve` for its own submission, and a new subtask needs
   `--min-child-requests` beyond the caller's reserve. `--ready-fraction` sets

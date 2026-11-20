@@ -368,6 +368,10 @@ class TaskRunner:
             self.workflow._event(self.task, self.actor, "finish_mode_entered", {
                 "reason": self._phase["reason"], "available": self._phase["available"],
                 "tools": sorted(self.gateway.restricted)})
+        if self.gateway.restricted is not None and self._phase.get("final") and not self.workflow.db.execute(
+                "SELECT 1 FROM events WHERE task=? AND kind='final_requests_entered'", (self.task,)).fetchone():
+            self.workflow._event(self.task, self.actor, "final_requests_entered", {
+                "available": self._phase["available"], "tools": sorted(self.gateway.restricted)})
 
     def _append_delivery_phase(self, transcript, added):
         """When every child of this task is accepted, ask for a finish decision (proposed 2026-11-19).
