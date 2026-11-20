@@ -627,6 +627,24 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 - **2026-11-09 checkpoint review.** A fault injected during the second case reproduces the loss of the reviewed plan and earlier case outcomes on the previous implementation. The batch evaluator now publishes the reviewed plan and run manifest before case effects, then atomically replaces the progress snapshot around each case. The checkpoint distinguishes recorded outcomes, the active case and unstarted cases. The normal CLI rehearsal produced four accepted fixtures, five detected negative controls and one unconfigured live case. The checkpoint and final results agree for all ten cases. Full suite 549 passed, including 19 actual-container and nine UI checks. Clean Python 3.12.12 passed 16 commands and 521 core checks with 28 explicit skips. Model calls were zero. The active case may need reconciliation after interruption. Official format mapping and the final release freeze remain open.
 
+- **2026-11-20 evaluation-maintenance review:** Qingthefish, owner-requested
+  Codex-assisted continuation on `review/evaluation-evidence-20261120`.
+  Reviewed Jingran's [PR #67](https://github.com/Qingthefish/evolutionary-agent-lab/pull/67)
+  and [PR #58](https://github.com/Qingthefish/evolutionary-agent-lab/pull/58),
+  preserving contributor commits. The memory comparator/reader and ordinary
+  batch reader keep supplied inputs, seeds, ownership, known/unknown usage,
+  case coverage, independent-check inventory and checkpoints explicit. A
+  further coordinator reproduction showed outer seed/accounting failures
+  still starting another replicate; correction `6a982b2` stops that path and
+  retains the original error and unrun slots. Scripted fault coverage and
+  independent saved-record controls pass. Source `046ef20` passed 768 checks
+  (21 actual-container checks included), with nine optional UI skips. Both
+  retained ordinary batches are internally consistent; a modified-summary
+  copy was rejected without touching its original. Zero new model calls in
+  this review. Raw logs/analyses are under ignored
+  `runs/review-evaluation-20261120/`; final release freeze and official/live
+  acceptance remain open. [Results and limits](final-report.md#retained-evidence-reanalysis)
+
 ### S01
 
 **Run the official evaluation**
@@ -732,6 +750,16 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   The corrected root expires at 00:38:23 Hong Kong time on November 20 and
   cannot be automatically replayed or extended when Codex quota refreshes.
 
+- **2026-11-20 service observation:** At the owner's explicit request, one
+  new minimal issued-model HTTP check returned 502 at 10:14 Hong Kong time.
+  The cumulative round now records eight requests, two allocated roots and
+  four unknown-usage attempts. An initial local environment lookup error
+  occurred before transport construction; that record remains preserved and
+  the same previously unissued reservation was released once after fixing
+  environment export. No extra allowance, retry of an issued request, model
+  tool effect or expired-task resume occurred. Service/account-route cause
+  remains unconfirmed; no provider-wide outage is inferred.
+
 ### S02
 
 **Finish submission materials**
@@ -763,6 +791,16 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   `runs/booking-artifact-demo-20261119/`. This accepts a presentation fallback,
   not the parent workflow, an official task, learning benefit or final S02
   delivery. [Demonstration scope](final-report.md#recorded-artifact-fallback)
+
+- **2026-11-20 report evidence:** The seven selected original memory reports
+  match their published hashes and remain unchanged. The two complete pairs
+  reproduce the existing completion/time/request/token figures; one failed
+  pair exercised no selected memory and four other reports remain not
+  comparable. Updated the existing report and architecture to explain the
+  readers, whole-trial stop and current completion/provider boundaries.
+  Contributor-only raw trials are explicitly outside this local audit.
+  This prepares required failure/memory analysis and preserves attribution;
+  it does not close official runs, screenshots, presentation delivery or S02.
 
 ## Starting a Codex session
 

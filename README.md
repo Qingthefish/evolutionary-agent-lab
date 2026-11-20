@@ -49,7 +49,7 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
-**Current verified status (2026-11-19).** No complete instructor mid-test task
+**Current verified status (2026-11-20).** No complete instructor mid-test task
 has been independently established in the coordinator's records. A real
 developer's booking source passed 26 independent actual-container checks, but
 the parent workflow remained unfinished. Engineering checks and working child
@@ -62,8 +62,10 @@ container checks, with nine UI skips; all three required remote jobs passed.
 The latest live attempt on that fixed revision paused on its first HTTP 502,
 without tool execution or automatic resend. After an explicitly released
 resend and a separate minimal plain-chat control also returned HTTP 502, the
-round has **seven actual requests**, with usage unknown for three attempts.
-No further model call was made. Complete live outcomes for all six mid-test tasks, GitHub runtime
+round reached seven actual requests, with usage unknown for three attempts.
+An owner-requested minimal check on November 20 also returned HTTP 502: the
+current cumulative record is **eight requests**, with four unknown-usage
+attempts. Old paused/expired tasks were not resumed. Complete live outcomes for all six mid-test tasks, GitHub runtime
 evidence, release freeze and final submission materials remain open.
 [Current S01 record](docs/team-roadmap.md#s01)
 
@@ -75,6 +77,15 @@ source was reproduced unchanged in the configured no-network container. All
 changed-source negative control was refused before execution. This uses zero
 new model requests and does not accept the unfinished parent or either official
 task. [Provenance and limits](docs/final-report.md#recorded-artifact-fallback)
+
+**Evaluation review (November 20):** integrated review of the contributed
+memory-effect and ordinary-batch readers checked seven retained memory reports
+and two saved batches without model calls or changes to original evidence.
+Two complete memory pairs retain their null-benefit conclusion; incomplete and
+failed trials remain visible. Review also fixed an outer snapshot/accounting
+error path that could start a later replicate. The reviewed source passed
+768 checks, including 21 actual-container checks, with nine optional UI skips.
+[Evidence and limits](docs/final-report.md#retained-evidence-reanalysis)
 
 **Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)
 

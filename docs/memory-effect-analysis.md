@@ -97,6 +97,11 @@ repeat rules remain separate from development experiments.
 
 ### Retained development attempt, 2026-11-16
 
+This subsection records the contributor's retained attempt. Its raw run files
+were not available in the coordinator's November 20 review, so these details
+are not an independently reproduced local run or part of the coordinator's
+seven-report reanalysis.
+
 The existing JSONL plan was attempted on source commit
 `679c145c01404bc249ee0f4f38f8aa7c99ad9a1c` under a fresh authorized allowance of
 48 requests across three roots. A dedicated Linux Docker VM and the actual
