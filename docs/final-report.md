@@ -180,7 +180,7 @@ Detailed ownership, acceptance and dependencies remain in the Roadmap; this draf
 
 ## 8. Contributions and AI assistance
 
-Repository history preserves actual authors and reviews. The accepted contributions include Qingthefish's Codex-assisted backend/integration work and HelloWorld2333666's terminal, Git and evaluation foundations (PRs #7–#9), plus the C07 comparison and coordination audit (PRs #48–#50). Minho Joh (aminoacid11) reproduced setup on clean WSL, fixed CLI parsing, tested HKGAI and Docker, and added the GitHub Actions workflow. [D04 PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) · [I04 PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) Further claims must be checked against actual code and review history; repository access alone does not establish contribution. AI assistance was used for implementation, checks, documentation and review. Automated/Codex-assisted self-review is not independent teammate approval. Final per-member statements and required screenshots remain to be verified.
+Repository history preserves actual authors and reviews. The accepted contributions include Qingthefish's Codex-assisted backend/integration work and HelloWorld2333666's terminal, Git and evaluation foundations (PRs #7–#9), plus the C07 comparison and coordination audit (PRs #48–#50). Minho Joh (aminoacid11) reproduced setup on clean WSL, fixed CLI parsing, tested HKGAI and Docker, and added the GitHub Actions workflow. [D04 PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) · [I04 PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) Further claims must be checked against actual code and review history; repository access alone does not establish contribution. AI assistance was used for implementation, checks, documentation and review. Automated/Codex-assisted self-review is not independent teammate approval. Final per-member statements remain to be verified.
 
 Jingran (jingran-jupiter) contributed the C06 instructor mid-test adapter, including input parsing, same-group preparation and automated checks. The coordinator adapted it to use a local course archive while keeping his authorship. [C06 source PR #54](https://github.com/Qingthefish/evolutionary-agent-lab/pull/54) · [Review evidence](team-roadmap.md#c06)
 
@@ -189,6 +189,20 @@ and [memory evidence/effect reader, PR #67](https://github.com/Qingthefish/evolu
 Coordinator review retained his commits and added the outer snapshot/accounting
 stop correction. These are evaluation-engineering contributions, not evidence
 of a learning gain or an official task pass.
+
+On November 20, actual public GitHub main-branch commit-history pages were
+captured through the author filter. The unedited screenshots below retain
+titles, authors, dates and commit IDs. Their [manifest](contributions/manifest.json)
+records source URLs, capture times, hashes and the baseline `5e7073b`, before
+PR #69 integration. They show recorded history, not hours worked or guaranteed
+individual grades; the coordinator capture shows the first history page.
+
+| Member/account | Actual history screenshot |
+| --- | --- |
+| Qingthefish | [Coordinator history](contributions/04-qingthefish-main-history.jpg) |
+| HelloWorld2333666 | [Software/evaluation history](contributions/02-helloworld-main-history.jpg) |
+| Minho / aminoacid11 | [Setup/CI history](contributions/01-minho-main-history.jpg) |
+| Jingran / jingran-jupiter | [Mid-test adapter history](contributions/03-jingran-main-history.jpg) |
 
 ## 9. Proposed presentation outline
 

@@ -1838,7 +1838,20 @@
       ]
     },
     "source_records_unchanged": true,
-    "scope": "Read-only saved-JSON consistency and descriptive results only; original database/artifact/provider authentication is outside these readers. Two complete pairs retain no general learning-benefit claim. Final release and official results remain open."
+    "scope": "Read-only saved-JSON consistency and descriptive results only; original database/artifact/provider authentication is outside these readers. Two complete pairs retain no general learning-benefit claim. Final release and official results remain open.",
+    "portability_review": {
+      "initial_remote_run": 44661461042,
+      "initial_failed_job": 136040435419,
+      "initial_failure_log_sha256": "50f5e2a5d6c99b6235ea00fd2c07d1ceab939d1db0e67ee2510f4e97e139edec",
+      "finding": "Serialized timing digits caused a false substring rejection; a helper also shadowed unittest.TestCase.fail",
+      "correction": "Compare baseline and recomputed structures, with legitimate 0.1000123 timing; rename helper fail_goal",
+      "focused_final_python_versions": [
+        "3.12",
+        "3.14"
+      ],
+      "focused_tests_each": 51,
+      "runtime_unchanged": true
+    }
   },
   "service_observation_20261120": {
     "started_at": "2026-11-20T10:14:27.592308+08:00",
@@ -1854,5 +1867,48 @@
     "unissued_reservation_released_once_after_export_fix": true,
     "result_sha256": "376a256bcb6c4536440d676b168aca6711fbab04ba9cb025dc5680a032f05218",
     "cause_or_provider_wide_outage_established": false
+  },
+  "contribution_history_captures": {
+    "kind": "actual_github_public_commit_history_screenshots",
+    "captured_date": "2026-11-20",
+    "basis_main_commit": "5e7073ba73f4a7148920fc6678a233013d690291",
+    "source": "Actual GitHub rendered main-branch history filtered through its author menu; logged-out public view",
+    "screenshots_edited": false,
+    "model_calls": 0,
+    "files": [
+      {
+        "file": "01-minho-main-history.jpg",
+        "account": "aminoacid11",
+        "sha256": "6a0c69dfd9461856ce5d251bde0aa65698cb6cb3fe764e2b9c12f8f73e2bc70a",
+        "bytes": 67281,
+        "captured_at": "2026-11-20T10:33:57.191976+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=aminoacid11"
+      },
+      {
+        "file": "02-helloworld-main-history.jpg",
+        "account": "HelloWorld2333666",
+        "sha256": "5649cb8fc32f5d7d20989b0e874d744d4c6e1f751194d3e6274a9b506d1c59e7",
+        "bytes": 293414,
+        "captured_at": "2026-11-20T10:35:31.888607+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=HelloWorld2333666"
+      },
+      {
+        "file": "03-jingran-main-history.jpg",
+        "account": "jingran-jupiter",
+        "sha256": "cf5bb2f4001121e50a8d2c73a0bf00eaa2902cc58a28fdfbd95ced4e8758d494",
+        "bytes": 46769,
+        "captured_at": "2026-11-20T10:38:05.429275+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=jingran-jupiter"
+      },
+      {
+        "file": "04-qingthefish-main-history.jpg",
+        "account": "Qingthefish",
+        "sha256": "20625fca8f27c785620dd457efcbbb3be092f9a9e1964a84e91ac60f09f8059a",
+        "bytes": 364592,
+        "captured_at": "2026-11-20T10:39:14.848994+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=Qingthefish"
+      }
+    ],
+    "limitations": "Historical captures before PR #69 integration. These show recorded commits and attribution, not hours worked, independent review, official results or individual grades. Final per-member statements still need verification."
   }
 }

@@ -802,6 +802,17 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   This prepares required failure/memory analysis and preserves attribution;
   it does not close official runs, screenshots, presentation delivery or S02.
 
+- **2026-11-20 submission history captures:** Captured the actual public
+  main-branch author-filtered history for all four accounts, preserving the
+  screenshot bytes, titles/dates/IDs and a source/time/hash manifest under
+  `docs/contributions/`. The baseline is `5e7073b`, before PR #69, rather than
+  an invented final freeze. Final per-member statements and presentation/report
+  delivery remain open. The initial Python 3.14 CI failure also exposed a
+  flaky substring assertion and a test helper overriding `TestCase.fail`.
+  Replaced these with structural comparison and a distinctly named helper;
+  the focused 51 checks pass on local Python 3.12 and 3.14. Remote checks
+  remain required before merge. [Captured evidence](final-report.md#8-contributions-and-ai-assistance)
+
 ## Starting a Codex session
 
 ```text

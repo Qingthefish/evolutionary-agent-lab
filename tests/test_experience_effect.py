@@ -44,7 +44,7 @@ class ExperienceEffectTests(unittest.TestCase):
         return next(row for row in self.report['results'] if row['phase']=='probe'
                     and row['replicate']==replicate and row['memory']==arm and row['case']['id']==case)
 
-    def fail(self, row):
+    def fail_goal(self, row):
         row.update(classification='task_failed')
         row['checks']['final_state'] = False
         workflow = row['workflow']
@@ -83,10 +83,10 @@ class ExperienceEffectTests(unittest.TestCase):
             self.assertEqual(pair['off']['selected_lesson_task_pairs'], 0)
 
     def test_benefit_regression_and_failures_remain_in_planned_denominator(self):
-        self.fail(self.row('off'))
-        self.fail(self.row('on',case='memory-probe-b'))
-        self.fail(self.row('on',replicate=1))
-        self.fail(self.row('off',replicate=1))
+        self.fail_goal(self.row('off'))
+        self.fail_goal(self.row('on',case='memory-probe-b'))
+        self.fail_goal(self.row('on',replicate=1))
+        self.fail_goal(self.row('off',replicate=1))
         result = analyze_experience(self.report)
         self.assertEqual(result['outcomes'], {'planned_pairs':4, 'on_only_success':1,
                                              'off_only_success':1, 'both_succeeded':1, 'neither_succeeded':1})
@@ -173,10 +173,18 @@ class ExperienceEffectTests(unittest.TestCase):
         json.dumps(analyze_experience(self.report),allow_nan=False)
 
     def test_edited_summary_is_ignored(self):
+        # Legitimate timing digits may contain the edited headline's value.
+        # Compare the recomputed structure, not substrings of serialized floats.
+        workflow = self.row('on')['workflow']
+        root = next(task for task in workflow['task_outcomes'] if task['parent'] is None)
+        root.update(elapsed_seconds=0.1000123, final_duration_seconds=0.1000123)
+        workflow['workflow_elapsed_seconds'] = 0.1000123
+        expected = analyze_experience(self.report)
+        self.assertEqual(expected['status'], 'engineering_only')
         self.report['comparison'] = {'memory_improvement':1000}
         result = analyze_experience(self.report)
-        self.assertEqual(result['outcomes']['both_succeeded'],4)
-        self.assertNotIn('1000',json.dumps(result))
+        self.assertEqual(result, expected)
+        self.assertNotIn('memory_improvement', result['comparison'])
 
     def test_synthetic_live_shape_describes_results_without_asserting_causality(self):
         # Metadata/analysis wiring only; all responses were the scripted fixture.
