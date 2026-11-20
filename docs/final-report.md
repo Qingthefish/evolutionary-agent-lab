@@ -87,7 +87,7 @@ The earlier complete code/report memory pair is:
 
 | Condition | Root completion | Attempts | Assignment-to-final seconds | Provider-reported tokens | Experience use |
 | --- | ---: | ---: | ---: | ---: | --- |
-| ON | 1/1 | 13 | 20.369 | 70,790 | Two retrievals, one explicit candidate selection, later outcome succeeded |
+| ON | 1/1 | 13 | 20.369 | 70,790 | Two candidate records retrieved, one explicit selection, later outcome succeeded |
 | OFF | 1/1 | 13 | 20.795 | 66,618 | No retrieval or selection |
 
 Common training cost was 15 attempts and 78,230 reported tokens; its coder succeeded but its parent failed. The ON candidate was source-bound observed experience, not proof of a newly learned algorithm. Both arms used 13 attempts; ON used more tokens. One pair and a small time difference establish exercised experience use, **not a general learning advantage**. Different cases/code/budgets across later rounds cannot establish a causal improvement either.
@@ -96,7 +96,7 @@ The current JSONL pair uses identical case content, initial frozen memory, allow
 
 | Condition | Root completion | Attempts | Assignment-to-final seconds | Provider-reported tokens | Experience use |
 | --- | ---: | ---: | ---: | ---: | --- |
-| JSONL ON | 1/1 | 14 | 52.244 | 78,666 | One retrieval/selection of a coordinator observation sourced from the failed training parent; later task succeeded |
+| JSONL ON | 1/1 | 14 | 52.244 | 78,666 | One candidate record retrieved/selected from the failed training parent; later task succeeded |
 | JSONL OFF | 1/1 | 13 | 48.281 | 67,567 | No retrieval/selection |
 
 Common training used 16 attempts and 106,586 reported tokens. Its coder executed the original failing starter, repaired it, produced independently correct output and was accepted, but the parent exhausted the shared local cap after receiving that output. The full work round used 43/48 requests and three/three roots; five unused requests do not authorize a fourth root. ON was slower, used more requests and tokens, and did not establish a benefit. The selected candidate is a source-bound failure observation, not proof of an invented successful repair recipe. Each task family has one matched pair; the different code/request policy and stochastic runs prevent causal comparison to earlier truncated trials. All raw databases/reports are unchanged under independent read-only audits.
@@ -116,6 +116,39 @@ A separate **11 November HKGAI search run** completed both planned roots in **ei
 The **11 November Git acceptance rehearsal** reproduced a false negative in the evaluator. A successful scoped runtime push to a local bare remote was missed because the verifier looked for the offline fixture backend. The updated evaluator checked the consumed approval and independently read the matching branch SHA on the original remote. The fixture also checked the pending and granted states before release, a changed remote, unavailable or missing refs, and a missing consumption record. The approval was scripted for the local fixture. The GitHub runtime trial still requires a designated target and credential. [Git acceptance evidence](../evaluation/evidence/development-summary.json)
 
 On **11 November**, C07’s read-only audit reconciled 13 recorded slots across five retained HKGAI development batches. Two other slots lacked root records. In three training runs the coder succeeded, while the root failed after using the shared attempt cap. The parent and child used **7 + 8**, **3 + 13**, and **7 + 9** requests respectively. The final parent action was a progress message, an artifact acceptance, and a memory record respectively. None of those last turns submitted the root for verification. The audit used no new provider requests and the original database hashes matched after reading. C07’s paired single/multi replay uses scripted turns and supplies engineering evidence. [C07 evidence](../evaluation/evidence/development-summary.json)
+
+### Retained evidence reanalysis
+
+On November 20, coordinator review applied the contributed read-only readers
+from PRs #67 and #58 to seven selected retained memory experiments and two
+ordinary batch reports. Original experiment hashes match the already published
+record, and all source JSON remained byte-identical after reading. The readers
+check recorded consistency; this reanalysis does not authenticate database
+events, rerun generated programs or create a new live experiment.
+
+Two complete pairs remain comparable under their recorded conditions:
+
+| Pair | ON/OFF verified probes | ON minus OFF requests | ON minus OFF successful seconds | ON minus OFF reported tokens |
+| --- | --- | ---: | ---: | ---: |
+| Code/report | 1/1 and 1/1 | 0 | -0.426 | +4,172 |
+| Required-action JSONL | 1/1 and 1/1 | +1 | +3.963 | +11,099 |
+
+Both training parents remain failed, with costs kept separate. A third selected
+report retains failed ON/OFF goals and no selected experience; the other four
+selected reports remain not comparable. None is discarded or counted as a new
+successful run. One pair per family and differing protocols do not establish a
+general learning gain, causal speed benefit or official score. Candidate-record
+retrieval counts do not mean search-call counts.
+
+Both ordinary batches passed internal consistency checks. Editing a copy's
+completion summary was rejected; the originals were untouched. Review also
+reproduced and corrected a memory-trial error outside the normal slot handler:
+failed seed snapshots or usage accounting could previously continue into a
+later replicate. Such failures now stop the trial, retaining error evidence and
+unstarted slots. The reviewed runtime passed 768 engineering checks, including
+21 actual-container checks, with nine optional UI skips. This review made zero
+model calls; all engineering fault injections were scripted. Public hashes and
+scope are in the [existing evidence summary](../evaluation/evidence/development-summary.json).
 
 ## 6. Failure analysis and corrections
 
@@ -147,9 +180,29 @@ Detailed ownership, acceptance and dependencies remain in the Roadmap; this draf
 
 ## 8. Contributions and AI assistance
 
-Repository history preserves actual authors and reviews. The accepted contributions include Qingthefish's Codex-assisted backend/integration work and HelloWorld2333666's terminal, Git and evaluation foundations (PRs #7–#9), plus the C07 comparison and coordination audit (PRs #48–#50). Minho Joh (aminoacid11) reproduced setup on clean WSL, fixed CLI parsing, tested HKGAI and Docker, and added the GitHub Actions workflow. [D04 PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) · [I04 PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) Further claims must be checked against actual code and review history; repository access alone does not establish contribution. AI assistance was used for implementation, checks, documentation and review. Automated/Codex-assisted self-review is not independent teammate approval. Final per-member statements and required screenshots remain to be verified.
+Repository history preserves actual authors and reviews. The accepted contributions include Qingthefish's Codex-assisted backend/integration work and HelloWorld2333666's terminal, Git and evaluation foundations (PRs #7–#9), plus the C07 comparison and coordination audit (PRs #48–#50). Minho Joh (aminoacid11) reproduced setup on clean WSL, fixed CLI parsing, tested HKGAI and Docker, and added the GitHub Actions workflow. [D04 PR #52](https://github.com/Qingthefish/evolutionary-agent-lab/pull/52) · [I04 PR #53](https://github.com/Qingthefish/evolutionary-agent-lab/pull/53) Further claims must be checked against actual code and review history; repository access alone does not establish contribution. AI assistance was used for implementation, checks, documentation and review. Automated/Codex-assisted self-review is not independent teammate approval. Final per-member statements remain to be verified.
 
 Jingran (jingran-jupiter) contributed the C06 instructor mid-test adapter, including input parsing, same-group preparation and automated checks. The coordinator adapted it to use a local course archive while keeping his authorship. [C06 source PR #54](https://github.com/Qingthefish/evolutionary-agent-lab/pull/54) · [Review evidence](team-roadmap.md#c06)
+
+Jingran also contributed the [ordinary batch audit, PR #58](https://github.com/Qingthefish/evolutionary-agent-lab/pull/58)
+and [memory evidence/effect reader, PR #67](https://github.com/Qingthefish/evolutionary-agent-lab/pull/67).
+Coordinator review retained his commits and added the outer snapshot/accounting
+stop correction. These are evaluation-engineering contributions, not evidence
+of a learning gain or an official task pass.
+
+On November 20, actual public GitHub main-branch commit-history pages were
+captured through the author filter. The unedited screenshots below retain
+titles, authors, dates and commit IDs. Their [manifest](contributions/manifest.json)
+records source URLs, capture times, hashes and the baseline `5e7073b`, before
+PR #69 integration. They show recorded history, not hours worked or guaranteed
+individual grades; the coordinator capture shows the first history page.
+
+| Member/account | Actual history screenshot |
+| --- | --- |
+| Qingthefish | [Coordinator history](contributions/04-qingthefish-main-history.jpg) |
+| HelloWorld2333666 | [Software/evaluation history](contributions/02-helloworld-main-history.jpg) |
+| Minho / aminoacid11 | [Setup/CI history](contributions/01-minho-main-history.jpg) |
+| Jingran / jingran-jupiter | [Mid-test adapter history](contributions/03-jingran-main-history.jpg) |
 
 ## 9. Proposed presentation outline
 
@@ -294,3 +347,11 @@ outage. The current course API page still lists the same endpoint/model. The
 root's original deadline is 20 November 00:38:23 Hong Kong time; quota recovery
 does not extend it or authorize replay. The [recorded-artifact fallback](#recorded-artifact-fallback)
 is available independently of that paused live run.
+
+On November 20 at 10:14 Hong Kong time, one new owner-requested minimal
+plain-chat observation also returned HTTP 502. The cumulative round is eight
+requests, with four unknown-usage attempts; no tool was dispatched and no old
+task was resumed. An earlier local environment lookup failed before transport
+construction. Its record is retained separately; fixing environment export
+released the same unissued reservation once. Known usage is unchanged. The
+failure still does not establish its remote cause or a provider-wide outage.

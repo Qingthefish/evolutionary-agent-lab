@@ -2,7 +2,7 @@
 
 ## Implemented boundary
 
-The standard-library Python package `agent_lab` owns local SQLite-backed workflow state, a controlled text-file broker, scoped candidate experience memory, a DeepSeek protocol adapter, a model-facing tool gateway, an opt-in Docker Python executor, and a cooperative multi-agent scheduler. Its public API is called by a trusted local application. A bounded runner executes one assigned task; the scheduler advances eligible delegated tasks across configured roles. There is no server or authenticated user session, and live-model autonomous planning/negotiation has not been demonstrated. Actual Python execution requires the explicit Docker backend; there is no host-code fallback. Opening the database or raw workspace paths directly bypasses application checks; protect them using normal operating-system access controls. Tests use temporary directories and demos use fresh ignored run directories.
+The standard-library Python package `agent_lab` owns local SQLite-backed workflow state, a controlled text-file broker, scoped candidate experience memory, explicit DeepSeek/HKGAI adapters, a model-facing tool gateway, an opt-in Docker Python executor, and a cooperative multi-agent scheduler. Its public API is called by a trusted local application. A bounded runner executes one assigned task; the scheduler advances eligible delegated tasks across configured roles. There is no server or authenticated user session. Bounded live delegation and delivery traces exist; general long-task planning/negotiation and complete mid-test delivery remain unestablished. The [README](../README.md#status) and [report](final-report.md) retain current observations and failures. Actual Python execution requires the explicit Docker backend; there is no host-code fallback. Opening the database or raw workspace paths directly bypasses application checks; protect them using normal operating-system access controls. Tests use temporary directories and demos use fresh ignored run directories.
 
 The tool gateway keeps identity, transition authority, and completion validation outside model-controlled arguments. Never expose `register_actor`, `respond`, or arbitrary passing `checks` as tools a model can call to impersonate a user or certify its own result.
 
@@ -20,7 +20,7 @@ Tasks begin pending and can start only through their assigned agent. Running tas
 
 Approval is bound to the canonical JSON representation of an exact action, including all supplied arguments. A changed branch, commit, or other argument invalidates the match. A request is usable only in its resumed task revision; a later human request makes older approvals stale. Action release is transactional and at most once, including across multiple database connections. A task cannot succeed while its current approved action remains unreleased.
 
-**Release is not external execution.** A future executor must take the exact returned action and execute it with the applicable sandbox and resource checks. An approval does not grant authority the human does not already possess. Authenticated identity, tool-specific permission, expiry, and resource-scope enforcement must be added at that boundary. There is no permission-management service in this foundation.
+**Release is not external execution.** Current deletion and Git tools bind the exact approved action and recheck applicable versions/targets before effects. Granting approval alone does not delete a file or push a branch. An approval does not grant authority the human does not already possess. Code execution retains its separate configured sandbox and resource boundary. Authenticated remote identity remains unimplemented; this is a trusted local application, not a permission-management service.
 
 At-most-once release does not guarantee exactly-once effects. A process may crash after consuming approval and before or after the external action. Do not replay the effect automatically: reconcile the external state and obtain a new applicable approval when needed. Similarly, cancellation cannot undo an already released/in-flight effect. Future tools need idempotency or explicit reconciliation.
 
@@ -30,7 +30,18 @@ Only the assigned agent may finish a task. Success requires a running task; a tr
 
 Goal and subtask status fractions are reported separately. Failed, cancelled, pending, and waiting assignments are not counted as successful or silently removed from the denominator. Elapsed time runs from assignment to terminal state, including time awaiting a human. Human waiting is also recorded separately, including an open wait, and survives restart. Wall-clock durations assume a reasonably stable system clock; this is not a distributed-clock protocol.
 
-Offline reports explicitly identify themselves as fixtures, make zero model calls, and are not valid model-performance benchmarks. The provider parser can return reported token counts and actual response/model IDs, but no live usage, model-call timing, or learning improvement has been measured yet.
+Offline reports explicitly identify themselves as fixtures, make zero model calls, and are not valid model-performance benchmarks. Live records retain reported token counts, actual response/model IDs, timing and unknown usage separately. A failed/uncertain request still consumes its reserved attempt; historical credit rows grant no additional requests. Neither reported tokens nor a local call cap establishes provider balance or billing. Current live results do not establish general learning improvement.
+
+The opt-in completion protocol derives working/ready/finish phases from task
+structure and remaining requests, preserves ancestor/submission reserves and
+restricts finish-phase tools to already permitted completion, handoff, read and
+communication actions. Structural readiness is not acceptance. Failed required
+children still block success, and an explicit blocker records failure. The
+default mode stays unchanged. Under this protocol, uncertain provider failures
+pause for operator resolution; they are not automatically replayed, refunded or
+resumed after expiry. Configuration compatibility is checked before attaching a
+new finish policy to an existing tree. These are engineering controls; the
+current HTTP 502 observations do not validate their full live task benefit.
 
 ## Candidate experience memory
 
@@ -44,7 +55,21 @@ A candidate must be retrieved in the current task before it can be selected once
 
 Only exactly matching lesson text and normalized tag sets are deduplicated, preserving every distinct source task and both successful and failed outcomes. There is no automatic semantic merge. Retirement excludes a candidate from future retrieval while preserving its sources and use history; recapturing a duplicate does not silently reactivate it. Each owner/conversation/namespace has a hard cap of 1000 total candidates, including retired records. Source/use history has no separate retention quota yet; it remains private runtime data and is excluded from commits.
 
-The `memory-demo` fixture deliberately separates plumbing from efficacy: the first text check genuinely fails, but fixture code explicitly writes the second correct output. Its recorded subsequent success and duplicate merge do not establish a learning gain. Formal memory-on/off comparisons on new tasks with the allowed model remain required.
+The `memory-demo` fixture deliberately separates plumbing from efficacy: the first text check genuinely fails, but fixture code explicitly writes the second correct output. Its recorded subsequent success and duplicate merge do not establish a learning gain. Two bounded live ON/OFF pairs are retained separately in the [report](final-report.md#5-observed-development-results); they do not establish a general learning gain or replace official evaluation/reset rules.
+
+### Evaluation record checks
+
+The frozen-experience comparator checks planned slots, original supplied inputs,
+role/seed conditions, complete known/unknown usage counters and private lesson
+ownership. Its [effect reader](memory-effect-analysis.md) reports matched
+case/replicate outcomes and keeps training costs separate. The ordinary
+[batch reader](evaluation-run-audit.md) independently recomputes summary metrics
+and checks case coverage and checkpoint consistency. Both readers are read-only,
+make no model calls and explicitly do not authenticate artifacts, database events
+or provider replies. They are separate from the official scenario export.
+Experience execution stops the whole trial at unknown-usage, human, driver,
+snapshot or accounting boundaries; unstarted slots remain visible rather than
+starting another arm/replicate after the failure.
 
 ## Checks and remaining work
 

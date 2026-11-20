@@ -1680,5 +1680,235 @@
       "independent_review": "bc621b6e035d5e35301e0ecd75a5944cbbd119459b984e6f0794a8543fdc0aab"
     },
     "scope": "Recorded source behavior and presentation reproducibility only. No live coordination, final handoff, Task 2, memory gain or official outcome."
+  },
+  "evaluation_evidence_review": {
+    "date": "2026-11-20",
+    "contributor_prs": [
+      67,
+      58
+    ],
+    "contributor": "jingran-jupiter",
+    "coordinator": "Qingthefish (Codex-assisted)",
+    "source_commit": "046ef2088e2d1db6758be89ddabe6a6bdf84644d",
+    "review_correction_commit": "6a982b2",
+    "new_model_calls": 0,
+    "benchmark_valid": false,
+    "authenticity_verified_by_readers": false,
+    "learning_improvement_established": false,
+    "validation": {
+      "python": "3.12",
+      "discovered": 777,
+      "passed": 768,
+      "skipped": 9,
+      "actual_container_checks": 21,
+      "focused_memory_tests": 51,
+      "focused_batch_audit_tests": 22,
+      "full_log_sha256": "c6eb2ecc1d40d6ef34115288c6de212d823820e97a2ad1fd5b08dd50229663c2"
+    },
+    "review_correction": {
+      "finding": "Outer seed snapshot/accounting failure continued into a later replicate",
+      "synthetic_reproduction_executed_replicates": [
+        0,
+        1
+      ],
+      "corrected_behavior": "Stop whole trial with replicate_driver_failure, preserve error and unrun slots",
+      "reproduction_sha256": "5b57a53eecb87a04da4ebbdc0e3c96ee1da06a90e2104f7e01aa372423cddb82"
+    },
+    "retained_memory_reports": [
+      {
+        "evidence_key": "review-20261029-code-experience",
+        "experiment_sha256": "623d189d0a6f2ea5f0f749af4a9745f05d7c16a52f6f6d9220c858a2c301ee99",
+        "hash_matches_prior_publication": true,
+        "analysis_status": "not_exercised",
+        "paired_outcomes": {
+          "planned_pairs": 1,
+          "on_only_success": 0,
+          "off_only_success": 0,
+          "both_succeeded": 0,
+          "neither_succeeded": 1
+        }
+      },
+      {
+        "evidence_key": "review-20261029-code-experience-dns-restart",
+        "experiment_sha256": "2f95477e57b3b83440c6f58a539350639bbbec8bbfca16f36e42837403b881dd",
+        "hash_matches_prior_publication": true,
+        "analysis_status": "compared",
+        "paired_outcomes": {
+          "planned_pairs": 1,
+          "on_only_success": 0,
+          "off_only_success": 0,
+          "both_succeeded": 1,
+          "neither_succeeded": 0
+        }
+      },
+      {
+        "evidence_key": "review-20261029-code-experience-followup",
+        "experiment_sha256": "45b403a1ee88a2d08609b86febaa99e39f4186d6ebe6c9e4250f00355972e760",
+        "hash_matches_prior_publication": true,
+        "analysis_status": "not_comparable",
+        "paired_outcomes": null
+      },
+      {
+        "evidence_key": "review-20261030-required-actions",
+        "experiment_sha256": "9cdcf3d57221a2caf7d9cffd3e65b6da4c6f90cdb5546626f139cedb9dfc4e77",
+        "hash_matches_prior_publication": true,
+        "analysis_status": "compared",
+        "paired_outcomes": {
+          "planned_pairs": 1,
+          "on_only_success": 0,
+          "off_only_success": 0,
+          "both_succeeded": 1,
+          "neither_succeeded": 0
+        }
+      },
+      {
+        "evidence_key": "review-20261030-acceptance-batch",
+        "experiment_sha256": "0427bb4c682931c5020993ce21f73cd33d591b70285701717afe2efe01c136c0",
+        "hash_matches_prior_publication": true,
+        "analysis_status": "not_comparable",
+        "paired_outcomes": null
+      },
+      {
+        "evidence_key": "review-20261030-overnight",
+        "experiment_sha256": "596678c855ad01ab792bbf22940a378d14c9e4d2c462af4abd48e778a6c4051d",
+        "hash_matches_prior_publication": true,
+        "analysis_status": "not_comparable",
+        "paired_outcomes": null
+      },
+      {
+        "evidence_key": "review-20261030-jsonl-repair",
+        "experiment_sha256": "04618ca8bd9333999f30b582be61aa1f87b15c2973fbc7a461ca56bab7a8d6cd",
+        "hash_matches_prior_publication": true,
+        "analysis_status": "not_comparable",
+        "paired_outcomes": null
+      }
+    ],
+    "complete_pair_deltas": [
+      {
+        "evidence_key": "review-20261029-code-experience-dns-restart",
+        "case_id": "code-experience-probe",
+        "on_minus_off": {
+          "reserved_model_attempts": 0,
+          "successful_goal_final_seconds": -0.42610907554626465,
+          "reported_tokens": 4172
+        },
+        "training_parent_verified_completed": false,
+        "on_selected_lesson_task_pairs": 1
+      },
+      {
+        "evidence_key": "review-20261030-required-actions",
+        "case_id": "jsonl-provided-probe",
+        "on_minus_off": {
+          "reserved_model_attempts": 1,
+          "successful_goal_final_seconds": 3.9632160663604736,
+          "reported_tokens": 11099
+        },
+        "training_parent_verified_completed": false,
+        "on_selected_lesson_task_pairs": 1
+      }
+    ],
+    "ordinary_batch_audits": [
+      {
+        "evidence_key": "review-20261109-batch-checkpoint/rehearsal/20261109-203053-a31ca1",
+        "source_files": {
+          "results.json": "5a1942575bf2ffc936e5dc336ab68bce0c5a608af4fb35fe23be21390b21956f",
+          "run-progress.json": "e74b257bf889695582d6b147e0675bbb638d564468451a0aaca7451e3f7188a3"
+        },
+        "status": "consistent"
+      },
+      {
+        "evidence_key": "review-pr64-20261119/corrected-setup/evaluations/20261119-202836-76a4ad",
+        "source_files": {
+          "results.json": "748ec8b0b55828f5cb9c329255d571ec4202f5a93e679666b640e1b422e446e1",
+          "run-progress.json": "0c71e9e27303198a906307aeb9cc8e893f402aebb496302762416d7729a54f5a"
+        },
+        "status": "consistent"
+      }
+    ],
+    "negative_control": {
+      "synthetic_edit_only": true,
+      "original_unchanged": true,
+      "model_calls": 0,
+      "status": "invalid",
+      "findings": [
+        {
+          "code": "summary_mismatch",
+          "location": "results.json"
+        }
+      ]
+    },
+    "source_records_unchanged": true,
+    "scope": "Read-only saved-JSON consistency and descriptive results only; original database/artifact/provider authentication is outside these readers. Two complete pairs retain no general learning-benefit claim. Final release and official results remain open.",
+    "portability_review": {
+      "initial_remote_run": 44661461042,
+      "initial_failed_job": 136040435419,
+      "initial_failure_log_sha256": "50f5e2a5d6c99b6235ea00fd2c07d1ceab939d1db0e67ee2510f4e97e139edec",
+      "finding": "Serialized timing digits caused a false substring rejection; a helper also shadowed unittest.TestCase.fail",
+      "correction": "Compare baseline and recomputed structures, with legitimate 0.1000123 timing; rename helper fail_goal",
+      "focused_final_python_versions": [
+        "3.12",
+        "3.14"
+      ],
+      "focused_tests_each": 51,
+      "runtime_unchanged": true
+    }
+  },
+  "service_observation_20261120": {
+    "started_at": "2026-11-20T10:14:27.592308+08:00",
+    "request_scope": "Minimal plain chat; issued host/model; no tools",
+    "actual_new_requests": 1,
+    "round_cumulative_requests": 8,
+    "unknown_usage_attempts": 4,
+    "http_status": 502,
+    "automatic_retry": false,
+    "expired_task_resumed": false,
+    "known_tokens_unchanged": 17598,
+    "local_environment_failure_before_http_preserved": true,
+    "unissued_reservation_released_once_after_export_fix": true,
+    "result_sha256": "376a256bcb6c4536440d676b168aca6711fbab04ba9cb025dc5680a032f05218",
+    "cause_or_provider_wide_outage_established": false
+  },
+  "contribution_history_captures": {
+    "kind": "actual_github_public_commit_history_screenshots",
+    "captured_date": "2026-11-20",
+    "basis_main_commit": "5e7073ba73f4a7148920fc6678a233013d690291",
+    "source": "Actual GitHub rendered main-branch history filtered through its author menu; logged-out public view",
+    "screenshots_edited": false,
+    "model_calls": 0,
+    "files": [
+      {
+        "file": "01-minho-main-history.jpg",
+        "account": "aminoacid11",
+        "sha256": "6a0c69dfd9461856ce5d251bde0aa65698cb6cb3fe764e2b9c12f8f73e2bc70a",
+        "bytes": 67281,
+        "captured_at": "2026-11-20T10:33:57.191976+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=aminoacid11"
+      },
+      {
+        "file": "02-helloworld-main-history.jpg",
+        "account": "HelloWorld2333666",
+        "sha256": "5649cb8fc32f5d7d20989b0e874d744d4c6e1f751194d3e6274a9b506d1c59e7",
+        "bytes": 293414,
+        "captured_at": "2026-11-20T10:35:31.888607+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=HelloWorld2333666"
+      },
+      {
+        "file": "03-jingran-main-history.jpg",
+        "account": "jingran-jupiter",
+        "sha256": "cf5bb2f4001121e50a8d2c73a0bf00eaa2902cc58a28fdfbd95ced4e8758d494",
+        "bytes": 46769,
+        "captured_at": "2026-11-20T10:38:05.429275+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=jingran-jupiter"
+      },
+      {
+        "file": "04-qingthefish-main-history.jpg",
+        "account": "Qingthefish",
+        "sha256": "20625fca8f27c785620dd457efcbbb3be092f9a9e1964a84e91ac60f09f8059a",
+        "bytes": 364592,
+        "captured_at": "2026-11-20T10:39:14.848994+08:00",
+        "history_url": "https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=Qingthefish"
+      }
+    ],
+    "limitations": "Historical captures before PR #69 integration. These show recorded commits and attribution, not hours worked, independent review, official results or individual grades. Final per-member statements still need verification."
   }
 }
