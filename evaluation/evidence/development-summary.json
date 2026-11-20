@@ -1910,5 +1910,52 @@
       }
     ],
     "limitations": "Historical captures before PR #69 integration. These show recorded commits and attribution, not hours worked, independent review, official results or individual grades. Final per-member statements still need verification."
+  },
+  "presentation_preparation_20261120": {
+    "kind": "recorded_live_development_walkthrough",
+    "planning_date": "2026-11-25",
+    "date_basis": "Wednesday and inferred week 13 if 2026-09-02 is week 1; not a verified group slot",
+    "duration": "Proposed nine-minute outline; instructor duration unverified",
+    "source_run_id": "20261030-090221-3f0e8c",
+    "source_runtime_commit": "a52c34af7cb1ac578f11329eb36f53dcc71d271d",
+    "source_experiment_sha256": "9cdcf3d57221a2caf7d9cffd3e65b6da4c6f90cdb5546626f139cedb9dfc4e77",
+    "source_database_sha256": "5c6f3b703378568023e22f2408ac6deb3c713690691d3291cb0104ab346c797c",
+    "historical_root_state": "succeeded",
+    "historical_model_attempts": 14,
+    "active_roles": [
+      "coordinator",
+      "coder"
+    ],
+    "validation": {
+      "sections_rehearsed": 4,
+      "changed_snapshot_refused": true,
+      "source_and_pack_snapshots_unchanged": true,
+      "new_model_calls": 0,
+      "new_code_executions": 0,
+      "recorded_turns": 14,
+      "recorded_tasks": 2,
+      "root_criteria_rechecked": 6,
+      "coder_criteria_rechecked": 5,
+      "benchmark_valid": false,
+      "official_task_pass": false,
+      "manifest_sha256": "7538188c7f133c30e3abdf92b5113150f2652c59002c0b89381825771f8ef4e9",
+      "viewer_sha256": "47ce82d0af2202f3dfc375bb59db2afa419deb082998357780efc2b72663fd89",
+      "record_sha256": "4ac73dfea874e65db4a8e1607a5d85bf0529e85a71eba88b952c3a14686acb9e"
+    },
+    "source_and_original_outcomes_unchanged": true,
+    "training_parent_still_failed": true,
+    "general_planning_or_learning_benefit_established": false,
+    "official_task_pass": false,
+    "scope": "Read-only source-bound historical display. It does not replace instructor live evaluation, rerun code, combine the separate partial booking artifact into a complete official task, or establish a new model result."
+  },
+  "service_observation_20261120_1139": {
+    "started_at": "2026-11-20T11:39:10.816323+08:00",
+    "http_status": 502,
+    "round_cumulative_requests": 9,
+    "unknown_usage_attempts": 5,
+    "automatic_retry": false,
+    "expired_task_resumed": false,
+    "result_sha256": "a7b094a92ce95a9238661cdeb317f2d2f796df34db3fd286fc8a60d564d6939e",
+    "cause_or_provider_wide_outage_established": false
   }
 }
