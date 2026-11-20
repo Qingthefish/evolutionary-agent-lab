@@ -205,6 +205,8 @@ class ExperienceTrial:
                 for record in (r for r in records if r['phase'] == 'training'):
                     self.stage(session, chat, cases[record['case']['id']], record, floor=0)
                     roots.append(record['root'])
+                    if self.stop_at_boundary(record):
+                        return self.finish()
                     if record['workflow'] is None or record['workflow']['root_state'] not in TERMINAL:
                         raise WorkflowError('Training stopped before a known terminal outcome; dependent probes remain not run')
                 seed = MemorySeed.freeze(session, path / 'seed', chat, roots)
@@ -222,15 +224,37 @@ class ExperienceTrial:
                         self.save()
                     finally:
                         if probe is not None: probe.close()
+                    if self.stop_at_boundary(record):
+                        return self.finish()
             except Exception as error:
                 report.setdefault('replicate_errors',{})[str(rep)] = _error(error)
                 self.save()
             finally:
                 if session is not None: session.close()
-        report['ended'] = time.time()
-        report['comparison'] = compare_experience(report)
+        return self.finish()
+
+    def stop_at_boundary(self, record):
+        """Do not start another slot after human pauses or uncertain requests.
+
+        Retain the current outcome and every remaining not_run slot. A known
+        terminal task failure with complete usage may still be compared.
+        """
+        workflow = record.get('workflow')
+        usage = record.get('usage') or {}
+        reason = ('unknown_provider_usage' if usage.get('unknown_usage_attempts') else
+                  'driver_failure' if record['classification'] == 'driver_error' else
+                  'human_or_unfinished_boundary' if workflow is not None and workflow['root_state'] not in TERMINAL
+                  else None)
+        if reason is None:
+            return False
+        self.report['stop'] = {'slot':record['slot'], 'reason':reason}
+        return True
+
+    def finish(self):
+        self.report['ended'] = time.time()
+        self.report['comparison'] = compare_experience(self.report)
         self.save()
-        return report
+        return self.report
 
     def stage(self, session, chat, case, record, *, floor):
         started = time.monotonic()
@@ -340,8 +364,10 @@ def compare_experience(report):
                 raise ValueError('Trial order, condition or case changed')
             defined = definitions[row['case']['id']]
             for field in ('id','title','goal','driver','split','control','expected','constraints'):
-                if row['case'][field] != defined[field]:
+                if digest(row['case'][field]) != digest(defined[field]):
                     raise ValueError('Executed case content differs from the inspected plan')
+            if digest(row['case'].get('inputs', {})) != digest(defined.get('inputs', {})):
+                raise ValueError('Executed task inputs differ from the inspected plan')
             if row['status'] not in {'executed','not_run','running'}:
                 raise ValueError('Invalid execution status')
             if row['status'] != 'executed':
@@ -384,6 +410,9 @@ def compare_experience(report):
                 raise ValueError('Accepted goal lacks trusted completion evidence')
             if not isinstance(workflow['observed_models'],list) or any(not isinstance(m,str) or not m for m in workflow['observed_models']):
                 raise ValueError('Observed provider identity is malformed')
+            if not isinstance(row['usage'], dict) or set(row['usage']) != {
+                    'reserved_model_attempts','unknown_usage_attempts','reported_tokens','tool_calls'}:
+                raise ValueError('Usage must retain every known and unknown counter')
             for value in row['usage'].values(): _nonnegative(value,integer=True)
             if row['usage']['unknown_usage_attempts'] > row['usage']['reserved_model_attempts']:
                 raise ValueError('Unknown usage count exceeds reserved attempts')
@@ -400,9 +429,12 @@ def compare_experience(report):
                 if (use['selections'] != len(use['uses']) or use['selections'] > use['retrievals']
                         or use['assessed'] != sum(u['outcome'] is not None for u in use['uses'])):
                     raise ValueError('Memory use counts lack matching evidence')
+                if len({(u['lesson'], u['task']) for u in use['uses']}) != len(use['uses']):
+                    raise ValueError('A selected lesson/task pair cannot be counted twice')
                 by_id = {t['task_id']:t for t in outcomes}
                 for entry in use['uses']:
                     if (entry['task'] not in by_id or entry['owner'] != entry['assignee']
+                            or entry['assignee'] != by_id[entry['task']]['assignee']
                             or entry['namespace'] != seed['namespace'] or entry['chat'] != seed['chat']
                             or (entry['outcome'] is not None and entry['outcome'] != by_id[entry['task']]['state'])):
                         raise ValueError('Selected-use outcome differs from actual probe task')
@@ -424,6 +456,7 @@ def compare_experience(report):
                     reasons.append('Paired observed provider identities are missing or differ')
         training_summary = trial_summary([r for r in rows if r['phase']=='training'])
         arms = {arm:trial_summary([r for r in rows if r['phase']=='probe' and r['memory']==arm]) for arm in ('on','off')}
+        digest({'training':training_summary, 'probes':arms})  # Reject non-finite aggregate overflow too.
         exercised = any((r.get('memory_use') or {}).get('selections',0) for r in rows if r['memory']=='on')
         if data['ended'] is None: reasons.append('Trial is still running or interrupted')
         status = ('not_comparable' if reasons else 'engineering_only' if data['mode']=='offline_fixture'

@@ -353,6 +353,8 @@ Training costs are reported separately. Failed, paused, interrupted and unrun pl
 
 Reports and seeds stay in ignored `runs/`. `compare` rechecks conditions, candidate identity, reset boundaries, role/tool/budget matching, observed model IDs and result evidence; edited headline summaries are ignored. Fingerprints detect changes, not forged results. No official scoring/reset rule is assumed, and no single/multi-agent baseline is supplied by this memory protocol.
 
+For a per-case ON/OFF result table and memory-use diagnostics, run `python -m agent_lab.evaluation.experience_effect --run runs/experience-development/RUN_ID --format markdown`. The read-only [memory effect analysis](docs/memory-effect-analysis.md) preserves training costs, failures and unknown usage; positive time/request/token deltas mean ON used more. Scripted fixtures remain engineering evidence, and the tool makes no causal learning claim.
+
 ## Inspect or exercise the single/multi-agent baseline (C07 preparation)
 
 ```bash
