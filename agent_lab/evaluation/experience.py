@@ -228,7 +228,11 @@ class ExperienceTrial:
                         return self.finish()
             except Exception as error:
                 report.setdefault('replicate_errors',{})[str(rep)] = _error(error)
-                self.save()
+                # Snapshot/accounting/setup errors can occur outside stage's
+                # normal result boundary, after provider or tool effects. Do
+                # not spend a later replicate while that state is unresolved.
+                report['stop'] = {'replicate':rep, 'reason':'replicate_driver_failure'}
+                return self.finish()
             finally:
                 if session is not None: session.close()
         return self.finish()

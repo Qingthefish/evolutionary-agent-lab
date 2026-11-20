@@ -19,6 +19,7 @@ from agent_lab.evaluation.experience import ExperiencePlan, ExperienceTrial
 from agent_lab.evaluation.manifest import digest
 from agent_lab.runtime import LiveConfig
 from agent_lab.deepseek import DeepSeekClient
+from agent_lab.core import WorkflowError
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -251,6 +252,23 @@ class ExperienceEffectTests(unittest.TestCase):
 
 
 class ExperienceStopTests(unittest.TestCase):
+    def test_outer_snapshot_or_usage_failure_stops_before_next_replicate(self):
+        plan = ExperiencePlan(ROOT/'evaluation/memory-plan.json')
+        for boundary in ('MemorySeed.freeze', 'tree_usage'):
+            with self.subTest(boundary=boundary), tempfile.TemporaryDirectory() as directory:
+                driver = ExperienceFixtureDriver(LiveConfig(api_key='unused-scripted-key', **plan.runtime.settings))
+                with patch('agent_lab.evaluation.experience.' + boundary,
+                           side_effect=WorkflowError('Injected snapshot/accounting failure')):
+                    report = ExperienceTrial(plan, driver).run(directory)
+                self.assertEqual(report['stop'], {'replicate':0, 'reason':'replicate_driver_failure'})
+                self.assertEqual(set(report['replicate_errors']), {'0'})
+                self.assertTrue(all(row['status']=='not_run' for row in report['results']
+                                    if row['replicate'] > 0 or row['phase']=='probe'))
+                self.assertEqual(report['comparison']['status'], 'not_comparable')
+                self.assertIsNotNone(report['ended'])
+                saved = json.loads(next(Path(directory).glob('*/experiment.json')).read_text())
+                self.assertEqual(saved['stop'], report['stop'])
+
     def run_stopped(self, phase, pause=False):
         plan = ExperiencePlan(ROOT/'evaluation/memory-plan.json')
 

@@ -61,6 +61,12 @@ has unknown provider usage, a driver failure or a human/unfinished boundary. The
 still be followed by the planned comparison. This prevents an ON transport error
 or clarification from silently triggering OFF or a later replicate.
 
+Setup, frozen-seed snapshot or accounting failures outside a slot's normal
+result path also stop the entire trial. Their `stop` record names the
+replicate with `reason=replicate_driver_failure`; original completed/partial
+rows and the `replicate_errors` record are retained. No later replicate is
+started to work around that failure.
+
 ## Prepare a real trial
 
 The checked-in JSONL repair plan is an existing three-root development experiment:
