@@ -2,6 +2,11 @@
 
 Evolutionary Multi-Agent Collaboration System
 
+A platform for turning human tasks into delegated, tool-based agent work with
+private workspaces, recorded handoffs and independently checked delivery. The
+allowed language model chooses actions; the application enforces permissions,
+execution limits, human decisions and task state.
+
 ## Supported environment and clean setup
 
 Use **Python 3.12 or newer and Git on Linux or macOS**. The controlled file broker requires POSIX directory descriptors, no-follow opens and private file permissions. Native Windows Python cannot enforce this boundary and is not supported. The core commands and tests use only the Python standard library; Textual is optional and Docker is needed only for actual isolated code execution.
@@ -64,8 +69,9 @@ without tool execution or automatic resend. After an explicitly released
 resend and a separate minimal plain-chat control also returned HTTP 502, the
 round reached seven actual requests, with usage unknown for three attempts.
 An owner-requested minimal check on November 20 also returned HTTP 502: the
-current cumulative record is **eight requests**, with four unknown-usage
-attempts. Old paused/expired tasks were not resumed. Complete live outcomes for all six mid-test tasks, GitHub runtime
+record reached eight requests. A later owner-requested check at 11:39 Hong
+Kong time again returned 502: **nine cumulative requests**, with five unknown-
+usage attempts. Old paused/expired tasks were not resumed. Complete live outcomes for all six mid-test tasks, GitHub runtime
 evidence, release freeze and final submission materials remain open.
 [Current S01 record](docs/team-roadmap.md#s01)
 
@@ -86,6 +92,12 @@ failed trials remain visible. Review also fixed an outer snapshot/accounting
 error path that could start a later replicate. The reviewed source passed
 768 checks, including 21 actual-container checks, with nine optional UI skips.
 [Evidence and limits](docs/final-report.md#retained-evidence-reanalysis)
+
+**Presentation preparation:** the existing report now explains the platform in
+plain terms and gives a proposed eight-slide/nine-minute story, a source-bound
+recorded workflow walkthrough and honest mid-test limitations. November 25 is
+the week-13 planning target; exact group time/duration remains unconfirmed.
+[Presentation story and runbook](docs/final-report.md#9-proposed-presentation-outline)
 
 **Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)
 

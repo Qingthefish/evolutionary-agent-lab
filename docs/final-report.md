@@ -206,14 +206,82 @@ individual grades; the coordinator capture shows the first history page.
 
 ## 9. Proposed presentation outline
 
-The announcement requires a week-13 presentation; confirm its exact date/format. This outline and its length are our proposal:
+The instructor announcement specifies a week-13 presentation and a report
+**after** week 13; the report deadline is not automatically the presentation
+date. Wednesday, **25 November 2026**, is week 13 if the shown 2 September
+lecture is week 1. Treat November 25 as the preparation target, not a confirmed
+group slot. The mailbox search found no separate presentation timetable or
+stated duration. The following nine-minute structure is our proposal and can
+be shortened when the actual format is confirmed.
 
-1. Instructor objective and the engineering problem: observable completion under bounded execution.
-2. Task lifecycle: original inputs, model-selected delegation, isolated code execution, handoff and independent verification.
-3. Human boundaries and private experience: actual grants/outcomes rather than prompt-only restrictions.
-4. Real development results, including failed parents, unrun probes and the two bounded memory pairs and actual private/group human decisions.
-5. Demonstration and limitations: label recorded traces and scripted fixtures clearly; never present them as a new live model run.
-6. Official test results and remaining failure analysis, to be filled only after the prescribed evaluation.
+### What the system is
+
+A multi-agent execution platform takes a human task, lets permitted agents
+choose and delegate work, gives each agent its own tools/files/experience, and
+records actual handoffs, execution, human decisions and checked outcomes.
+The allowed course model supplies language reasoning; trusted application code
+owns state, access, limits and acceptance. The booking application is one test
+output produced through that platform, not its definition. Experience means
+retrieving scoped candidate observations, not retraining model weights or
+assuming every prior fix is useful.
+
+Opening script:
+
+> We built a multi-agent execution platform that connects human requests to
+> delegated tool work and verifiable delivery. The language model chooses
+> actions; the platform enforces workspace boundaries, records evidence and
+> decides completion through independent checks or actual human review.
+> We evaluate both execution reliability and the observed effect of experience
+> reuse, including failures and cases where memory does not help.
+
+### Proposed slides and evidence
+
+| Slide / time | Main point | Show or explain |
+| --- | --- | --- |
+| 1 / 0:45 | What problem the platform solves | A multi-step task needs delegation, executable work and checked delivery. State the instructor objective and the system definition above. |
+| 2 / 1:15 | Architecture and responsibility | Human request → model-selected assignments → private tools/workspaces → snapshot handoff → independent checks → candidate experience. Explain what the model chooses and what code enforces. |
+| 3 / 2:00 | One complete recorded workflow | Historical HKGAI JSONL probe: coordinator delegates original input, coder writes/runs source, offers output, coordinator receives/reads it and delivers the report. Both tasks succeeded under their declared contract. Label it a past real run, not a fresh live request. |
+| 4 / 1:00 | Isolation and human control | Explain private files, actual restricted code execution, clarification, and approval versus action release. Reference the separately retained real private clarification and group-deletion evidence; they are not part of the JSONL run. |
+| 5 / 1:15 | Experience and evaluation | Show the matched JSONL ON/OFF results and separate training cost. Both probes completed; ON took 14 versus 13 requests and 52.244 versus 48.281 seconds. One selected candidate is not proof of benefit. |
+| 6 / 1:00 | Instructor mid-test status | Show the three scenario pairs and the exact verified state. Booking source has independent behavior evidence, but complete mid-test parent delivery is not established locally; other unrun/partial tasks stay visible. Do not convert engineering checks into a six-task score. |
+| 7 / 1:00 | Failures and corrections | Separate our truncation, shared-budget, handoff and completion problems from the later HTTP 502 boundary. Explain parent reserves, bounded repair, exact-version checks and stopping on uncertain effects. Fixed-code live benefit remains unverified where service failure prevented execution. |
+| 8 / 0:45 | Deliverables and remaining gates | Repository, architecture, truthful results/failure analysis, genuine contribution history and recorded demonstration. Remaining gates: allowed-model scenario runs, runtime GitHub evidence, final release/configuration and actual course submission requirements. |
+
+A recorded walkthrough may be presented if the service remains unavailable,
+with that limitation stated before showing it. It is preparation material,
+not instructor approval to replace required live evaluation. Avoid making the
+outage the whole presentation: the engineering design, real bounded outcomes,
+null memory result and remaining delivery gaps are all part of the story.
+
+### Demonstration runbook
+
+The local ignored package `runs/presentation-20261120/` contains a hash-checked
+viewer, exact prior outputs and a scoped 14-turn trace from the original
+October 30 HKGAI ON probe. Its source experiment and database match the retained
+published/audited hashes. The original six coordinator criteria and five coder
+criteria were rechecked read-only and pass. The viewer makes zero model calls
+and executes no generated code; original records remain unchanged.
+
+From the project root:
+
+```bash
+python3 runs/presentation-20261120/view.py --section overview
+python3 runs/presentation-20261120/view.py --section trace
+python3 runs/presentation-20261120/view.py --section results
+python3 runs/presentation-20261120/view.py --section memory
+```
+
+The source trace is a bounded declared-role/file-contract development case,
+not proof of general autonomous planning or a passed instructor mid-test.
+Training's failed parent remains failed. Keep the separate booking-artifact
+reproduction below as an optional view of the partial software output; do not
+combine the two examples into one supposedly completed official workflow.
+
+If asked why a child can succeed while its root fails, explain that root
+completion also requires delivery, receipt/read, report and final acceptance
+within the shared budget. A working child artifact proves only its checked
+subtask. If asked whether memory improves results, state that the mechanism
+was exercised but the retained pairs do not establish general improvement.
 
 ### Recorded-artifact fallback
 

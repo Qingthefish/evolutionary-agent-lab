@@ -813,6 +813,24 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   the focused 51 checks pass on local Python 3.12 and 3.14. Remote checks
   remain required before merge. [Captured evidence](final-report.md#8-contributions-and-ai-assistance)
 
+- **2026-11-20 presentation preparation:** Qingthefish, owner-requested
+  Codex-assisted S02 maintenance on `docs/S02-presentation-20261120`.
+  Expanded the existing report into a concrete platform definition,
+  eight-slide/nine-minute proposal, source-bound demonstration runbook and
+  questions about partial delivery, memory and evaluation. November 25 is
+  the inferred week-13 planning target; the actual group slot/duration remains
+  unconfirmed. Prepared a local read-only walkthrough of the October 30 HKGAI
+  ON probe: 14 recorded turns, two successful tasks, exact retained outputs
+  and six coordinator/five coder criteria rechecked against original data.
+  Source experiment and database hashes match the prior retained record.
+  All four viewer sections ran; a changed-snapshot copy was refused. Zero
+  new model calls or generated-code executions. Package and raw validation
+  remain under ignored `runs/presentation-20261120/`; public scope/hashes are
+  in the existing evidence JSON. This is a recorded development demonstration,
+  not a new live run, general planning/learning proof, official task pass or
+  final S02 delivery. The failed training parent and separate incomplete
+  booking parent are retained. [Presentation plan](final-report.md#9-proposed-presentation-outline)
+
 ## Starting a Codex session
 
 ```text
