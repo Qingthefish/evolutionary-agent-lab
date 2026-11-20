@@ -16,6 +16,12 @@ authorization. The default ceiling is 1,024, and the configured plan value must
 fit the selected ceiling. Existing task configurations cannot acquire the new
 setting on resume.
 
+A reply cut off at the ceiling is still discarded unread and runs no tool; a
+second consecutive cut-off stops the task. The notice before the next request
+names what filled the reply (the tool call and its argument size, reasoning or
+text), and gives file-splitting advice only to roles that can write files. Only
+sizes are recorded (the `output_limit_reached` event's `shape`), never text.
+
 The November 18 integration review checked the later interrupted-state recovery
 command as well. It tightened file export against linked task directories,
 added full runner transcripts to the local export and bound HTML permission in

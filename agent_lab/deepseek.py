@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import http.client
 import json
 import math
+import re
 import socket
 import ssl
 import time
@@ -77,12 +78,37 @@ class TruncatedCompletion(ProviderError):
     Proposed 2026-11-18, pending owner review.
     """
 
-    def __init__(self, usage, response_id, model, **diagnostics):
+    def __init__(self, usage, response_id, model, *, shape=None, **diagnostics):
         super().__init__("Invalid, incomplete, or unsupported provider completion; no tools released",
                          kind="invalid_completion", phase="parsing", **diagnostics)
         self.usage = dict(usage)
         self.response_id = response_id
         self.model = model
+        self.shape = shape or truncation_shape({})
+
+
+_TOOL_NAME = re.compile(r"[a-z_]{1,64}")
+
+
+def truncation_shape(source):
+    """Sizes only of a length-stopped message (proposed 2026-11-21, pending owner review).
+
+    Which tool was being written and how many characters each part reached, so the
+    notice can name the oversized part. Never text, argument values or reasoning.
+    """
+    def chars(value):
+        return len(value) if isinstance(value, str) else 0
+
+    calls = source.get("tool_calls") if isinstance(source, dict) else None
+    tools = []
+    for call in (calls if isinstance(calls, list) else [])[:16]:
+        function = call.get("function") if isinstance(call, dict) else None
+        name = function.get("name") if isinstance(function, dict) else None
+        tools.append({"name": name if isinstance(name, str) and _TOOL_NAME.fullmatch(name) else "unknown",
+                      "argument_chars": chars(function.get("arguments")) if isinstance(function, dict) else 0})
+    source = source if isinstance(source, dict) else {}
+    return {"tool_calls": tools, "content_chars": chars(source.get("content")),
+            "reasoning_chars": chars(source.get("reasoning_content"))}
 
 
 def _truncated_identity(data):
@@ -261,6 +287,7 @@ class DeepSeekClient:
             check["parse_rule"] = "finish_reason"
             if reason == "length":
                 truncated = _truncated_identity(data)
+                shape = truncation_shape(source)
             if not isinstance(reason, str) or reason not in {"stop", "tool_calls"}:
                 raise ValueError()
             check["parse_rule"] = "role"
@@ -324,8 +351,8 @@ class DeepSeekClient:
                 raise ValueError()
         except (ValueError, KeyError, TypeError, UnicodeError, RecursionError):
             if truncated is not None:
-                raise TruncatedCompletion(*truncated, request_bytes=len(encoded), response_bytes=len(raw),
-                                          completion_check=check) from None
+                raise TruncatedCompletion(*truncated, shape=shape, request_bytes=len(encoded),
+                                          response_bytes=len(raw), completion_check=check) from None
             raise ProviderError("Invalid, incomplete, or unsupported provider completion; no tools released",
                 kind="invalid_completion", phase="parsing", request_bytes=len(encoded), response_bytes=len(raw),
                 completion_check=check) from None

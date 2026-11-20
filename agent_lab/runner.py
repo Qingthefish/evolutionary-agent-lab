@@ -8,7 +8,7 @@ import math
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError, TruncatedCompletion
 from .hkgai import HKGAIClient, HKGAIHTTP
-from .gateway import ToolBudgetError, ToolRequestError
+from .gateway import _SPECS as TOOL_SPECS, ToolBudgetError, ToolRequestError
 from .files import INPUT_PROTOCOL
 from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
 from . import budget, completion
@@ -84,6 +84,49 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
     if require_tool_actions:
         result['provider_action_protocol'] = REQUIRED_ACTION_POLICY
     return result
+
+
+FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
+
+
+def _argument_limit(tool):
+    spec = TOOL_SPECS.get(tool)
+    sizes = [field.get("maxLength") for field in (spec[1].values() if spec else ()) if isinstance(field, dict)]
+    sizes = [size for size in sizes if type(size) is int]
+    return max(sizes) if sizes else None
+
+
+def output_limit_instruction(shape, allowed):
+    """A notice that names what filled the response (proposed 2026-11-21, pending owner review).
+
+    Live Software Task 2 (2026-11-21): a lead without file tools was told to split long
+    documents across files, then hit the limit again and the task stopped.
+    """
+    parts = ["Your previous response reached the output-token limit and was discarded unread; none of its tool "
+             "calls ran. Continue the same task."]
+    calls = shape.get("tool_calls") or []
+    if calls:
+        largest = max(calls, key=lambda call: call["argument_chars"])
+        limit = _argument_limit(largest["name"])
+        parts.append(f"It was cut off with {len(calls)} tool call(s); the largest was {largest['name']} with about "
+                     f"{largest['argument_chars']:,} characters of arguments"
+                     + (f" (its longest argument may be at most {limit:,} characters)" if limit else "") + ".")
+        if len(calls) > 1:
+            parts.append("Send one or two tool calls per response.")
+    elif shape.get("reasoning_chars"):
+        parts.append(f"It spent about {shape['reasoning_chars']:,} characters reasoning before any tool call. "
+                     "Decide briefly and make the next tool call.")
+    elif shape.get("content_chars"):
+        parts.append(f"It wrote about {shape['content_chars']:,} characters of text without a tool call. Answer "
+                     "briefly or make the next tool call.")
+    if FILE_WRITERS & set(allowed):
+        parts.append("Split long documents across several smaller files"
+                     + (", or write a long file in parts with create_text then append_text"
+                        if "append_text" in allowed else "") + ".")
+    else:
+        parts.append("You cannot write files, so keep briefs and messages short: state the deliverable, constraints "
+                     "and acceptance checks in a few lines and let the subtask design the details.")
+    return " ".join(parts)
 
 
 class TaskRunner:
@@ -605,17 +648,14 @@ class TaskRunner:
                                  {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
             self.workflow._event(self.task, self.actor, "output_limit_reached",
                                  {"number": number, "usage": error.usage, "consecutive": consecutive,
-                                  "task_continues": not consecutive, "tools_released": 0})
+                                  "task_continues": not consecutive, "tools_released": 0, "shape": error.shape})
             if current["status"] != "calling" or current["attempts"] != number:
                 return self.status()
             if not consecutive:
                 transcript.append({"role": "user", "content": _json({
                     "kind": "output_limit_notice", "max_output_tokens": self.client.max_tokens,
-                    "instruction": "Your previous response reached the output-token limit and was discarded unread; "
-                        "none of its tool calls ran. Continue the same task. Keep each response within the limit: "
-                        "use fewer tool calls per response and brief arguments, and split long documents across "
-                        "several smaller files" + (", or write a long file in parts with create_text then append_text"
-                                                   if "append_text" in self.gateway.allowed else "") + "."})})
+                    "cut_off": error.shape,
+                    "instruction": output_limit_instruction(error.shape, self.gateway.allowed)})})
                 task_state = self.workflow.task(self.task, self.actor)["state"]
                 self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
                                          ("paused" if task_state.startswith("waiting_") else "ready",
