@@ -285,7 +285,7 @@ class TaskRunner:
 
     def _expired(self):
         task = self.workflow.task(self.task, self.actor)
-        return self.workflow.clock() - task["created"] >= self.limits.duration_seconds
+        return budget.task_elapsed(self.workflow, self.task, self.workflow.clock()) >= self.limits.duration_seconds
 
     def _budget_context(self, transcript, session, number):
         """Current local reservations, never account balance or action authority.
@@ -303,7 +303,7 @@ class TaskRunner:
                                                                   + budget.refunded_for_task(self.workflow, self.task)),
                      'tool_calls_left': max(0, maximum - used), 'reported_tokens_observed': session['tokens'],
                      'reported_token_stop_threshold': self.limits.reported_tokens,
-                     'seconds_left': max(0, self.limits.duration_seconds - (now - task['created']))},
+                     'seconds_left': max(0, self.limits.duration_seconds - budget.task_elapsed(self.workflow, self.task, now))},
             'shared': None,
             'instruction': 'Local execution limits only, not provider account balance or a billing guarantee. '
                 'Preserve all constraints and approval boundaries. If your required artifacts and offers are ready, '
@@ -318,7 +318,7 @@ class TaskRunner:
                 'tool_calls_left': max(0, limits['tool_calls'] - shared['tool_calls']),
                 'task_slots_left': max(0, limits['tasks'] - shared['tasks']),
                 'reported_tokens_observed': shared['tokens'], 'reported_token_stop_threshold': limits['reported_tokens'],
-                'seconds_left': max(0, limits['duration_seconds'] - (now - scope['created']))}
+                'seconds_left': max(0, limits['duration_seconds'] - budget.tree_elapsed(self.workflow, scope, now))}
             if self.show_execution_budget:
                 self._shared_view(data, limits['model_attempts'])
         if 'submit_for_verification' in self.gateway.allowed:

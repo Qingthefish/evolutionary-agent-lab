@@ -41,6 +41,52 @@ def descendants(workflow, root):
     """, (root,)).fetchall()
 
 
+def provider_pause_seconds(workflow, tasks, now):
+    """Seconds the given tasks sat paused for an operator decision after a provider failure.
+
+    A pause starts at a provider_decision_required event and ends at the next
+    provider_resend_released event for that task, the task's end, or now.
+    Overlapping pauses in one tree count once. Deadlines exclude this time: the
+    task could not act, and nothing was retried without the operator.
+    """
+    intervals = []
+    for task in tasks:
+        row = workflow.db.execute("SELECT ended FROM tasks WHERE id=?", (task,)).fetchone()
+        ended = row["ended"] if row and row["ended"] is not None else now
+        events = workflow.db.execute(
+            "SELECT kind,timestamp FROM events WHERE task=? AND kind IN "
+            "('provider_decision_required','provider_resend_released') ORDER BY sequence", (task,)).fetchall()
+        start = None
+        for event in events:
+            if event["kind"] == "provider_decision_required" and start is None:
+                start = event["timestamp"]
+            elif event["kind"] == "provider_resend_released" and start is not None:
+                intervals.append((start, event["timestamp"]))
+                start = None
+        if start is not None:
+            intervals.append((start, max(start, min(ended, now))))
+    total, covered = 0.0, None
+    for start, end in sorted(intervals):
+        if covered is not None:
+            start = max(start, covered)
+        if end > start:
+            total += end - start
+        covered = end if covered is None else max(covered, end)
+    return total
+
+
+def tree_elapsed(workflow, scope, now):
+    """Elapsed seconds against the tree deadline, without operator-decision pauses."""
+    tasks = [row["id"] for row in descendants(workflow, scope["root"])]
+    return now - scope["created"] - provider_pause_seconds(workflow, tasks, now)
+
+
+def task_elapsed(workflow, task, now):
+    """Elapsed seconds against one task's deadline, without its operator-decision pauses."""
+    row = workflow.db.execute("SELECT created FROM tasks WHERE id=?", (task,)).fetchone()
+    return now - row["created"] - provider_pause_seconds(workflow, [task], now)
+
+
 def _scope(workflow, task):
     if not workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='tree_budgets' AND type='table'").fetchone():
         return None
@@ -58,7 +104,7 @@ def check(workflow, task, *, reserve=None, after_response=False):
     if scope is None:
         return
     limits = json.loads(scope["limits"])
-    if workflow.clock() - scope["created"] >= limits["duration_seconds"]:
+    if tree_elapsed(workflow, scope, workflow.clock()) >= limits["duration_seconds"]:
         raise TreeBudgetError("Shared task-tree duration budget exhausted; partial artifacts retained")
     if scope["tokens"] > limits["reported_tokens"] or (not after_response and scope["tokens"] == limits["reported_tokens"]):
         raise TreeBudgetError("Shared task-tree reported token budget exhausted; partial artifacts retained")

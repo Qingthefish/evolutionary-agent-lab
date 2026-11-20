@@ -252,7 +252,8 @@ class MultiAgentScheduler:
             # Deadline checks still apply to human/review/child waiting tasks.
             if task["assignee"] not in self.roles:
                 return self._fail("Delegated task has no trusted configured role")
-            if self.workflow.clock() - task["created"] >= self.roles[task["assignee"]].limits.duration_seconds:
+            if (budget.task_elapsed(self.workflow, task["id"], self.workflow.clock())
+                    >= self.roles[task["assignee"]].limits.duration_seconds):
                 return self._fail("Assigned task duration exhausted; partial artifacts retained")
         needs = []
         for task in active:
