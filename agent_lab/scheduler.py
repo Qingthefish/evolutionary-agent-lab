@@ -3,17 +3,25 @@
 One controller performs one ready task turn at a time. It yields at human or
 independent-review boundaries and never replays an uncertain provider/tool turn.
 This is infrastructure, not evidence of live-model collaboration quality.
+
+Opt-in (`parallel_model_calls=2`): one controller step may overlap the provider
+requests of up to two independent ready tasks. Selection, atomic budget
+reservation, request snapshots, response recording and every tool effect stay
+on the controller thread in short SQLite transactions; worker threads only wait
+on provider I/O and never touch the database, files or tools.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 import json
+import time
 from uuid import uuid4
 
 from . import budget, recovery
 from .deepseek import DeepSeekClient, DeepSeekHTTP
 from .hkgai import HKGAIClient, HKGAIHTTP
 from .gateway import ToolGateway, _SPECS
-from .runner import Limits, RunnerError, TaskRunner
+from .runner import Limits, PreparedTurn, RunnerError, TaskRunner
 from .core import WorkflowError
 from .delegation import input_records, normalize_inputs
 from .model_context import CONTEXT_POLICY, peer_description
@@ -45,8 +53,11 @@ class MultiAgentScheduler:
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
                  delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False,
-                 finish_policy=None):
+                 finish_policy=None, parallel_model_calls=1):
         self.workflow, self.files, self.root = workflow, files, root
+        if type(parallel_model_calls) is not int or parallel_model_calls not in (1, 2):
+            raise RunnerError("Parallel model calls are 1 (sequential, the default) or 2")
+        self.parallel_model_calls = parallel_model_calls
         self.human, self.roles, self.clients = human, dict(roles), dict(clients)
         self.mode, self.constraints = mode, constraints
         if type(allow_html) is not bool:
@@ -257,32 +268,85 @@ class MultiAgentScheduler:
             if self.workflow.clock() - task["created"] >= self.roles[task["assignee"]].limits.duration_seconds:
                 return self._fail("Assigned task duration exhausted; partial artifacts retained")
         needs = []
+        if self.parallel_model_calls > 1:
+            return self._advance_parallel(active, sessions, needs)
         for task in active:
-            if task["state"] in {"succeeded", "failed", "cancelled"}:
+            if not self._runnable(task, active, sessions, needs):
                 continue
-            if task["state"].startswith("waiting_"):
-                requests = [dict(row) for row in self.workflow.db.execute(
-                    "SELECT id,kind,responder,prompt,action FROM requests WHERE task=? AND answered=0 ORDER BY rowid",
-                    (task["id"],))]
-                needs.append({"task": task["id"], "kind": task["state"], "requests": requests})
-                continue
-            if any(child["parent"] == task["id"] and child["state"] not in {"succeeded", "failed"} for child in active):
-                continue
-            if task["id"] in sessions and sessions[task["id"]]["status"] == "awaiting_verification":
-                needs.append({"task": task["id"], "kind": "independent_verification"})
-                continue
-            if task["state"] == "pending":
-                self.workflow.start_task(task["id"], task["assignee"])
             runner = self.runner(task["id"])
             result = runner.step()
             if result.get("needs"):
-                request_ids = [row["id"] for row in self.workflow.db.execute(
-                    "SELECT id FROM requests WHERE task=? AND approved=1 AND consumed=0 AND resume_revision=?",
-                    (task["id"], self.workflow.task(task["id"], task["assignee"])["revision"]))]
-                needs.append({"task": task["id"], "kind": result["needs"], "request_ids": request_ids})
+                needs.append(self._need(task, result))
                 continue
             return self.status() | {"state": "running", "advanced_task": task["id"]}
         return self.status() | {"state": "blocked", "needs": needs}
+
+    def _runnable(self, task, active, sessions, needs):
+        """Whether `task` may take a turn now; records why not in `needs`. Shared by both modes."""
+        if task["state"] in {"succeeded", "failed", "cancelled"}:
+            return False
+        if task["state"].startswith("waiting_"):
+            requests = [dict(row) for row in self.workflow.db.execute(
+                "SELECT id,kind,responder,prompt,action FROM requests WHERE task=? AND answered=0 ORDER BY rowid",
+                (task["id"],))]
+            needs.append({"task": task["id"], "kind": task["state"], "requests": requests})
+            return False
+        if any(child["parent"] == task["id"] and child["state"] not in {"succeeded", "failed"} for child in active):
+            return False  # A parent waits for every open child.
+        if task["id"] in sessions and sessions[task["id"]]["status"] == "awaiting_verification":
+            needs.append({"task": task["id"], "kind": "independent_verification"})
+            return False
+        if task["state"] == "pending":
+            self.workflow.start_task(task["id"], task["assignee"])
+        return True
+
+    def _need(self, task, result):
+        request_ids = [row["id"] for row in self.workflow.db.execute(
+            "SELECT id FROM requests WHERE task=? AND approved=1 AND consumed=0 AND resume_revision=?",
+            (task["id"], self.workflow.task(task["id"], task["assignee"])["revision"]))]
+        return {"task": task["id"], "kind": result["needs"], "request_ids": request_ids}
+
+    def _advance_parallel(self, active, sessions, needs):
+        """Prepare up to N independent ready tasks, overlap their provider calls, apply in order.
+
+        Only tasks that are runnable now are taken (a parent never runs beside its open
+        children; a task that waits for an artifact or review is not runnable). Each
+        prepare is its own transaction and reserves exactly one attempt, so shared
+        caps and finish-window holds are checked against every earlier reservation.
+        """
+        prepared, advanced = [], []
+        for task in active:
+            if len(prepared) + len(advanced) >= self.parallel_model_calls:
+                break
+            if not self._runnable(task, active, sessions, needs):
+                continue
+            runner = self.runner(task["id"])
+            outcome = runner.prepare()
+            if isinstance(outcome, PreparedTurn):
+                prepared.append((runner, outcome))
+            elif outcome.get("needs"):
+                needs.append(self._need(task, outcome))
+            else:
+                advanced.append(task["id"])  # A state change without a provider call (e.g. a limit stop).
+        if not prepared and not advanced:
+            return self.status() | {"state": "blocked", "needs": needs}
+        started = time.monotonic()
+        if len(prepared) > 1:
+            with ThreadPoolExecutor(max_workers=len(prepared), thread_name_prefix="model-call") as pool:
+                results = list(pool.map(lambda pair: pair[0].call(pair[1]), prepared))
+        else:
+            results = [runner.call(turn) for runner, turn in prepared]
+        waited = time.monotonic() - started
+        for (runner, turn), result in zip(prepared, results):
+            runner.apply(turn, result)
+            advanced.append(turn.task)
+        if len(prepared) > 1:
+            with self.workflow._transaction():
+                self.workflow._event(self.root, self.human, "model_calls_overlapped", {
+                    "tasks": [turn.task for _, turn in prepared], "attempts": [turn.number for _, turn in prepared],
+                    "provider_wait_seconds": round(waited, 3), "max_concurrent": len(prepared)})
+        return self.status() | {"state": "running", "advanced_task": advanced[0], "advanced_tasks": advanced,
+                                "concurrent_model_calls": len(prepared)}
 
     def step(self):
         """Advance one ready task turn; a durable claim excludes other controllers."""

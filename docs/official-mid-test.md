@@ -321,6 +321,44 @@ retain unknown usage. No local setting can refund a provider charge. Legacy
 do not enlarge current limits or the remaining-budget view. There is no automatic
 resend, even when a request allowance remains.
 
+### Overlapping provider calls (proposed, opt-in)
+
+`advance --parallel-model-calls 2` lets one controller step overlap the provider
+requests of up to two independent ready tasks. The default (1) is unchanged.
+
+- Each task turn has three stages: **prepare** (state checks, atomic request
+  reservation and the persisted request snapshot, in one SQLite transaction),
+  **call** (provider I/O only, on a worker thread with no database, file or tool
+  access) and **apply** (response recording, tool validation and every tool
+  effect, on the controller thread, in preparation order). Sequential `step()`
+  runs the same three stages back to back.
+- Only runnable tasks are prepared: a parent still waits for every open child,
+  and a task that needs an artifact, a review or an answer is not runnable. A
+  task has at most one reserved call. The shared request cap, finish-window
+  holds and tool-call caps are checked against every earlier reservation.
+- A pending review or requester answer pauses only its own task; independent
+  ready tasks keep moving and the boundary is still reported in `needs`.
+  Uncertain provider or tool states still stop the whole tree, and nothing is
+  resent automatically, including after a crash with two calls in flight.
+- Two calls can each push the reported-token total past its cap; a reply that
+  crosses it releases no tool, as in sequential mode.
+- `model_calls_overlapped` events record the overlapping tasks and the wait.
+
+Where it helps: only when a parent delegates independent children in the same
+batch. In the 2026-11-21 live records, provider calls were 28-54% of each task's
+wall-clock time (review waits 4-12 minutes were the largest share). Replaying
+recorded per-turn provider times, two workers would have saved 1.1-3.5 minutes
+of provider time on the three Securities trees with research and risk delegated
+together, and nothing on the Newsroom and Software trees, whose children ran in
+a dependent chain. This is an estimate from stored timestamps, not a live
+measurement; HKGAI's own concurrency limits are untested.
+
+The offline benchmark (`python -m agent_lab.evaluation.parallel_benchmark`,
+synthetic 0.15 s mock latency, five repeats) shows the same requests, tool
+calls, tokens and final states in both modes, 1.49-1.59x faster wall time on
+fan-out graphs (1.55-1.76x with a 1 s synthetic review delay), and 1.0x on a
+dependent chain.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,
