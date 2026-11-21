@@ -8,7 +8,7 @@ import math
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError, TruncatedCompletion
 from .hkgai import HKGAIClient, HKGAIHTTP
-from .gateway import _SPECS as TOOL_SPECS, ToolBudgetError, ToolRequestError
+from .gateway import ToolBudgetError, ToolRequestError
 from .files import INPUT_PROTOCOL
 from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
 from . import budget, completion
@@ -89,40 +89,34 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
 
 
-def _argument_limit(tool):
-    spec = TOOL_SPECS.get(tool)
-    sizes = [field.get("maxLength") for field in (spec[1].values() if spec else ()) if isinstance(field, dict)]
-    sizes = [size for size in sizes if type(size) is int]
-    return max(sizes) if sizes else None
-
-
-def output_limit_instruction(shape, allowed):
+def output_limit_instruction(shape, allowed, max_tokens=None):
     """A notice that names what filled the response (proposed 2026-11-21, pending owner review).
 
-    Live Software Task 2 (2026-11-21): a lead without file tools was told to split long
-    documents across files, then hit the limit again and the task stopped.
+    Live 2026-11-21: a Software lead without file tools was told to split long documents
+    across files; a Newsroom fact checker writing its report with create_text was cut off
+    twice. HKGAI drops the unfinished arguments of a cut-off call, so the visible
+    argument size is not reported as the size the model attempted.
     """
+    budget_text = f"all {max_tokens:,} output tokens" if max_tokens else "the whole output limit"
+    part = max(1000, max_tokens * 2) if max_tokens else 4000
     parts = ["Your previous response reached the output-token limit and was discarded unread; none of its tool "
              "calls ran. Continue the same task."]
     calls = shape.get("tool_calls") or []
+    names = sorted({call["name"] for call in calls})
     if calls:
-        largest = max(calls, key=lambda call: call["argument_chars"])
-        limit = _argument_limit(largest["name"])
-        parts.append(f"It was cut off with {len(calls)} tool call(s); the largest was {largest['name']} with about "
-                     f"{largest['argument_chars']:,} characters of arguments"
-                     + (f" (its longest argument may be at most {limit:,} characters)" if limit else "") + ".")
+        parts.append(f"It used {budget_text} while still writing {len(calls)} tool call(s) ({', '.join(names)}).")
         if len(calls) > 1:
-            parts.append("Send one or two tool calls per response.")
+            parts.append("Send one tool call per response until the large output is written.")
     elif shape.get("reasoning_chars"):
-        parts.append(f"It spent about {shape['reasoning_chars']:,} characters reasoning before any tool call. "
-                     "Decide briefly and make the next tool call.")
-    elif shape.get("content_chars"):
-        parts.append(f"It wrote about {shape['content_chars']:,} characters of text without a tool call. Answer "
-                     "briefly or make the next tool call.")
+        parts.append(f"It used {budget_text} reasoning (about {shape['reasoning_chars']:,} characters) before any "
+                     "tool call. Decide briefly and make the next tool call.")
+    else:
+        parts.append(f"It used {budget_text} without completing a tool call. Answer briefly or make the next tool "
+                     "call.")
     if FILE_WRITERS & set(allowed):
-        parts.append("Split long documents across several smaller files"
-                     + (", or write a long file in parts with create_text then append_text"
-                        if "append_text" in allowed else "") + ".")
+        parts.append(f"Write long files in parts of at most about {part:,} characters, one part per response"
+                     + (": the first with create_text then append_text for each further part"
+                        if "append_text" in allowed else ", across several smaller files") + ".")
     else:
         parts.append("You cannot write files, so keep briefs and messages short: state the deliverable, constraints "
                      "and acceptance checks in a few lines and let the subtask design the details.")
@@ -655,7 +649,7 @@ class TaskRunner:
                 transcript.append({"role": "user", "content": _json({
                     "kind": "output_limit_notice", "max_output_tokens": self.client.max_tokens,
                     "cut_off": error.shape,
-                    "instruction": output_limit_instruction(error.shape, self.gateway.allowed)})})
+                    "instruction": output_limit_instruction(error.shape, self.gateway.allowed, self.client.max_tokens)})})
                 task_state = self.workflow.task(self.task, self.actor)["state"]
                 self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
                                          ("paused" if task_state.startswith("waiting_") else "ready",

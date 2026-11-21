@@ -75,8 +75,7 @@ class OutputLimitNotice(unittest.TestCase):
         (notice,) = {json.dumps(n, sort_keys=True) for n in notices}
         notice = json.loads(notice)
         text = notice["instruction"]
-        self.assertIn("delegate_task with about 15,000 characters of arguments", text)
-        self.assertIn("at most 4,096 characters", text)
+        self.assertIn("while still writing 1 tool call(s) (delegate_task)", text)
         self.assertIn("You cannot write files", text)
         self.assertNotIn("smaller files", text)
         self.assertEqual(notice["cut_off"]["tool_calls"], [{"name": "delegate_task", "argument_chars": 15000}])
@@ -91,17 +90,26 @@ class OutputLimitNotice(unittest.TestCase):
                                       cut_off(("create_text", "{\"path\": \"dashboard.html\", \"content\": \"" + "x" * 9000)),
                                       done())
         text = notices[0]["instruction"]
-        self.assertIn("create_text with about 9,", text)
+        self.assertIn("(create_text)", text)
         self.assertIn("create_text then append_text", text)
         self.assertNotIn("You cannot write files", text)
 
     def test_reasoning_and_many_calls_are_named(self):
-        reasoning = output_limit_instruction(truncation_shape({"reasoning_content": "r" * 12000}), LEAD_TOOLS)
-        self.assertIn("about 12,000 characters reasoning before any tool call", reasoning)
+        reasoning = output_limit_instruction(truncation_shape({"reasoning_content": "r" * 12000}), LEAD_TOOLS, 4096)
+        self.assertIn("all 4,096 output tokens reasoning (about 12,000 characters) before any tool call", reasoning)
         many = output_limit_instruction(truncation_shape({"tool_calls": [
-            {"function": {"name": "read_text", "arguments": "{}"}}] * 6}), LEAD_TOOLS)
-        self.assertIn("6 tool call(s)", many)
-        self.assertIn("one or two tool calls per response", many)
+            {"function": {"name": "read_text", "arguments": "{}"}}] * 6}), LEAD_TOOLS, 4096)
+        self.assertIn("6 tool call(s) (read_text)", many)
+        self.assertIn("one tool call per response", many)
+
+    def test_hkgai_drops_unfinished_arguments_so_the_size_is_not_understated(self):
+        # Live Newsroom fact checker, 2026-11-21: 4,096 completion tokens, 31 visible argument characters.
+        shape = {"tool_calls": [{"name": "create_text", "argument_chars": 31}], "content_chars": 0,
+                 "reasoning_chars": 0}
+        text = output_limit_instruction(shape, ["create_text", "append_text", "submit_for_verification"], 4096)
+        self.assertNotIn("31", text)
+        self.assertIn("used all 4,096 output tokens while still writing 1 tool call(s) (create_text)", text)
+        self.assertIn("parts of at most about 8,192 characters, one part per response", text)
 
     def test_the_shape_is_sizes_only_and_names_are_bounded(self):
         shape = truncation_shape({"content": SECRET, "reasoning_content": SECRET, "tool_calls": [
