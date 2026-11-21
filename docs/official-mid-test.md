@@ -359,6 +359,24 @@ calls, tokens and final states in both modes, 1.49-1.59x faster wall time on
 fan-out graphs (1.55-1.76x with a 1 s synthetic review delay), and 1.0x on a
 dependent chain.
 
+### Replacing a file with an accepted version (proposed)
+
+`accept_artifact` takes an optional `replace_sha256`. Without it, an offered
+version can only be accepted at a new path, and an existing path now gets a
+clear refusal that names the options instead of the generic file error. With
+it, the offered version replaces the existing file only if that file's current
+SHA-256 matches (same check and atomic replace as `update_text`); the
+`artifact_received` receipt records `replaced_sha256`, and the offer stays open
+after any refusal.
+
+Why: in both live Software tasks of 2026-11-22 the lead could not accept the
+developer's fixed files over the existing paths and saw only "File request
+rejected". It stored the fixes as `v2/` or `cli_dashboard_patch.py`, kept
+shipping the old versions, and spent its remaining requests on workarounds; both
+tasks ended failed although the fixed code existed and passed its tests. The
+tool list changes, so a task started before this change cannot be resumed with
+it (the runner configuration check refuses).
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,

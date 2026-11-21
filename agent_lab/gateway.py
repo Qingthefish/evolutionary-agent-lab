@@ -82,8 +82,10 @@ _SPECS = {
     "offer_artifact": ("Offer your task-local file snapshot to another task; use its current path/hash from a file or Python import receipt", {
         "path": _PATH, "target_task": _text("Recipient task identifier", maximum=128),
         "expected_sha256": _HASH}),
-    "accept_artifact": ("Accept a snapshot explicitly offered by another task; Python exports are already your own files and need no acceptance", {
-        "artifact_id": _text("Actual offered artifact identifier, not a file path or Python run identifier", maximum=128), "path": _PATH}),
+    "accept_artifact": ("Accept a snapshot explicitly offered by another task; Python exports are already your own files and need no acceptance. "
+                        "To make an offered version replace an existing file at the same path, also pass replace_sha256", {
+        "artifact_id": _text("Actual offered artifact identifier, not a file path or Python run identifier", maximum=128), "path": _PATH,
+        "replace_sha256": {**_HASH, "description": "Optional: the current SHA-256 of the existing file at path, to replace it with the offered version"}}),
     "run_python": ("Execute exact input snapshots in the isolated container. Exports are imported into your task: read or offer them directly, not accept_artifact. Exit zero is not task verification", {
         "entrypoint": _PATH,
         "input_files": {"type": "object", "minProperties": 1, "maxProperties": 20,
@@ -114,7 +116,7 @@ _SPECS = {
         "branch": _text("Writable branch name", maximum=100)}),
 }
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
-_OPTIONAL = {"run_python": frozenset({"replace_outputs"})}
+_OPTIONAL = {"run_python": frozenset({"replace_outputs"}), "accept_artifact": frozenset({"replace_sha256"})}
 _COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
 # A blocker report is the task's final, failed evidence. Live Securities 2026-11-21: two
 # forced window completions both sent report_blocker with the summary "placeholder".
