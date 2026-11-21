@@ -382,7 +382,7 @@ python -m agent_lab.evaluation.official_live \
 | `processing` with a tool whose effect is unknown | `abort` | `recover-tools` refuses. Inspect the files first; the reserved tool stays recorded. |
 | `stopping` | `abort` | Finishes the interrupted stop. |
 | `controller_reconciliation_or_busy` only | `release-claim` | Clears the stale claim; the task is unchanged. |
-| `provider_uncertain` (transport failure or HTTP 5xx) | `resend` or `abort` | Nothing is retried automatically. `resend` releases one new counted request with the same transcript; `abort` ends the task failed. |
+| `provider_uncertain` (transport failure or HTTP 5xx) | `resend` or `abort` | Nothing is retried automatically. `resend` releases one new counted request with the same transcript; `abort` ends the task failed. Time paused for this decision does not count toward task or tree deadlines. |
 
 Each action is recorded as an `official_reconciliation_recorded` event with the
 operator's reason, and it sends no model request. An aborted Task 1 is a
