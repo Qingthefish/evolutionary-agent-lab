@@ -29,10 +29,12 @@ _CONTENT = _text("UTF-8 text or source code", maximum=65536, empty=True)
 _SPECS = {
     "submit_for_verification": ("Propose completion for independent checks after your deliverables and offers. Must be the last tool in a batch. This does not set success, approve actions or supply criteria", {
         "summary": _text("Brief description of the deliverable submitted for independent verification", maximum=2000)}),
-    "report_blocker": ("Report that required work cannot be completed in this task. Ends this task as failed with your "
-                       "summary of what is done and what is missing. Must be the last tool in a batch; it is the honest "
-                       "alternative to submitting incomplete work", {
-        "summary": _text("What is done, what is missing and why it cannot be finished here", maximum=2000)}),
+    "report_blocker": ("Report that required work cannot be completed in this task. Ends this task immediately and "
+                       "permanently as failed with your summary of what is done and what is missing; nothing can follow "
+                       "it, so never use it as a test or a placeholder. Must be the last tool in a batch; it is the "
+                       "honest alternative to submitting incomplete work", {
+        "summary": _text("What is done, what is missing and why it cannot be finished here (at least 40 characters; "
+                         "placeholder text is refused)", maximum=2000)}),
     "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
         "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
@@ -113,6 +115,27 @@ _SPECS = {
 }
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
 _OPTIONAL = {"run_python": frozenset({"replace_outputs"})}
+_COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
+# A blocker report is the task's final, failed evidence. Live Securities 2026-11-21: two
+# forced window completions both sent report_blocker with the summary "placeholder".
+_BLOCKER_MIN_CHARS, _BLOCKER_MIN_WORDS = 40, 6
+_PLACEHOLDER_WORDS = frozenset({"placeholder", "todo", "tbd", "tba", "na", "n/a", "none", "null", "blocked",
+                                "blocker", "summary", "test", "xxx", "x", "lorem", "ipsum", "dummy", "pending", "wip"})
+
+
+def blocker_summary_problem(summary):
+    """Why a report_blocker summary is not a meaningful failure explanation, or None."""
+    words = re.findall(r"[^\W_]+(?:[/'-][^\W_]+)*", summary.lower())
+    if not words or all(word in _PLACEHOLDER_WORDS for word in words):
+        return "it is placeholder text"
+    # Unspaced scripts (Chinese, Japanese) count two characters as a word, so the rule judges content, not language.
+    cjk = len(re.findall(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]", summary))
+    count = sum(1 for word in words if not re.search(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]", word)) + cjk // 2
+    if len(summary.strip()) < _BLOCKER_MIN_CHARS and cjk < 20 or count < _BLOCKER_MIN_WORDS:
+        return f"it is too short (at least {_BLOCKER_MIN_CHARS} characters and {_BLOCKER_MIN_WORDS} words)"
+    return None
+# Never accepted inside a finish window, even before a completion call: they open new work or pause.
+_OPENS_WORK = frozenset({"delegate_task", "delegate_with_inputs", "retry_failed_task", "ask_human"})
 
 
 class ToolGateway:
@@ -167,7 +190,8 @@ class ToolGateway:
         if self.allowed & {"delegate_task", "delegate_with_inputs"} and not self.delegates:
             raise ToolRequestError("Delegation requires explicit eligible agents")
         self.chat = row["chat"]
-        self.restricted = None  # Finish Mode: the runner offers only these tools for the current turn.
+        self.restricted = None  # Finish window: the runner offers only these tools for the current turn.
+        self._batch_completes = False
         workflow.db.executescript("""
             CREATE TABLE IF NOT EXISTS tool_budgets (
                 task TEXT PRIMARY KEY REFERENCES tasks(id), maximum INTEGER NOT NULL
@@ -220,11 +244,13 @@ class ToolGateway:
         name, raw = call["function"]["name"], call["function"]["arguments"]
         if not isinstance(name, str) or name not in self.allowed:
             raise ToolRequestError("Tool is not available to this task")
-        if self.restricted is not None and name not in self.restricted:
+        if self.restricted is not None and name not in self.restricted and not (
+                self._batch_completes and name not in _OPENS_WORK):
             available = ", ".join(sorted(self.allowed & self.restricted))
-            raise ToolRequestError(f"Finish Mode: {name} is not available now. Available: {available}. Submit the work "
-                                   "that is done with submit_for_verification, or call report_blocker if required work "
-                                   "is missing")
+            raise ToolRequestError(f"Finish window: {name} is only accepted in a batch that ends with one of: "
+                                   f"{available}. Submit the work that is done with submit_for_verification, or call "
+                                   "report_blocker if required work is missing; a handoff (offer_artifact, "
+                                   "accept_artifact) may come first in that same batch")
         if not isinstance(raw, str) or len(raw) > 128 * 1024:
             raise ToolRequestError("Arguments must be a bounded JSON string")
         try:
@@ -243,6 +269,14 @@ class ToolGateway:
                 and (arguments["assignee"], arguments["title"]) not in self.delegation_rules):
             raise ToolRequestError("Unknown declared child work; use one of the trusted assignee/title pairs: " +
                 json.dumps(sorted((a, t) for a, t in self.delegation_rules if a in self.delegates))[:3000])
+        if name == "report_blocker":
+            problem = blocker_summary_problem(arguments["summary"])
+            if problem:  # Refused like any invalid argument: nothing runs, the task stays open and can resend.
+                raise ToolRequestError(f"summary is not a meaningful failure explanation: {problem}. State what is "
+                                       "done, what is missing and why it cannot be finished in this task, then resend")
+        if name == "offer_artifact" and arguments["target_task"] == self.task:
+            # Live Newsroom 2026-11-21: a lead offered its own files to itself to copy them.
+            raise ToolRequestError("A task cannot offer files to itself; they are already in this task")
         if name in _GIT_TOOLS and arguments["repository"] not in self.git.repositories:
             raise ToolRequestError("Repository is not in the trusted allowlist")
         if name == "run_python":
@@ -331,6 +365,8 @@ class ToolGateway:
         """
         if not isinstance(calls, list) or not 1 <= len(calls) <= 16:
             raise ToolRequestError("Supply between one and sixteen tool proposals")
+        last = calls[-1].get("function") if isinstance(calls[-1], dict) else None
+        self._batch_completes = isinstance(last, dict) and last.get("name") in _COMPLETION
         for call in calls:
             try:
                 self._validate(call)

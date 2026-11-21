@@ -26,9 +26,11 @@ TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
 # direct child, carrying explicitly offered snapshots, instead of the whole task
 # failing. Replacements share the same request cap; no budget is added.
 CHILD_REPLACEMENTS = 2
-# Proposed 2026-11-18 (owner-approved, pending merge): up to 48 requests per task.
-# Live software Task 1 used all 24 after its developer child was accepted.
-MAX_SCENARIO_ATTEMPTS = 96
+# Up to 80 requests per task (requester-approved 2026-11-21; was 48 from 2026-11-18). The
+# instructor package sets no call budget. Live 48-request tasks: Software T1 and Newsroom
+# T1/T2 finished at 41-45; Securities T1 ran out at 46 with four roles. Token and tool-call
+# caps scale with the share (TOKENS_PER_REQUEST, tool scale below).
+MAX_SCENARIO_ATTEMPTS = 160
 CONSTRAINTS = [
     "Use local files and the supplied Python sandbox with standard-library dependencies. "
     "Deliver runnable source and Markdown or plain-text instructions. No external services are configured.",
@@ -324,14 +326,10 @@ def main(argv=None):
         command.add_argument("--finish-protocol", action="store_true",
                              help="Completion protocol: hierarchical finish reserves, Finish Mode and report_blocker; "
                                   "requires --show-execution-budget")
-        command.add_argument("--parent-reserve", type=int, default=FINISH_POLICY.parent_reserve,
-                             help="Requests each parent keeps for its own finish while subtasks run")
-        command.add_argument("--submit-reserve", type=int, default=FINISH_POLICY.submit_reserve,
-                             help="Requests any task keeps for its own submission (Finish Mode inside it)")
+        command.add_argument("--finish-requests", type=int, default=FINISH_POLICY.finish_requests,
+                             help="Last requests of every open task kept as its finish window (completion only)")
         command.add_argument("--min-child-requests", type=int, default=FINISH_POLICY.min_child,
-                             help="Minimum requests a new subtask needs beyond the caller's reserve")
-        command.add_argument("--ready-fraction", type=float, default=FINISH_POLICY.ready_fraction,
-                             help="Share of the tree cap at which Finish Mode starts once deliverables look ready")
+                             help="Work requests a new subtask needs beyond its own finish window")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
         elif name == "review":
@@ -374,9 +372,7 @@ def main(argv=None):
                     stack.callback(services.close)
                     if args.finish_protocol and not args.show_execution_budget:
                         raise WorkflowError("--finish-protocol requires --show-execution-budget")
-                    finish_policy = FinishPolicy(parent_reserve=args.parent_reserve, submit_reserve=args.submit_reserve,
-                                                 min_child=args.min_child_requests,
-                                                 ready_fraction=args.ready_fraction) if args.finish_protocol else None
+                    finish_policy = FinishPolicy(finish_requests=args.finish_requests, min_child=args.min_child_requests) if args.finish_protocol else None
                     scheduler = make_scheduler(session, root, files, live, services,
                                                show_execution_budget=args.show_execution_budget,
                                                finish_policy=finish_policy)

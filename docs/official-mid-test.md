@@ -16,6 +16,12 @@ authorization. The default ceiling is 1,024, and the configured plan value must
 fit the selected ceiling. Existing task configurations cannot acquire the new
 setting on resume.
 
+A reply cut off at the ceiling is still discarded unread and runs no tool; a
+second consecutive cut-off stops the task. The notice before the next request
+names what filled the reply (the tool call and its argument size, reasoning or
+text), and gives file-splitting advice only to roles that can write files. Only
+sizes are recorded (the `output_limit_reached` event's `shape`), never text.
+
 The November 18 integration review checked the later interrupted-state recovery
 command as well. It tightened file export against linked task directories,
 added full runner transcripts to the local export and bound HTML permission in
@@ -140,7 +146,7 @@ local because it contains conversation text. Use `--help` for options.
 For the software scenario, copy the operator plan into a fresh local input
 directory alongside its archive and manifest. Set the issued HKGAI model,
 `tool_policy` to `software-files-coordination-python-v1`, and set the authorized
-`per_scenario_model_attempts` (2–96, up to 48 per task) and `max_output_tokens`
+`per_scenario_model_attempts` (2–160, up to 80 per task; the instructor package sets no call budget) and `max_output_tokens`
 (1–1024 by default; up to 4096 with `--output-token-ceiling`). Inspect
 this plan before initializing the run. The two roots' call caps add up to
 the reviewed scenario budget. Shares above 24 requests scale the per-role and
@@ -237,29 +243,76 @@ including the retained 2026-11-16 software run.
   dialogue is not reachable that way during Task 2. The full conversation is
   still retained in the state directory and the evidence export.
 
-### Completion protocol (proposed, opt-in)
+### Completion protocol (proposed, opt-in; completion-protocol-v2)
 
 `--show-execution-budget --finish-protocol` turns on a completion protocol for
 every role. Task states do not change; each turn derives a phase from recorded
-state and the shared request cap:
+state and the shared budgets:
 
-- **working**, **ready** (a subtask has offered files to its parent, or every
-  subtask a parent delegated was accepted) and **finish**. Ready never means
-  succeeded.
-- **Finish Mode** starts when a task's available requests reach its own reserve,
-  or when it looks ready and few requests remain. Only finishing tools are then
-  offered and accepted: submit, `report_blocker`, offer/accept, read, message
-  and ask the requester. Submission still waits for the human review;
-  `report_blocker` ends the task as an honest failure.
-- Each ancestor keeps `--parent-reserve` requests while descendants run, any
-  task keeps `--submit-reserve` for its own submission, and a new subtask needs
-  `--min-child-requests` beyond the caller's reserve. `--ready-fraction` sets
-  the early Finish Mode window as a share of the tree cap.
-- A proposal over a failed, unreplaced subtask is refused before review, and
-  argument errors name the argument, its actual size and the limit.
+- **working** and **ready** (a subtask has offered files to its parent, or every
+  subtask a parent delegated was accepted). Ready is advice in the completion
+  contract only: every role tool stays available, because a parent may still
+  have to write or integrate the final deliverable. Ready never means succeeded.
+- **Finish window**: every open task's last `--finish-requests` (R, default 3)
+  requests. While a task runs, each other open task in the tree (ancestors,
+  siblings and their subtasks) holds what is left of its R requests, so nobody
+  else can spend them;
+  a subtask stops once only those holds remain. The window also starts when tool
+  calls or the role's own request limit run low, and it is entered at once after
+  three output-limit replies in a row or repeated identical outcomes (instead of
+  stopping the task). The second cut-off in a row escalates the notice: one small
+  call, the first part of a file. Once entered the window lasts at most R requests.
+  (Live Securities Task 2, 2026-11-21: forcing after two cut-offs left the fund
+  manager 19 requests it could not use to write its HTML deck in parts.)
+- Inside the window the tool schema offers only the completion actions the
+  gateway would accept: `submit_for_verification` (not when an unreplaced failed
+  subtask makes review impossible) and `report_blocker`. With
+  `tool_choice=required` every schema-valid reply is therefore a proposal for
+  human review or an honest blocker. A batch that ends with one of them may still
+  carry the role's other calls first (an `offer_artifact` / `accept_artifact`
+  handoff, a last fix, a message); delegation and `ask_human` stay closed.
+- `report_blocker` is the task's final failure evidence, so its summary must
+  explain what is done, what is missing and why (at least 40 characters and six
+  words; two CJK characters count as a word). Placeholder text such as
+  "placeholder" or "TODO" is refused like any invalid argument and can be resent.
+  In the 2026-11-21 live Securities run both forced window blockers said only
+  "placeholder".
+- An invalid completion (for example a summary over 2,000 characters) gets a
+  specific error and can be corrected in the remaining window requests. A window
+  used up without a valid completion ends the task as failed with "Finish window
+  used without a valid submission or blocker report"; its files are kept.
+- A proposal is reviewed by the human as before; its `completion_proposed` event
+  records whether it was made in the window. A rejection with requests left
+  beyond the window reopens every tool for a correction; a rejection inside the
+  window leaves an honest resubmission or a blocker. No budget is enlarged.
+- A new subtask needs `2R + --min-child-requests` (default 16) available
+  requests: the caller's window, the subtask's window and its work.
 
-The defaults (3, 2, 10, 0.25) come from the live software roots: accepted
-children used 10-25 requests and leads needed 2-5 after their last child.
+What the window can and cannot guarantee under the existing hard limits (none is
+enlarged):
+
+- **Requests and tool calls**: guaranteed. Both are counted before use, so each
+  other open task's unspent window (one tool call per window request) is held.
+  A batch that would take held tool calls is refused with the number of free
+  calls; it does not stop the task.
+- **Duration**: not guaranteed. Time passes during requests and while the human
+  reviews (the task duration includes human waiting by design). A deadline inside
+  the window ends it early with the window label; a proposal still waiting for
+  review when the deadline passes is failed by the next `advance`.
+- **Reported tokens**: not guaranteed. Usage is known only after a reply; a reply
+  that crosses the cap releases no tool, even a valid submission, and the cap can
+  be reached before the window starts. In the 2026-11-21 live runs the largest
+  tree used 1.41M of 2.4M tokens and every run ended on the request cap first.
+- Provider failures inside the window count as window requests (the cap is
+  strict); pauses for an operator or the requester spend no request. The window
+  record is persisted, so it survives a restart, a review and a rejection.
+
+The previous version (v1: `--parent-reserve`, `--submit-reserve`,
+`--ready-fraction`, a two-tier Finish Mode and a final-batch rule) was replaced
+after the 2026-11-21 live runs: Finish Mode removed a Newsroom chief editor's
+file tools while it still had to write the final report, and in the final
+requests it and a Software QA/lead spent every request on reads, packaging and
+self-offers. Stored v1 policies are read with R = `parent_reserve`.
 
 An operator `resend` after a provider failure consumes another request from the
 same actual-request cap. Failed or response-less requests keep counting and
