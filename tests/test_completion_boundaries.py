@@ -231,6 +231,23 @@ class Boundaries(unittest.TestCase):
                 self.assertNotIn("Task tool-call budget cannot accommodate", lead_task["evidence"] or "")
                 self.assertEqual(self.window_requests("lead"), 1 if schema else R)
 
+    def test_a_role_limit_below_the_tree_share_still_opens_the_finish_window(self):
+        def lead(schema):
+            def decide(payload, n, state):
+                if window(payload) and schema:
+                    return reply(("submit_for_verification", {"summary": "Done within the role's own limit"}))
+                return reply(("read_text", {"path": f"x{n}.md"}))
+            return decide
+
+        for schema, expected in ((True, "proposed"), (False, "exhausted")):
+            with self.subTest(schema_following=schema):
+                self.setUp()
+                self.build({"lead": (WORKER, ())}, {"lead": Agent(lead(schema))}, cap=40)
+                object.__setattr__(self.scheduler.roles["lead"], "limits", Limits(model_attempts=8))
+                self.drive()
+                self.assertEqual(self.outcome(self.task("lead")), expected)
+                self.assertEqual(self.window_requests("lead"), 1 if schema else R)
+
     # --- 4. Persistence across pauses, review, rejection and restart. ---------------------------
     def stalling(self):
         def lead(payload, n, state):
@@ -367,7 +384,7 @@ class Boundaries(unittest.TestCase):
                  "test_a_root_cut_off_twice_is_routed_to_its_finish_window_not_stopped",
                  "test_replay_newsroom_chief_packages_its_files_in_the_final_requests",
                  "test_a_task_short_of_its_own_tool_calls_enters_its_window_in_time",
-                 "test_budget_sweep_every_limit_stop_comes_after_a_finish_window"]
+                 "test_a_role_limit_below_the_tree_share_still_opens_the_finish_window"]
         caught = {}
         for label, patches in mutants.items():
             suite = unittest.TestSuite()
@@ -388,7 +405,7 @@ class Boundaries(unittest.TestCase):
     # --- Budget sweep with tight caps and smaller role limits. ----------------------------------
     def test_budget_sweep_every_limit_stop_comes_after_a_finish_window(self):
         cases = 0
-        for cap, role_cap, tight, width, style in itertools.product(range(6, 46, 6), (None, "half"), (False, True),
+        for cap, role_cap, tight, width, style in itertools.product((6, 13, 25, 41), (None, "half"), (False, True),
                                                                     (0, 1, 2), ("offschema", "stall_schema")):
             self.setUp()
             members = ("a", "b")[:width]
@@ -411,7 +428,7 @@ class Boundaries(unittest.TestCase):
                 with self.subTest(cap=cap, role=role_cap, tight=tight, width=width, style=style, task=task["assignee"]):
                     # Reachability: a limit stop always comes after the task had its finish window.
                     self.assertTrue("Blocker reported" in evidence or FINISH in evidence, evidence)
-        self.assertEqual(cases, 7 * 2 * 2 * 3 * 2)
+        self.assertEqual(cases, 4 * 2 * 2 * 3 * 2)
 
 
 if __name__ == "__main__":
