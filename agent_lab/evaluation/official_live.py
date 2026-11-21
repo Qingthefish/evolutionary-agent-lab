@@ -20,7 +20,7 @@ from .official_session import OfficialScenarioSession, TERMINAL, _workflow
 
 TOOL_POLICY = "software-files-coordination-python-v1"
 TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
-         "create_text", "read_text", "update_text", "append_text", "offer_artifact", "accept_artifact",
+         "create_text", "read_text", "list_files", "update_text", "append_text", "offer_artifact", "accept_artifact",
          "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
 # Proposed 2026-11-18 (owner-approved, pending merge): a parent may replace a failed
 # direct child, carrying explicitly offered snapshots, instead of the whole task
@@ -150,7 +150,9 @@ def _posted_root(session, sequence):
 
 def tools_for_role(scenario, agent, tools):
     if scenario == "software-engineering" and agent == "lead":
-        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text", "run_python"})
+        # The lead coordinates and does not write code, but it can run the integrated deliverable to check it before
+        # submitting (2026-11-22: leads shipped misplaced or outdated files they had no way to run).
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text"})
     return tools
 
 

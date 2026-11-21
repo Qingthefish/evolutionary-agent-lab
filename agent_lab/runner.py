@@ -88,6 +88,13 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 
 FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
 FINISH_EXHAUSTED = "Finish window used without a valid submission or blocker report; "
+# With the protocol, the first run of identical outcomes gets a notice instead of an immediate forced finish; only
+# REPEAT_GRACE more identical outcomes force it. Live Software Task 1 (2026-11-22): a lead re-read one missing path
+# three times and was forced into its finish window with 35 requests unused, so it could not repair the layout.
+REPEAT_GRACE = 2
+REPEAT_NOTICE = ("Your last turns produced the same outcome each time. Repeating it will not change the result: "
+                 "check what actually exists (for example list_files), use a different approach, or hand the work "
+                 "to a role that can do it. Further identical outcomes end your work turns early.")
 # With the protocol, cut-off replies in a row before the finish window is forced. Live Securities Task 2
 # (2026-11-21): forcing after two removed the write-in-parts recovery with 19 requests left.
 FORCE_AFTER_CUTOFFS = 3
@@ -789,13 +796,19 @@ class TaskRunner:
                 state = task_state
             else:
                 state = state or ("paused" if task_state.startswith("waiting_") else "ready")
+            if (repeats == self.limits.repeated_outcomes and state == "ready" and self._phase is not None
+                    and not self._in_finish()):
+                messages = list(messages) + [{"role": "user", "content": _json(
+                    {"kind": "repeated_outcome_notice", "repeats": repeats, "instruction": REPEAT_NOTICE})}]
+                self.workflow._event(self.task, self.actor, "repeated_outcome_warned", {"repeats": repeats})
             transcript = json.loads(session["transcript"]) + messages
             self.workflow.db.execute(
                 "UPDATE runner_sessions SET status=?,transcript=?,last_signature=?,repeats=? WHERE task=?",
                 (state, _json(transcript), digest, repeats, self.task),
             )
             self.workflow.db.execute("UPDATE runner_turns SET status='settled' WHERE task=? AND number=?", (self.task, number))
-        if repeats >= self.limits.repeated_outcomes and state == "ready":
+        grace = REPEAT_GRACE if self._phase is not None and not self._in_finish() else 0
+        if repeats >= self.limits.repeated_outcomes + grace and state == "ready":
             if self._phase and not self._in_finish():
                 self._force_finish("repeated_outcomes")
                 return self.status()

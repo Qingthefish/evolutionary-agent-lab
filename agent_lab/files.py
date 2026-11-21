@@ -6,6 +6,7 @@ Untrusted processes must never run on this host or receive these descriptors.
 
 from contextlib import contextmanager
 import hashlib
+import json
 import os
 from pathlib import Path
 import stat
@@ -205,6 +206,24 @@ class FileTools:
         self.workflow._event(task, actor, operation, detail)
         return result
 
+    def list_files(self, task, actor):
+        """Current task files from the broker's own write records (no directory walk), sorted by path."""
+        with self._access(task, actor):
+            current = {}
+            for kind, detail in self.workflow.db.execute(
+                    "SELECT kind,detail FROM events WHERE task=? AND kind IN ('file_created','file_updated','file_deleted',"
+                    "'artifact_received','task_input_provided','sandbox_artifact_imported') ORDER BY sequence", (task,)):
+                detail = json.loads(detail)
+                if not isinstance(detail.get("path"), str):
+                    continue
+                if kind == "file_deleted":
+                    current.pop(detail["path"], None)
+                else:
+                    current[detail["path"]] = {"path": detail["path"], "sha256": detail.get("sha256"),
+                                               "bytes": detail.get("bytes")}
+            files = [current[path] for path in sorted(current)]
+            return {"count": len(files), "files": files[:300], "truncated": len(files) > 300}
+
     def read_text(self, task, actor, path):
         with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
             data = self._read(parent, name)
@@ -335,12 +354,18 @@ class FileTools:
             })
             return {"artifact_id": identifier, "sha256": _sha(data), "bytes": len(data)}
 
-    def accept_artifact(self, task, actor, artifact_id, path, *, replace_sha256=None):
+    def accept_artifact(self, task, actor, artifact_id, path=None, *, replace_sha256=None):
         """Accept an offered snapshot as a new file, or, with `replace_sha256`, over the exact current version.
 
         Replacement (proposed 2026-11-22) uses the same version check and atomic replace as
         update_text; the receipt records the replaced digest. Without it an existing path is refused.
+        Without `path` the producer's own path is kept, so a received package keeps its layout.
         """
+        if path is None:
+            label = self.workflow.db.execute("SELECT path FROM artifact_labels WHERE artifact=?", (artifact_id,)).fetchone()
+            if label is None:
+                raise FileToolError("This offer records no source path; pass an explicit path")
+            path = label[0]
         with self._access(task, actor) as directory:
             artifact = self.workflow._row("artifacts", artifact_id)
             source = self.workflow._task(artifact["source_task"], actor)

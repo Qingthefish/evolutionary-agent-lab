@@ -377,6 +377,25 @@ tasks ended failed although the fixed code existed and passed its tests. The
 tool list changes, so a task started before this change cannot be resumed with
 it (the runner configuration check refuses).
 
+### Integration aids for any task (proposed)
+
+The 2026-11-22 Software runs failed at the parent's integration step, not in
+the children's work. These changes are task-agnostic:
+
+- `list_files` (every role): the current files of your own task, with SHA-256
+  and size, from the broker's write records. No directory walk.
+- `accept_artifact` without `path` keeps the producer's path, so a received
+  package keeps its layout. An explicit path still works.
+- `delegate_task` says the child starts with no files; when the parent holds
+  files, the result names how many and points to `delegate_with_inputs`.
+- The software lead may run code (`run_python`) to check the integrated
+  deliverable before submitting; it still cannot write source files.
+- With the completion protocol, the first run of identical outcomes adds a
+  notice asking the agent to change approach; only two more identical outcomes
+  force the finish window (before: forced at the third).
+
+Tool lists change, so tasks started before this change cannot be resumed with it.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,

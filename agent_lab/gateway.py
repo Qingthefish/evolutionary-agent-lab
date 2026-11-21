@@ -38,6 +38,7 @@ _SPECS = {
     "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
         "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
+    "list_files": ("List the files currently in your assigned task with their paths, SHA-256 receipts and sizes", {}),
     "create_text": ("Create a new file without overwriting; returns its current SHA-256 receipt", {"path": _PATH, "content": _CONTENT}),
     "update_text": ("Replace only the exact known task-local version using its current SHA-256 receipt", {
         "path": _PATH, "content": _CONTENT, "expected_sha256": _HASH}),
@@ -53,7 +54,8 @@ _SPECS = {
         "reason": _text("Concrete change in approach based on failure evidence", maximum=2048),
         "input_files": {"type": "object", "minProperties": 0, "maxProperties": 20,
                         "propertyNames": _PATH, "additionalProperties": _HASH}}),
-    "delegate_task": ("Delegate child work to an eligible agent in this conversation", {
+    "delegate_task": ("Delegate child work to an eligible agent in this conversation. The child starts with no files; "
+                      "to give it files, use delegate_with_inputs", {
         "assignee": _text("Agent identifier", maximum=128), "title": _text("Deliverable and constraints")}),
     "delegate_with_inputs": ("Delegate and offer hash-matched input snapshots before the parent waits; child must accept them", {
         "assignee": _text("Agent identifier", maximum=128), "title": _text("Deliverable and constraints"),
@@ -83,8 +85,10 @@ _SPECS = {
         "path": _PATH, "target_task": _text("Recipient task identifier", maximum=128),
         "expected_sha256": _HASH}),
     "accept_artifact": ("Accept a snapshot explicitly offered by another task; Python exports are already your own files and need no acceptance. "
-                        "To make an offered version replace an existing file at the same path, also pass replace_sha256", {
-        "artifact_id": _text("Actual offered artifact identifier, not a file path or Python run identifier", maximum=128), "path": _PATH,
+                        "Omit path to keep the producer's own path (keeps a received package's layout). "
+                        "To make an offered version replace an existing file at that path, also pass replace_sha256", {
+        "artifact_id": _text("Actual offered artifact identifier, not a file path or Python run identifier", maximum=128),
+        "path": {**_PATH, "description": "Optional: where to store it in your task; default is the producer's path"},
         "replace_sha256": {**_HASH, "description": "Optional: the current SHA-256 of the existing file at path, to replace it with the offered version"}}),
     "run_python": ("Execute exact input snapshots in the isolated container. Exports are imported into your task: read or offer them directly, not accept_artifact. Exit zero is not task verification", {
         "entrypoint": _PATH,
@@ -116,7 +120,7 @@ _SPECS = {
         "branch": _text("Writable branch name", maximum=100)}),
 }
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
-_OPTIONAL = {"run_python": frozenset({"replace_outputs"}), "accept_artifact": frozenset({"replace_sha256"})}
+_OPTIONAL = {"run_python": frozenset({"replace_outputs"}), "accept_artifact": frozenset({"replace_sha256", "path"})}
 _COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
 # A blocker report is the task's final, failed evidence. Live Securities 2026-11-21: two
 # forced window completions both sent report_blocker with the summary "placeholder".
@@ -487,7 +491,7 @@ class ToolGateway:
                 action={"tool": name, "arguments": args},
             )
             return {"request_id": request, "action": {"tool": name, "arguments": args}}
-        if name in {"read_text", "create_text", "update_text", "append_text", "offer_artifact", "accept_artifact"}:
+        if name in {"read_text", "list_files", "create_text", "update_text", "append_text", "offer_artifact", "accept_artifact"}:
             return getattr(self.files, name)(self.task, self.actor, **args)
         if name == "ask_human":
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}
@@ -525,7 +529,15 @@ class ToolGateway:
                         "error": "Replacement exists but an input offer failed; preserve state and clarify missing inputs"}
             return {**result, "inputs": "only explicitly offered fresh snapshots", "input_offers": offers, "status": "replaced"}
         if name == "delegate_task":
-            return {"task_id": self.workflow.create_task(self.chat, self.actor, parent=self.task, **args)}
+            result = {"task_id": self.workflow.create_task(self.chat, self.actor, parent=self.task, **args),
+                      "inputs": "none: the child starts with an empty task workspace"}
+            held = self.files.list_files(self.task, self.actor)["count"]
+            if held:
+                # Live Software Task 2 (2026-11-22): a lead with the whole package delegated without files and the
+                # child rebuilt a stand-in core. Say so in the result; the delegation itself is unchanged.
+                result["note"] = (f"You hold {held} task file(s) that this child cannot see. If it needs any of them, "
+                                  "offer them with offer_artifact now, or delegate with delegate_with_inputs next time.")
+            return result
         if name == "delegate_with_inputs":
             for path, expected in args["input_files"].items():
                 if self.files.read_text(self.task, self.actor, path)["sha256"] != expected:

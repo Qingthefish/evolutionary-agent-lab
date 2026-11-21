@@ -25,7 +25,7 @@ from agent_lab.core import Workflow
 from agent_lab.deepseek import DeepSeekClient
 from agent_lab.evaluation.official_live import POLICIES, review_proposal, tools_for_role, with_completion_tools
 from agent_lab.files import FileTools
-from agent_lab.runner import Limits
+from agent_lab.runner import Limits, REPEAT_GRACE
 from agent_lab.scheduler import MultiAgentScheduler, Role
 
 R = FinishPolicy().finish_requests
@@ -526,6 +526,26 @@ class Lifecycle(unittest.TestCase):
         tasks = self.check_invariants()
         self.assertEqual(self.outcome(tasks["fund_manager"]), "blocker")
         self.assertEqual(self.events("finish_mode_forced")[0][1]["reason"], "repeated_outcomes")
+        # A notice comes first; the window is forced only after REPEAT_GRACE more identical outcomes.
+        self.assertEqual(len(self.events("repeated_outcome_warned")), 1)
+        reads = self.workflow.db.execute("SELECT count(*) FROM tool_calls WHERE name='read_text'").fetchone()[0]
+        self.assertEqual(reads, 3 + REPEAT_GRACE)
+
+    def test_a_repeat_notice_lets_the_agent_change_course_without_a_forced_finish(self):
+        def lead(payload, n, state):
+            if b"repeated_outcome_notice" in payload and not state.get("written"):
+                state["written"] = True
+                return reply(("create_text", {"path": "analysis.md", "content": "Checked the files; wrote the analysis"}))
+            if state.get("written"):
+                return reply(("submit_for_verification", {"summary": "analysis.md written after the missing input was confirmed"}))
+            return reply(("read_text", {"path": "missing.md"}))
+
+        self.build("securities-fund", {"fund_manager": Agent(lead)}, cap=48)
+        self.drive()
+        tasks = self.check_invariants()
+        self.assertEqual(self.outcome(tasks["fund_manager"]), "proposed")
+        self.assertEqual(self.events("finish_mode_forced"), [])
+        self.assertEqual(len(self.events("repeated_outcome_warned")), 1)
 
     def test_a_handoff_batch_ending_in_completion_is_accepted_but_a_handoff_alone_is_not(self):
         def dev(payload, n, state):

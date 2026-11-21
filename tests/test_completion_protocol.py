@@ -498,7 +498,8 @@ class CompletionProtocol(unittest.TestCase):
             for role in roles.values():
                 self.assertEqual(role.tools[-1], "submit_for_verification")
                 self.assertEqual("report_blocker" in role.tools, policy is not None)
-            self.assertFalse({"create_text", "update_text", "append_text", "run_python"} & set(roles["lead"].tools))
+            self.assertFalse({"create_text", "update_text", "append_text"} & set(roles["lead"].tools))
+            self.assertIn("run_python", roles["lead"].tools)
 
 
 if __name__ == "__main__":
