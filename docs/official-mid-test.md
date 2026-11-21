@@ -359,6 +359,40 @@ calls, tokens and final states in both modes, 1.49-1.59x faster wall time on
 fan-out graphs (1.55-1.76x with a 1 s synthetic review delay), and 1.0x on a
 dependent chain.
 
+### Overlapping web fetches inside one reply (proposed, opt-in)
+
+`advance --parallel-web-fetches N` (N = 2-4) lets up to N consecutive
+`search_web`/`retrieve_text` calls in one model reply wait for their public
+HTTPS responses at the same time. The default (1) is unchanged.
+
+- Each call is validated and reserved in call order exactly as before (tool-call
+  row, `tool_reserved` event, `reserved` retrieval record). Only the network
+  fetch runs on a worker thread, with no database or file access. Parsing,
+  artifact writes, retrieval records and tool results then settle in call order
+  on the controller thread, so later calls in the same reply see the same files.
+- Any other tool, or a non-web call between web calls, keeps strict serial
+  execution. A tool-budget stop ends reservation; calls already reserved still
+  complete first. An unexpected fetch crash leaves the unsettled calls
+  `reserved` (reported as uncertain), and nothing is resent.
+- Requests, tool calls, tokens and model-visible results are unchanged. Only
+  event order differs: the group's `tool_reserved` events precede its results,
+  and `retrieved_at` is taken when each response is processed, at most one fetch
+  deadline (15 s) after it arrived. A `web_fetches_overlapped` event records
+  the group and its wait. The option is not stored in the run configuration, so
+  existing state directories resume unchanged.
+
+Why: in the 2026-11-21 Securities and Newsroom records, research replies
+usually held 2-4 web calls run one after another (48 of 49 and 63 of 70
+retrieval replies in the two Securities runs), and web retrieval took 108-236 s
+per research-heavy task tree. Replaying the recorded batch sizes and per-call
+latencies through the real runner (`python -m
+agent_lab.evaluation.web_fetch_benchmark --replay COPY.sqlite3`, synthetic
+fetches) cuts that wait by 55-65%: 3.2-4.4 minutes per Securities run (two tasks) and
+2.2 minutes for the Newsroom run, with identical tool records. This is a replay
+estimate, not a live measurement; how the search endpoint and sites respond to
+four concurrent requests is untested, so a short live check is needed before
+relying on it.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,
