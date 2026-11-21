@@ -32,7 +32,8 @@ _SPECS = {
     "report_blocker": ("Report that required work cannot be completed in this task. Ends this task as failed with your "
                        "summary of what is done and what is missing. Must be the last tool in a batch; it is the honest "
                        "alternative to submitting incomplete work", {
-        "summary": _text("What is done, what is missing and why it cannot be finished here", maximum=2000)}),
+        "summary": _text("What is done, what is missing and why it cannot be finished here (at least 40 characters; "
+                         "placeholder text is refused)", maximum=2000)}),
     "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
         "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
@@ -114,6 +115,24 @@ _SPECS = {
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
 _OPTIONAL = {"run_python": frozenset({"replace_outputs"})}
 _COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
+# A blocker report is the task's final, failed evidence. Live Securities 2026-11-21: two
+# forced window completions both sent report_blocker with the summary "placeholder".
+_BLOCKER_MIN_CHARS, _BLOCKER_MIN_WORDS = 40, 6
+_PLACEHOLDER_WORDS = frozenset({"placeholder", "todo", "tbd", "tba", "na", "n/a", "none", "null", "blocked",
+                                "blocker", "summary", "test", "xxx", "x", "lorem", "ipsum", "dummy", "pending", "wip"})
+
+
+def blocker_summary_problem(summary):
+    """Why a report_blocker summary is not a meaningful failure explanation, or None."""
+    words = re.findall(r"[^\W_]+(?:[/'-][^\W_]+)*", summary.lower())
+    if not words or all(word in _PLACEHOLDER_WORDS for word in words):
+        return "it is placeholder text"
+    # Unspaced scripts (Chinese, Japanese) count two characters as a word, so the rule judges content, not language.
+    cjk = len(re.findall(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]", summary))
+    count = sum(1 for word in words if not re.search(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]", word)) + cjk // 2
+    if len(summary.strip()) < _BLOCKER_MIN_CHARS and cjk < 20 or count < _BLOCKER_MIN_WORDS:
+        return f"it is too short (at least {_BLOCKER_MIN_CHARS} characters and {_BLOCKER_MIN_WORDS} words)"
+    return None
 # Never accepted inside a finish window, even before a completion call: they open new work or pause.
 _OPENS_WORK = frozenset({"delegate_task", "delegate_with_inputs", "retry_failed_task", "ask_human"})
 
@@ -249,6 +268,11 @@ class ToolGateway:
                 and (arguments["assignee"], arguments["title"]) not in self.delegation_rules):
             raise ToolRequestError("Unknown declared child work; use one of the trusted assignee/title pairs: " +
                 json.dumps(sorted((a, t) for a, t in self.delegation_rules if a in self.delegates))[:3000])
+        if name == "report_blocker":
+            problem = blocker_summary_problem(arguments["summary"])
+            if problem:  # Refused like any invalid argument: nothing runs, the task stays open and can resend.
+                raise ToolRequestError(f"summary is not a meaningful failure explanation: {problem}. State what is "
+                                       "done, what is missing and why it cannot be finished in this task, then resend")
         if name == "offer_artifact" and arguments["target_task"] == self.task:
             # Live Newsroom 2026-11-21: a lead offered its own files to itself to copy them.
             raise ToolRequestError("A task cannot offer files to itself; they are already in this task")

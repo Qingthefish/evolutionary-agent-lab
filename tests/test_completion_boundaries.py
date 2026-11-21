@@ -198,7 +198,7 @@ class Boundaries(unittest.TestCase):
 
         def leaf(payload, n, state):
             if window(payload):
-                return reply(("report_blocker", {"summary": "Leaf could not finish"}))
+                return reply(("report_blocker", {"summary": "The leaf could not finish its files within its requests"}))
             return reply(*[("create_text", {"path": f"l{n}-{i}.md", "content": "x"}) for i in range(8)])
 
         roles = {"lead": (PARENT, ("mid",)), "mid": (PARENT, ("leaf",)), "leaf": (WORKER, ())}
@@ -255,7 +255,7 @@ class Boundaries(unittest.TestCase):
             if not window(payload):
                 return reply(("read_text", {"path": f"x{n}.md"}))
             if any(m.get("kind") == "trusted_verification_failure" for m in user_bodies(payload)):
-                return reply(("report_blocker", {"summary": "Cannot revise within the requests left"}))
+                return reply(("report_blocker", {"summary": "Cannot revise the draft within the requests left in this task"}))
             return reply(("submit_for_verification", {"summary": "Done"}))
 
         self.build({"lead": (WORKER, ())}, {"lead": Agent(lead)}, cap=10)
@@ -302,6 +302,49 @@ class Boundaries(unittest.TestCase):
         self.assertEqual(self.task("lead")["state"], "succeeded")
         errors = [r["error"] for p in self.agents["lead"].requests for r in results(p) if not r.get("ok")]
         self.assertTrue(any(e.startswith("ask_human: Finish window") for e in errors))
+
+    # --- 5. A blocker is the task's final evidence: it must explain the failure. ----------------
+    def test_placeholder_blockers_are_refused_and_a_real_explanation_is_kept(self):
+        def risk(payload, n, state):  # Live Securities 2026-11-21: report_blocker {"summary": "placeholder"}.
+            if not window(payload):
+                return reply(("read_text", {"path": f"x{n}.md"}))
+            if not any("not a meaningful failure explanation" in r.get("error", "") for r in results(payload)):
+                return reply(("report_blocker", {"summary": "placeholder"}))
+            return reply(("report_blocker", {"summary": "Stress table computed in stress.py; the written risk "
+                                                        "assessment is missing because the requests ran out"}))
+
+        agent = Agent(risk)
+        self.build({"lead": (WORKER, ())}, {"lead": agent}, cap=10)
+        self.drive()
+        evidence = self.task("lead")["evidence"]
+        self.assertIn("Blocker reported by the agent: Stress table computed", evidence)
+        self.assertNotIn("placeholder", evidence)
+        errors = [r["error"] for p in agent.requests for r in results(p) if not r.get("ok")]
+        self.assertTrue(any(e.startswith("report_blocker: summary is not a meaningful failure explanation: it is "
+                                         "placeholder text") for e in errors))
+
+    def test_a_model_that_only_sends_placeholders_still_ends_honestly_and_bounded(self):
+        agent = Agent(lambda p, n, s: reply(("report_blocker", {"summary": "TODO"})) if window(p)
+                      else reply(("read_text", {"path": f"x{n}.md"})))
+        self.build({"lead": (WORKER, ())}, {"lead": agent}, cap=10)
+        self.drive()
+        lead_task = self.task("lead")
+        self.assertEqual(lead_task["state"], "failed")
+        self.assertIn(FINISH, lead_task["evidence"])  # A labelled failure with no invented explanation.
+        self.assertNotIn("Blocker reported", lead_task["evidence"])
+        self.assertLessEqual(self.window_requests("lead"), R)
+
+    def test_blocker_explanations_are_judged_by_content_not_role(self):
+        from agent_lab.gateway import blocker_summary_problem
+        for bad in ("placeholder", "TODO", "n/a", "Blocked.", "x x x x x x x x", "Leaf could not finish", " ",
+                    "无法完成"):
+            with self.subTest(bad=bad):
+                self.assertIsNotNone(blocker_summary_problem(bad))
+        for good in ("Inputs are missing; the draft file is partial",
+                     "研究报告已完成，但风险评估缺失，因为请求次数已用完，无法继续撰写。 Missing: risk_assessment.md",
+                     "研究报告已经完成但风险评估文件缺失因为本任务的请求次数已经全部用完无法继续撰写"):
+            with self.subTest(good=good):
+                self.assertIsNone(blocker_summary_problem(good))
 
     # --- Validity of the matrix: mutants of the mechanism must be caught. -----------------------
     def test_the_lifecycle_tests_catch_each_mutant_of_the_mechanism(self):

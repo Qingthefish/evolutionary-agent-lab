@@ -487,7 +487,7 @@ class Lifecycle(unittest.TestCase):
         def lead(payload, n, state):
             if not window(payload):
                 return reply(("read_text", {"path": "missing.md"}))  # The same failing call every turn.
-            return reply(("report_blocker", {"summary": "Required input file is missing"}))
+            return reply(("report_blocker", {"summary": "The required input file missing.md does not exist, so no analysis was possible"}))
 
         self.build("securities-fund", {"fund_manager": Agent(lead)}, cap=48)
         self.drive()

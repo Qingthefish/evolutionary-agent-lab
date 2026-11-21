@@ -268,6 +268,12 @@ state and the shared budgets:
   human review or an honest blocker. A batch that ends with one of them may still
   carry the role's other calls first (an `offer_artifact` / `accept_artifact`
   handoff, a last fix, a message); delegation and `ask_human` stay closed.
+- `report_blocker` is the task's final failure evidence, so its summary must
+  explain what is done, what is missing and why (at least 40 characters and six
+  words; two CJK characters count as a word). Placeholder text such as
+  "placeholder" or "TODO" is refused like any invalid argument and can be resent.
+  In the 2026-11-21 live Securities run both forced window blockers said only
+  "placeholder".
 - An invalid completion (for example a summary over 2,000 characters) gets a
   specific error and can be corrected in the remaining window requests. A window
   used up without a valid completion ends the task as failed with "Finish window
