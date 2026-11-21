@@ -71,7 +71,7 @@ def check(workflow, task, *, reserve=None, after_response=False):
             raise TreeBudgetError("Shared task-tree " + reserve + " budget exhausted; partial artifacts retained")
         policy = _policy(workflow, scope)
         if reserve == "attempts" and policy is not None and (
-                maximum - used <= policy.finish_requests * len(_open_others(workflow, scope["root"], task))):
+                maximum - used <= held_for_others(workflow, scope["root"], task, policy.finish_requests)):
             raise TreeBudgetError("Remaining shared requests are kept for the parent task's finish; "
                                   "this subtask stops and its artifacts are retained")
         workflow.db.execute(f"UPDATE tree_budgets SET {reserve}={reserve}+1 WHERE root=?", (scope["root"],))
@@ -88,7 +88,7 @@ class FinishPolicy:
 
     finish_requests (R): every open task in a tree is guaranteed its last R requests.
         While a task runs, each other open task (ancestors, siblings and their
-        subtasks) holds R, so nobody else can spend them. A task's finish window is
+        subtasks) holds what is left of its R, so nobody else can spend them. A task's finish window is
         its last R available requests, in which only completion actions are offered.
     min_child: work requests a new subtask needs beyond its own finish window.
     Live roots (2026-11-19..21): accepted children used 10-25 requests; leads needed
@@ -139,8 +139,27 @@ TERMINAL = frozenset({"succeeded", "failed", "cancelled"})
 
 
 def _open_others(workflow, root, task):
-    """Open tasks in the tree other than `task`; each holds its own finish window."""
+    """Open tasks in the tree other than `task`; each holds what is left of its own finish window."""
     return [row["id"] for row in descendants(workflow, root) if row["id"] != task and row["state"] not in TERMINAL]
+
+
+def window_used(workflow, task):
+    """Requests a task has already spent inside its finish window (0 before it is entered)."""
+    entered = workflow.db.execute("SELECT min(sequence) FROM events WHERE task=? AND kind='finish_mode_entered'",
+                                  (task,)).fetchone()[0]
+    if entered is None:
+        return 0
+    return workflow.db.execute("SELECT count(*) FROM events WHERE task=? AND kind='model_attempt_reserved' AND "
+                               "sequence>?", (task, entered)).fetchone()[0]
+
+
+def held_for_others(workflow, root, task, window):
+    """Requests `task` must leave: each other open task's unspent finish window.
+
+    A fixed R per other task would count a window twice once its owner has spent
+    it: a blocked sibling (awaiting review) could then be left with nothing.
+    """
+    return sum(max(0, window - window_used(workflow, other)) for other in _open_others(workflow, root, task))
 
 
 def finish_budget(workflow, task):
@@ -152,7 +171,7 @@ def finish_budget(workflow, task):
     cap = json.loads(scope["limits"])["model_attempts"]
     shared_left = max(0, cap - scope["attempts"])
     others = _open_others(workflow, scope["root"], task)
-    held = policy.finish_requests * len(others)
+    held = held_for_others(workflow, scope["root"], task, policy.finish_requests)
     task_calls = workflow.db.execute("SELECT maximum FROM tool_budgets WHERE task=?", (task,)).fetchone() if \
         workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='tool_budgets'").fetchone() else None
     used_calls = workflow.db.execute("SELECT count(*) FROM tool_calls WHERE task=?", (task,)).fetchone()[0] if \

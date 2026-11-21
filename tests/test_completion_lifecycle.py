@@ -293,6 +293,55 @@ class Lifecycle(unittest.TestCase):
                 self.assertEqual(offered(root_window[-1]), {"report_blocker"})  # Failed children: only a blocker.
                 self.assertEqual(self.outcome(tasks[root_role]), "blocker")
 
+    def test_a_sibling_blocked_in_review_keeps_its_window_while_the_other_spends_everything(self):
+        def early(payload, n, state):  # Submits at once; after a later rejection it needs its window.
+            mine = receipts(payload)
+            if mine:
+                state["file"] = (mine[-1]["path"], mine[-1]["sha256"])
+            if n == 1:
+                return reply(("create_text", {"path": "part.md", "content": "first"}))
+            if any(m.get("kind") == "trusted_verification_failure" for m in user_bodies(payload)):
+                state["after_rejection"] = state.get("after_rejection", 0) + 1
+                return reply(("report_blocker", {"summary": "Rejected; cannot revise within the requests left"}))
+            return finish(payload, state, "First part")
+
+        def last_moment(payload, n, state):  # Spends its whole window, submits on the last request, stays open.
+            mine = receipts(payload)
+            if mine:
+                state["file"] = (mine[-1]["path"], mine[-1]["sha256"])
+            if not window(payload):
+                return reply(("create_text", {"path": f"w{n}.md", "content": "x"}))
+            if terms(payload)["finish_mode"]["requests_left_including_current"] > 1:
+                return reply(("read_text", {"path": f"w{n}.md"}))  # Refused in the window; still a request.
+            return finish(payload, state, "Second part, submitted at the last moment")
+
+        for scenario, (root_role, members) in SCENARIOS.items():
+            with self.subTest(scenario=scenario):
+                first, second = members[:2]
+                agents = {root_role: Agent(coordinator((first, second), "stall_schema")),
+                          first: Agent(early), second: Agent(last_moment)}
+                self.build(scenario, agents, cap=40)
+                rejected = False
+                for _ in range(400):
+                    state = self.scheduler.step()
+                    if state["state"] == "running":
+                        continue
+                    waiting = {n["task"] for n in state.get("needs") or [] if n.get("kind") == "independent_verification"}
+                    first_task = completion_task(self.workflow, first)
+                    second_task = completion_task(self.workflow, second)
+                    if not rejected and {first_task, second_task} <= waiting:
+                        rejected = True  # Both siblings open; the second has spent its whole window.
+                        review_proposal(self.scheduler, first_task, "reject", "Synthetic fixture review: reject")
+                    elif waiting and rejected:
+                        review_proposal(self.scheduler, sorted(waiting)[0], "accept", "Synthetic fixture review: accept")
+                    else:
+                        break
+                self.assertTrue(rejected)
+                tasks = self.check_invariants()
+                self.assertEqual(self.agents[first].state.get("after_rejection"), 1)  # It still got a request.
+                self.assertIn("Blocker reported by the agent", tasks[first]["evidence"])
+                self.assertEqual(self.outcome(tasks[second]), "proposed")
+
     # --- Replays of the recorded live failures (also run against the previous implementation). ----
     def test_replay_newsroom_chief_packages_its_files_in_the_final_requests(self):
         def chief(payload, n, state):  # Live 2026-11-21: accept / self-offer instead of submitting.

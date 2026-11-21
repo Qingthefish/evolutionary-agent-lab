@@ -255,7 +255,8 @@ state and the shared budgets:
   have to write or integrate the final deliverable. Ready never means succeeded.
 - **Finish window**: every open task's last `--finish-requests` (R, default 3)
   requests. While a task runs, each other open task in the tree (ancestors,
-  siblings and their subtasks) holds R requests, so nobody else can spend them;
+  siblings and their subtasks) holds what is left of its R requests, so nobody
+  else can spend them;
   a subtask stops once only those holds remain. The window also starts when tool
   calls or the role's own request limit run low, and it is entered at once after
   two consecutive output-limit replies or repeated identical outcomes (instead
