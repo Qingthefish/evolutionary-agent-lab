@@ -125,6 +125,8 @@ def worker(style, summary="Delivered; evidence in the offered file"):
 
 
 def finish(payload, state, summary):
+    if "file" not in state:  # Nothing written yet (a tight budget): a completion needs no artifact.
+        return reply(("submit_for_verification", {"summary": summary + " (no file was produced)"}))
     path, sha = state["file"]
     return reply(("offer_artifact", {"path": path, "target_task": context(payload)["parent_task_id"],
                                      "expected_sha256": sha}),

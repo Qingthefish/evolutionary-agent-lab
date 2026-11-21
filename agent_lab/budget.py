@@ -176,7 +176,7 @@ def finish_budget(workflow, task):
         workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='tool_budgets'").fetchone() else None
     used_calls = workflow.db.execute("SELECT count(*) FROM tool_calls WHERE task=?", (task,)).fetchone()[0] if \
         task_calls else 0
-    tool_left = json.loads(scope["limits"])["tool_calls"] - scope["tool_calls"]
+    tool_left = json.loads(scope["limits"])["tool_calls"] - scope["tool_calls"] - held
     if task_calls:
         tool_left = min(tool_left, task_calls["maximum"] - used_calls)
     return {"policy": policy, "depth": scope["depth"], "cap": cap, "shared_left": shared_left,
@@ -196,8 +196,18 @@ def record_tokens(workflow, task, count):
 def preflight_tools(workflow, task, count):
     check(workflow, task)
     scope = _scope(workflow, task)
-    if scope is not None and scope["tool_calls"] + count > json.loads(scope["limits"])["tool_calls"]:
+    if scope is None:
+        return
+    limit = json.loads(scope["limits"])["tool_calls"]
+    if scope["tool_calls"] + count > limit:
         raise TreeBudgetError("Shared task-tree tool_calls budget cannot accommodate this batch")
+    policy = _policy(workflow, scope)
+    held = held_for_others(workflow, scope["root"], task, policy.finish_requests) if policy else 0
+    if held and scope["tool_calls"] + count > limit - held:
+        # Each unspent finish-window request of another open task keeps one tool call for its completion.
+        raise TreeBudgetError(f"Shared task-tree tool_calls budget cannot accommodate this batch: "
+                              f"{max(0, limit - scope['tool_calls'] - held)} call(s) are free for this task and "
+                              f"{held} are kept for other open tasks' finish windows; send fewer calls")
 
 
 def configure(workflow, root, limits):

@@ -267,6 +267,15 @@ class TaskRunner:
                 "elapsed_seconds": max(0, (task["ended"] if task["ended"] is not None else self.workflow.clock()) - task["created"]),
                 "stop_reason": session["stop_reason"], "benchmark_valid": False}
 
+    def _limit_stop(self, reason):
+        """Stop on a hard limit; inside the finish window say that the window ended without a completion."""
+        if (self.show_execution_budget and not reason.startswith(FINISH_EXHAUSTED) and self.workflow.db.execute(
+                "SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'", (self.task,)).fetchone()):
+            reason = FINISH_EXHAUSTED + reason
+        if reason.startswith(FINISH_EXHAUSTED):
+            self.workflow._event(self.task, self.actor, "finish_window_exhausted", {"reason": reason})
+        return self._stop(reason)
+
     def _stop(self, reason):
         # Persist a stop claim before terminating; a crash can safely finalize it.
         with self.workflow._transaction():
@@ -538,12 +547,6 @@ class TaskRunner:
                     budget.check(self.workflow, self.task, reserve="attempts")
                 except budget.TreeBudgetError as error:
                     reason = str(error)
-            if (reason is not None and self.show_execution_budget and not reason.startswith(FINISH_EXHAUSTED)
-                    and self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'",
-                                                 (self.task,)).fetchone()):
-                reason = FINISH_EXHAUSTED + reason  # Any limit reached inside the window: say so.
-            if reason is not None and reason.startswith(FINISH_EXHAUSTED):
-                self.workflow._event(self.task, self.actor, "finish_window_exhausted", {"reason": reason})
             if reason is None:
                 transcript = self._append_input_offers(self._append_child_results(self._append_human_responses(session)))
                 number = session["attempts"] + 1
@@ -563,7 +566,7 @@ class TaskRunner:
                 )
                 self.workflow._event(self.task, self.actor, "model_attempt_reserved", {"number": number, "mode": self.mode})
         if reason is not None:
-            return self._stop(reason)
+            return self._limit_stop(reason)
         try:
             result = self.client.complete(transcript, tools=self.gateway.tools())
         except TruncatedCompletion as error:
@@ -601,23 +604,24 @@ class TaskRunner:
             self.workflow.db.execute("UPDATE runner_sessions SET status='processing',transcript=? WHERE task=?",
                                      (_json(transcript), self.task))
         if self._expired() or self._session()["tokens"] > self.limits.reported_tokens:
-            return self._stop("Provider response exceeded duration or reported token budget; no tools released")
+            return self._limit_stop("Provider response exceeded duration or reported token budget; no tools released")
         try:
             budget.check(self.workflow, self.task, after_response=True)
         except budget.TreeBudgetError as error:
-            return self._stop(str(error))
+            return self._limit_stop(str(error))
         if result.finish_reason == "stop":
             return self._verify(number, result.message)
         calls = result.message["tool_calls"]
         try:
             self.gateway.validate_batch(calls)
         except ToolBudgetError as error:
-            if not self._in_finish():
-                return self._stop(str(error))
-            # Inside the finish window a batch too large for the remaining tool calls is refused with
-            # feedback; a single completion call still fits, because the window starts in time.
-            outcomes = [self._tool_error(call, f"{str(error).rstrip('.')}. In the finish window send only "
-                                                "submit_for_verification or report_blocker. No call in this batch ran")
+            if not self._phase:
+                return self._stop(str(error))  # Without the protocol, behaviour is unchanged.
+            # With the protocol a batch too large for the remaining tool calls is refused with feedback; a single
+            # completion call still fits, because the window starts in time and other tasks' windows are held.
+            hint = (" In the finish window send only submit_for_verification or report_blocker." if self._in_finish()
+                    else " Send fewer calls in one batch.")
+            outcomes = [self._tool_error(call, f"{str(error).rstrip('.')}.{hint} No call in this batch ran")
                         for call in calls]
             return self._settle(number, calls, outcomes)
         except ToolRequestError as error:
@@ -626,7 +630,7 @@ class TaskRunner:
         outcomes = []
         for call in calls:
             if self._expired():
-                return self._stop("Task duration budget exhausted during tool batch; partial artifacts retained")
+                return self._limit_stop("Task duration budget exhausted during tool batch; partial artifacts retained")
             if self._session()["status"] != "processing":
                 return self.status()
             if self.workflow.task(self.task, self.actor)["state"] != "running":
@@ -639,7 +643,7 @@ class TaskRunner:
             except ToolRequestError as error:
                 outcomes.append(self._tool_error(call, str(error)))
         if self._expired():
-            return self._stop("Task duration budget exhausted after tools; partial artifacts retained")
+            return self._limit_stop("Task duration budget exhausted after tools; partial artifacts retained")
         return self._settle(number, calls, outcomes)
 
     def _output_limit(self, number, transcript, error):
@@ -687,11 +691,11 @@ class TaskRunner:
         if stop:
             return self._stop("Provider output reached the output-token limit on consecutive attempts; no tools released")
         if self._expired() or self._session()["tokens"] > self.limits.reported_tokens:
-            return self._stop("Provider response exceeded duration or reported token budget; no tools released")
+            return self._limit_stop("Provider response exceeded duration or reported token budget; no tools released")
         try:
             budget.check(self.workflow, self.task, after_response=True)
         except budget.TreeBudgetError as error:
-            return self._stop(str(error))
+            return self._limit_stop(str(error))
         return self.status()
 
     @staticmethod
@@ -745,8 +749,7 @@ class TaskRunner:
                 self._force_finish("repeated_outcomes")
                 return self.status()
             if self._phase:
-                self.workflow._event(self.task, self.actor, "finish_window_exhausted", {"reason": "repeated outcomes"})
-                return self._stop(FINISH_EXHAUSTED + "repeated identical outcomes; partial artifacts retained")
+                return self._limit_stop(FINISH_EXHAUSTED + "repeated identical outcomes; partial artifacts retained")
             return self._stop("Repeated identical proposals/outcomes; stopping without evidence of progress")
         return self.status()
 
@@ -809,6 +812,9 @@ class TaskRunner:
             raise RunnerError("Interrupted verification requires trusted inspection, not automatic replay")
         calls = response["message"]["tool_calls"]
         floor = json.loads(turn["request"])["event_floor"]
+        if self.show_execution_budget:  # A fresh process: rebuild this turn's phase from persisted records.
+            self._phase = completion.phase(self.workflow, self.task,
+                                           role_left=self.limits.model_attempts - session["attempts"])
         outcomes = []
         for call in calls:
             record = self.workflow.db.execute("SELECT * FROM tool_calls WHERE task=? AND call_id=?",

@@ -279,6 +279,25 @@ state and the shared budgets:
 - A new subtask needs `2R + --min-child-requests` (default 16) available
   requests: the caller's window, the subtask's window and its work.
 
+What the window can and cannot guarantee under the existing hard limits (none is
+enlarged):
+
+- **Requests and tool calls**: guaranteed. Both are counted before use, so each
+  other open task's unspent window (one tool call per window request) is held.
+  A batch that would take held tool calls is refused with the number of free
+  calls; it does not stop the task.
+- **Duration**: not guaranteed. Time passes during requests and while the human
+  reviews (the task duration includes human waiting by design). A deadline inside
+  the window ends it early with the window label; a proposal still waiting for
+  review when the deadline passes is failed by the next `advance`.
+- **Reported tokens**: not guaranteed. Usage is known only after a reply; a reply
+  that crosses the cap releases no tool, even a valid submission, and the cap can
+  be reached before the window starts. In the 2026-11-21 live runs the largest
+  tree used 1.41M of 2.4M tokens and every run ended on the request cap first.
+- Provider failures inside the window count as window requests (the cap is
+  strict); pauses for an operator or the requester spend no request. The window
+  record is persisted, so it survives a restart, a review and a rejection.
+
 The previous version (v1: `--parent-reserve`, `--submit-reserve`,
 `--ready-fraction`, a two-tier Finish Mode and a final-batch rule) was replaced
 after the 2026-11-21 live runs: Finish Mode removed a Newsroom chief editor's
