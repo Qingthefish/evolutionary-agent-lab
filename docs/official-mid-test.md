@@ -261,6 +261,9 @@ state and the shared request cap:
   offers only submit, `report_blocker` and offer/accept for the handoff. In the
   2026-11-21 live Software run, QA and the lead spent their last Finish Mode
   requests rereading files and ended with neither a submission nor a blocker.
+  A final-request batch must also end with submit or `report_blocker`;
+  otherwise it is refused and runs nothing. In the 2026-11-21 live Newsroom run
+  the chief editor spent its final requests offering its own files to itself.
 - Each ancestor keeps `--parent-reserve` requests while descendants run, any
   task keeps `--submit-reserve` for its own submission, and a new subtask needs
   `--min-child-requests` beyond the caller's reserve. `--ready-fraction` sets

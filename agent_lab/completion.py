@@ -109,7 +109,7 @@ def _finish_instruction(state):
         return (f"Final requests: {state['available']} left after this one. Reading, messaging and new work are no "
                 "longer available. In this batch, call submit_for_verification with the work that is done (offer or "
                 "accept deliverables first in the same batch if needed), or report_blocker if required work is "
-                "missing.")
+                "missing. A batch that does not end with one of them is refused and runs nothing.")
     return ("Finish Mode: submit the work that is done now, or report a blocker if required work is missing. Do not "
             "start optional tests, rewrites, packaging or improvements. A genuine critical defect can be reported in "
             "the summary or raised with the requester.")

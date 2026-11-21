@@ -168,6 +168,7 @@ class ToolGateway:
             raise ToolRequestError("Delegation requires explicit eligible agents")
         self.chat = row["chat"]
         self.restricted = None  # Finish Mode: the runner offers only these tools for the current turn.
+        self.final_batch = False  # Finish Mode's final requests: a batch must end with a completion tool.
         workflow.db.executescript("""
             CREATE TABLE IF NOT EXISTS tool_budgets (
                 task TEXT PRIMARY KEY REFERENCES tasks(id), maximum INTEGER NOT NULL
@@ -346,6 +347,12 @@ class ToolGateway:
             raise ToolRequestError('Submit for verification exactly once as the last tool; no batch effects started')
         if blockers and blockers != [len(calls) - 1]:
             raise ToolRequestError('Report a blocker exactly once as the last tool; no batch effects started')
+        if self.final_batch and calls[-1]['function']['name'] not in {'submit_for_verification', 'report_blocker'}:
+            # Live Newsroom Task 1, 2026-11-21: the lead spent its final requests on offers and
+            # accepts of its own files and the tree ran out with no submission or blocker.
+            raise ToolRequestError('Final requests: end this batch with submit_for_verification or report_blocker; '
+                                   'offer or accept files earlier in the same batch if needed. No call in this '
+                                   'batch ran')
         if calls[-1]['function']['name'] == 'submit_for_verification':
             from .completion import submission_refusal
             refusal = submission_refusal(self.workflow, self.task)

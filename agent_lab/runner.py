@@ -400,6 +400,7 @@ class TaskRunner:
         """Derive this turn's phase; Finish Mode narrows the offered tools and is recorded once."""
         self._phase = completion.phase(self.workflow, self.task) if self.show_execution_budget else None
         self.gateway.restricted = completion.offered_tools(self.gateway.allowed, self._phase)
+        self.gateway.final_batch = bool(self.gateway.restricted is not None and self._phase.get("final"))
         if self.gateway.restricted is not None and not self.workflow.db.execute(
                 "SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'", (self.task,)).fetchone():
             self.workflow._event(self.task, self.actor, "finish_mode_entered", {

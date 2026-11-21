@@ -63,8 +63,9 @@ class FinalRequests(unittest.TestCase):
     task_of = protocol.CompletionProtocol.task_of
     events = protocol.CompletionProtocol.events
 
-    def build(self, agents, *, cap, policy=FinishPolicy()):
-        tools = {"lead": ("delegate_task", "accept_artifact", "read_text", "post_message", "retry_failed_task"),
+    def build(self, agents, *, cap, policy=FinishPolicy(), lead_extra=()):
+        tools = {"lead": ("delegate_task", "accept_artifact", "read_text", "post_message", "retry_failed_task",
+                          *lead_extra),
                  "dev": ("create_text", "read_text", "offer_artifact"),
                  "qa": ("create_text", "read_text", "offer_artifact")}
         delegates = {"lead": ("dev", "qa"), "dev": (), "qa": ()}
@@ -108,6 +109,41 @@ class FinalRequests(unittest.TestCase):
         evidence = (root.get("evidence") or "") + str(reasons) + str(state)
         self.assertIn("Blocker reported by the agent", evidence)
         self.assertNotIn("attempts budget exhausted", evidence)
+
+    def test_a_packaging_lead_is_refused_until_its_final_batch_submits(self):
+        def lead(payload, n, state):
+            if n == 1:
+                return reply(("delegate_task", {"assignee": "qa", "title": "Test the booking tool adversarially"}))
+            offer = child_offer(payload)
+            if offer and not state.get("accepted") and "accept_artifact" in offered(payload):
+                state["accepted"] = True
+                return reply(("accept_artifact", {"artifact_id": offer["artifact_id"], "path": "QA_REPORT.md"}))
+            found = last_sha(payload)
+            if found and found[0] == "QA_REPORT.md":
+                state["report"] = found
+            if "read_text" in offered(payload):
+                return reply(("read_text", {"path": "QA_REPORT.md"}))
+            if not any("Final requests: end this batch" in r.get("error", "") for r in tool_results(payload)):
+                path, sha = state["report"]  # Live chief editor: offers its own files to itself to package them.
+                return reply(("offer_artifact", {"path": path, "target_task": context(payload)["task_id"],
+                                                 "expected_sha256": sha}))
+            return reply(("submit_for_verification", {"summary": "Delivered with the accepted QA report"}))
+
+        lead_agent = Agent(lead)
+        self.build({"lead": lead_agent, "qa": Agent(reader_qa())}, cap=20, lead_extra=("offer_artifact",))
+        state = self.drive()
+        (qa_task,) = self.task_of("qa")
+        review_proposal(self.scheduler, qa_task["id"], "accept", "Reviewer accepted the QA report")
+        state = self.drive()
+        self.assertEqual(state["needs"][0], {"task": self.root, "kind": "independent_verification"})
+        errors = [r.get("error", "") for p in lead_agent.requests for r in tool_results(p)]
+        self.assertTrue(any(e.startswith("Final requests: end this batch") for e in errors))
+        offers = self.workflow.db.execute("SELECT count(*) FROM artifacts WHERE source_task=? AND target_task=?",
+                                          (self.root, self.root)).fetchone()[0]
+        self.assertEqual(offers, 0)  # The packaging batch was refused and ran nothing.
+        self.assertTrue(self.events("final_requests_entered", self.root))
+        review_proposal(self.scheduler, self.root, "accept", "Requester accepted")
+        self.assertEqual(self.workflow.task(self.root, "user")["state"], "succeeded")
 
     def test_final_requests_start_at_the_submission_reserve_and_keep_handoff(self):
         policy = FinishPolicy()
