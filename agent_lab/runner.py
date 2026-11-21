@@ -136,6 +136,15 @@ def output_limit_instruction(shape, allowed, max_tokens=None, streak=1):
     return " ".join(parts)
 
 
+@dataclass(frozen=True)
+class PreparedTurn:
+    """One reserved provider attempt: its persisted request snapshot, ready to send."""
+    task: str
+    number: int
+    transcript: list
+    tools: list
+
+
 class TaskRunner:
     def __init__(self, gateway, client, *, mode, constraints, limits=Limits(),
                  verifier=None, verifier_id=None, role=None, allow_html=False, show_execution_budget=False):
@@ -517,7 +526,27 @@ class TaskRunner:
         return transcript
 
     def step(self):
-        """Reserve at most one provider attempt, then dispatch sequentially or pause."""
+        """Reserve at most one provider attempt, then dispatch sequentially or pause.
+
+        The three stages below are also what the opt-in parallel scheduler composes:
+        prepare and apply run on the controller thread inside short SQLite
+        transactions; only `call` (provider I/O, no database access) may run on a
+        worker thread for several independent tasks at once.
+        """
+        prepared = self.prepare()
+        if not isinstance(prepared, PreparedTurn):
+            return prepared
+        return self.apply(prepared, self.call(prepared))
+
+    def call(self, prepared):
+        """Provider I/O only: no workflow, file or tool access. Safe on a worker thread."""
+        try:
+            return self.client.complete(prepared.transcript, tools=prepared.tools)
+        except ProviderError as error:  # Includes TruncatedCompletion; handled by apply().
+            return error
+
+    def prepare(self):
+        """Check state and atomically reserve one attempt; return a PreparedTurn or a status."""
         with self.workflow._transaction():
             session = self._session()
             task = self.workflow._task(self.task, self.actor, assigned=True)
@@ -565,9 +594,10 @@ class TaskRunner:
                 self._enter_phase(number)
                 if self.budget_context:
                     transcript = self._budget_context(transcript, session, number)
+                tools = self.gateway.tools()
                 self.workflow.db.execute(
                     "INSERT INTO runner_turns(task,number,status,request,started) VALUES(?,?,'calling',?,?)",
-                    (self.task, number, _json({"messages": transcript, "tools": self.gateway.tools(),
+                    (self.task, number, _json({"messages": transcript, "tools": tools,
                      "finish_mode": self.gateway.restricted is not None,
                      "event_floor": self.workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events").fetchone()[0]}),
                      self.workflow.clock()),
@@ -579,11 +609,15 @@ class TaskRunner:
                 self.workflow._event(self.task, self.actor, "model_attempt_reserved", {"number": number, "mode": self.mode})
         if reason is not None:
             return self._limit_stop(reason)
-        try:
-            result = self.client.complete(transcript, tools=self.gateway.tools())
-        except TruncatedCompletion as error:
-            return self._output_limit(number, transcript, error)
-        except ProviderError as error:
+        return PreparedTurn(self.task, number, transcript, tools)
+
+    def apply(self, prepared, result):
+        """Record the provider outcome and apply its tools through the trusted gateway (controller thread)."""
+        number, transcript = prepared.number, prepared.transcript
+        if isinstance(result, TruncatedCompletion):
+            return self._output_limit(number, transcript, result)
+        if isinstance(result, ProviderError):
+            error = result
             with self.workflow._transaction():
                 self.workflow.db.execute("UPDATE runner_turns SET status='provider_error',error=?,ended=? WHERE task=? AND number=?",
                                          (str(error), self.workflow.clock(), self.task, number))

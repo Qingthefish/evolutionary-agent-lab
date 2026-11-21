@@ -169,7 +169,8 @@ def with_completion_tools(tools):
         else (*tools, "report_blocker")
 
 
-def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, finish_policy=None):
+def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, finish_policy=None,
+                   parallel_model_calls=1):
     policy = scenario_policy(session)
     second = session._root(2)
     allow_html = session.scenario["id"] == "securities-fund" and second is not None and second["root"] == root
@@ -195,7 +196,7 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
         show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS,
-        finish_policy=finish_policy)
+        finish_policy=finish_policy, parallel_model_calls=parallel_model_calls)
 
 
 def _review_boundaries(scheduler):
@@ -218,9 +219,15 @@ def _review_boundaries(scheduler):
     return needs
 
 
+# Runner states that must be reconciled before anything else in the tree may run.
+_UNCERTAIN = {"calling", "processing", "stopping", "provider_uncertain"}
+
+
 def advance(scheduler, turns):
     if type(turns) is not int or not 1 <= turns <= 8:
         raise WorkflowError("Advance by one to eight turns at a time")
+    if getattr(scheduler, "parallel_model_calls", 1) > 1:
+        return _advance_overlapping(scheduler, turns)
     for _ in range(turns):
         needs = _review_boundaries(scheduler)
         if needs:
@@ -231,6 +238,28 @@ def advance(scheduler, turns):
     needs = _review_boundaries(scheduler)
     if needs:
         return scheduler.status() | {"state": "blocked", "needs": needs}
+    return result
+
+
+def _advance_overlapping(scheduler, turns):
+    """Opt-in: keep independent ready tasks moving while a human review or answer is pending.
+
+    The task at a human boundary stays paused until the human decides; a parent
+    still waits for every open child, so nothing that depends on the pending
+    decision can run. Uncertain provider/tool states still stop the whole tree.
+    Pending human boundaries are always reported in `needs`.
+    """
+    result = None
+    for _ in range(turns):
+        uncertain = [need for need in _review_boundaries(scheduler) if need["kind"] in _UNCERTAIN]
+        if uncertain:
+            return scheduler.status() | {"state": "blocked", "needs": uncertain}
+        result = scheduler.step()
+        if result["state"] != "running":
+            break
+    needs = _review_boundaries(scheduler)
+    if needs and result["state"] == "running":
+        return result | {"needs": needs}
     return result
 
 
@@ -332,6 +361,9 @@ def main(argv=None):
                              help="Work requests a new subtask needs beyond its own finish window")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
+            command.add_argument("--parallel-model-calls", type=int, choices=(1, 2), default=1,
+                                 help="Opt-in: overlap the provider requests of up to two independent ready tasks "
+                                      "(default 1, sequential)")
         elif name == "review":
             command.add_argument("--task", required=True)
             command.add_argument("--decision", choices=("accept", "reject"), required=True)
@@ -375,7 +407,8 @@ def main(argv=None):
                     finish_policy = FinishPolicy(finish_requests=args.finish_requests, min_child=args.min_child_requests) if args.finish_protocol else None
                     scheduler = make_scheduler(session, root, files, live, services,
                                                show_execution_budget=args.show_execution_budget,
-                                               finish_policy=finish_policy)
+                                               finish_policy=finish_policy,
+                                               parallel_model_calls=getattr(args, "parallel_model_calls", 1))
                     if args.command == "preflight":
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
