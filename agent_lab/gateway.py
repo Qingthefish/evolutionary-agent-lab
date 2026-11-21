@@ -1,13 +1,16 @@
 """Allowlisted model proposals bound to trusted task identity and real tool results."""
 
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 import re
+import time
 
 from .core import WorkflowError
 from .protocol import strict_json
 from .delegation import check_inputs, normalize_inputs
 from . import budget
+from .retrieval import PendingRetrieval
 
 
 class ToolRequestError(WorkflowError):
@@ -116,6 +119,7 @@ _SPECS = {
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
 _OPTIONAL = {"run_python": frozenset({"replace_outputs"})}
 _COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
+_WEB = frozenset({"search_web", "retrieve_text"})
 # A blocker report is the task's final, failed evidence. Live Securities 2026-11-21: two
 # forced window completions both sent report_blocker with the summary "placeholder".
 _BLOCKER_MIN_CHARS, _BLOCKER_MIN_WORDS = 40, 6
@@ -406,6 +410,70 @@ class ToolGateway:
                 raise ToolBudgetError("Task tool-call budget cannot accommodate this batch")
 
     def dispatch(self, call):
+        name, arguments = self._reserve(call)
+        output, status = self._outcome(lambda: self._execute(name, arguments))
+        return self._record(call, name, output, status)
+
+    def overlap_length(self, calls, start):
+        """How many consecutive web calls from `start` may overlap their fetches (1 = dispatch alone).
+
+        Only with explicitly enabled concurrent fetches; every other tool, and any call after a
+        non-web call, keeps strictly serial execution.
+        """
+        limit = getattr(self.retrieval, "concurrent_fetches", 1) if self.retrieval is not None else 1
+        end = start
+        while (end < len(calls) and end - start < limit and isinstance(calls[end], dict)
+               and isinstance(calls[end].get("function"), dict) and calls[end]["function"].get("name") in _WEB):
+            end += 1
+        return max(1, end - start)
+
+    def dispatch_retrievals(self, calls):
+        """Consecutive web calls with overlapped public HTTPS fetches.
+
+        Each call is validated and reserved in call order exactly as `dispatch` reserves it,
+        including its retrieval record; then only the network fetches run concurrently; then
+        parsing, artifact writes and every result are completed in call order on this thread.
+        Returns one tool message, or the ToolRequestError `dispatch` would have raised, per call.
+        A budget stop ends reservation; calls already reserved still complete before it is raised.
+        """
+        slots, stop = [], None
+        for call in calls:
+            try:
+                name, arguments = self._reserve(call)
+            except ToolBudgetError as error:
+                stop = error
+                break
+            except ToolRequestError as error:
+                slots.append(error)
+                continue
+            output, status = self._outcome(lambda: self.retrieval.begin(self.task, self.actor, name, arguments))
+            slots.append((call, name, output["result"] if output["ok"] else (output, status)))
+        pending = [slot[2] for slot in slots if isinstance(slot, tuple) and isinstance(slot[2], PendingRetrieval)]
+        started = time.monotonic()
+        with ThreadPoolExecutor(max_workers=max(1, len(pending)), thread_name_prefix="web-fetch") as pool:
+            fetches = {item.identifier: pool.submit(type(self.retrieval).fetched, item) for item in pending}
+            results = []
+            for slot in slots:
+                if isinstance(slot, ToolRequestError):
+                    results.append(slot)
+                    continue
+                call, name, item = slot
+                if isinstance(item, PendingRetrieval):
+                    output, status = self._outcome(
+                        lambda: self.retrieval.complete(item, fetches[item.identifier].result()))
+                else:
+                    output, status = item
+                results.append(self._record(call, name, output, status))
+        if len(pending) > 1:
+            with self.workflow._transaction():
+                self.workflow._event(self.task, self.actor, "web_fetches_overlapped", {
+                    "calls": [slot[0]["id"] for slot in slots if isinstance(slot, tuple)],
+                    "fetches": len(pending), "seconds": round(time.monotonic() - started, 3)})
+        if stop is not None:
+            raise stop
+        return results
+
+    def _reserve(self, call):
         name, arguments = self._validate(call)
         encoded = json.dumps(arguments, sort_keys=True, allow_nan=False)
         with self.workflow._transaction():
@@ -432,16 +500,20 @@ class ToolGateway:
                 "call_id": call["id"], "name": name,
                 "arguments_sha256": hashlib.sha256(encoded.encode()).hexdigest(),
             })
+        return name, arguments
+
+    def _outcome(self, execute):
         try:
-            result = self._execute(name, arguments)
+            result = execute()
             state = self.workflow.task(self.task, self.actor)["state"]
-            output = {"ok": True, "result": result, "task_state": state}
-            status = "paused" if state.startswith("waiting_") else "succeeded"
+            return {"ok": True, "result": result, "task_state": state}, "paused" if state.startswith("waiting_") else "succeeded"
         except (WorkflowError, OSError, UnicodeError) as error:
             # Known workflow errors carry program-authored diagnostics; don't echo OS paths.
             diagnostic = str(error) if isinstance(error, WorkflowError) else "Backend IO failed"
-            output, status = {"ok": False, "error": diagnostic,
-                              "recovery": "Inspect task events and reconcile before retry"}, "failed"
+            return {"ok": False, "error": diagnostic,
+                    "recovery": "Inspect task events and reconcile before retry"}, "failed"
+
+    def _record(self, call, name, output, status):
         with self.workflow._transaction():
             self.workflow.db.execute("UPDATE tool_calls SET status=?,result=? WHERE task=? AND call_id=?", (
                 status, json.dumps(output, allow_nan=False), self.task, call["id"],

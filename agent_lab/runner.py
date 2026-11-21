@@ -673,17 +673,26 @@ class TaskRunner:
         except ToolRequestError as error:
             outcomes = [self._tool_error(call, str(error)) for call in calls]
             return self._settle(number, calls, outcomes)
-        outcomes = []
-        for call in calls:
+        outcomes, index = [], 0
+        while index < len(calls):
+            call = calls[index]
             if self._expired():
                 return self._limit_stop("Task duration budget exhausted during tool batch; partial artifacts retained")
             if self._session()["status"] != "processing":
                 return self.status()
             if self.workflow.task(self.task, self.actor)["state"] != "running":
                 outcomes.append(self._tool_error(call, "Not executed: task paused or terminated"))
+                index += 1
                 continue
+            # Opt-in only: consecutive web calls overlap their fetches; results still settle in call order.
+            group = calls[index:index + self.gateway.overlap_length(calls, index)]
+            index += len(group)
             try:
-                outcomes.append(self.gateway.dispatch(call))
+                if len(group) > 1:
+                    outcomes.extend(self._tool_error(item, str(result)) if isinstance(result, ToolRequestError) else result
+                                    for item, result in zip(group, self.gateway.dispatch_retrievals(group)))
+                else:
+                    outcomes.append(self.gateway.dispatch(call))
             except ToolBudgetError as error:
                 return self._stop(str(error))
             except ToolRequestError as error:
