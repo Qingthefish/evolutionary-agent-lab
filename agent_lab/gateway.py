@@ -113,6 +113,9 @@ _SPECS = {
 }
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
 _OPTIONAL = {"run_python": frozenset({"replace_outputs"})}
+_COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
+# Never accepted inside a finish window, even before a completion call: they open new work or pause.
+_OPENS_WORK = frozenset({"delegate_task", "delegate_with_inputs", "retry_failed_task", "ask_human"})
 
 
 class ToolGateway:
@@ -167,8 +170,8 @@ class ToolGateway:
         if self.allowed & {"delegate_task", "delegate_with_inputs"} and not self.delegates:
             raise ToolRequestError("Delegation requires explicit eligible agents")
         self.chat = row["chat"]
-        self.restricted = None  # Finish Mode: the runner offers only these tools for the current turn.
-        self.final_batch = False  # Finish Mode's final requests: a batch must end with a completion tool.
+        self.restricted = None  # Finish window: the runner offers only these tools for the current turn.
+        self._batch_completes = False
         workflow.db.executescript("""
             CREATE TABLE IF NOT EXISTS tool_budgets (
                 task TEXT PRIMARY KEY REFERENCES tasks(id), maximum INTEGER NOT NULL
@@ -221,11 +224,13 @@ class ToolGateway:
         name, raw = call["function"]["name"], call["function"]["arguments"]
         if not isinstance(name, str) or name not in self.allowed:
             raise ToolRequestError("Tool is not available to this task")
-        if self.restricted is not None and name not in self.restricted:
+        if self.restricted is not None and name not in self.restricted and not (
+                self._batch_completes and name not in _OPENS_WORK):
             available = ", ".join(sorted(self.allowed & self.restricted))
-            raise ToolRequestError(f"Finish Mode: {name} is not available now. Available: {available}. Submit the work "
-                                   "that is done with submit_for_verification, or call report_blocker if required work "
-                                   "is missing")
+            raise ToolRequestError(f"Finish window: {name} is only accepted in a batch that ends with one of: "
+                                   f"{available}. Submit the work that is done with submit_for_verification, or call "
+                                   "report_blocker if required work is missing; a handoff (offer_artifact, "
+                                   "accept_artifact) may come first in that same batch")
         if not isinstance(raw, str) or len(raw) > 128 * 1024:
             raise ToolRequestError("Arguments must be a bounded JSON string")
         try:
@@ -244,6 +249,9 @@ class ToolGateway:
                 and (arguments["assignee"], arguments["title"]) not in self.delegation_rules):
             raise ToolRequestError("Unknown declared child work; use one of the trusted assignee/title pairs: " +
                 json.dumps(sorted((a, t) for a, t in self.delegation_rules if a in self.delegates))[:3000])
+        if name == "offer_artifact" and arguments["target_task"] == self.task:
+            # Live Newsroom 2026-11-21: a lead offered its own files to itself to copy them.
+            raise ToolRequestError("A task cannot offer files to itself; they are already in this task")
         if name in _GIT_TOOLS and arguments["repository"] not in self.git.repositories:
             raise ToolRequestError("Repository is not in the trusted allowlist")
         if name == "run_python":
@@ -332,6 +340,8 @@ class ToolGateway:
         """
         if not isinstance(calls, list) or not 1 <= len(calls) <= 16:
             raise ToolRequestError("Supply between one and sixteen tool proposals")
+        last = calls[-1].get("function") if isinstance(calls[-1], dict) else None
+        self._batch_completes = isinstance(last, dict) and last.get("name") in _COMPLETION
         for call in calls:
             try:
                 self._validate(call)
@@ -347,12 +357,6 @@ class ToolGateway:
             raise ToolRequestError('Submit for verification exactly once as the last tool; no batch effects started')
         if blockers and blockers != [len(calls) - 1]:
             raise ToolRequestError('Report a blocker exactly once as the last tool; no batch effects started')
-        if self.final_batch and calls[-1]['function']['name'] not in {'submit_for_verification', 'report_blocker'}:
-            # Live Newsroom Task 1, 2026-11-21: the lead spent its final requests on offers and
-            # accepts of its own files and the tree ran out with no submission or blocker.
-            raise ToolRequestError('Final requests: end this batch with submit_for_verification or report_blocker; '
-                                   'offer or accept files earlier in the same batch if needed. No call in this '
-                                   'batch ran')
         if calls[-1]['function']['name'] == 'submit_for_verification':
             from .completion import submission_refusal
             refusal = submission_refusal(self.workflow, self.task)

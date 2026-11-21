@@ -70,8 +70,8 @@ def check(workflow, task, *, reserve=None, after_response=False):
         if used >= maximum:
             raise TreeBudgetError("Shared task-tree " + reserve + " budget exhausted; partial artifacts retained")
         policy = _policy(workflow, scope)
-        if reserve == "attempts" and policy is not None and scope["depth"] > 0 and (
-                maximum - used <= policy.parent_reserve * scope["depth"]):
+        if reserve == "attempts" and policy is not None and (
+                maximum - used <= policy.finish_requests * len(_open_others(workflow, scope["root"], task))):
             raise TreeBudgetError("Remaining shared requests are kept for the parent task's finish; "
                                   "this subtask stops and its artifacts are retained")
         workflow.db.execute(f"UPDATE tree_budgets SET {reserve}={reserve}+1 WHERE root=?", (scope["root"],))
@@ -84,30 +84,31 @@ def check(workflow, task, *, reserve=None, after_response=False):
 
 @dataclass(frozen=True)
 class FinishPolicy:
-    """Hierarchical completion budget for open workflows (proposed 2026-11-19).
+    """Hierarchical completion budget for open workflows (completion-protocol-v2, proposed 2026-11-21).
 
-    parent_reserve: requests each ancestor keeps for its own finish while a
-        descendant runs (accept results, report, submit, one retry).
-    submit_reserve: requests any task keeps for its own submission; inside
-        it the task is in Finish Mode (finishing tools only).
-    min_child: requests a new subtask needs beyond the caller's own reserve.
-    ready_fraction: once deliverables look ready, Finish Mode starts when the
-        task's available requests fall to this share of the tree cap.
-    Live software roots: accepted children used 10-25 requests; leads needed
-    2-5 requests after their last child. Nothing is completed automatically.
+    finish_requests (R): every open task in a tree is guaranteed its last R requests.
+        While a task runs, each other open task (ancestors, siblings and their
+        subtasks) holds R, so nobody else can spend them. A task's finish window is
+        its last R available requests, in which only completion actions are offered.
+    min_child: work requests a new subtask needs beyond its own finish window.
+    Live roots (2026-11-19..21): accepted children used 10-25 requests; leads needed
+    2-5 after their last child. Nothing is completed automatically.
     """
-    parent_reserve: int = 3
-    submit_reserve: int = 2
+    finish_requests: int = 3
     min_child: int = 10
-    ready_fraction: float = 0.25
 
     def __post_init__(self):
-        if (any(type(getattr(self, key)) is not int for key in ("parent_reserve", "submit_reserve", "min_child"))
-                or not 1 <= self.submit_reserve <= self.parent_reserve <= 16 or not 1 <= self.min_child <= 64
-                or type(self.ready_fraction) not in (int, float) or not 0 <= self.ready_fraction <= 0.5
-                or self.min_child <= self.submit_reserve):
-            raise TreeBudgetError("Use small positive finish-policy settings: 1 <= submit_reserve <= parent_reserve, "
-                                  "submit_reserve < min_child, 0 <= ready_fraction <= 0.5")
+        if (any(type(getattr(self, key)) is not int for key in ("finish_requests", "min_child"))
+                or not 1 <= self.finish_requests <= 16 or not self.finish_requests < self.min_child <= 64):
+            raise TreeBudgetError("Use small positive finish-policy settings: 1 <= finish_requests <= 16 and "
+                                  "finish_requests < min_child <= 64")
+
+    @classmethod
+    def from_record(cls, data):
+        """Read a stored policy; v1 records (parent_reserve/submit_reserve/ready_fraction) map R to parent_reserve."""
+        if "finish_requests" in data:
+            return cls(**data)
+        return cls(finish_requests=data["parent_reserve"], min_child=data["min_child"])
 
 
 def configure_finish_policy(workflow, root, policy):
@@ -131,22 +132,38 @@ def _policy(workflow, scope):
             "SELECT 1 FROM sqlite_master WHERE name='finish_policies' AND type='table'").fetchone():
         return None
     row = workflow.db.execute("SELECT policy FROM finish_policies WHERE root=?", (scope["root"],)).fetchone()
-    return FinishPolicy(**json.loads(row["policy"])) if row else None
+    return FinishPolicy.from_record(json.loads(row["policy"])) if row else None
+
+
+TERMINAL = frozenset({"succeeded", "failed", "cancelled"})
+
+
+def _open_others(workflow, root, task):
+    """Open tasks in the tree other than `task`; each holds its own finish window."""
+    return [row["id"] for row in descendants(workflow, root) if row["id"] != task and row["state"] not in TERMINAL]
 
 
 def finish_budget(workflow, task):
-    """Shared requests `task` may still use after what its ancestors keep, or None when unconfigured."""
+    """Shared requests `task` may still use after every other open task's finish window, or None when unconfigured."""
     scope = _scope(workflow, task)
     policy = _policy(workflow, scope)
     if policy is None:
         return None
     cap = json.loads(scope["limits"])["model_attempts"]
     shared_left = max(0, cap - scope["attempts"])
-    held = policy.parent_reserve * scope["depth"]
-    delegated = workflow.db.execute("SELECT 1 FROM tasks WHERE parent=? LIMIT 1", (task,)).fetchone() is not None
+    others = _open_others(workflow, scope["root"], task)
+    held = policy.finish_requests * len(others)
+    task_calls = workflow.db.execute("SELECT maximum FROM tool_budgets WHERE task=?", (task,)).fetchone() if \
+        workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='tool_budgets'").fetchone() else None
+    used_calls = workflow.db.execute("SELECT count(*) FROM tool_calls WHERE task=?", (task,)).fetchone()[0] if \
+        task_calls else 0
+    tool_left = json.loads(scope["limits"])["tool_calls"] - scope["tool_calls"]
+    if task_calls:
+        tool_left = min(tool_left, task_calls["maximum"] - used_calls)
     return {"policy": policy, "depth": scope["depth"], "cap": cap, "shared_left": shared_left,
-            "reserved_for_ancestors": held, "available": max(0, shared_left - held),
-            "own_reserve": policy.parent_reserve if delegated else policy.submit_reserve}
+            "held_for_other_open_tasks": held, "open_other_tasks": len(others),
+            "available": max(0, shared_left - held), "tool_calls_left": max(0, tool_left),
+            "finish_requests": policy.finish_requests}
 
 
 def record_tokens(workflow, task, count):

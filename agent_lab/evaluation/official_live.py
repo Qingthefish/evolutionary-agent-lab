@@ -324,14 +324,10 @@ def main(argv=None):
         command.add_argument("--finish-protocol", action="store_true",
                              help="Completion protocol: hierarchical finish reserves, Finish Mode and report_blocker; "
                                   "requires --show-execution-budget")
-        command.add_argument("--parent-reserve", type=int, default=FINISH_POLICY.parent_reserve,
-                             help="Requests each parent keeps for its own finish while subtasks run")
-        command.add_argument("--submit-reserve", type=int, default=FINISH_POLICY.submit_reserve,
-                             help="Requests any task keeps for its own submission (Finish Mode inside it)")
+        command.add_argument("--finish-requests", type=int, default=FINISH_POLICY.finish_requests,
+                             help="Last requests of every open task kept as its finish window (completion only)")
         command.add_argument("--min-child-requests", type=int, default=FINISH_POLICY.min_child,
-                             help="Minimum requests a new subtask needs beyond the caller's reserve")
-        command.add_argument("--ready-fraction", type=float, default=FINISH_POLICY.ready_fraction,
-                             help="Share of the tree cap at which Finish Mode starts once deliverables look ready")
+                             help="Work requests a new subtask needs beyond its own finish window")
         if name == "advance":
             command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
         elif name == "review":
@@ -374,9 +370,7 @@ def main(argv=None):
                     stack.callback(services.close)
                     if args.finish_protocol and not args.show_execution_budget:
                         raise WorkflowError("--finish-protocol requires --show-execution-budget")
-                    finish_policy = FinishPolicy(parent_reserve=args.parent_reserve, submit_reserve=args.submit_reserve,
-                                                 min_child=args.min_child_requests,
-                                                 ready_fraction=args.ready_fraction) if args.finish_protocol else None
+                    finish_policy = FinishPolicy(finish_requests=args.finish_requests, min_child=args.min_child_requests) if args.finish_protocol else None
                     scheduler = make_scheduler(session, root, files, live, services,
                                                show_execution_budget=args.show_execution_budget,
                                                finish_policy=finish_policy)

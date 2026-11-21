@@ -130,7 +130,7 @@ class MultiAgentScheduler:
         if show_execution_budget:
             settings["show_execution_budget"] = True
         if finish_policy is not None:
-            settings["finish_policy"] = {"version": "completion-protocol-v1", **asdict(finish_policy)}
+            settings["finish_policy"] = {"version": "completion-protocol-v2", **asdict(finish_policy)}
         if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
             settings["git"] = git.configuration()
         if retrieval is not None:

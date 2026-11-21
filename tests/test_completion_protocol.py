@@ -1,4 +1,4 @@
-"""Completion protocol lifecycle (proposed 2026-11-19, pending owner review).
+"""Completion protocol lifecycle (completion-protocol-v2, proposed 2026-11-21, pending owner review).
 
 Scripted agents reproduce the live S01 software failures. Each test asserts the
 lifecycle outcome (who proposed, who was reviewed, final states), not merely that
@@ -199,9 +199,7 @@ class CompletionProtocol(unittest.TestCase):
         self.assertEqual(state["needs"][0], {"task": self.root, "kind": "independent_verification"})
         self.assertEqual(self.task_of("qa"), [])  # No optional polish subtask was started.
         resumed = [p for p in lead.requests if "delegated_work_accepted" in kinds(p)]
-        self.assertTrue(resumed and all("delegate_task" not in offered(p) for p in resumed))
-        (finish,) = self.events("finish_mode_entered", self.root)
-        self.assertIn("every delegated subtask was accepted", finish[1]["reason"])
+        self.assertTrue(resumed and contract(resumed[0])["deliverable_looks_ready"])
         self.assertEqual(self.workflow.task(self.root, "user")["state"], "running")  # Proposed, not completed.
         review_proposal(self.scheduler, self.root, "accept", "Requester accepted the delivered tool")
         self.assertEqual(self.workflow.task(self.root, "user")["state"], "succeeded")
@@ -224,7 +222,7 @@ class CompletionProtocol(unittest.TestCase):
                 return reply(("update_text", {"path": path, "content": f"All checks pass (rewrite {n})",
                                               "expected_sha256": sha}))
             return reply(("offer_artifact", {"path": path, "target_task": context(payload)["parent_task_id"],
-                                             "expected_sha256": sha}),
+                                             "expected_sha256": sha}),  # Handoff first in the completing batch.
                          ("submit_for_verification", {"summary": "QA report: all checks pass; see QA_REPORT.md"}))
 
         qa_agent = Agent(qa)
@@ -233,8 +231,9 @@ class CompletionProtocol(unittest.TestCase):
         (qa_task,) = self.task_of("qa")
         self.assertEqual(state["needs"][0], {"task": qa_task["id"], "kind": "independent_verification"})
         (finish,) = self.events("finish_mode_entered", qa_task["id"])
-        self.assertIn("deliverables were offered to the parent task", finish[1]["reason"])
-        self.assertLess(len(qa_agent.requests), 24 - 1 - 3)  # Submitted before the reserve stop.
+        self.assertIn("finish window", finish[1]["reason"])
+        self.assertTrue(contract(qa_agent.requests[2])["deliverable_looks_ready"])  # Advice, not a restriction.
+        self.assertIn("update_text", offered(qa_agent.requests[2]))
         review_proposal(self.scheduler, qa_task["id"], "accept", "Reviewer accepted the QA report")
         state = self.drive()
         review_proposal(self.scheduler, self.root, "accept", "Requester accepted")
@@ -252,7 +251,7 @@ class CompletionProtocol(unittest.TestCase):
                          ("submit_for_verification", {"summary": summary}))
 
         dev = Agent(writer(in_finish, then))
-        self.build({"lead": Agent(lead_finisher()), "dev": dev}, cap=16)
+        self.build({"lead": Agent(lead_finisher()), "dev": dev}, cap=18)
         state = self.drive()
         (dev_task,) = self.task_of("dev")
         self.assertEqual(state["needs"][0], {"task": dev_task["id"], "kind": "independent_verification"})
@@ -262,7 +261,7 @@ class CompletionProtocol(unittest.TestCase):
                       "the summary. No call in this batch ran", errors)
         offers = self.workflow.db.execute("SELECT count(*) FROM artifacts WHERE source_task=?", (dev_task["id"],)).fetchone()[0]
         self.assertEqual(offers, 1)  # The rejected batch's offer never ran.
-        self.assertLessEqual(self.used(), 16 - FinishPolicy().parent_reserve)
+        self.assertLessEqual(self.used(), 18 - FinishPolicy().finish_requests)
 
     # 4 + 5. A child that never finishes cannot spend the parent's reserve; the parent cannot
     # propose over the failed child and reports an honest blocker instead.
@@ -273,8 +272,7 @@ class CompletionProtocol(unittest.TestCase):
         def lead(payload, n, state):
             if n == 1:
                 return reply(("delegate_task", {"assignee": "dev", "title": "Implement and test the tool"}))
-            refused = [r["error"] for r in tool_results(payload) if "was not completed or replaced" in r.get("error", "")]
-            if refused:
+            if "submit_for_verification" not in offered(payload):  # Over a failed child only a blocker is offered.
                 return reply(("report_blocker", {"summary": "The dev subtask stopped unfinished; nothing to deliver"}))
             return reply(("submit_for_verification", {"summary": "Delivered"}))
 
@@ -283,10 +281,11 @@ class CompletionProtocol(unittest.TestCase):
         self.drive()
         (dev_task,) = self.task_of("dev")
         self.assertEqual(dev_task["state"], "failed")
-        self.assertIn("kept for the parent task's finish", dev_task["evidence"])
         finish_errors = [r["error"] for p in dev_agent.requests for r in tool_results(p) if not r.get("ok")]
-        self.assertTrue(any(e.startswith("create_text: Finish Mode: create_text is not available now") for e in finish_errors))
-        self.assertEqual(len(lead_agent.requests) - 1, 2)  # The lead got its turns after the child stopped.
+        self.assertTrue(any(e.startswith("create_text: Finish window: create_text is only accepted in a batch that ends with") for e in finish_errors))
+        self.assertIn("Finish window used without a valid submission or blocker report", dev_task["evidence"])
+        self.assertEqual(len(lead_agent.requests) - 1, 1)  # The lead's first turn after the child is its blocker.
+        self.assertEqual(offered(lead_agent.requests[-1]), {"report_blocker"})
         self.assertEqual(self.events("completion_proposed", self.root), [])  # The refused proposal never existed.
         root = self.workflow.task(self.root, "user")
         self.assertEqual(root["state"], "failed")
@@ -338,14 +337,14 @@ class CompletionProtocol(unittest.TestCase):
             return offer_and_submit()(payload, state)
 
         dev = Agent(writer(in_finish, then))
-        self.build({"lead": Agent(lead_finisher()), "dev": dev}, cap=16)
+        self.build({"lead": Agent(lead_finisher()), "dev": dev}, cap=18)
         state = self.drive()
         (dev_task,) = self.task_of("dev")
         self.assertEqual(state["needs"][0]["runner_state"], "provider_uncertain")
         reconcile(self.scheduler, dev_task["id"], "resend", "Operator resent after HTTP 503", human="user")
         state = self.drive()
         self.assertEqual(state["needs"][0], {"task": dev_task["id"], "kind": "independent_verification"})
-        self.assertLessEqual(self.used(), 16 - FinishPolicy().parent_reserve)  # The lead's reserve is intact.
+        self.assertLessEqual(self.used(), 18 - FinishPolicy().finish_requests)  # The lead's reserve is intact.
         review_proposal(self.scheduler, dev_task["id"], "accept", "Accepted")
         self.drive()
         self.assertEqual(self.events("completion_proposed", self.root)[0][0], self.root)
@@ -448,10 +447,11 @@ class CompletionProtocol(unittest.TestCase):
             self.assertTrue(any("2000 characters" in rule for rule in terms["rules"]))
             self.assertTrue(any("report_blocker" in rule for rule in terms["rules"]))
             view = context(agent.requests[0])["execution_budget"]
-            self.assertEqual(view["task"]["model_attempts_left_after_current"], terms["requests_available_after_current"])
+            self.assertEqual(view["task"]["model_attempts_left_after_current"] + 1,
+                             terms["requests_available_including_current"])
         (dev_task,) = self.task_of("dev")
         self.assertTrue(any(self.root in rule for rule in contract(dev.requests[0])["rules"]))  # The parent task id.
-        self.assertEqual(contract(dev.requests[0])["requests_kept_for_own_finish"], FinishPolicy().submit_reserve)
+        self.assertEqual(contract(dev.requests[0])["finish_window_requests"], FinishPolicy().finish_requests)
 
     def test_recorded_live_delegation_points_against_the_policy(self):
         cases = {"24-request root": (24, 24, False), "48-request root #2": (48, 37, False),
@@ -471,22 +471,24 @@ class CompletionProtocol(unittest.TestCase):
                 self.assertEqual(completion.delegation_refusal(workflow, root) is None, allowed)
 
     def test_policy_is_validated_explicit_and_fixed_for_a_root(self):
-        for bad in ({"submit_reserve": 0}, {"parent_reserve": 1, "submit_reserve": 2}, {"min_child": 2},
-                    {"ready_fraction": 0.9}):
+        for bad in ({"finish_requests": 0}, {"finish_requests": 17}, {"min_child": 3},
+                    {"finish_requests": 10, "min_child": 10}):
             with self.subTest(bad=bad), self.assertRaises(TreeBudgetError):
                 FinishPolicy(**bad)
         with self.assertRaises(RunnerError):
             self.build({}, cap=8, show=False)
         self.build({}, cap=8)
         with self.assertRaises(WorkflowError):  # A resumed root cannot change its policy.
-            self.build({}, cap=8, policy=FinishPolicy(parent_reserve=4))
+            self.build({}, cap=8, policy=FinishPolicy(finish_requests=4))
+        legacy = {"parent_reserve": 3, "submit_reserve": 2, "min_child": 10, "ready_fraction": 0.25}
+        self.assertEqual(FinishPolicy.from_record(legacy), FinishPolicy())  # v1 records keep their reserve.
 
     def test_official_runs_select_the_policy_and_give_every_role_report_blocker(self):
         session = SimpleNamespace(scenario={"id": "software-engineering", "roles": [
             {"id": "lead", "prompt": "Lead."}, {"id": "qa", "prompt": "QA."}]},
             agents=("lead", "qa"), human="requester", workflow=None, _root=lambda number: None)
         live = SimpleNamespace(role_limits=Limits(), tree_limits=budget.TreeLimits(), tool_calls=32, max_output_tokens=4096)
-        for policy in (None, FinishPolicy(parent_reserve=4, submit_reserve=2, min_child=12, ready_fraction=0.2)):
+        for policy in (None, FinishPolicy(finish_requests=4, min_child=12)):
             with (patch.object(official_live, "live_clients", return_value={}),
                   patch.object(official_live, "MultiAgentScheduler") as factory):
                 official_live.make_scheduler(session, "root", None, live, SimpleNamespace(executor=None, retrieval=None),

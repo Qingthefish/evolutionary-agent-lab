@@ -243,36 +243,47 @@ including the retained 2026-11-16 software run.
   dialogue is not reachable that way during Task 2. The full conversation is
   still retained in the state directory and the evidence export.
 
-### Completion protocol (proposed, opt-in)
+### Completion protocol (proposed, opt-in; completion-protocol-v2)
 
 `--show-execution-budget --finish-protocol` turns on a completion protocol for
 every role. Task states do not change; each turn derives a phase from recorded
-state and the shared request cap:
+state and the shared budgets:
 
-- **working**, **ready** (a subtask has offered files to its parent, or every
-  subtask a parent delegated was accepted) and **finish**. Ready never means
-  succeeded.
-- **Finish Mode** starts when a task's available requests reach its own reserve,
-  or when it looks ready and few requests remain. Only finishing tools are then
-  offered and accepted: submit, `report_blocker`, offer/accept, read, message
-  and ask the requester. Submission still waits for the human review;
-  `report_blocker` ends the task as an honest failure.
-- On its **final requests** (at most `--submit-reserve` left), Finish Mode
-  offers only submit, `report_blocker` and offer/accept for the handoff. In the
-  2026-11-21 live Software run, QA and the lead spent their last Finish Mode
-  requests rereading files and ended with neither a submission nor a blocker.
-  A final-request batch must also end with submit or `report_blocker`;
-  otherwise it is refused and runs nothing. In the 2026-11-21 live Newsroom run
-  the chief editor spent its final requests offering its own files to itself.
-- Each ancestor keeps `--parent-reserve` requests while descendants run, any
-  task keeps `--submit-reserve` for its own submission, and a new subtask needs
-  `--min-child-requests` beyond the caller's reserve. `--ready-fraction` sets
-  the early Finish Mode window as a share of the tree cap.
-- A proposal over a failed, unreplaced subtask is refused before review, and
-  argument errors name the argument, its actual size and the limit.
+- **working** and **ready** (a subtask has offered files to its parent, or every
+  subtask a parent delegated was accepted). Ready is advice in the completion
+  contract only: every role tool stays available, because a parent may still
+  have to write or integrate the final deliverable. Ready never means succeeded.
+- **Finish window**: every open task's last `--finish-requests` (R, default 3)
+  requests. While a task runs, each other open task in the tree (ancestors,
+  siblings and their subtasks) holds R requests, so nobody else can spend them;
+  a subtask stops once only those holds remain. The window also starts when tool
+  calls or the role's own request limit run low, and it is entered at once after
+  two consecutive output-limit replies or repeated identical outcomes (instead
+  of stopping the task). Once entered it lasts at most R requests.
+- Inside the window the tool schema offers only the completion actions the
+  gateway would accept: `submit_for_verification` (not when an unreplaced failed
+  subtask makes review impossible) and `report_blocker`. With
+  `tool_choice=required` every schema-valid reply is therefore a proposal for
+  human review or an honest blocker. A batch that ends with one of them may still
+  carry the role's other calls first (an `offer_artifact` / `accept_artifact`
+  handoff, a last fix, a message); delegation and `ask_human` stay closed.
+- An invalid completion (for example a summary over 2,000 characters) gets a
+  specific error and can be corrected in the remaining window requests. A window
+  used up without a valid completion ends the task as failed with "Finish window
+  used without a valid submission or blocker report"; its files are kept.
+- A proposal is reviewed by the human as before; its `completion_proposed` event
+  records whether it was made in the window. A rejection with requests left
+  beyond the window reopens every tool for a correction; a rejection inside the
+  window leaves an honest resubmission or a blocker. No budget is enlarged.
+- A new subtask needs `2R + --min-child-requests` (default 16) available
+  requests: the caller's window, the subtask's window and its work.
 
-The defaults (3, 2, 10, 0.25) come from the live software roots: accepted
-children used 10-25 requests and leads needed 2-5 after their last child.
+The previous version (v1: `--parent-reserve`, `--submit-reserve`,
+`--ready-fraction`, a two-tier Finish Mode and a final-batch rule) was replaced
+after the 2026-11-21 live runs: Finish Mode removed a Newsroom chief editor's
+file tools while it still had to write the final report, and in the final
+requests it and a Software QA/lead spent every request on reads, packaging and
+self-offers. Stored v1 policies are read with R = `parent_reserve`.
 
 An operator `resend` after a provider failure consumes another request from the
 same actual-request cap. Failed or response-less requests keep counting and
