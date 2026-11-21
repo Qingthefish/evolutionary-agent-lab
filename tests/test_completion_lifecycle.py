@@ -440,7 +440,7 @@ class Lifecycle(unittest.TestCase):
 
     def test_a_root_cut_off_twice_is_routed_to_its_finish_window_not_stopped(self):
         def lead(payload, n, state):  # Live Software Task 2: two consecutive cut-off replies stopped the root.
-            if n in (1, 2):
+            if n in (1, 2, 3):  # The window is forced after FORCE_AFTER_CUTOFFS (3) in a row.
                 return cut_off()
             assert window(payload), "the forced window must be active"
             return reply(("report_blocker", {"summary": "My briefs kept exceeding the output limit; nothing delegated"}))
@@ -453,16 +453,48 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual(forced[1]["reason"], "output_limit")
         self.assertLess(self.workflow.db.execute("SELECT attempts FROM tree_budgets").fetchone()[0], 48)
 
+    def test_replay_securities_deck_written_in_parts_after_two_cut_offs(self):
+        def manager(payload, n, state):  # Live Securities Task 2: the whole HTML deck in one create_text, twice.
+            notices = [m for m in user_bodies(payload) if m.get("kind") == "output_limit_notice"]
+            mine = receipts(payload)
+            if mine:
+                state["deck"] = (mine[-1]["path"], mine[-1]["sha256"])
+            if not notices:
+                return cut_off()
+            streak = notices[-1].get("consecutive_cut_offs", 1)
+            if streak < 2 and "deck" not in state:
+                return cut_off()  # The first notice did not help, as live.
+            if "deck" not in state:
+                assert "Make the next response small" in notices[-1]["instruction"]
+                return reply(("create_text", {"path": "deck.html", "content": "<section>Slide 1</section>"}))
+            if not state.get("appended"):
+                state["appended"] = True
+                path, sha = state["deck"]
+                return reply(("append_text", {"path": path, "content": "<section>Slide 2</section>",
+                                              "expected_sha256": sha}))
+            return reply(("submit_for_verification", {"summary": "deck.html written in two parts"}))
+
+        agent = Agent(manager)
+        self.build("securities-fund", {"fund_manager": agent}, cap=30)
+        self.drive()
+        tasks = self.check_invariants()
+        self.assertEqual(tasks["fund_manager"]["state"], "succeeded")
+        self.assertEqual(self.events("finish_mode_forced"), [])  # Two cut-offs no longer force the window.
+        import hashlib
+        final = [r for p in agent.requests for r in results(p) if r.get("ok") and (r.get("result") or {}).get("path") == "deck.html"]
+        self.assertEqual(final[-1]["result"]["sha256"],  # The deck's last version holds both parts.
+                         hashlib.sha256(b"<section>Slide 1</section><section>Slide 2</section>").hexdigest())
+
     def test_a_forced_window_that_is_ignored_ends_after_R_requests(self):
         def lead(payload, n, state):
-            return cut_off() if n <= 2 else reply(("read_text", {"path": f"x{n}.md"}))
+            return cut_off() if n <= 3 else reply(("read_text", {"path": f"x{n}.md"}))
 
         agent = Agent(lead)
         self.build("newsroom", {"chief_editor": agent}, cap=48)
         self.drive()
         tasks = self.check_invariants()
         self.assertEqual(self.outcome(tasks["chief_editor"]), "exhausted")
-        self.assertEqual(len(agent.requests), 2 + R)  # Bounded: two cut-offs, then exactly R window requests.
+        self.assertEqual(len(agent.requests), 3 + R)  # Bounded: three cut-offs, then exactly R window requests.
 
     def test_waiting_for_the_requester_spends_no_requests_and_keeps_the_window(self):
         def lead(payload, n, state):

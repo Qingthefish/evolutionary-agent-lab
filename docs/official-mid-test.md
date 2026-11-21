@@ -259,8 +259,11 @@ state and the shared budgets:
   else can spend them;
   a subtask stops once only those holds remain. The window also starts when tool
   calls or the role's own request limit run low, and it is entered at once after
-  two consecutive output-limit replies or repeated identical outcomes (instead
-  of stopping the task). Once entered it lasts at most R requests.
+  three output-limit replies in a row or repeated identical outcomes (instead of
+  stopping the task). The second cut-off in a row escalates the notice: one small
+  call, the first part of a file. Once entered the window lasts at most R requests.
+  (Live Securities Task 2, 2026-11-21: forcing after two cut-offs left the fund
+  manager 19 requests it could not use to write its HTML deck in parts.)
 - Inside the window the tool schema offers only the completion actions the
   gateway would accept: `submit_for_verification` (not when an unreplaced failed
   subtask makes review impossible) and `report_blocker`. With

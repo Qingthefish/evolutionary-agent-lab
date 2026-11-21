@@ -88,9 +88,12 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 
 FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
 FINISH_EXHAUSTED = "Finish window used without a valid submission or blocker report; "
+# With the protocol, cut-off replies in a row before the finish window is forced. Live Securities Task 2
+# (2026-11-21): forcing after two removed the write-in-parts recovery with 19 requests left.
+FORCE_AFTER_CUTOFFS = 3
 
 
-def output_limit_instruction(shape, allowed, max_tokens=None):
+def output_limit_instruction(shape, allowed, max_tokens=None, streak=1):
     """A notice that names what filled the response (proposed 2026-11-21, pending owner review).
 
     Live 2026-11-21: a Software lead without file tools was told to split long documents
@@ -121,6 +124,15 @@ def output_limit_instruction(shape, allowed, max_tokens=None):
     else:
         parts.append("You cannot write files, so keep briefs and messages short: state the deliverable, constraints "
                      "and acceptance checks in a few lines and let the subtask design the details.")
+    if streak >= 2:
+        small = max(500, max_tokens) if max_tokens else 2000
+        left = FORCE_AFTER_CUTOFFS - streak
+        parts.append(f"This is cut-off {streak} in a row. Make the next response small: one tool call with at most "
+                     f"about {small:,} characters of content"
+                     + (" (write only the first part of the file now and append the rest later)"
+                        if FILE_WRITERS & set(allowed) else "") + "."
+                     + (f" After {left} more cut-off{'s' if left != 1 else ''} in a row only completion actions remain."
+                        if left > 0 else " Only completion actions remain now."))
     return " ".join(parts)
 
 
@@ -659,10 +671,13 @@ class TaskRunner:
                     "discarded_unread": True}
         with self.workflow._transaction():
             current = self._session()
-            previous = self.workflow.db.execute("SELECT response FROM runner_turns WHERE task=? AND number=?",
-                                                (self.task, number - 1)).fetchone()
-            consecutive = bool(previous and previous["response"]
-                               and json.loads(previous["response"]).get("finish_reason") == "length")
+            streak = 1  # This reply plus the cut-off replies directly before it.
+            for row in self.workflow.db.execute("SELECT response FROM runner_turns WHERE task=? AND number<? "
+                                                "ORDER BY number DESC", (self.task, number)):
+                if not row["response"] or json.loads(row["response"]).get("finish_reason") != "length":
+                    break
+                streak += 1
+            consecutive = streak >= 2
             self.workflow.db.execute(
                 "UPDATE runner_turns SET status='settled',response=?,error=?,ended=? WHERE task=? AND number=?",
                 (_json(response), str(error), self.workflow.clock(), self.task, number))
@@ -677,13 +692,15 @@ class TaskRunner:
                                   "task_continues": not stop, "tools_released": 0, "shape": error.shape})
             if current["status"] != "calling" or current["attempts"] != number:
                 return self.status()
-            if consecutive and self._phase and not self._in_finish():
+            if streak >= FORCE_AFTER_CUTOFFS and self._phase and not self._in_finish():
                 self._force_finish("output_limit")
             if not stop:
                 transcript.append({"role": "user", "content": _json({
                     "kind": "output_limit_notice", "max_output_tokens": self.client.max_tokens,
                     "cut_off": error.shape,
-                    "instruction": output_limit_instruction(error.shape, self.gateway.allowed, self.client.max_tokens)})})
+                    "consecutive_cut_offs": streak,
+                    "instruction": output_limit_instruction(error.shape, self.gateway.allowed, self.client.max_tokens,
+                                                            streak=streak if self._phase else 1)})})
                 task_state = self.workflow.task(self.task, self.actor)["state"]
                 self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
                                          ("paused" if task_state.startswith("waiting_") else "ready",

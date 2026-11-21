@@ -29,9 +29,10 @@ _CONTENT = _text("UTF-8 text or source code", maximum=65536, empty=True)
 _SPECS = {
     "submit_for_verification": ("Propose completion for independent checks after your deliverables and offers. Must be the last tool in a batch. This does not set success, approve actions or supply criteria", {
         "summary": _text("Brief description of the deliverable submitted for independent verification", maximum=2000)}),
-    "report_blocker": ("Report that required work cannot be completed in this task. Ends this task as failed with your "
-                       "summary of what is done and what is missing. Must be the last tool in a batch; it is the honest "
-                       "alternative to submitting incomplete work", {
+    "report_blocker": ("Report that required work cannot be completed in this task. Ends this task immediately and "
+                       "permanently as failed with your summary of what is done and what is missing; nothing can follow "
+                       "it, so never use it as a test or a placeholder. Must be the last tool in a batch; it is the "
+                       "honest alternative to submitting incomplete work", {
         "summary": _text("What is done, what is missing and why it cannot be finished here (at least 40 characters; "
                          "placeholder text is refused)", maximum=2000)}),
     "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
