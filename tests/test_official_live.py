@@ -86,7 +86,12 @@ class OfficialLiveTests(unittest.TestCase):
         self.assertEqual((first.tree_limits.model_attempts, second.tree_limits.model_attempts), (48, 48))
         self.assertEqual((first.role_limits.model_attempts, first.tree_limits.reported_tokens), (48, 48 * 50000))
         self.assertEqual((first.tool_calls, first.tree_limits.tool_calls), (80, 256))
-        settings["per_scenario_model_attempts"] = 97
+        settings["per_scenario_model_attempts"] = 160  # 80 per task (2026-11-21).
+        first, second = runtime_config(session, plan, 1, **backend), runtime_config(session, plan, 2, **backend)
+        self.assertEqual((first.tree_limits.model_attempts, second.tree_limits.model_attempts), (80, 80))
+        self.assertEqual((first.role_limits.model_attempts, first.tree_limits.reported_tokens), (80, 80 * 50000))
+        self.assertEqual((first.tool_calls, first.tree_limits.tool_calls), (160, 512))
+        settings["per_scenario_model_attempts"] = 161
         with self.assertRaisesRegex(WorkflowError, "bounded scenario budget"):
             runtime_config(session, plan, 1, **backend)
 

@@ -26,9 +26,11 @@ TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
 # direct child, carrying explicitly offered snapshots, instead of the whole task
 # failing. Replacements share the same request cap; no budget is added.
 CHILD_REPLACEMENTS = 2
-# Proposed 2026-11-18 (owner-approved, pending merge): up to 48 requests per task.
-# Live software Task 1 used all 24 after its developer child was accepted.
-MAX_SCENARIO_ATTEMPTS = 96
+# Up to 80 requests per task (requester-approved 2026-11-21; was 48 from 2026-11-18). The
+# instructor package sets no call budget. Live 48-request tasks: Software T1 and Newsroom
+# T1/T2 finished at 41-45; Securities T1 ran out at 46 with four roles. Token and tool-call
+# caps scale with the share (TOKENS_PER_REQUEST, tool scale below).
+MAX_SCENARIO_ATTEMPTS = 160
 CONSTRAINTS = [
     "Use local files and the supplied Python sandbox with standard-library dependencies. "
     "Deliver runnable source and Markdown or plain-text instructions. No external services are configured.",
