@@ -54,129 +54,65 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
-**Original Software Task 1 reproduction (2026-11-22):** the frozen reviewed
-runtime `d8dec1a` completed the instructor's original booking-system task in
-63 actual HKGAI requests, with independently checked developer-to-lead
-receipt/read and final technical acceptance. A first-initialization race was
-reproduced, rejected with concrete feedback, repaired by the developer Agent
-and rechecked: nine of ten independent behavior checks passed before repair;
-all ten passed afterwards. The lead received that exact version, reran the
-12 generated tests and delivered usage instructions. This is a coordinator-
-assisted replay with two active roles, not a teacher score or unattended run.
-Its 28.47-minute wall time includes review/repair and exceeds ten minutes.
-The second original task now continues in the same group with exact first-task
-snapshots; it has no accepted outcome yet. [Evidence and limits](docs/final-report.md#original-software-task-1-reproduction)
+**Current acceptance (2026-11-22).** Reviewed contributor changes #75/#76/#77
+and coordinator corrections are integrated through [PR #79](https://github.com/Qingthefish/evolutionary-agent-lab/pull/79).
+The runtime requires exact explicit failed-child waiver IDs and permits labelled
+recovery only of a failed direct child's already-offered snapshot. Follow-up
+`61a9f86` corrects late repair authorization and the gateway's boolean option
+validation. Latest local engineering checks: **893 discovered, 884 passed, nine
+optional UI skips**, with **21 actual-container checks executed**.
+Optional performance switches remain off; actual HKGAI speed benefits remain
+unmeasured. [Review and limits](docs/final-report.md#12-november-22-coordinator-catch-up)
 
-**Coordinator catch-up (2026-11-22):** the integration review brings together
-the contributed completion/recovery changes (#77), opt-in stable prompt layout
-(#76) and opt-in overlapping retrieval (#75). It adds explicit failed-child
-review waivers and labelled recovery of a failed direct child's already-offered
-snapshot. No unoffered private file is exposed and no child failure is erased.
-The integrated code passes 880 of 889 engineering checks, with nine optional
-UI skips and actual-container checks executed. A fresh HKGAI development root
-completed input delegation, isolated source execution, checked handoff/read and
-report delivery in 18 requests / 86.693 seconds. Independent read-only audit
-rechecked the six root/five coder criteria and retained the original database.
-This is a bounded known development case, not a six-task score or a learning/
-speedup claim. [Evidence and remaining presentation gates](docs/final-report.md#12-november-22-coordinator-catch-up)
+**Original Software Task 1 replay: complete technical acceptance.** Frozen
+runtime `d8dec1a` completed the instructor's booking-system task in **63 actual
+HKGAI requests / 28.47 minutes**, including review and repair. An independent
+check exposed a first-initialization race that erased a confirmed booking.
+The developer Agent repaired it; all ten independent behavioral checks then
+passed. The lead received/read that exact revision, reran the 12 generated
+tests and delivered source and usage instructions. This is a coordinator-
+assisted replay with two active roles, not a teacher score, an unattended run
+or ten-minute completion. In the same group, the bounded Task 2 replay ended
+**failed** after 78 requests: 14/16 independent checks passed, and the cross-hour
+statistic repair was not fully checked or handed back. Its tool/repair defects
+were then corrected offline; no repaired-runtime Task 2 success is claimed. [Evidence and limits](docs/final-report.md#original-software-task-1-reproduction)
 
-The contributor reports complete Newsroom and Securities pairs and successes
-in an earlier Software round, with the latest Software rerun still incomplete.
-Those `full13/full14/full16` raw records are on the contributor's machine and
-are not attached to the PR. Their outcomes remain contributor-reported, not
-independently verified here; do not combine best results across different
-rounds into a six-of-six claim. Current local four-role setup/preflight/export
-is rehearsed with original mid-test inputs and zero calls. Unknown final-link
-input mapping, final hardware/configuration and actual official outcomes still
-need acceptance. All performance switches remain off for the reviewed check.
+**Other evidence.** A fresh known-development HKGAI root completed delegated
+input, isolated execution, checked handoff/read and report delivery in **18
+requests / 86.693 seconds**. Earlier bounded real private clarification,
+approval/release and peer handoff are accepted separately. Two complete memory
+ON/OFF pairs retain their **no demonstrated learning benefit** conclusion.
+Original failed, expired and incomplete runs remain preserved. Requested e7
+and returned e10 model labels differ; equivalence is unconfirmed. The
+[report](docs/final-report.md) and [public evidence](evaluation/evidence/development-summary.json)
+retain the source identities, actual outcomes and limitations.
 
-**Connection observation (2026-11-22, 16:50 Hong Kong time):** one newly
-owner-requested minimal HKGAI request completed in 1.329 seconds with `OK.`
-and 116 reported tokens. The existing parser accepts it; the punctuation means
-the exact `OK` instruction was not followed verbatim. The requested/returned
-model labels remain `e7`/`e10`, with equivalence unconfirmed. This establishes
-a minimal text response, not tool compatibility or a complete scenario. The
-round now retains 11 actual requests, including earlier failures; old tasks
-were not resumed and no provider-wide cause or account balance is inferred.
+**Contributor scenario reports.** The contributor reports complete Newsroom
+and Securities pairs and earlier Software successes. Their `full13/full14/full16`
+raw records are not attached to the PR or available locally, so these remain
+contributor-reported outcomes. Do not combine best results across different
+rounds into a six-of-six claim. The local Software replay is recorded separately.
 
-**Current verified status (2026-11-20).** No complete instructor mid-test task
-has been independently established in the coordinator's records. A real
-developer's booking source passed 26 independent actual-container checks, but
-the parent workflow remained unfinished. Engineering checks and working child
-artifacts do not count as full scenario delivery.
+**Wednesday presentation.** The instructor specifies **10 minutes**, a task
+link during the preceding group, and a live start when our talk begins. The
+format will be similar to the mid-test and tasks will not require web search.
+Slides cover Method, Mid-test results and Reflection. The supplied instructor
+reply permits sharing unfinished run results later; the talk still stays within
+ten minutes. November 25 is the week-13 planning target; the exact group slot
+is unconfirmed. The owner is preparing the slides separately. [Runbook](docs/final-report.md#9-proposed-presentation-outline)
 
-The reviewed completion protocol is integrated through PR #65, preserving the
-contributor's commits and correcting hard request limits and rejected-resume
-side effects. The corrected runtime passed 724 checks, including 21 actual
-container checks, with nine UI skips; all three required remote jobs passed.
-The latest live attempt on that fixed revision paused on its first HTTP 502,
-without tool execution or automatic resend. After an explicitly released
-resend and a separate minimal plain-chat control also returned HTTP 502, the
-round reached seven actual requests, with usage unknown for three attempts.
-An owner-requested minimal check on November 20 also returned HTTP 502: the
-record reached eight requests. A later owner-requested check at 11:39 Hong
-Kong time again returned 502: **nine cumulative requests**, with five unknown-
-usage attempts. Old paused/expired tasks were not resumed. Complete live outcomes for all six mid-test tasks, GitHub runtime
-evidence, release freeze and final submission materials remain open.
-[Current S01 record](docs/team-roadmap.md#s01)
-
-[Review and limitations](docs/final-report.md#11-mid-test-execution-record-19-november)
-
-**Recorded-artifact presentation fallback:** the previously generated booking
-source was reproduced unchanged in the configured no-network container. All
-26 independent behavior checks and ten original generated tests passed; a
-changed-source negative control was refused before execution. This uses zero
-new model requests and does not accept the unfinished parent or either official
-task. The later presentation clarification requires a live start; this retained
-material is auxiliary. [Provenance and limits](docs/final-report.md#recorded-artifact-fallback)
-
-**Evaluation review (November 20):** integrated review of the contributed
-memory-effect and ordinary-batch readers checked seven retained memory reports
-and two saved batches without model calls or changes to original evidence.
-Two complete memory pairs retain their null-benefit conclusion; incomplete and
-failed trials remain visible. Review also fixed an outer snapshot/accounting
-error path that could start a later replicate. The reviewed source passed
-768 checks, including 21 actual-container checks, with nine optional UI skips.
-[Evidence and limits](docs/final-report.md#retained-evidence-reanalysis)
-
-**Presentation preparation:** the verified instructor clarification sets
-**10 minutes**, requires starting the live run at the beginning, and asks for
-Method, Mid-test results and Reflection. The task link arrives during the
-preceding group's presentation; its format will be similar to the mid-test,
-and tasks will not involve web search. The report's proposed eight-slide plan
-now runs alongside the live task. Recorded workflows remain auxiliary evidence.
-November 25 is the week-13 planning target; the group slot remains unconfirmed.
-[Presentation story and runbook](docs/final-report.md#9-proposed-presentation-outline)
-
-**Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)
-
-**Accepted required-action milestone:** an explicit opt-in `require_tool_actions` mode requests actual tool calls and uses the existing independent-verification proposal for completion. In the issued HKGAI trial, **all 43 replies were tool calls with no free-text narration or truncation**. Both changed-input JSONL probes completed their full independently audited contracts: current code/input, real isolated execution, correct output, actual handoff/read, report and final verification. The ON probe used 14 requests and selected a prior coordinator failure observation; OFF used 13. Both succeeded, with ON slower and more costly in reported tokens: **no learning advantage is claimed**.
-
-The common training coder genuinely repaired the supplied faulty script and completed, but its parent exhausted the local 16-request cap. This failure and every previous failed/unrun task remain unchanged. The round used **43/48 requests and all three root slots**; there was no extra root, provider fallback or output-cap increase. Request/output limits are local trial settings, not teacher account balance or grading limits. Required-action mode remains disabled by default; old tasks/C07 behavior is preserved and incompatible resumes are refused.
-
-**Live peer delegation:** a fresh [room-notice case](evaluation/peer-review/cases.json) completed in 14 HKGAI requests. The writer assigned the editor directly, then relayed the corrected notice to the coordinator. A read-only audit verified the parent chain, all three snapshot handoffs and reads, and the current output. The case declares roles and titles. The provider returned a different model label from the course ID sent in the request; equivalence is unconfirmed. Inspect the [peer-review plan](evaluation/peer-review-plan.json) with the same offline plan command.
-
-**Retained evidence:** an earlier code/report ON/OFF pair also completed. There are now two different bounded task families with one matched pair each. Broad autonomous planning/negotiation, general web-search relevance, runtime GitHub push, varied comparisons, official evaluation and final submission evidence remain open. The instructor announcement is the primary authority. Read the [draft report](docs/final-report.md), [public evidence](evaluation/evidence/development-summary.json) and sole task register, the [Roadmap](docs/team-roadmap.md).
-
-Inspect the successful slice without a credential or model call:
-
-```bash
-python3 -m agent_lab.evaluation experience plan --config evaluation/required-actions-experience-plan.json
-```
-
-The portable [runtime plan](evaluation/required-actions-runtime.json) leaves Docker configuration unset. Real execution requires a reviewed ignored local copy, explicit model-call authorization and the configured isolated environment; inspection alone does not validate provider compatibility.
-
-**Interaction follow-up closed:** the real private writer resumed after the owner's **English** choice, wrote the current note, posted a private message and completed independent checks. The same one actual language choice answered the group clarification; the group retrieved the official Python JSON page, posted messages and wrote a draft, then paused for exact-version scratch deletion approval. That approval was never supplied and its original four-hour deadline has elapsed: no deletion, automatic replay or group completion is claimed. A read-only audit also rejects two draft criteria and records semantic review corrections. The separate live search failed with empty/irrelevant RSS results. This round used **18 actual HKGAI HTTP requests**, one additional known local refusal without HTTP, and three roots. Current [interaction evidence](evaluation/evidence/development-summary.json) preserves the earlier pending snapshots and remains separate from code/experience comparisons. [D02](docs/team-roadmap.md#d02) records the remaining gates.
-
-**New bounded human-interaction acceptance:** a fresh real HKGAI group task requested exact-version deletion of its disposable scratch, paused for the owner's actual approval, and resumed in a different process. Recording the grant alone left the file intact; separate trusted release deleted only that version. The retained input stayed unchanged, the agent wrote its note afterward, posted its group completion message and passed independent verification. **Seven requests, one root, 85.349 seconds including 68.286 seconds of human wait; 26,527 provider-reported tokens.** One post-deletion read correctly failed on the missing scratch and remains recorded. The round closed without using its remaining allowance. Together with the earlier real private clarification, this accepts the bounded [D01/D02 console/human scope](docs/team-roadmap.md#d02). Denial/uncertainty retain engineering coverage. Open-ended planning, general search relevance, runtime GitHub, comparisons, official evaluation and final evidence still need completion. Earlier failed/expired runs remain unchanged.
-
-**Git failure handling verified:** result reconciliation now checks the original approved remote URL and revalidates the local target before observing it. Changed targets, symlink replacements, malformed refs and contradictory push results cannot produce a false success; unknown effects remain recorded and are never automatically pushed again. Six new regressions plus existing Git checks pass (22 total), and the full 549-check suite passes. This closes [B04's local failure/reconciliation engineering scope](docs/team-roadmap.md#b04); actual GitHub runtime pushing still requires the designated narrow credential under B03. No model requests or runtime GitHub pushes were made in this follow-up.
-
-**Runtime Git acceptance.** The evaluator now checks the most recent verified push in the task tree against its consumed approval and the current SHA at the original remote. A disposable local runtime test confirms that granting approval leaves the branch absent until release. A live case that requires remote verification must configure a trusted Git repository. The GitHub test target and dedicated credential are pending. [B03](docs/team-roadmap.md#b03)
-
-**Development evaluation recovery evidence.** The evaluator saves the selected cases and manifest before execution. For reviewed plans it also saves the approved plan snapshot. Each returned case outcome is checkpointed in `run-progress.json` alongside the active and unstarted case IDs. Inspect the active case's retained state before deciding how to proceed after an interruption. The offline rehearsal recorded four accepted fixtures, five detected negative controls and one unconfigured live case. See [A07](docs/team-roadmap.md#a07).
-
-**Search and source acceptance.** The [two-case development plan](evaluation/search-source-plan.json) enables the official Python Module Index for queries such as `site:docs.python.org json`. In CLI/TUI live mode, pass `--enable-web --enable-python-docs-search`. General queries use the existing Bing RSS adapter. Real runtime tool requests found, retrieved and read the official `json`, `pathlib` and `csv` pages. Each passed the independent `searched_source` and content criteria after the saved-file read. HKGAI also completed both live search cases in eight requests. The model chose the module-index query, retrieved the matching page, read the saved excerpt and proposed independent verification. Both cases passed. The provider returned a different model label from the issued ID sent by the client. [Live search evidence](evaluation/evidence/development-summary.json)
+**Remaining gates.** Verify the repaired runtime on a fresh authorized case,
+check the actual final-link mapping, freeze and rehearse
+on the presentation machine, retain final task results and finish submission.
+Original four-role CLI setup/preflight/read-only export has been rehearsed with
+zero calls, which does not verify an unknown final input. R09's actual Agent-
+runtime GitHub push still needs its designated test branch, scoped credential
+and genuine action-bound approval; coordinator pushes/local-remote fixtures do
+not establish it. Teacher quota/pricing are unknown; local request ceilings
+are experiment limits. Use the [Roadmap](docs/team-roadmap.md) as the sole task,
+owner and progress register, with the instructor [requirements](docs/requirements.md)
+as the primary project authority. Historical observations live in the report
+and retained evidence rather than competing current-status paragraphs.
 
 ## First 10 minutes / 新成员从这里开始
 

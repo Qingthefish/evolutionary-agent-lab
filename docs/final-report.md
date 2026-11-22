@@ -566,19 +566,68 @@ was not changed during the experiment. This incident is part of provenance,
 not an erased failure or a new model attempt.
 
 The accepted Task 1 state was copied read-only and exported before Task 2 was
-posted. Task 2 continues in the **same group** with nine exact broker-carried
-Task 1 snapshots, without a copied historical answer. Its accepted outcome is
-still pending. Original records and source-bound manifests remain in the
-private readiness package. [Whitelisted figures and hashes](../evaluation/evidence/development-summary.json)
+posted. Task 2 then ran in the **same group** with nine exact broker-carried
+Task 1 snapshots, without a copied historical answer. Its separate result is
+below. Original records and source-bound manifests remain in the private
+readiness package. [Whitelisted figures and hashes](../evaluation/evidence/development-summary.json)
+
+### Original Software Task 2 outcome and repair follow-up
+
+The original interactive-dashboard prompt produced a formal developer proposal
+whose **16 independent behavioral checks passed 14 and failed two**. Both failed
+checks concern cross-hour occupancy: all reserved minutes were grouped by a
+booking's start hour, omitting time occupied in subsequent hours. For example,
+09:00-10:30 and 09:30-10:30 bookings plus a next-day 10:00-11:00 booking occupy
+90 minutes in the 09h bucket and 120 in 10h; the candidate reported 150 and 60.
+A different midday fixture independently exposed the same error. Its 26
+self-written tests had passed, illustrating why those alone are insufficient.
+The independent tests also exercised actual booking-record input, date ranges,
+cancellations, utilization, charts, interactive selection and report output.
+
+After concrete feedback, the developer wrote a partial revision but did not
+finish its regression, rerun or revised snapshot offers. It reported a blocker,
+which is terminal failure rather than a checkpoint. The lead could not obtain
+and complete the revised package. **Task 2 failed**, using **78 requests /
+3,103,263 reported tokens / 2,027.279 seconds (33.79 minutes)**. The two root
+outcomes are therefore one accepted technical replay and one failed replay;
+no six-task score or teacher grade is inferred. Their 141 requests leave 19 of
+the declared 160 unused. With the separate 18-request development probe, this
+work totals 159 actual requests within its concrete 178 ceiling. The pair is
+closed; the remainder is not permission to replay a terminal task or add roots.
+
+Two platform defects were isolated after the frozen run:
+
+- A trusted rejection before any finish window did not record the later repair
+  authorization. When that task eventually entered its window, promised repair
+  tools were hidden. Now the rejection records that authorization whenever the
+  finish policy is configured, without replenishing requests or tokens. Human
+  rejection and technical feedback retain distinct provenance.
+- The coordinator's earlier `allow_failed_source` addition advertised a JSON
+  boolean, but the gateway validator lacked the boolean branch and rejected
+  even literal `true`/`false`. This is a missed positive gateway path in that
+  earlier review. The corrected gateway accepts actual booleans only. Its new
+  end-to-end check recovers only an already-offered direct-child snapshot,
+  never an unoffered later edit, and leaves the child failed.
+
+Implementation `61a9f86` passed **893 discovered / 884 passed / nine optional UI
+skips**, with 21 actual-container checks executed. The two early-rejection
+regressions failed before the change and pass afterwards; the real gateway
+path likewise failed before its correction and now passes with invalid-type
+refusals retained. **Zero model requests** were used for this follow-up. The
+frozen failed Task 2 database, raw replies, independent failures and whole-pair
+export are unchanged. These engineering fixes have **not** been rerun through
+a fresh real HKGAI Task 2 and do not retroactively accept it. Software lead
+write restrictions and all budgets/approval/isolation boundaries are unchanged.
 
 ### Wednesday technical readiness
 
 | Gate | Current observation / remaining action |
 | --- | --- |
-| Allowed model and complete bounded execution | Fresh local real probe above completed, with source-bound execution, handoff/read and independent checks. This does not guarantee service availability on presentation day. |
+| Allowed model and complete bounded execution | The bounded development probe and original Software Task 1 completed under their independent technical checks. Task 2 failed; the follow-up repair source has engineering validation but no new real-model acceptance. Service availability on presentation day is not guaranteed. |
 | Original four-role setup and export | Actual CLI init/post/preflight/read-only export rehearsed with `lead/dev/qa/release`, unchanged original mid-test data and zero model calls. The original database hash is unchanged by export. |
 | Unknown task-link ingestion | Similar format is announced; the current adapter remains specific to the canonical mid-test package. Preserve the received final files and review the actual mapping before launch; final import is not yet verified. |
 | Submission and review boundaries | Exact snapshot versions, explicit failed-child waivers and labelled partial recovery are checked. Real clarification/critical-action choices still require the actual human. |
+| Remaining original tool evidence | R09's actual Agent-runtime GitHub push still needs a designated test branch, a suitably scoped runtime credential and the genuine action-bound human approval. Coordinator Git pushes and local-remote fixtures do not close that gate. |
 | Timing | Talk is ten minutes. The instructor reply supplied as a screenshot allows sharing run results with the instructor/TA later if needed. Assignment-to-final wall time remains separate from local deadline pause/idle exclusions. |
 | Frozen presentation machine/configuration | Freeze one reviewed revision, use a fresh state, verify that machine's model key/sandbox and rehearse its launch. Keep optional speed switches off unless a distinct reviewed run establishes their suitability. A different presenter's machine needs its own reproduction. |
 | Mid-test slides and final results | Distinguish contributor reports, locally audited development evidence, engineering checks and actual official results. Obtain raw teammate exports or independently reproduce the required scenarios before claiming acceptance. |
