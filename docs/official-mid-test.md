@@ -405,8 +405,8 @@ From the 2026-11-22 reruns across all three scenarios:
   budget is still low, the window is re-entered on the next request.
 - An unreplaced failed subtask no longer blocks a proposal. The runner attaches
   it to the proposal (`unreplaced_failed_subtasks`, also shown in the review
-  need); accepting that proposal is the reviewer's explicit waiver
-  (`failed_subtask_waived`) of exactly those subtasks. Without that, a parent
+  need); accepting that proposal with each explicit `--waive-failed-subtask`
+  records `failed_subtask_waived` for exactly those reviewed subtasks. Without that, a parent
   still cannot succeed over a failed child.
 - `retry_failed_task` without input files gets the same "child starts empty"
   note as `delegate_task`; running a script that does not exist names
@@ -431,6 +431,36 @@ From the 2026-11-22 reruns across all three scenarios:
 - `advance` records a gap of more than 120 s since the tree's last event as
   `controller_idle` when nothing awaited a human, and deadlines exclude it. Human
   answer and review time still counts.
+
+### Coordinator review corrections (November 22)
+
+Receiving a snapshot and accepting a task are distinct. A failed direct child
+may have offered useful output before failing. The parent can explicitly pass
+`allow_failed_source: true` to `accept_artifact` to recover **only an already
+offered** snapshot addressed to that parent. The receipt says `partial: true`
+and `source_state: failed`; the child remains failed. Cancelled sources,
+non-child sources, unoffered private files, wrong recipients, consumed offers
+and stale replacement hashes stay refused. Independent validation remains
+necessary; this is not a solution for a child that failed before offering files.
+
+Accepting a parent proposal does **not** implicitly waive failed child work.
+The reviewer must inspect the failure and explicitly repeat
+`--waive-failed-subtask CHILD_ID` for every disclosed exception that the finished
+deliverable actually covers. Missing, wrong, duplicate or stale waiver IDs
+refuse acceptance without changing the review state. A new failure after the
+proposal requires a new proposal. The child failures remain in the record and
+budget failure rolls back the review/waiver transaction.
+
+These are actual reviewer decisions, not choices to be auto-filled by a model.
+An assistant's technical checks must not be labelled as a human decision.
+The changed artifact schema requires fresh compatible tasks; do not upgrade an
+ongoing teammate run underneath it or bypass the stored configuration guard.
+
+Deadline accounting and evaluation timing also remain distinct. Provider pauses
+and recorded controller-idle intervals can be excluded from **local deadline
+enforcement**. Reported assignment-to-final wall time still includes those
+intervals. Do not present deadline exclusion as faster real execution or an
+instructor-approved timing adjustment.
 
 ### Stable prompt prefix (proposed, opt-in)
 

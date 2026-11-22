@@ -51,9 +51,17 @@ adds these official instructions:
 - Slides must cover **Method**, **Mid-test results**, and **Reflection**:
   system design, results/key observations, and what worked/did not/was learned.
 
-The clarification does not specify a group slot, task count, separate run
-completion deadline, scoring/reset/repeat policy, model change or quota.
-It does not move the original report deadline to presentation day.
+An owner-supplied screenshot of the instructor's reply to a teammate, provided
+on November 22, clarifies the ten-minute question: tasks would normally finish
+within ten minutes; if not, results can be shared with the instructor and TA
+later. The screenshot is retained privately. This is separate from the earlier
+announcement, not an independently fetched reply in the coordinator's mailbox.
+The talk still stays within ten minutes and the run still starts at its beginning.
+Later completion is not unlimited API authorization or permission to reset a run.
+
+A group slot, final task count, scoring/reset/repeat policy, model change and
+quota remain unverified. The reply does not set the later sharing deadline or
+move the original report deadline to presentation day.
 
 ## Questions affecting design
 

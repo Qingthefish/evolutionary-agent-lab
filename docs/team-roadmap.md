@@ -853,6 +853,38 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   mapping, live startup rehearsal and official outcomes remain readiness gates.
   No search credential was committed and no new search integration was started.
 
+- **2026-11-22 full catch-up and readiness review:** Qingthefish,
+  owner-requested Codex-assisted S01/S02 maintenance on
+  `review/S01-readiness-20261122`, from `8a53eef`. Preserved the contributor
+  commits of #75/#76/#77, resolved the overlapping CLI/documentation additions,
+  and retained all optional performance switches disabled. Review correction
+  `d8dec1a` requires exact explicit failed-child waiver IDs and permits labelled
+  recovery only of a failed direct child's previously offered snapshot; source
+  failures and all other file/approval boundaries remain. A negative plain-
+  accept reproduction and the original development test failures are retained.
+  Final Python 3.12: 889 discovered, 880 passed, nine optional UI skips;
+  actual-container checks executed. A fresh known-development HKGAI root then
+  completed in 18 requests / 86.693 seconds / 124,918 reported tokens with two
+  cleaned successful sandbox executions and actual receipt/read. Independent
+  read-only recheck passes six root/five coder criteria and leaves source hashes
+  unchanged. No human decision was requested or invented. One root and 18/48
+  work-round requests used; its own run cap was 32, output cap 1024, timeout 90.
+  Four original software roles were separately initialized/preflighted/exported
+  via the actual CLI with zero model calls and unchanged source database.
+  Instructor timing reply from the supplied screenshot is recorded privately:
+  aim to finish within the ten-minute talk, otherwise share results later.
+  Contributor full13/full14/full16 raw runs are not attached or available here;
+  report their outcomes as contributed observations, not independent acceptance.
+  Final task mapping, presentation-machine freeze and official outcomes remain
+  gates. The owner delegated the concrete expanded Software-pair budget decision;
+  staged Task 1 reproduction is now launched on frozen `d8dec1a`, at most 80
+  requests for Task 1 and 160 additional across the pair, output cap 4096 and
+  timeout 90. Ordinary technical checks are recorded separately from actual
+  human decisions; transport/authentication/quota boundaries stop without replay.
+  Source, logs, raw evidence and startup instructions stay under ignored
+  `runs/review-readiness-20261122/`; this is the sole task register.
+  [Current evidence and readiness](final-report.md#12-november-22-coordinator-catch-up)
+
 ## Starting a Codex session
 
 ```text

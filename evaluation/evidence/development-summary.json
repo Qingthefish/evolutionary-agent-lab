@@ -2003,5 +2003,107 @@
     "new_search_integration_started": false,
     "credentials_included": false,
     "sanitized_notice_sha256": "7fa5efd81625fa284eaad9f0ffa92ec6abb3a6c9daad5a80571c4a5797ab3413"
+  },
+  "readiness_review_20261122": {
+    "review_base": "8a53eefa13da640ebf497a7a309febd5a6adc0ac",
+    "implementation_commit": "d8dec1a",
+    "contributor_heads": {
+      "75": "ebfc59d2fb9a8c20651e4caf1b2bbc97f7df4cab",
+      "76": "592f3c02bba88a0df552c80a1fa20e349a3bd9f4",
+      "77": "27959f80eecb4bcb3d9dc0786a7992f5de561402"
+    },
+    "regression": {
+      "discovered": 889,
+      "passed": 880,
+      "optional_ui_skips": 9,
+      "actual_container_checks": 21,
+      "log_sha256": "5562de15392df66a705004a65c804c90b5b8bfcd5def38216137421c6fb3b06a"
+    },
+    "corrections": [
+      "Plain acceptance no longer implicitly waives failed children; exact IDs and current proposal required",
+      "Failed direct-child already-offered snapshots are recoverable only by explicit opt-in and labelled partial; failures remain"
+    ],
+    "real_development_check": {
+      "case": "jsonl-provided-probe",
+      "source_commit": "d8dec1a3815c02779ae28f09d6f27295347ed7ef",
+      "classification": "completed",
+      "active_roles": [
+        "coordinator",
+        "coder"
+      ],
+      "requests": 18,
+      "duration_seconds": 86.69297220799945,
+      "reported_tokens": 124918,
+      "fresh_roots": 1,
+      "run_max_requests": 32,
+      "standing_work_max_requests": 48,
+      "max_output_tokens": 1024,
+      "socket_timeout": 90,
+      "sandbox_executions": 2,
+      "sandbox_exit_codes": [
+        0,
+        0
+      ],
+      "cleanup_confirmed": true,
+      "root_criteria_rechecked": 6,
+      "coder_criteria_rechecked": 5,
+      "root_and_coder_succeeded": true,
+      "source_database_sha256": "64444e83a8d7aa36fdf88cdd781035533ebc9c2be9c430fe432cc9aa51de36d6",
+      "source_database_and_files_unchanged": true,
+      "independent_audit_sha256": "b9c96c7a26befdb0afdcc5badaf7f0ff2e53fe69bec4508cf3ddcd50ea8fa216",
+      "human_decisions_simulated": false,
+      "official_task_pass": false,
+      "learning_or_speedup_claim": false,
+      "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+      "returned_models": [
+        "t2_hkgai-v3_fp8_1m_e10"
+      ],
+      "model_equivalence_confirmed": false,
+      "performance_flags": {
+        "parallel_model_calls": 1,
+        "parallel_web_fetches": 1,
+        "stable_prompt_prefix": false
+      }
+    },
+    "four_role_startup": {
+      "model_calls": 0,
+      "roles": [
+        "lead",
+        "dev",
+        "qa",
+        "release"
+      ],
+      "source_format": "original canonical mid-test only",
+      "plan_sha256": "c5abb456ed51e2cf4796b60b8fa7146fe7a02fb65c6bf4db5b7147e563cbfd96",
+      "source_database_sha256": "b569b7ec4cb5899ad799ab78bb36bd36e089905ae4c146aff112d1ac3aa55d79",
+      "export_preserved_original_database": true,
+      "final_task_import_claimed": false,
+      "live_scenario_pass_claimed": false,
+      "configuration_preflight": true
+    },
+    "contributor_raw_runs_independently_checked": false,
+    "contributor_report_source": "https://github.com/Qingthefish/evolutionary-agent-lab/pull/77",
+    "instructor_reply_source": "Owner-supplied screenshot of a reply to a teammate, provided November 22; retained privately",
+    "instructor_reply_screenshot_sha256": "f3935b3700880848f33fbf8d6930eeb8034067e58b969bacba97abecff9d8353",
+    "timing_clarification": "Aim to finish within 10 minutes; unfinished results may be shared with instructor and TA later. Talk stays within 10 minutes; no unlimited API allowance inferred.",
+    "technical_ready_for_unknown_final_input": false,
+    "remaining_gates": [
+      "Verify final task-link mapping",
+      "Freeze and rehearse on the actual presentation machine",
+      "Obtain original teammate evidence or independently reproduce official scenarios",
+      "Retain real human decisions and final delivery evidence"
+    ],
+    "software_pair_reproduction": {
+      "budget_decision": "Owner delegated selection within the concrete bounded proposal; stage Task 1 first",
+      "max_additional_requests": 160,
+      "max_per_task": 80,
+      "max_output_tokens": 4096,
+      "socket_timeout": 90,
+      "already_used_development_requests": 18,
+      "combined_work_ceiling": 178,
+      "launched": true,
+      "source_commit": "d8dec1a",
+      "automatic_retry": false
+    }
   }
 }
