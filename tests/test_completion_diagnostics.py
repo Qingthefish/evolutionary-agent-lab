@@ -57,7 +57,7 @@ REJECTED = {
     "reasoning_type": (changed(lambda v: message_of(v).update(reasoning_content=[SENTINEL])), "stop", 0, True),
     "tool_call_shape": (changed(lambda v: message_of(v)["tool_calls"][0].update(extra=SENTINEL), calls=[call()]),
                         "tool_calls", 1, False),
-    "tool_call_limit": (reply(calls=[call(f"call-{n}") for n in range(17)]), "tool_calls", 17, False),
+    "tool_call_limit": (reply(calls=[call(f"call-{n}") for n in range(65)]), "tool_calls", 65, False),
     "duplicate_tool_call_id": (reply(calls=[call(), call()]), "tool_calls", 2, False),
     "finish_reason_mismatch": (reply(calls=[call()], reason="stop"), "stop", 1, False),
     "required_tool_missing": (reply(), "stop", 0, True),

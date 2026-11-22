@@ -393,7 +393,9 @@ class ToolGateway:
         and must stop after a pause, cancellation, or controller stop.
         """
         if not isinstance(calls, list) or not 1 <= len(calls) <= 16:
-            raise ToolRequestError("Supply between one and sixteen tool proposals")
+            count = len(calls) if isinstance(calls, list) else 0
+            raise ToolRequestError(f"A response may contain at most 16 tool calls; this one had {count}, so none ran. "
+                                   "Send the most important calls first, at most 16 per response")
         last = calls[-1].get("function") if isinstance(calls[-1], dict) else None
         self._batch_completes = isinstance(last, dict) and last.get("name") in _COMPLETION
         for call in calls:

@@ -248,8 +248,9 @@ def record_controller_idle(scheduler):
     if not tasks:
         return None
     ids = [task["id"] for task in tasks]
-    marks = ",".join("?" * len(ids))
-    last = workflow.db.execute(f"SELECT max(timestamp) FROM events WHERE task IN ({marks})", ids).fetchone()[0]
+    every = [task["id"] for task in descendants(workflow, scheduler.root)]  # Include subtasks that just ended.
+    marks = ",".join("?" * len(every))
+    last = workflow.db.execute(f"SELECT max(timestamp) FROM events WHERE task IN ({marks})", every).fetchone()[0]
     now = workflow.clock()
     if last is None or now - last <= IDLE_GRACE_SECONDS:
         return None

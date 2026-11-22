@@ -157,6 +157,25 @@ class IntegrationRobustnessTests(unittest.TestCase):
             with self.subTest(good=good):
                 self.assertIsNone(submission_summary_problem(good))
 
+    def test_a_reply_with_too_many_tool_calls_is_refused_and_the_task_continues(self):
+        from agent_lab.deepseek import DeepSeekClient
+        from agent_lab.runner import TaskRunner, Limits
+        from test_runner import Script, response, tool
+        many = [tool("create_text", {"path": f"f{i}.txt", "content": "x"}, f"m{i}") for i in range(18)]
+        script = Script([response(many), response([tool("create_text", {"path": "note.txt", "content": "Hello\n"}, "ok")]),
+                         response()])
+        gateway = ToolGateway(self.workflow, self.files, self.dev, "dev", human="user", allowed=["create_text"], max_calls=40)
+        runner = TaskRunner(gateway, DeepSeekClient("synthetic", script), mode="offline_fixture", constraints=[],
+                            limits=Limits(model_attempts=5),
+                            verifier=self.files.text_verifier(self.dev, "dev", {"note.txt": "Hello\n"}), verifier_id="note-v1")
+        runner.step()  # 18 calls: refused as a batch, nothing written, the task keeps running.
+        self.assertEqual(self.workflow.task(self.dev, "dev")["state"], "running")
+        self.assertEqual(self.files.list_files(self.dev, "dev")["count"], 0)
+        runner.run()
+        self.assertEqual(self.workflow.task(self.dev, "dev")["state"], "succeeded")
+        seen = json.dumps(script.requests[1]["messages"])
+        self.assertIn("at most 16 tool calls; this one had 18", seen)
+
     def test_a_missing_source_path_needs_an_explicit_path(self):
         receipt = self.files.create_text(self.dev, "dev", "x.md", "x\n")
         offer = self.files.offer_artifact(self.dev, "dev", "x.md", self.lead, expected_sha256=receipt["sha256"])
