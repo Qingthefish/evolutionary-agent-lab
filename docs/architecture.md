@@ -45,6 +45,14 @@ resumed after expiry. Configuration compatibility is checked before attaching a
 new finish policy to an existing tree. These are engineering controls; the
 current HTTP 502 observations do not validate their full live task benefit.
 
+Trusted verification rejection authorizes bounded repair even if it occurs
+before the first finish window. If that task later enters its finish window,
+its already-permitted file/execution repair tools remain available in a batch
+ending with submission or an honest blocker. This records no new allowance,
+does not reopen terminal tasks and does not manufacture a human rejection for
+technical feedback. The partial-recovery option above is validated as an actual
+JSON boolean at the model gateway; strings and integers do not grant it.
+
 ## Candidate experience memory
 
 `ExperienceMemory` stores each agent's candidate suggestions in SQLite with separate source observations. Capture requires an assigned task to have ended in a success or failure with a terminal event and trusted recorded checks/error. Source snapshots include that event, outcome evidence, and any actual artifact-verification records. A trusted-caller success without artifact records is distinguishable from an artifact-verified outcome. Capturing a completed outcome does not prove that the accompanying suggestion is correct or that a suggested fix caused the result; every lesson remains explicitly `candidate`.
