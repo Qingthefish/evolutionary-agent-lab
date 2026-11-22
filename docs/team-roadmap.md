@@ -831,6 +831,28 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   final S02 delivery. The failed training parent and separate incomplete
   booking parent are retained. [Presentation plan](final-report.md#9-proposed-presentation-outline)
 
+- **2026-11-22 presentation clarification and connection observation:**
+  Qingthefish, owner-requested Codex-assisted S02 maintenance on
+  `docs/S02-presentation-clarification-20261122`, based on latest shared main
+  `640ece1`. Preserved the newly merged contributor changes in #71/#72/#74;
+  this documentation review does not claim to independently accept their full
+  runtime behavior. Verified the instructor's [clarification](https://canvas.ust.hk/courses/73253/announcements/658936):
+  ten-minute talk, task link during the preceding group, live start at the
+  beginning, similar mid-test format, no web-search tasks, and Method/Mid-test
+  results/Reflection slides. Updated the existing requirements, README and
+  report/runbook; historical demonstrations are auxiliary, not substitutes
+  for the required live start. A fresh minimal HKGAI observation at 16:50
+  returned `OK.` in 1.329 seconds with 116 reported tokens. The existing parser
+  accepted the retained response on both the request-source revision and latest
+  shared main, without another HTTP request. Requested/returned labels remain
+  e7/e10; their equivalence is not confirmed, and exact `OK` instruction matching
+  is false. The cumulative round is 11 actual requests, with all earlier failures
+  and six unknown-usage attempts retained. No tools ran or old task resumed.
+  Connection recovery is not a complete workflow or official task pass. Raw
+  observation and sanitized notice remain in ignored `runs/`; final-link input
+  mapping, live startup rehearsal and official outcomes remain readiness gates.
+  No search credential was committed and no new search integration was started.
+
 ## Starting a Codex session
 
 ```text

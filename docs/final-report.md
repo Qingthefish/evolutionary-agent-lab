@@ -210,9 +210,13 @@ The instructor announcement specifies a week-13 presentation and a report
 **after** week 13; the report deadline is not automatically the presentation
 date. Wednesday, **25 November 2026**, is week 13 if the shown 2 September
 lecture is week 1. Treat November 25 as the preparation target, not a confirmed
-group slot. The mailbox search found no separate presentation timetable or
-stated duration. The following nine-minute structure is our proposal and can
-be shortened when the actual format is confirmed.
+group slot. The later [Presentation Clarification](https://canvas.ust.hk/courses/73253/announcements/658936),
+verified through the November 21 notification on November 22, confirms a
+**10-minute** presentation and a **live run starting at its beginning**.
+The task link arrives while the preceding group presents. Its data format
+will be similar to the mid-test and tasks will not involve web search.
+Slides must cover **Method, Mid-test results and Reflection**. The schedule
+below is our proposed allocation inside that official limit, not a new rubric.
 
 ### What the system is
 
@@ -236,24 +240,55 @@ Opening script:
 
 ### Proposed slides and evidence
 
-| Slide / time | Main point | Show or explain |
+| Slide / elapsed time | Required theme | Show or explain |
 | --- | --- | --- |
-| 1 / 0:45 | What problem the platform solves | A multi-step task needs delegation, executable work and checked delivery. State the instructor objective and the system definition above. |
-| 2 / 1:15 | Architecture and responsibility | Human request → model-selected assignments → private tools/workspaces → snapshot handoff → independent checks → candidate experience. Explain what the model chooses and what code enforces. |
-| 3 / 2:00 | One complete recorded workflow | Historical HKGAI JSONL probe: coordinator delegates original input, coder writes/runs source, offers output, coordinator receives/reads it and delivers the report. Both tasks succeeded under their declared contract. Label it a past real run, not a fresh live request. |
-| 4 / 1:00 | Isolation and human control | Explain private files, actual restricted code execution, clarification, and approval versus action release. Reference the separately retained real private clarification and group-deletion evidence; they are not part of the JSONL run. |
-| 5 / 1:15 | Experience and evaluation | Show the matched JSONL ON/OFF results and separate training cost. Both probes completed; ON took 14 versus 13 requests and 52.244 versus 48.281 seconds. One selected candidate is not proof of benefit. |
-| 6 / 1:00 | Instructor mid-test status | Show the three scenario pairs and the exact verified state. Booking source has independent behavior evidence, but complete mid-test parent delivery is not established locally; other unrun/partial tasks stay visible. Do not convert engineering checks into a six-task score. |
-| 7 / 1:00 | Failures and corrections | Separate our truncation, shared-budget, handoff and completion problems from the later HTTP 502 boundary. Explain parent reserves, bounded repair, exact-version checks and stopping on uncertain effects. Fixed-code live benefit remains unverified where service failure prevented execution. |
-| 8 / 0:45 | Deliverables and remaining gates | Repository, architecture, truthful results/failure analysis, genuine contribution history and recorded demonstration. Remaining gates: allowed-model scenario runs, runtime GitHub evidence, final release/configuration and actual course submission requirements. |
+| 1 / 0:00–0:30 | Method + live start | Start the prepared fresh task with the allowed model as the presentation begins; retain the actual start and source/configuration identity. Introduce the platform while it runs. |
+| 2 / 0:30–2:00 | Method: architecture | Human request → model-selected assignments → private tools/workspaces → snapshot handoff → independent checks → candidate experience. Explain what the model chooses and what code enforces. |
+| 3 / 2:00–3:15 | Method: control and verification | Private files, restricted code execution, clarification, and action-bound approval. Show an actual live status when useful; clearly label any separate historical illustration. |
+| 4 / 3:15–4:15 | Method: experience | Explain private candidate observations and the frozen ON/OFF comparison. Show the bounded JSONL pair: both completed, ON used 14 versus 13 requests and 52.244 versus 48.281 seconds. No general improvement is established. |
+| 5 / 4:15–6:00 | Mid-test results | Show the three scenario pairs and exact locally verified outcomes. Booking source has independent behavior evidence, but complete mid-test parent delivery is not established locally; partial and unrun tasks stay visible. Development probes and engineering checks are separate evidence, not a six-task score. |
+| 6 / 6:00–7:30 | Reflection | Explain truncation, shared-budget, handoff and completion problems, what was corrected, and what remains unverified. Distinguish later 502 observations from our own execution failures. The November 22 minimal reply does not establish full workflow recovery. |
+| 7 / 7:30–9:15 | Actual live status | Show real assignments, tool effects, outputs, human waits or failure evidence from this presentation's run. Report parent and child outcomes separately. Do not force acceptance or label a running task complete. |
+| 8 / 9:15–10:00 | Reflection + close | State the observed result, remaining limits and next engineering steps; point to the repository, architecture, honest report and genuine contribution history. End within 10 minutes. |
 
-A recorded walkthrough may be presented if the service remains unavailable,
-with that limitation stated before showing it. It is preparation material,
-not instructor approval to replace required live evaluation. Avoid making the
-outage the whole presentation: the engineering design, real bounded outcomes,
-null memory result and remaining delivery gaps are all part of the story.
+The live task runs alongside the talk. The notice requires a start at the
+beginning; it does not state a separate run completion deadline or new scoring
+rule. Do not assume either that every task must finish inside the talk or that
+unbounded continuation is permitted. Preserve the actual state at the end and
+follow the instructor's directions. A service failure is reported with its
+evidence; an old trace must not silently stand in for the required live start.
 
-### Demonstration runbook
+### Live presentation preparation
+
+1. **Before presentation day:** freeze the reviewed revision and bounded
+   runtime configuration, check the supported environment and existing sandbox,
+   and rehearse starting a fresh task without displaying keys. Test imports and
+   launch paths offline before spending model calls. The optional search key is
+   not needed for the announced task scope and is not a new model credential.
+2. **During the preceding group:** receive the actual link and retain the
+   original supplied files/prompts and their identities. Inspect its roles and
+   data contract, prepare a fresh private state and check configuration. Do not
+   execute task turns before our presentation begins. The existing importer
+   supports the mid-test package specifically: format similarity does not prove
+   a new link/ZIP/schema will load unchanged. Final input mapping and the exact
+   launch command remain a readiness gate until the supplied format is known.
+3. **At the start:** launch the actual task under the allowed model and reviewed
+   budget, record the start, and speak while it runs. Do not resume an expired
+   trial, copy a historical answer into the new task, or expand authorization.
+4. **During the talk:** keep the real conversation/status visible when useful.
+   Supply genuine human answers or action decisions when required; a coding
+   assistant must not fabricate those decisions. Retain dialogue, execution,
+   exact outputs, usage and timing, including waits and failures.
+5. **At the end:** report the observed state and keep the records. Critical
+   actions and uncertain provider effects retain their existing boundaries;
+   presentation pressure is not permission to retry, reset counters or invent
+   a successful result.
+
+This is an operational plan; no final-link import, fresh live rehearsal or
+complete official outcome is claimed by writing it. The response at 16:50 on
+November 22 establishes a minimal allowed-model text request only.
+
+### Auxiliary recorded development walkthrough
 
 The local ignored package `runs/presentation-20261120/` contains a hash-checked
 viewer, exact prior outputs and a scoped 14-turn trace from the original
@@ -285,8 +320,10 @@ was exercised but the retained pairs do not establish general improvement.
 
 ### Recorded-artifact fallback
 
-If live service is unavailable during presentation, label the demonstration as
-reproduction of a previously generated artifact. On 19 November, the exact
+This historical material can support reflection or explain a service failure;
+the later clarification requires a live start and does not approve replacing
+it with a recording. Label this as reproduction of a previously generated
+artifact. On 19 November, the exact
 developer booking snapshot from runtime `b028936` was copied from its retained
 export without editing. The configured digest-pinned, no-network Python
 container reproduced all 26 independent behavior checks and the ten original
@@ -309,11 +346,11 @@ gain or supply a teacher score.
 
 | Field | Status |
 | --- | --- |
-| Official dataset version/hash and exact task count | Mid-test: three scenarios and six ordered tasks, with source hashes recorded by C06. Final test dataset pending. |
-| Instructor timing, human intervention, memory reset/repeat and scoring rules | Await verified protocol |
+| Official dataset version/hash and exact task count | Mid-test: three scenarios and six ordered tasks, with source hashes recorded by C06. The live task link will arrive during the preceding group's presentation; final task count/bytes are not known yet. |
+| Instructor timing, human intervention, memory reset/repeat and scoring rules | Ten-minute talk and live start are confirmed; other protocol details remain unverified. |
 | Final revision/configuration and authorized evaluation budget | To freeze for the official run |
 | Official completion rate, execution time and failure/memory analysis | No official results claimed |
-| Presentation/report deadlines and delivery evidence | Confirm actual dates and requirements |
+| Presentation/report deadlines and delivery evidence | Method, Mid-test results and Reflection are confirmed slide themes; verify group slot and report date, and retain actual delivery evidence. |
 
 ## 11. Mid-test execution record, 19 November
 
