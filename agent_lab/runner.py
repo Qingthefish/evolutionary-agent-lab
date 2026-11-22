@@ -889,10 +889,11 @@ class TaskRunner:
             transcript = json.loads(session["transcript"]) + [{"role": "user", "content": _json({
                 "kind": "trusted_verification_failure", "error": feedback,
             })}]
-            if self.show_execution_budget and any(completion.window_record(self.workflow, self.task)[k] for k in ("entered", "forced")):
-                # Live Software Task 1 (2026-11-22): rejected tasks in a forced finish window could only report a
-                # blocker. The rejection asks for changes, so the window and repeat count start again; a low budget
-                # re-enters the window on the next request.
+            if self.show_execution_budget and budget.finish_budget(self.workflow, self.task) is not None:
+                # Record the repair authorization even when review precedes the
+                # first finish window. It must still apply if later work or
+                # truncation brings that rejected task into its finish window.
+                # No request/token allowance is replenished by this event.
                 self.workflow._event(self.task, reviewer or self.actor, "finish_mode_reopened",
                                      {"reason": "rejected_by_review"})
             self.workflow.db.execute("UPDATE runner_sessions SET status='ready',transcript=?,repeats=0,"

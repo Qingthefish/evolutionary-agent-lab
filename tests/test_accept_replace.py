@@ -172,6 +172,37 @@ class AcceptReplaceTests(unittest.TestCase):
         with self.assertRaises(ToolRequestError):
             gateway.validate_batch([call])
 
+    def test_model_gateway_recovers_only_the_offered_failed_child_snapshot_with_true(self):
+        offer = self.offer()
+        self.files.update_text(self.dev, "dev", "core.py", "unoffered later edit\n", expected_sha256=sha("fixed\n"))
+        self.workflow.finish_task(self.dev, "dev", error="Synthetic review repair was not re-offered")
+        gateway = ToolGateway(self.workflow, self.files, self.lead, "lead", human="user",
+                              allowed=["accept_artifact"], max_calls=8)
+
+        def call(identifier, opt_in):
+            return {"id": identifier, "type": "function", "function": {"name": "accept_artifact", "arguments":
+                json.dumps({"artifact_id": offer["artifact_id"], "path": "partial.py", "allow_failed_source": opt_in})}}
+
+        refused = json.loads(gateway.dispatch(call("no-opt-in", False))["content"])
+        self.assertFalse(refused["ok"])
+        self.assertEqual(self.consumed(offer["artifact_id"]), 0)
+        recovered = json.loads(gateway.dispatch(call("explicit-opt-in", True))["content"])
+        self.assertTrue(recovered["ok"], recovered)
+        self.assertTrue(recovered["result"]["partial"])
+        self.assertEqual(self.content("partial.py"), "fixed\n")  # Never the unoffered later edit.
+        self.assertEqual(self.workflow.task(self.dev, "user")["state"], "failed")
+        self.assertEqual(self.workflow.task(self.lead, "user")["state"], "running")
+
+    def test_model_gateway_requires_an_actual_boolean_not_an_integer_or_string(self):
+        gateway = ToolGateway(self.workflow, self.files, self.lead, "lead", human="user",
+                              allowed=["accept_artifact"], max_calls=8)
+        for value in [0, 1, None, "true", [], {}]:
+            with self.subTest(value=value):
+                call = {"id": "invalid-partial", "type": "function", "function": {"name": "accept_artifact", "arguments":
+                    json.dumps({"artifact_id": "not-an-offer", "allow_failed_source": value})}}
+                with self.assertRaisesRegex(ToolRequestError, "must be a boolean"):
+                    gateway.validate_batch([call])
+
 
 if __name__ == "__main__":
     unittest.main()
