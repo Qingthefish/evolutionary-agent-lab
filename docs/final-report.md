@@ -619,11 +619,143 @@ export are unchanged. These engineering fixes have **not** been rerun through
 a fresh real HKGAI Task 2 and do not retroactively accept it. Software lead
 write restrictions and all budgets/approval/isolation boundaries are unchanged.
 
+### Software pair rerun on `bddf523` (full17)
+
+At the owner's request, a contributor reran the original Software pair on
+merged main `bddf523` (PR #80), with no code change. This adds 152 requests
+beyond the closed pair's 178-request ceiling. It is a separate run, not a
+continuation or replacement of the frozen `d8dec1a` replay above. Both roots
+started fresh in one new group. Task 2 began only after Task 1 finished, with
+its 18 accepted files carried as exact snapshots.
+
+| Root | Outcome | Requests | Reported tokens | Tool calls | Wall time | Cut-off replies |
+| --- | --- | --- | --- | --- | --- | --- |
+| Task 1 (booking system) | **succeeded** | 77 / 80 | 2,246,304 | 144 | 1,878.0 s (31.3 min) | 6 |
+| Task 2 (manager dashboard) | **failed** | 75 / 80 | 3,517,744 | 103 | 2,130.4 s (35.5 min) | 9 |
+
+Wall time runs from assignment to final status and includes review time.
+Task 2 also includes 187.9 s of recorded human wait for the clarification.
+No ten-minute completion is claimed.
+
+**Configuration.**
+
+- Source:
+  - Clean detached checkout of `bddf5235111e040ca0166cba3c65e400529fd36d`, which includes `61a9f86`, with no local changes.
+  - `agent_lab` was imported from that checkout, using Python 3.12.15.
+- Model:
+  - HKGAI, requested `t2_hkgai-v3_fp8_1m_e7`.
+  - All 152 replies were labelled `t2_hkgai-v3_fp8_1m_e10`; equivalence is unconfirmed.
+- Limits:
+  - Output ceiling 4,096 tokens per request.
+  - `--show-execution-budget --finish-protocol` enabled.
+  - Per-root tree limits:
+    - 80 requests, 4,000,000 reported tokens, 512 tool calls, 8 tasks, depth 3, 14,400 s.
+    - Finish window 3 requests; `min_child` 10.
+- Sandbox: digest-pinned `python@sha256:5e2bdb1b…4fa5b`, network `none`.
+- Performance switches all off: one model call at a time, one web fetch at a time, no stable prompt prefix.
+- Roles: the original four (`lead`, `dev`, `qa`, `release`).
+
+**Review provenance.**
+
+- Every proposal review was recorded as *technical acceptance or review by the assistant at the owner's request*. None is a human decision, teacher grade or official result.
+- The only actual human decision was Task 2's clarification. The lead asked about three things:
+  - an append-only cancellation log
+  - an offline HTML dashboard plus a terminal summary
+  - a 30-day default window
+- The owner replied "Go with defaults".
+- The first attempt to submit that answer was refused by the CLI because of extra runner arguments. Nothing was recorded, and the identical text was then submitted.
+
+#### Task 1: succeeded
+
+The lead delegated to `dev`, `qa` and `release`.
+
+- **`dev` (34 requests, succeeded).** Built a stdlib booking package with 30 unit tests, then accepted after an independent rerun of a copied snapshot:
+  - `unittest discover`: 30 OK.
+  - The CLI's seed, rooms, book, availability, list and cancel commands worked on a fresh data file.
+  - A 09:30–10:30 booking over 09:00–10:00 was refused with exit 1 naming the clash.
+  - An adjacent 10:00 booking was allowed.
+  - Cancel freed the slot immediately.
+  - An unknown room, a past date and an end time before the start were rejected without a traceback.
+- **`qa` (17 requests, succeeded).** Independent probes in the no-network sandbox found no way to force a double booking: 12 threads produced one winner, and 4 processes produced one persisted booking. QA reported three advisory defects. The reviewer reproduced D3; QA's own evidence covers D1 and D2.
+  - **D1:** CSV import rejects `HH:MM:SS` times.
+  - **D2:** the CLI does not print the corrupt-file recovery note that the README promises.
+  - **D3:** `python -m roombook` needs `PYTHONPATH=src` on a clean checkout.
+- **`release` (5 requests, failed).** It was asked for release notes and a manifest, which the issued prompt does not require. One reply hit the output ceiling with no content. Inside its finish window, its next request called `report_blocker`, which ends a task as failed.
+- **Lead.** It disclosed the failed child, the open D1–D3 defects and the missing release notes. Its final package was rerun from a clean copy before acceptance:
+  - 30 tests OK.
+  - The README quick start, including `export PYTHONPATH`, then seed and book, worked.
+  - Overlaps were refused.
+
+  Acceptance named the exact waiver `--waive-failed-subtask c97ea30d…`, recorded as `failed_subtask_waived`. The release failure stays in the record.
+
+#### Task 2: failed
+
+The first `dev` (46 requests) wrote a dashboard module, a cancellation log and 19 new tests. Its snapshot was copied and checked independently:
+
+| Check | Observation |
+| --- | --- |
+| `unittest discover -s tests` | 49 tests, OK |
+| Cross-hour occupancy (the defect that failed the `d8dec1a` Task 2) | Correct. A 09:30–11:00 booking gives 30 min at 09:00 and 60 at 10:00. A 13:30–14:30 booking gives 30 min at 13:00 and 30 at 14:00. Busiest hour 10:00. |
+| Cancellation reporting | A cancelled 15:00–16:00 booking was excluded from reserved time and counted once under "cancellations". It is labelled "tracked from the dashboard version onwards", as clarified. |
+| Totals and rooms | 2 bookings, 150 min, per-room utilisation, underused rooms at 0 |
+| Interactive HTML | `dashboard --html PATH` wrote a self-contained 22 KB page: 6 inline SVG charts, 2 scripts, date-from/date-to inputs and a room selector, no external URLs. Default range is 30 days. |
+
+The proposal was rejected only because it was incomplete. Its own summary said
+the README section and VERIFICATION.md "still needed" writing. The README hash
+was unchanged from Task 1 (`e721593f…`), and the submission included
+`probe_*` scratch files. The rejection asked for those two documents and for
+the probe files to be dropped. The code was not rejected.
+
+The failure chain, from the retained events:
+
+1. **No requests left for the rework.** After the rejection, the reopened finish window had 2 requests.
+2. **Truncation.** The next reply was a 3,773-character `append_text` plus a `create_text`. It hit the 4,096-token completion ceiling (`finish_reason=length`, prompt 95,504 tokens) and was refused unparsed. The finish window then ran out (`finish_window_exhausted`), and `dev` failed.
+3. **Nothing was handed over.** This `dev` never called `offer_artifact`. The lead received no Task 2 file, and its working copy stayed in the child's private files.
+4. **The replacement failed too.** The lead replaced the child. Its stated reason was that the previous attempt "produced no artifacts", which is true from the lead's view. The second `dev` (12 requests) received the 9 lead inputs, updated `storage.py` and `service.py`, then had two output-limit replies in a row. Its finish window also ran out without a submission.
+5. **The lead could not finish.** It produced five cut-off replies in total, three of them consecutive with empty content, at about 44k-token prompts. That forced finish mode (`finish_mode_forced`, reason `output_limit`). The lead's next request called `report_blocker`, and the root **failed** after 75 of 80 requests.
+
+Across the tree, 9 of 75 replies hit the output ceiling. The `d8dec1a` Task 2
+failed on calculation correctness. This run failed on delivery and completion,
+even though its candidate passed the cross-hour check. The early rejection used
+up the child's remaining requests. Acceptance with a request for the lead to
+finish the documentation might have let the root succeed, but it would have
+accepted a submission the developer itself described as unfinished. That
+trade-off is a reviewer choice and is recorded as such. The failure stands.
+The cut-off-reply pattern near the end of long tasks remains open, and no fix
+is part of this record.
+
+#### Reproduction
+
+The operator commands used `--config` with a copy of the canonical Software
+plan (software plan SHA-256 `22fa08e4…a0d74`) and a fresh `--state-dir`.
+
+1. Run `official_session init --scenario software-engineering --human requester --plan-sha256 …`.
+2. Run `post --sequence 1 --assignee lead`.
+3. Repeat `official_live --sequence 1 advance --turns 8` until each review boundary or a terminal state. Pass the output-ceiling, budget and finish-protocol flags above, plus the Docker host and pinned image.
+4. Record each review with `official_live review --task … --decision accept|reject --feedback …`. Use `--waive-failed-subtask` only for a disclosed failed child.
+5. Run `post --sequence 2 --assignee lead`.
+6. For each accepted Task 1 file, run `carry --source-task <task1-root> --source-path P --sha256 H --target-path P`.
+7. Drive Task 2 the same way, and answer its clarification with `official_live answer --request … --text …`.
+
+Independent checks copied each reviewed snapshot outside the state directory and ran:
+
+- `python3 -I -m unittest discover -s tests`
+- the documented `python -m roombook …` commands, against a throwaway `--data` file
+
+No reviewed file was edited.
+
+The local database, raw replies, state files and the owner's exact answer are
+kept in the ignored `runs/full17-sw-state/`, which is not published. Sanitized
+counts, configuration and file digests are in
+[`software_rerun_full17_20261122`](../evaluation/evidence/development-summary.json).
+That includes the final database digest `8a6b8621…40fb72`, the 18 carried Task 1
+files and the reviewed Task 2 candidate.
+
 ### Wednesday technical readiness
 
 | Gate | Current observation / remaining action |
 | --- | --- |
-| Allowed model and complete bounded execution | The bounded development probe and original Software Task 1 completed under their independent technical checks. Task 2 failed; the follow-up repair source has engineering validation but no new real-model acceptance. Service availability on presentation day is not guaranteed. |
+| Allowed model and complete bounded execution | The bounded development probe and original Software Task 1 completed under their independent technical checks. Task 2 failed; the follow-up repair source has engineering validation but no new real-model acceptance. The separate `bddf523` rerun (full17) repeated this: Task 1 succeeded, and Task 2 failed on delivery after cut-off replies, although its candidate's cross-hour statistics were correct. Service availability on presentation day is not guaranteed. |
 | Original four-role setup and export | Actual CLI init/post/preflight/read-only export rehearsed with `lead/dev/qa/release`, unchanged original mid-test data and zero model calls. The original database hash is unchanged by export. |
 | Unknown task-link ingestion | Similar format is announced; the current adapter remains specific to the canonical mid-test package. Preserve the received final files and review the actual mapping before launch; final import is not yet verified. |
 | Submission and review boundaries | Exact snapshot versions, explicit failed-child waivers and labelled partial recovery are checked. Real clarification/critical-action choices still require the actual human. |

@@ -2208,5 +2208,267 @@
         "Final official results and submission materials"
       ]
     }
+  },
+  "software_rerun_full17_20261122": {
+    "label": "Owner-requested contributor rerun of the original Software pair on merged main, no code change",
+    "source_commit": "bddf5235111e040ca0166cba3c65e400529fd36d",
+    "source_includes": [
+      "61a9f86"
+    ],
+    "source_checkout_clean": true,
+    "python": "3.12.15",
+    "independent_of_frozen_d8dec1a_replay": true,
+    "adds_requests_beyond_closed_pair_ceiling": 152,
+    "runtime": {
+      "provider": "hkgai",
+      "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+      "returned_models": {
+        "t2_hkgai-v3_fp8_1m_e10": 152
+      },
+      "model_equivalence_confirmed": false,
+      "max_output_tokens": 4096,
+      "show_execution_budget": true,
+      "finish_protocol": true,
+      "tree_limits": {
+        "model_attempts": 80,
+        "reported_tokens": 4000000,
+        "tool_calls": 512,
+        "tasks": 8,
+        "depth": 3,
+        "duration_seconds": 14400
+      },
+      "finish_policy": {
+        "finish_requests": 3,
+        "min_child": 10
+      },
+      "sandbox": {
+        "image": "python@sha256:5e2bdb1b0d542d5039cffb8181c65930093949194a65c365dfb1b0fe13a4fa5b",
+        "network": "none"
+      },
+      "performance_flags": {
+        "parallel_model_calls": 1,
+        "parallel_web_fetches": 1,
+        "stable_prompt_prefix": false
+      },
+      "roles": [
+        "lead",
+        "dev",
+        "qa",
+        "release"
+      ],
+      "software_plan_sha256": "22fa08e41548cb417ac71091a7147258f998393cce500e034c25c07b3baa0d74"
+    },
+    "review_provenance": "Every proposal review is technical acceptance/review by the assistant at the owner's request; none is a human decision, teacher grade or official result",
+    "human_decisions": [
+      {
+        "task": 2,
+        "kind": "clarification",
+        "topics": [
+          "append-only cancellation log",
+          "offline HTML dashboard plus terminal summary",
+          "30-day default range"
+        ],
+        "answer": "Go with defaults",
+        "answered_by": "owner",
+        "recorded_wait_seconds": 187.916,
+        "note": "First submission attempt refused by CLI argument parsing before recording; identical text then submitted"
+      }
+    ],
+    "task1": {
+      "outcome": "succeeded",
+      "requests": 77,
+      "reported_tokens": 2246304,
+      "tool_calls": 144,
+      "wall_seconds": 1878.012,
+      "output_limit_replies": 6,
+      "subtasks": [
+        {
+          "role": "lead",
+          "outcome": "succeeded",
+          "requests": 21
+        },
+        {
+          "role": "dev",
+          "outcome": "succeeded",
+          "requests": 34
+        },
+        {
+          "role": "qa",
+          "outcome": "succeeded",
+          "requests": 17
+        },
+        {
+          "role": "release",
+          "outcome": "failed",
+          "requests": 5,
+          "cause": "empty output-limit reply then report_blocker; optional release notes/manifest beyond the issued prompt"
+        }
+      ],
+      "reviews": [
+        {
+          "role": "dev",
+          "decision": "accepted",
+          "checks": "30 unit tests OK; CLI seed/rooms/book/availability/list/cancel; overlap refused exit 1 naming clash; adjacent allowed; cancel frees slot; unknown room/past date/end<start rejected without traceback"
+        },
+        {
+          "role": "qa",
+          "decision": "accepted",
+          "checks": "qa_report.md digest matches offer; D3 reproduced (python -m roombook needs PYTHONPATH=src)"
+        },
+        {
+          "role": "lead",
+          "decision": "accepted",
+          "explicit_failed_subtask_waivers": 1,
+          "checks": "clean-copy rerun: 30 tests OK; README quick start incl. PYTHONPATH works; overlap refused"
+        }
+      ],
+      "qa_findings": {
+        "double_booking_forced": false,
+        "threads_12_winners": 1,
+        "processes_4_persisted": 1,
+        "open_defects": [
+          "D1 CSV import rejects HH:MM:SS",
+          "D2 corrupt-file note not printed",
+          "D3 PYTHONPATH=src required"
+        ]
+      },
+      "sandbox_executions": 13,
+      "sandbox_cleanup_confirmed": 13,
+      "accepted_delivery_sha256": {
+        "README.md": "e721593fdd4e8cfd9941235f640d6cae8acf54991a9519a24b1cee500b92135b",
+        "VERIFICATION.md": "485ea1c9f54faeddc58cd976c4f65127c4b0f7ca8f825afd597938be79919660",
+        "data/rooms.json": "f53e7f123c1ba28905ef6c067b8dc428fb426714b7a903291a09b8e0e1a55649",
+        "demo_output.txt": "8002f8f5c33e68d7b9ed33331913f36de3852e3aad5c8f7c076246f00648b576",
+        "qa_evidence.txt": "d51af8fded161b15f8da928d77da09f0138dd99d4aa792f5dbafde5e616fa13e",
+        "qa_evidence2.txt": "ae22f48d41897389f0a727eaec7174c8233ae464fd88f17a103a324d9e273b1b",
+        "qa_evidence3.txt": "b8c0bcfdc338ba08956af87563e351163a277a006173dde7d74c646126d85049",
+        "qa_evidence4.txt": "90b8cabdcfca5ca8c85c6977e4396cdaff1ba3ae1192a126238929baa16322f7",
+        "qa_report.md": "c46e4e8c1a7d24528c03902d4b347a6e8e9a46d0b376bab2406e41534a1623e4",
+        "src/roombook/__init__.py": "d5ce40f8ab53175cf22bccffe3a952271b470fb9b9dfe4654471f148820234a1",
+        "src/roombook/__main__.py": "42a91c46f9e5d2b24b5c063458a96c1b05ee393a70e7a0eb2f6bee68a0f57f85",
+        "src/roombook/cli.py": "5e971b618220d9ad23364935588d036f86003684674933cd04fe96f800095bae",
+        "src/roombook/model.py": "5b5cd808b52be7691e0dfaab456f53e0268e2ca374bd0ecdc81054fcdadf0f1d",
+        "src/roombook/service.py": "46048874f94786ed4d38a354c1bd16df33379f0297baea1dded9da833146075f",
+        "src/roombook/storage.py": "f615df01d08a1774c10a96437ea7588964cf29699a434ceec09ab11cf2c48c52",
+        "tests/demo.py": "d029c501d3fca2f55c49d5aecb5de4710d4723877aabd503df52828b87c055f5",
+        "tests/module_smoke.py": "2d9b806f9cf2b77a6aa1f2668c45eeed1cbf7e1d70b96fece9bee20da7842a9e",
+        "tests/test_roombook.py": "cfed99d350d2bf6d36fff7103658f959c53f21cd49b68e691da5a7ecb414e5e1"
+      }
+    },
+    "task2": {
+      "outcome": "failed",
+      "requests": 75,
+      "reported_tokens": 3517744,
+      "tool_calls": 103,
+      "wall_seconds": 2130.415,
+      "output_limit_replies": 9,
+      "carried_task1_snapshots": 18,
+      "subtasks": [
+        {
+          "role": "lead",
+          "outcome": "failed",
+          "requests": 17,
+          "output_limit_replies": 5,
+          "end": "finish_mode_forced (output_limit) then report_blocker"
+        },
+        {
+          "role": "dev",
+          "attempt": 1,
+          "outcome": "failed",
+          "requests": 46,
+          "output_limit_replies": 2,
+          "offered_to_parent": 0,
+          "end": "rejected with 2 finish requests left; truncated 3,773-char append_text at 4096 completion tokens (prompt 95,504); finish_window_exhausted"
+        },
+        {
+          "role": "dev",
+          "attempt": 2,
+          "outcome": "failed",
+          "requests": 12,
+          "output_limit_replies": 2,
+          "offered_to_parent": 0,
+          "end": "consecutive output-limit replies; finish_window_exhausted"
+        }
+      ],
+      "candidate_review": {
+        "decision": "rejected",
+        "reason": "incomplete: README dashboard section and VERIFICATION.md missing (developer's own summary), probe scratch files offered",
+        "unit_tests": {
+          "ran": 49,
+          "ok": true
+        },
+        "cross_hour": {
+          "09:30-11:00": {
+            "09:00": 30,
+            "10:00": 60
+          },
+          "13:30-14:30": {
+            "13:00": 30,
+            "14:00": 30
+          },
+          "busiest_hour": "10:00",
+          "correct": true
+        },
+        "cancellation": {
+          "cancelled_excluded_from_reserved": true,
+          "counted": 1,
+          "label": "tracked from the dashboard version onwards"
+        },
+        "html": {
+          "bytes": 22486,
+          "inline_svg": 6,
+          "scripts": 2,
+          "controls": [
+            "date from",
+            "date to",
+            "room select"
+          ],
+          "external_urls": 0,
+          "default_range_days": 30
+        },
+        "readme_unchanged_from_task1": true
+      },
+      "sandbox_executions": 9,
+      "sandbox_cleanup_confirmed": 9,
+      "reviewed_candidate_sha256": {
+        "README.md": "e721593fdd4e8cfd9941235f640d6cae8acf54991a9519a24b1cee500b92135b",
+        "dashboard.html": "27a2a85ca90974d25f904a2a362bf4852aeb8f7967dfab90293b633dec7c2c41",
+        "demo_run.txt": "2eed4afbdfcbb6af31f9e4e33fbdffbe218393f1d8aadffdb88656a2d20f271f",
+        "src/roombook/__init__.py": "d5ce40f8ab53175cf22bccffe3a952271b470fb9b9dfe4654471f148820234a1",
+        "src/roombook/__main__.py": "42a91c46f9e5d2b24b5c063458a96c1b05ee393a70e7a0eb2f6bee68a0f57f85",
+        "src/roombook/__pycache__/__init__.cpython-312.pyc": "bee993224ac1c7707c4efacfc3839c0b531058678ce2887ba1ca84f63ad49c82",
+        "src/roombook/__pycache__/cli.cpython-312.pyc": "fd58f79e7ea1f9cd654a47b4e7847601bccbdc9d3855fb0f399c51c938856869",
+        "src/roombook/__pycache__/dashboard.cpython-312.pyc": "c49d2da91f714ba118cc92e6649659d0c2c2d39acc3313829c80155b6a8dbcaa",
+        "src/roombook/__pycache__/model.cpython-312.pyc": "8cb38ca62a4867bf15b819be47de15f9b097151ee5d43cdaf384ed9a1c4a4366",
+        "src/roombook/__pycache__/service.cpython-312.pyc": "91e745bc27c82338c7a320de94839174e5433fdd849bee5e30994547bf1e3d60",
+        "src/roombook/__pycache__/storage.cpython-312.pyc": "5b655ae4076fc9cb30ca815098e6b48457df734b0bef3527f614852c8ee3ceba",
+        "src/roombook/cli.py": "52076425746f3027f3d6096d763e54460c11be122c928f127f16b6110493479c",
+        "src/roombook/dashboard.py": "18d466df9623557ff1c9626a94c22748173c72a86662639c6485e41595f002d6",
+        "src/roombook/model.py": "bc9dc7476e9411eee7d4a191bc19b70a8f0b759ebe660fc2a002835d67ff694a",
+        "src/roombook/service.py": "e91b7466236203274020923e78d1e948b761ff1c93ab8edb2d66530b2a8c4c27",
+        "src/roombook/storage.py": "127106a44a454c57594230c2b58e22ce3cbc13e3d81dfc352d733470f85014a3",
+        "summary.txt": "3b3881bb60cd4f70c763013952cde54e69a04cd3f480ec09e8b4f7f77852503f",
+        "tests/__init__.py": "234c652965a02aac7390c7e120c19ed911f686f99e61a38ffda864095f26f4f6",
+        "tests/__pycache__/test_dashboard.cpython-312.pyc": "5fad849d63e8be09d8421151e6536582ba3cda6aef07d8060f7078baf7d9a499",
+        "tests/__pycache__/test_roombook.cpython-312.pyc": "c6e2049fe5411081a93a5b4c5944a7df451959be1cd3068f19ef1e4f5eea4b0f",
+        "tests/collect_evidence.py": "c380182bb94007fdd40bcea6c5ad337a3b326ede111718294eb49b579c05e496",
+        "tests/dashboard_demo.py": "10e8a7b3874196e1ae8c206ad0f41ad53ec24b1d0e5609715ca26d7574c209a3",
+        "tests/export_probe.py": "796e568d3959890b6bb8ea34fc22c8886e25951717caf4ff1924e7d5e41d183c",
+        "tests/export_probe2.py": "8670ebae54390d0e98ad3f33008fbfba9de3cb7cd015035364aef0232c8b66da",
+        "tests/run_all.py": "5d8e800a49d6777cc3405a66f5fff161200c73e91f0f3bfe4e8ca606e3ce2c2d",
+        "tests/test_dashboard.py": "0ca163f74c440c470fa6dc3945f2d5068ac9b04eb721df8b15d34e223834190e",
+        "tests/test_roombook.py": "cfed99d350d2bf6d36fff7103658f959c53f21cd49b68e691da5a7ecb414e5e1",
+        "tests_run.txt": "e900a8a9f61f468840949340557123c500c41c06aed8cafb80089084dd5e59c4"
+      }
+    },
+    "sandbox_exit_codes_all": {
+      "0": 17,
+      "1": 4,
+      "2": 1
+    },
+    "local_database_sha256": "8a6b86210ba0b4206dc01a5c4154c8b54725430c62ae4468b4695f589f40fb72",
+    "raw_evidence_note": "Database, raw replies, file stores and transcripts retained only in ignored runs/full17-sw-state/; not published",
+    "official_task_pass": false,
+    "learning_or_speedup_claim": false
   }
 }
