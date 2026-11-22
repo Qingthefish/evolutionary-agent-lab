@@ -2103,7 +2103,49 @@
       "combined_work_ceiling": 178,
       "launched": true,
       "source_commit": "d8dec1a",
-      "automatic_retry": false
-    }
+      "automatic_retry": false,
+      "task1": {
+        "task1_state": "succeeded",
+        "requests": 63,
+        "reported_tokens": 2015011,
+        "unknown_usage_responses": 0,
+        "elapsed_wall_seconds": 1708.368911266327,
+        "database_sha256": "5216e8482ae2716ba11540055685b75673d22fc21b9c8549bd4cb66497795fbb",
+        "readonly_snapshot_sha256": "b4094c5dcad8f96ff5d2b0b641ef3d9bfcff0501c6e2f7b5f603f32443bd1e7a",
+        "technical_assistant_intervention": true,
+        "actual_human_decisions": 0,
+        "controller_acceptance_incident_retained": true,
+        "independent_tests_before": {
+          "passed": 9,
+          "failed": 1
+        },
+        "independent_tests_after": {
+          "passed": 10,
+          "failed": 0
+        },
+        "active_roles": [
+          "lead",
+          "dev"
+        ],
+        "teacher_score": null,
+        "result_sha256": "e542c994b9844e12154a904dd14372efa8b65a0072f8372a194dc442d2f62f85",
+        "independent_negative_verdict_sha256": "18d2c57b105143b8a99b451a4411ec6342b324b8cc04988c58dcf34b4e3dd2e2",
+        "independent_repaired_verdict_sha256": "fa406025733e9bf79fde3991be90ab0c5ec730c7be17c6b87aa66c37c6351db5",
+        "root_acceptance_sha256": "8196640b50efd1191db20cc7595eac433530524a5b3eb7d0feee0cc96dd2d839",
+        "task1_export_manifest_sha256": "8c5029e4dfc639e9f2c239f0a39b11f3432898fe70177b495ee10fd8f4a77115",
+        "root_snapshot_sha256": "b4094c5dcad8f96ff5d2b0b641ef3d9bfcff0501c6e2f7b5f603f32443bd1e7a",
+        "ten_minute_target_met": false,
+        "memory_learning_gain_claimed": false
+      },
+      "task2": {
+        "state": "running",
+        "same_group": true,
+        "carried_exact_snapshots": 9,
+        "carry_receipts_sha256": "452093682e147ecef4db8d587940ae5b4033073c2e77e2facd9dc69fbee42ac0",
+        "accepted_outcome": false
+      }
+    },
+    "integration_pr": "https://github.com/Qingthefish/evolutionary-agent-lab/pull/79",
+    "integration_merge": "243fb921d61f01ea767977ef2a8c6ee37860d198"
   }
 }

@@ -885,6 +885,25 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   `runs/review-readiness-20261122/`; this is the sole task register.
   [Current evidence and readiness](final-report.md#12-november-22-coordinator-catch-up)
 
+- **2026-11-22 original Software Task 1 replay:** continued the S01/S02
+  maintenance above on frozen `d8dec1a`; original instructor prompt and roles,
+  two active roles (lead/dev). The first developer proposal failed a
+  deterministic independent first-initialization race check (nine/ten passed).
+  Concrete technical feedback led to an Agent repair; all ten unchanged
+  independent checks then passed in the actual container. Exact revised
+  source receipt/read, lead reruns of 12 generated tests, usage delivery and
+  both succeeded states were checked. Technical assistant acceptance is
+  distinguished from an actual human decision and teacher scoring. The
+  complete Task 1 replay used 63 requests, 2,015,011 reported tokens and
+  1,708.369 seconds including review/repair; no ten-minute success claimed.
+  A private controller acceptance exception was reconciled by inspecting the
+  persisted state without reissuing acceptance; its original trace remains.
+  Task 1 has a sealed read-only snapshot/export. Task 2 has now been posted in
+  the same group with nine exact carried source snapshots; no accepted Task 2
+  outcome yet. Both share the declared 160-additional-request ceiling, at most
+  80 per task; original failures remain. No production-source change or new
+  progress Markdown was made. [Evidence and limits](final-report.md#original-software-task-1-reproduction)
+
 ## Starting a Codex session
 
 ```text

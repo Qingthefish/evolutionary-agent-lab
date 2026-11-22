@@ -54,6 +54,19 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Original Software Task 1 reproduction (2026-11-22):** the frozen reviewed
+runtime `d8dec1a` completed the instructor's original booking-system task in
+63 actual HKGAI requests, with independently checked developer-to-lead
+receipt/read and final technical acceptance. A first-initialization race was
+reproduced, rejected with concrete feedback, repaired by the developer Agent
+and rechecked: nine of ten independent behavior checks passed before repair;
+all ten passed afterwards. The lead received that exact version, reran the
+12 generated tests and delivered usage instructions. This is a coordinator-
+assisted replay with two active roles, not a teacher score or unattended run.
+Its 28.47-minute wall time includes review/repair and exceeds ten minutes.
+The second original task now continues in the same group with exact first-task
+snapshots; it has no accepted outcome yet. [Evidence and limits](docs/final-report.md#original-software-task-1-reproduction)
+
 **Coordinator catch-up (2026-11-22):** the integration review brings together
 the contributed completion/recovery changes (#77), opt-in stable prompt layout
 (#76) and opt-in overlapping retrieval (#75). It adds explicit failed-child

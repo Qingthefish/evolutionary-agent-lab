@@ -520,6 +520,57 @@ returned e10-labelled replies; equivalence remains unconfirmed. All three
 performance switches were off. The optional prompt/fetch changes have
 engineering coverage; their actual HKGAI speed advantage remains unmeasured.
 
+### Original Software Task 1 reproduction
+
+The original instructor booking-system prompt was replayed on frozen runtime
+`d8dec1a`, with the original four available roles and two active roles
+(`lead`, `dev`). The root and its developer child both reached **succeeded**
+under coordinator-assisted independent technical acceptance. This is a replay
+of a known mid-test task, not a new held-out score, teacher acceptance or an
+unattended/autonomous-evaluation result.
+
+The first developer proposal passed nine of ten independent behavioral tests.
+A deterministic two-process check exposed a lost confirmed booking: a slow
+first initializer overwrote a store that another process had already booked
+into. Concrete technical rejection returned that interleaving to the developer.
+The Agent moved initialization under the writer lock with absence rechecked
+inside it, added a regression and reran its checks. The unchanged independent
+suite then passed all ten tests in the actual no-network container, including
+overlap shapes, adjacent/separate bookings, cancellation, persistence,
+validation, command-line use, six competing bookers and the first-init race.
+This is demonstrated repair under feedback; it is not a memory-learning gain.
+
+Exact hashes bind the reviewed source to the developer's revised offer and
+the lead's receipt/read for all six reviewed delivery files. The lead reran
+the current 12 generated unit tests and the CLI/concurrency demonstrations,
+submitted the complete package and provided usage instructions. All actual
+isolated executions retain their results and cleanup evidence, including
+earlier failed CLI attempts. Generated tests supplement the independent checks.
+
+The record is **63 requests / 2,015,011 reported tokens / 1,708.369 seconds
+(28.47 minutes)** from assignment to final technical acceptance. This includes
+controller/review/repair time and exceeds the ten-minute target; local deadline
+exclusions are not subtracted from wall time. Output cap was 4,096 tokens and
+socket timeout 90 seconds under the owner's concrete expanded-budget judgment;
+the per-task ceiling was 80, not a teacher quota. All optional performance
+switches stayed off. Requested e7/returned e10 labels remain unconfirmed as
+equivalent. No actual human decision was requested or simulated.
+
+A private review-controller error is retained separately: runner setup inside
+its acceptance callback committed SQLite state before the outer commit raised
+an error. Read-only reconciliation confirmed that the exact checks, technical
+review event and developer success had actually persisted; acceptance was not
+replayed. The helper now constructs the runner before the transaction, and
+the lead's later acceptance completed normally. The frozen platform source
+was not changed during the experiment. This incident is part of provenance,
+not an erased failure or a new model attempt.
+
+The accepted Task 1 state was copied read-only and exported before Task 2 was
+posted. Task 2 continues in the **same group** with nine exact broker-carried
+Task 1 snapshots, without a copied historical answer. Its accepted outcome is
+still pending. Original records and source-bound manifests remain in the
+private readiness package. [Whitelisted figures and hashes](../evaluation/evidence/development-summary.json)
+
 ### Wednesday technical readiness
 
 | Gate | Current observation / remaining action |
