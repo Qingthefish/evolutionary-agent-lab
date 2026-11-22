@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "source_kind": "Owner-supplied screenshot of instructor and TA notice; content read in chat, not independently fetched from Canvas",
+  "provided_on": "2026-11-23",
+  "original_notice_sha256": "66d867db8de731b5f29b418fdf05521f6b788a8565386fd6115bbcc1a40bc33b",
+  "supersedes": "presentation_clarification_20261122",
+  "teams_in_evening_session": 38,
+  "presentation_minutes": 5,
+  "transition_seconds": 30,
+  "normal_qa_session": false,
+  "presenters_per_team": 1,
+  "skip_background_introductions": true,
+  "sections": [
+    {
+      "name": "Method",
+      "seconds": 120
+    },
+    {
+      "name": "Mid-test results",
+      "seconds": 60
+    },
+    {
+      "name": "In-class test results",
+      "seconds": 60
+    },
+    {
+      "name": "Reflection",
+      "seconds": 60
+    }
+  ],
+  "meeting": "All teams join the same Zoom meeting and screen-share from their own computer",
+  "task_link_before_turn_slots": 3,
+  "first_three_teams_receive_link": "before the session begins",
+  "agents_may_run_before_presentation": true,
+  "presentation_activity": "Show the in-class test results; a live start at the beginning of the talk is no longer required",
+  "data_format": "Similar to mid-test; identical ZIP/schema not verified",
+  "tasks_involve_web_search": false,
+  "allowed_model_apis": [
+    "DeepSeek",
+    "HKGAI"
+  ],
+  "final_submission_date": "2026-12-19",
+  "deadline_time_or_timezone_stated": false,
+  "exact_group_slot_verified": false,
+  "separate_run_completion_deadline_stated": false,
+  "runtime_provider_changed": false,
+  "model_requests_made": 0,
+  "credentials_included": false
+}

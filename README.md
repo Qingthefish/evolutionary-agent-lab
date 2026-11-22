@@ -108,13 +108,18 @@ reports a further Software Task 1 success and Task 2 delivery failure on
 `bddf523`; its raw full17 state is likewise unavailable locally and its review
 is pending. This follow-up preserves that separate contributor branch.
 
-**Wednesday presentation.** The instructor specifies **10 minutes**, a task
-link during the preceding group, and a live start when our talk begins. The
-format will be similar to the mid-test and tasks will not require web search.
-Slides cover Method, Mid-test results and Reflection. The supplied instructor
-reply permits sharing unfinished run results later; the talk still stays within
-ten minutes. November 25 is the week-13 planning target; the exact group slot
-is unconfirmed. The owner is preparing the slides separately. [Runbook](docs/final-report.md#9-proposed-presentation-outline)
+**Updated presentation and submission.** The instructor's replacement notice,
+supplied on November 23, specifies **5 minutes plus 30 seconds for transition**,
+**one presenter**, and normally no Q&A. Receive the task link **three
+presentation slots before our turn**, set up and run then, and show the results
+during the talk. Use the same Zoom meeting and screen-share from our own
+computer. Skip background introductions: Method 2 minutes, Mid-test results
+1 minute, In-class test results 1 minute, Reflection 1 minute. Tasks will not
+require web search; DeepSeek or HKGAI is permitted. **Final submission is
+December 19, 2026**; the cutoff time is not stated. This replaces the previous
+ten-minute/live-start arrangement. November 25 remains the week-13 planning
+target; the exact group slot is unconfirmed. The owner prepares the slides
+separately. [Requirements](docs/requirements.md#current-presentation-and-submission-requirements) · [Runbook](docs/final-report.md#9-proposed-presentation-outline)
 
 **Remaining gates.** Complete a full repaired-runtime Software Task 2 delivery,
 check the actual final-link mapping, freeze and rehearse

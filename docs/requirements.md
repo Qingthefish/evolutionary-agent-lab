@@ -27,41 +27,56 @@ Source: instructor announcement supplied by the user, “Final Project Specifica
 - Preferred team size: 2–4. Announcement says members finalized by the end of next week; exact date is not specified.
 - Final test set: one paragraph says exactly three weeks before final submission.
 - Report paragraph instead refers to mid/final test sets released in the last “3/1 weeks”. Clarify the schedule.
-- Final report is due after week 13; exact due date is not supplied.
-- Presentation preparation target: Wednesday, 2026-11-25, if the shown 2026-09-02 lecture is week 1. This is a week-count inference; a specific group slot has not been verified. The later clarification below confirms the duration and live-start procedure.
+- The original specification places the final report after week 13. The replacement presentation notice supplied on November 23 sets final submission to **December 19, 2026**; it does not state a cutoff time, timezone or a separate report deadline.
+- Presentation preparation target: Wednesday, 2026-11-25, if the shown 2026-09-02 lecture is week 1. This is a week-count inference; a specific group slot has not been verified. The replacement notice below specifies the talk duration and advance setup/run procedure.
 - The original announcement said dedicated model keys would be distributed later. On 2026-10-26 the instructor's [API announcement](https://canvas.ust.hk/courses/73253/announcements/651390) directed students to the restricted [API Information page](https://canvas.ust.hk/courses/73253/pages/api-information), which now gives the HKGAI address, model and a credential. Do not copy its credential into project documentation. The inspected page does not state quota, pricing or reset policy.
 
-## Verified presentation clarification
+## Current presentation and submission requirements
 
-The instructor's [Presentation Clarification](https://canvas.ust.hk/courses/73253/announcements/658936),
-received on 2026-11-21 at 00:54 Hong Kong time and read on November 22,
-adds these official instructions:
+The owner supplied a screenshot of a replacement notice from the instructor
+and TA team on **November 23, 2026**. It explicitly replaces the previously
+announced ten-minute format. The screenshot is retained privately; its
+[sanitized requirements and source hash](../evaluation/evidence/presentation-update-20261123.json)
+record supplied evidence, not an independently fetched Canvas announcement.
 
-- Each group has **10 minutes** for its final-project presentation.
-- The next group receives the agent task link while the preceding group is
-  presenting and may use that interval to set up its agents.
-- **Start the run when the presentation begins.** A historical recording is
-  auxiliary evidence, not a replacement for this live start.
-- The task data format will be **similar** to the mid-test. This does not
-  establish that the final link supplies the identical ZIP/schema or prompts.
-- Presentation tasks **will not involve web search**. The optional supplied
-  search credential is not a new model key or an instruction to integrate a
-  new service. Keep it out of public files. R06 remains part of the original
-  platform requirements; it is not a dependency of these live tasks.
-- Slides must cover **Method**, **Mid-test results**, and **Reflection**:
-  system design, results/key observations, and what worked/did not/was learned.
+- **5 minutes per team, followed by 30 seconds for transition.** There will
+  normally be **no Q&A**. Designate **one member** to present for the team.
+- Skip background introductions and go straight to method and results:
 
-An owner-supplied screenshot of the instructor's reply to a teammate, provided
-on November 22, clarifies the ten-minute question: tasks would normally finish
-within ten minutes; if not, results can be shared with the instructor and TA
-later. The screenshot is retained privately. This is separate from the earlier
-announcement, not an independently fetched reply in the coordinator's mailbox.
-The talk still stays within ten minutes and the run still starts at its beginning.
-Later completion is not unlimited API authorization or permission to reset a run.
+  | Section | Time | Required content |
+  | --- | --- | --- |
+  | Method | 2 minutes | Approach and agent system design |
+  | Mid-test results | 1 minute | Results and key observations |
+  | In-class test results | 1 minute | Show outputs and briefly explain results |
+  | Reflection | 1 minute | What worked, what did not, and what was learned |
 
-A group slot, final task count, scoring/reset/repeat policy, model change and
-quota remain unverified. The reply does not set the later sharing deadline or
-move the original report deadline to presentation day.
+- All teams join **the same Zoom meeting** and share their screens. Prepare
+  slides and the demonstration environment on **our own computer**.
+- Receive the agent task link **three presentation slots before our turn**,
+  giving time to **set up and run the agents before presenting**. The first
+  three teams receive their links before the session begins. During the talk,
+  only the results need to be shown; a live start at the beginning of the talk
+  is no longer the required procedure.
+- Data format will be **similar to the mid-test**; identical ZIP/schema,
+  prompts and final task count have not been established.
+- Tasks **will not involve web search**. Model inference through the allowed
+  API still requires network access. R06 remains a platform requirement and
+  the mid-test web scenarios retain their original prompts.
+- **Either DeepSeek API or HKGAI API** is permitted for the project and in-class
+  test. Keep the currently configured HKGAI provider until a separately
+  configured and authorized change; this notice does not supply a new key or
+  authorize unlimited use.
+- **Final submission deadline: December 19, 2026.** The notice says the project
+  can be improved after the presentation. It gives no deadline time/timezone
+  or separate later-results submission procedure.
+
+The earlier [November 21 clarification](https://canvas.ust.hk/courses/73253/announcements/658936)
+and the owner-supplied November 22 reply concerned the superseded ten-minute
+arrangement. Retain them as historical evidence, not current startup/timing
+instructions. A group slot, Zoom URL, final input mapping, scoring/reset/repeat
+policy, and provider quota/pricing remain unverified. Three complete preceding
+slots would give roughly 16.5 minutes at 5 minutes plus 30 seconds each; this is
+a planning estimate, not a separately stated execution deadline.
 
 ## Questions affecting design
 

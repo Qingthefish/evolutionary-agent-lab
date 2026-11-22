@@ -839,7 +839,8 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   runtime behavior. Verified the instructor's [clarification](https://canvas.ust.hk/courses/73253/announcements/658936):
   ten-minute talk, task link during the preceding group, live start at the
   beginning, similar mid-test format, no web-search tasks, and Method/Mid-test
-  results/Reflection slides. Updated the existing requirements, README and
+  results/Reflection slides (timing/start instructions superseded by the
+  November 23 replacement notice recorded below). Updated the existing requirements, README and
   report/runbook; historical demonstrations are auxiliary, not substitutes
   for the required live start. A fresh minimal HKGAI observation at 16:50
   returned `OK.` in 1.329 seconds with 116 reported tokens. The existing parser
@@ -872,7 +873,8 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   Four original software roles were separately initialized/preflighted/exported
   via the actual CLI with zero model calls and unchanged source database.
   Instructor timing reply from the supplied screenshot is recorded privately:
-  aim to finish within the ten-minute talk, otherwise share results later.
+  aim to finish within the ten-minute talk, otherwise share results later
+  (historical reply; current timing follows the November 23 replacement notice).
   Contributor full13/full14/full16 raw runs are not attached or available here;
   report their outcomes as contributed observations, not independent acceptance.
   Final task mapping, presentation-machine freeze and official outcomes remain
@@ -949,6 +951,26 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   and corrected stale lead-execution/token-guard descriptions. Raw evidence is
   in ignored `runs/recovery-regression-20261122/`; no additional progress
   Markdown. [Checked scope](final-report.md#scoped-recovery-and-artifact-validation)
+
+- **2026-11-23 replacement presentation notice:** Qingthefish, owner-requested
+  S02 documentation maintenance on `docs/S02-five-minute-update-20261123`.
+  The owner supplied a new instructor/TA notice explicitly replacing the old
+  ten-minute arrangement: **five-minute talk, 30-second transition, one
+  presenter, normally no Q&A**, and no background introduction. Official
+  allocation: Method 2 minutes; Mid-test results, In-class test results and
+  Reflection 1 minute each. All teams join the same Zoom meeting and
+  screen-share from their own computer. Receive the link three slots before
+  our turn (pre-session for the first three teams), then set up and run in
+  advance; only results need to be shown during the talk. No web search;
+  DeepSeek or HKGAI permitted. Final submission is **December 19, 2026**, with
+  cutoff time unspecified. Preserve the earlier notices as history; their
+  ten-minute/live-start instructions are superseded. Updated the existing
+  requirements, README, runbook/report, direction and sanitized evidence;
+  original screenshot retained privately. This documentation change adds no
+  model call, provider switch, source-code change or quota allowance. The
+  current six-task run retains its frozen runtime, counters and actual review
+  boundaries. Unknown final-input mapping and the actual group slot remain
+  open. [Current requirements](requirements.md#current-presentation-and-submission-requirements)
 
 ## Starting a Codex session
 
