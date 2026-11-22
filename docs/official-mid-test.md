@@ -17,10 +17,15 @@ bound an experiment; the teacher's quota and pricing remain unknown.
 
 Before presentation day, freeze and rehearse one reviewed revision, environment,
 configuration and cached execution image on the actual presenting machine.
-During the preceding group's talk, preserve and inspect the supplied final
-task files and check how they map into the runtime. The importer below supports
-the issued canonical mid-test ZIP; it does not automatically accept an arbitrary
-link or an unverified final package. Start model execution when our talk begins.
+Under the replacement instructor notice supplied November 23, the task link
+arrives **three presentation slots before our turn** (before the session for
+the first three teams). Preserve and inspect the supplied files, check their
+runtime mapping, and **set up and run in that advance window**. Show the
+results in the five-minute talk; the old live-start-at-talk-beginning rule is
+superseded. Join the shared Zoom meeting and screen-share from this Mac.
+The importer below supports the issued canonical mid-test ZIP; it does not
+automatically accept an arbitrary link or an unverified final package.
+See the [current requirements](requirements.md#current-presentation-and-submission-requirements).
 
 The prepared command sequence is: initialize/post the task, perform the
 zero-model-call preflight, then advance the run. Inspect status when it stops;

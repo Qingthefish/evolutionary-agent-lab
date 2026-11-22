@@ -1,6 +1,6 @@
 # Evolutionary Multi-Agent Collaboration System — Draft Report
 
-MAIE5221 / ARIN5202. **Development draft, updated 2026-11-14 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. Official tasks, scoring/intervention rules, final member contribution evidence and submission dates have not been incorporated into this draft. The instructor announcement remains the authority in [requirements](requirements.md).
+MAIE5221 / ARIN5202. **Development draft, updated 2026-11-23 (Asia/Hong_Kong).** This is not a final submission or an official benchmark report. The supplied mid-test tasks and latest presentation/deadline notice are recorded below; unknown final tasks, scoring/intervention rules and final delivery evidence remain open. The instructor announcement remains the authority in [requirements](requirements.md).
 
 ## 1. Objective and verified scope
 
@@ -210,13 +210,18 @@ The instructor announcement specifies a week-13 presentation and a report
 **after** week 13; the report deadline is not automatically the presentation
 date. Wednesday, **25 November 2026**, is week 13 if the shown 2 September
 lecture is week 1. Treat November 25 as the preparation target, not a confirmed
-group slot. The later [Presentation Clarification](https://canvas.ust.hk/courses/73253/announcements/658936),
-verified through the November 21 notification on November 22, confirms a
-**10-minute** presentation and a **live run starting at its beginning**.
-The task link arrives while the preceding group presents. Its data format
-will be similar to the mid-test and tasks will not involve web search.
-Slides must cover **Method, Mid-test results and Reflection**. The schedule
-below is our proposed allocation inside that official limit, not a new rubric.
+group slot. The replacement notice supplied by the owner on **November 23**
+specifies a **five-minute talk, 30-second transition, one presenter, and
+normally no Q&A**. It explicitly supersedes the earlier ten-minute/live-start
+arrangement. Receive the link **three presentation slots before our turn**,
+set up and run then, and show the in-class results during the talk. The first
+three teams receive links before the session begins. All teams share one Zoom
+meeting and present by screen-sharing from their own computer. Format remains
+similar to the mid-test and tasks will not involve web search. DeepSeek or
+HKGAI is allowed; the current runtime remains HKGAI. **Final submission is
+December 19, 2026**, with cutoff time unspecified. See the
+[current requirements](requirements.md#current-presentation-and-submission-requirements)
+and [source record](../evaluation/evidence/presentation-update-20261123.json).
 
 ### What the system is
 
@@ -229,36 +234,26 @@ output produced through that platform, not its definition. Experience means
 retrieving scoped candidate observations, not retraining model weights or
 assuming every prior fix is useful.
 
-Opening script:
-
-> We built a multi-agent execution platform that connects human requests to
-> delegated tool work and verifiable delivery. The language model chooses
-> actions; the platform enforces workspace boundaries, records evidence and
-> decides completion through independent checks or actual human review.
-> We evaluate both execution reliability and the observed effect of experience
-> reuse, including failures and cases where memory does not help.
+The owner prepares the slides and script. Skip background introductions and
+use the official allocation below; these notes organize existing evidence and
+do not claim a finished slide deck or successful unseen-task rehearsal.
 
 ### Proposed slides and evidence
 
-| Slide / elapsed time | Required theme | Show or explain |
+| Section / elapsed time | Required theme | Show or explain |
 | --- | --- | --- |
-| 1 / 0:00–0:30 | Method + live start | Start the prepared fresh task with the allowed model as the presentation begins; retain the actual start and source/configuration identity. Introduce the platform while it runs. |
-| 2 / 0:30–2:00 | Method: architecture | Human request → model-selected assignments → private tools/workspaces → snapshot handoff → independent checks → candidate experience. Explain what the model chooses and what code enforces. |
-| 3 / 2:00–3:15 | Method: control and verification | Private files, restricted code execution, clarification, and action-bound approval. Show an actual live status when useful; clearly label any separate historical illustration. |
-| 4 / 3:15–4:15 | Method: experience | Explain private candidate observations and the frozen ON/OFF comparison. Show the bounded JSONL pair: both completed, ON used 14 versus 13 requests and 52.244 versus 48.281 seconds. No general improvement is established. |
-| 5 / 4:15–6:00 | Mid-test results | Show the three scenario pairs and exact locally verified outcomes. Booking source has independent behavior evidence, but complete mid-test parent delivery is not established locally; partial and unrun tasks stay visible. Development probes and engineering checks are separate evidence, not a six-task score. |
-| 6 / 6:00–7:30 | Reflection | Explain truncation, shared-budget, handoff and completion problems, what was corrected, and what remains unverified. Distinguish later 502 observations from our own execution failures. The November 22 minimal reply does not establish full workflow recovery. |
-| 7 / 7:30–9:15 | Actual live status | Show real assignments, tool effects, outputs, human waits or failure evidence from this presentation's run. Report parent and child outcomes separately. Do not force acceptance or label a running task complete. |
-| 8 / 9:15–10:00 | Reflection + close | State the observed result, remaining limits and next engineering steps; point to the repository, architecture, honest report and genuine contribution history. End within 10 minutes. |
+| 0:00–2:00 | Method | Human request → model-selected assignments → private tools/workspaces → exact snapshot handoff → independent checks → scoped experience. Explain isolation, clarification/critical approval and what code enforces. |
+| 2:00–3:00 | Mid-test results | Show the three scenario pairs using exact audited outcomes and timings. Keep failures, unrun tasks, contributor reports and assistant/human interventions distinct. Engineering checks are not a six-task score. |
+| 3:00–4:00 | In-class test results | Show actual outputs and the status from the newly received in-class task. Explain parent/child results and any pending checks or failure. Preserve source/configuration identity and actual timing. |
+| 4:00–5:00 | Reflection | Explain what worked, the observed truncation/budget/handoff problems, repairs and remaining limits. The bounded memory comparison does not establish a general learning benefit. End within five minutes. |
 
-The live task runs alongside the talk. The instructor's reply shown in the
-owner-supplied November 22 screenshot says tasks would normally finish within
-ten minutes; otherwise results may be shared with the instructor and TA later.
-The talk remains ten minutes. Preserve the state at its end and follow up with
-actual results under the authorized runtime limits; no unlimited continuation,
-counter reset, new scoring rule or automatic email submission is inferred.
-A service failure is reported with its
-evidence; an old trace must not silently stand in for the required live start.
+The fresh in-class task may already have run in the advance setup window.
+Record its actual start and state at presentation time. If unfinished, show
+that state and any genuine outputs; the new notice supplies no separate late-
+results deadline or revised scoring rule. Preserve all evidence within the
+authorized runtime limits; no unlimited continuation, counter reset or
+automatic email submission is inferred. A service failure is reported with
+its evidence; historical examples remain labelled historical.
 
 ### Live presentation preparation
 
@@ -267,17 +262,20 @@ evidence; an old trace must not silently stand in for the required live start.
    and rehearse starting a fresh task without displaying keys. Test imports and
    launch paths offline before spending model calls. The optional search key is
    not needed for the announced task scope and is not a new model credential.
-2. **During the preceding group:** receive the actual link and retain the
+2. **Three presentation slots before our turn:** receive the actual link and retain the
    original supplied files/prompts and their identities. Inspect its roles and
-   data contract, prepare a fresh private state and check configuration. Do not
-   execute task turns before our presentation begins. The existing importer
+   data contract, prepare a fresh private state and check configuration. The existing importer
    supports the mid-test package specifically: format similarity does not prove
    a new link/ZIP/schema will load unchanged. Final input mapping and the exact
    launch command remain a readiness gate until the supplied format is known.
-3. **At the start:** launch the actual task under the allowed model and reviewed
-   budget, record the start, and speak while it runs. Do not resume an expired
+3. **In the advance setup window:** launch the actual task under the allowed
+   model and reviewed budget and record its start. The first three teams use
+   their pre-session link. Three full five-minute slots plus transitions would
+   be approximately 16.5 minutes; actual scheduling can vary, so this is a
+   planning estimate rather than an official execution deadline. Do not resume an expired
    trial, copy a historical answer into the new task, or expand authorization.
-4. **During the talk:** keep the real conversation/status visible when useful.
+4. **During the five-minute talk:** one presenter screen-shares through the
+   common Zoom meeting and shows the real test results in their allocated minute.
    Supply genuine human answers or action decisions when required; a coding
    assistant must not fabricate those decisions. Retain dialogue, execution,
    exact outputs, usage and timing, including waits and failures.
@@ -323,8 +321,8 @@ was exercised but the retained pairs do not establish general improvement.
 ### Recorded-artifact fallback
 
 This historical material can support reflection or explain a service failure;
-the later clarification requires a live start and does not approve replacing
-it with a recording. Label this as reproduction of a previously generated
+the current notice asks for results from the newly issued in-class task and
+does not make an old recording that task's result. Label this as reproduction of a previously generated
 artifact. On 19 November, the exact
 developer booking snapshot from runtime `b028936` was copied from its retained
 export without editing. The configured digest-pinned, no-network Python
@@ -348,11 +346,11 @@ gain or supply a teacher score.
 
 | Field | Status |
 | --- | --- |
-| Official dataset version/hash and exact task count | Mid-test: three scenarios and six ordered tasks, with source hashes recorded by C06. The live task link will arrive during the preceding group's presentation; final task count/bytes are not known yet. |
-| Instructor timing, human intervention, memory reset/repeat and scoring rules | Ten-minute talk and live start are confirmed; the supplied instructor reply allows sharing unfinished-run results later. Other protocol details and later sharing deadline remain unverified. |
+| Official dataset version/hash and exact task count | Mid-test: three scenarios and six ordered tasks, with source hashes recorded by C06. The in-class link arrives three presentation slots before our turn (pre-session for the first three teams); final task count/bytes are not known yet. |
+| Instructor timing, human intervention, memory reset/repeat and scoring rules | Five-minute talk plus 30-second transition, one presenter, normally no Q&A; setup/run may occur in the advance link window. Other intervention/reset/repeat/scoring details remain unverified. |
 | Final revision/configuration and authorized evaluation budget | To freeze for the official run |
 | Official completion rate, execution time and failure/memory analysis | No official results claimed |
-| Presentation/report deadlines and delivery evidence | Method, Mid-test results and Reflection are confirmed slide themes; verify group slot and report date, and retain actual delivery evidence. |
+| Presentation/report deadlines and delivery evidence | Method 2 min, Mid-test results 1 min, In-class test results 1 min, Reflection 1 min. Final submission is December 19, 2026; cutoff time and exact presentation slot remain unverified. Retain actual delivery evidence. |
 
 ## 11. Mid-test execution record, 19 November
 
@@ -559,7 +557,7 @@ earlier failed CLI attempts. Generated tests supplement the independent checks.
 
 The record is **63 requests / 2,015,011 reported tokens / 1,708.369 seconds
 (28.47 minutes)** from assignment to final technical acceptance. This includes
-controller/review/repair time and exceeds the ten-minute target; local deadline
+controller/review/repair time and exceeds the then-current ten-minute target; local deadline
 exclusions are not subtracted from wall time. Output cap was 4,096 tokens and
 socket timeout 90 seconds under the owner's concrete expanded-budget judgment;
 the per-task ceiling was 80, not a teacher quota. All optional performance
@@ -699,7 +697,7 @@ model, runtime roles or production code were changed in this follow-up.
 | Unknown task-link ingestion | Similar format is announced; the current adapter remains specific to the canonical mid-test package. Preserve the received final files and review the actual mapping before launch; final import is not yet verified. |
 | Submission and review boundaries | Exact snapshot versions, explicit failed-child waivers and labelled partial recovery are checked. Real clarification/critical-action choices still require the actual human. |
 | Remaining original tool evidence | R09's actual Agent-runtime GitHub push still needs a designated test branch, a suitably scoped runtime credential and the genuine action-bound human approval. Coordinator Git pushes and local-remote fixtures do not close that gate. |
-| Timing | Talk is ten minutes. The instructor reply supplied as a screenshot allows sharing run results with the instructor/TA later if needed. Assignment-to-final wall time remains separate from local deadline pause/idle exclusions. |
+| Timing | Replacement notice: talk is five minutes, with setup/run after receiving the link three slots before our turn. Show actual in-class results in the allocated minute. Final submission is December 19, 2026; no cutoff time or separate late-results rule is given. Assignment-to-final wall time remains separate from local deadline pause/idle exclusions. |
 | Frozen presentation machine/configuration | Freeze one reviewed revision, use a fresh state, verify that machine's model key/sandbox and rehearse its Terminal launch. Codex develops the platform; local Python runs it and remote HKGAI supplies inference. Keep optional speed switches off unless separately validated. A different presenter's machine needs its own reproduction. |
 | Mid-test slides and final results | Distinguish contributor reports, locally audited development evidence, engineering checks and actual official results. Obtain raw teammate exports or independently reproduce the required scenarios before claiming acceptance. |
 
