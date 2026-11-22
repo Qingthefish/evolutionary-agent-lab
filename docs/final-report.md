@@ -706,3 +706,70 @@ audit, raw live trace, original failures, CLI startup/export rehearsal and
 provided instructor-reply screenshot. It is not a second progress register;
 the [Roadmap](team-roadmap.md) remains the only task/owner record. No slide deck
 was generated; the owner is preparing it separately.
+
+## 13. Six-task Mac evaluation, 23 November
+
+The owner operated the local Terminal while the coding assistant inspected
+deliverables, returned technical feedback and recorded scoped acceptance.
+All six canonical mid-test tasks have now ended on the frozen runtime with
+source hash `42bb19f8a23eb65c422b49d14f38c4df3efda990ce33a449c9daf4e27a2a4e1a`.
+Each scenario retained its original roles and same-group task order. Only
+accepted root files were carried to the second task under the selected policy.
+The allowed HKGAI runtime made **375 requests**, with an 80-request tree cap
+per task, 4,096 output tokens per request and a 480-request suite ceiling.
+
+| Scenario | Task | Outcome | Requests | Acceptance or failure scope |
+| --- | --- | --- | --- | --- |
+| Software | 1 | Accepted with assistance | 74 | Developer, QA and integrated root artifacts independently reviewed |
+| Software | 2 | Failed | 71 | Delivered/recovered snapshot did not preserve existing booking data |
+| Newsroom | 1 | Accepted with owner exceptions | 69 | Chief editor completed the draft; real owner waived blocking by three failed specialist tasks; collaboration incomplete |
+| Newsroom | 2 | Accepted with assistance | 38 | Agent fact-check and same-task scope corrections reviewed |
+| Securities | 1 | Accepted with assistance and limitations | 63 | Real clarification, three reviewed inputs, allocation arithmetic; editorial/evidence caveats retained |
+| Securities | 2 | Failed | 60 | No HTML deck; research/repair and scheduler recovery failures |
+
+This gives four assisted acceptances and two failures, **not an unattended
+completion rate or an instructor score**. The two complete memory probe pairs
+reported earlier are separate evidence; this suite does not establish a
+learning benefit. Requested e7 and observed e10 model labels still differ.
+Known provider-reported usage totals **14,933,867 tokens**, including rejected
+length replies; no parsed-usage observation is missing in this suite. This is
+not all-time account usage, a cost estimate or evidence of account balance.
+Assignment-to-terminal times include review, pauses and idle time and are
+preserved without converting them into model latency or presentation-day
+runtime. [Per-task figures and source hashes](../evaluation/evidence/mid-test-six-20261123.json)
+
+The final Securities task exposed a concrete recovery defect. The original
+research and risk children used 21 and 18 requests before failing. Replacement
+research reached a partial market-size brief; its final three repair replies
+hit the 4,096-token output ceiling, with no tool effect released. It failed
+after its finish window. Both allowed child replacements were already used,
+so the scheduler treated the exhausted replacement quota as a root-fatal error
+and cancelled the pending replacement risk task, which had made zero requests.
+The root had used only three requests; the task tree ended at 60/80 requests.
+At the earlier 57-request pause, 23 shared requests remained, but token-cost
+estimation, other finish-window holds and the parent integration reserve left
+only one reported available to research. Shared remainder was not a promise
+that this child could spend every remaining request. No provider account-quota
+or authentication failure was established by this trace.
+
+After all six tasks closed, the original databases, files, exports and runtime
+were sealed privately. A focused correction now treats exhausted replacement
+quota as a restriction on creating another child, allowing independent
+siblings and parent integration or a genuine human question to proceed.
+Denied/unreleased actions and uncertain effects are checked first and still
+stop the unsafe path. Failed children remain failed, new replacements remain
+refused, and accepting a parent with unresolved failed children still requires
+the trusted review's exact exceptions. The parent receives the exhaustion
+reason through its child-result context.
+
+Four regression expectations reproduced the defect and precedence problem on
+the original source. The corrected source passed the complete **896-check**
+engineering suite: **866 passed, 30 container/UI checks explicitly skipped**.
+An initial restricted run could not bind local loopback servers and is kept;
+the successful run permitted local loopback. These are synthetic engineering
+checks and made zero model requests. The correction has **not** been retested
+with a real HKGAI task, and original outcomes remain unchanged. Search
+relevance, repeated searching, earlier drafting and compact repair output
+remain separate limitations. The owner continues to prepare presentation
+slides independently; the missing task-required HTML deck is a failed Agent
+deliverable, not an omitted presentation artifact from the coding assistant.

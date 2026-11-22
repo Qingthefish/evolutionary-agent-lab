@@ -760,6 +760,28 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   tool effect or expired-task resume occurred. Service/account-route cause
   remains unconfirmed; no provider-wide outage is inferred.
 
+- **2026-11-23 six-task closure and recovery correction:** Qingthefish,
+  owner-requested Codex-assisted S01 continuation on
+  `fix/S01-child-recovery-20261123`. All six canonical tasks reached terminal
+  states in one preserved suite: **four assisted acceptances, two failures,
+  375 actual requests**. Software Task 2 and Securities Task 2 remain failed;
+  Newsroom Task 1 required the real owner's three failed-child exceptions,
+  and Securities Task 1 retains editorial/evidence limitations. No unattended
+  completion rate or teacher score is claimed. Sealed the three scenario
+  databases, files, original exports and frozen runtime before source edits.
+  Securities Task 2's three truncated repair replies exhausted its finish
+  window; the scheduler then terminated the root on exhausted replacement
+  quota, cancelling a pending risk task despite 20 unused shared requests.
+  The correction distinguishes quota exhaustion from denied/unreleased or
+  uncertain effects, preserves parent/sibling execution and discloses the
+  exhausted quota to the parent. Failed-child acceptance still needs exact
+  trusted-review exceptions; original failures and budgets are unchanged.
+  The full engineering run passed **866/896 checks**, with **30 explicit
+  container/UI skips**; an earlier permission-blocked loopback run remains
+  retained separately. No new HKGAI request or live retest was made for the
+  correction. Search relevance, earlier drafting and output-size management
+  remain open. [Six-task evidence and limits](final-report.md#13-six-task-mac-evaluation-23-november)
+
 ### S02
 
 **Finish submission materials**

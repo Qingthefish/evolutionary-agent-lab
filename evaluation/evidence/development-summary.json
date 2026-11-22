@@ -2386,5 +2386,14 @@
     "runtime_provider_changed": false,
     "model_requests_made": 0,
     "credentials_included": false
+  },
+  "six_task_mac_20261123": {
+    "evidence_file": "evaluation/evidence/mid-test-six-20261123.json",
+    "classification": "Coordinator-assisted development evaluation on six canonical mid-test tasks; not teacher scored or unattended",
+    "requests": 375,
+    "accepted_with_assistance": 4,
+    "failed": 2,
+    "original_records_sealed": true,
+    "post_closure_repair_live_retested": false
   }
 }

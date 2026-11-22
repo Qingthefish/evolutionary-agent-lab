@@ -258,6 +258,20 @@ class MultiAgentScheduler:
             if task["state"] == "failed" and self.child_retries:
                 try:
                     recovery.availability(self.workflow, task["parent"], task["id"], require_running=False)
+                except recovery.ReplacementLimitExceeded as error:
+                    # A replacement cap limits new children, not the parent's
+                    # ability to integrate/review partial work or report failure.
+                    # Independent siblings keep their already-authorized turns.
+                    with self.workflow._transaction():
+                        if not self.workflow.db.execute(
+                                "SELECT 1 FROM events WHERE task=? AND kind='child_replacement_unavailable' "
+                                "AND json_extract(detail,'$.failed_task')=?", (task["parent"], task["id"])).fetchone():
+                            parent = self.workflow._row("tasks", task["parent"])
+                            self.workflow._event(task["parent"], parent["assignee"], "child_replacement_unavailable", {
+                                "failed_task": task["id"], "reason": str(error),
+                                "instruction": "No further replacement is permitted. Finish other open work, then "
+                                    "integrate only explicitly offered artifacts or report a blocker. Failed-child "
+                                    "acceptance still requires the trusted review's exact exceptions."})
                 except WorkflowError as error:
                     return self._fail(str(error))
                 continue
