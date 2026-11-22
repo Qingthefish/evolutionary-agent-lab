@@ -432,6 +432,38 @@ From the 2026-11-22 reruns across all three scenarios:
   `controller_idle` when nothing awaited a human, and deadlines exclude it. Human
   answer and review time still counts.
 
+### Stable prompt prefix (proposed, opt-in)
+
+`advance --stable-prompt-prefix` sends the live execution budget (requests,
+tool calls and seconds left, the completion contract and Finish Mode) as the
+last message of each request instead of rewriting it into the first task
+message. The default is unchanged.
+
+- The model sees the same task context and the same budget view; only the
+  budget's position moves. Only the current view is sent; earlier views are not
+  kept in the conversation.
+- The stored transcript stays append-only: each request repeats the previous
+  one unchanged up to its old budget message. `runner_turns.request` still
+  records exactly what was sent.
+- The option is not part of the persisted run configuration. A resumed task
+  switches layout cleanly in either direction (the first task message is then
+  written without, or again with, the budget block).
+
+Why: inference servers with prefix caching (for example vLLM's automatic prefix
+caching) can skip recomputing a prompt prefix they have already processed. In
+the 2026-11-21 live records the first task message changed on every request
+(271 of 271 consecutive pairs), so only 11-25% of each prompt repeated the
+previous one unchanged; with the budget moved out, 87-94% would have (replay
+of the recorded requests). Provider latency in those records fits about 2.2 s
+per request + 0.075 s per 1,000 prompt tokens + 3.8 s per 1,000 output tokens
+(468 requests, R^2 0.85), so prompt processing was about a third of provider
+time. Whether HKGAI caches prefixes is unknown, so the saving is unmeasured:
+if it does not, this changes nothing but the message order. A short live check
+(the same long prompt sent twice, then a run with the flag) is needed.
+`python -m agent_lab.evaluation.prompt_prefix_benchmark` checks offline that
+every request extends the previous one with the same requests, tool calls and
+final states.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,

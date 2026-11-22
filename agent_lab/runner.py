@@ -87,6 +87,7 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 
 
 FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
+CURRENT_BUDGET_SCOPE = "Current local limits for this request; replaces every earlier budget view."
 FINISH_EXHAUSTED = "Finish window used without a valid submission or blocker report; "
 # With the protocol, the first run of identical outcomes gets a notice instead of an immediate forced finish; only
 # REPEAT_GRACE more identical outcomes force it. Live Software Task 1 (2026-11-22): a lead re-read one missing path
@@ -150,12 +151,19 @@ class PreparedTurn:
     number: int
     transcript: list
     tools: list
+    messages: list = None  # What is sent when it differs from the stored transcript (stable prompt prefix).
 
 
 class TaskRunner:
     def __init__(self, gateway, client, *, mode, constraints, limits=Limits(),
-                 verifier=None, verifier_id=None, role=None, allow_html=False, show_execution_budget=False):
+                 verifier=None, verifier_id=None, role=None, allow_html=False, show_execution_budget=False,
+                 stable_prompt_prefix=False):
         self.gateway, self.client = gateway, client
+        if type(stable_prompt_prefix) is not bool:
+            raise RunnerError("Stable prompt prefix requires an explicit boolean setting")
+        # Opt-in, not in the persisted configuration: the live budget is sent as a trailing message
+        # instead of being rewritten into the first task message, so earlier messages stay byte-identical.
+        self.stable_prompt_prefix = stable_prompt_prefix
         self.workflow, self.task, self.actor = gateway.workflow, gateway.task, gateway.actor
         self.limits, self.mode, self.verifier = limits, mode, verifier
         if type(show_execution_budget) is not bool:
@@ -403,9 +411,17 @@ class TaskRunner:
         context = json.loads(transcript[1]['content'])
         if not isinstance(context, dict) or transcript[1]['role'] != 'user':
             raise RunnerError('Trusted task context is unavailable; no model call released')
+        if self.stable_prompt_prefix:
+            # The same budget view, as the latest message of this request only. The stored transcript keeps
+            # the task context without it, so every earlier message (and the provider's prefix) is unchanged.
+            if 'execution_budget' in context:
+                del context['execution_budget']
+                transcript[1] = {**transcript[1], 'content': _json(context)}
+            return transcript, transcript + [{'role': 'user', 'content': _json(
+                {'kind': 'execution_budget', 'scope': CURRENT_BUDGET_SCOPE, 'execution_budget': data})}]
         context['execution_budget'] = data
         transcript[1] = {**transcript[1], 'content': _json(context)}
-        return transcript
+        return transcript, transcript
 
     def _shared_view(self, data, cap):
         """Consistent remaining requests and the completion contract (proposed 2026-11-19).
@@ -550,7 +566,8 @@ class TaskRunner:
     def call(self, prepared):
         """Provider I/O only: no workflow, file or tool access. Safe on a worker thread."""
         try:
-            return self.client.complete(prepared.transcript, tools=prepared.tools)
+            return self.client.complete(prepared.transcript if prepared.messages is None else prepared.messages,
+                                        tools=prepared.tools)
         except ProviderError as error:  # Includes TruncatedCompletion; handled by apply().
             return error
 
@@ -601,12 +618,13 @@ class TaskRunner:
                 transcript = self._append_input_offers(self._append_child_results(self._append_human_responses(session)))
                 number = session["attempts"] + 1
                 self._enter_phase(number)
+                messages = transcript
                 if self.budget_context:
-                    transcript = self._budget_context(transcript, session, number)
+                    transcript, messages = self._budget_context(transcript, session, number)
                 tools = self.gateway.tools()
                 self.workflow.db.execute(
                     "INSERT INTO runner_turns(task,number,status,request,started) VALUES(?,?,'calling',?,?)",
-                    (self.task, number, _json({"messages": transcript, "tools": tools,
+                    (self.task, number, _json({"messages": messages, "tools": tools,
                      "finish_mode": self.gateway.restricted is not None,
                      "event_floor": self.workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events").fetchone()[0]}),
                      self.workflow.clock()),
@@ -618,7 +636,7 @@ class TaskRunner:
                 self.workflow._event(self.task, self.actor, "model_attempt_reserved", {"number": number, "mode": self.mode})
         if reason is not None:
             return self._limit_stop(reason)
-        return PreparedTurn(self.task, number, transcript, tools)
+        return PreparedTurn(self.task, number, transcript, tools, None if messages is transcript else messages)
 
     def apply(self, prepared, result):
         """Record the provider outcome and apply its tools through the trusted gateway (controller thread)."""

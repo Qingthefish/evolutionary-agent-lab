@@ -172,7 +172,7 @@ def with_completion_tools(tools):
 
 
 def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, finish_policy=None,
-                   parallel_model_calls=1):
+                   parallel_model_calls=1, stable_prompt_prefix=False):
     policy = scenario_policy(session)
     second = session._root(2)
     allow_html = session.scenario["id"] == "securities-fund" and second is not None and second["root"] == root
@@ -198,7 +198,8 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
         show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS,
-        finish_policy=finish_policy, parallel_model_calls=parallel_model_calls)
+        finish_policy=finish_policy, parallel_model_calls=parallel_model_calls,
+        stable_prompt_prefix=stable_prompt_prefix)
 
 
 def _review_boundaries(scheduler):
@@ -413,6 +414,9 @@ def main(argv=None):
             command.add_argument("--parallel-model-calls", type=int, choices=(1, 2), default=1,
                                  help="Opt-in: overlap the provider requests of up to two independent ready tasks "
                                       "(default 1, sequential)")
+            command.add_argument("--stable-prompt-prefix", action="store_true",
+                                 help="Opt-in: send the live execution budget as the last message instead of rewriting "
+                                      "the first task message, so earlier prompt text is unchanged between requests")
         elif name == "review":
             command.add_argument("--task", required=True)
             command.add_argument("--decision", choices=("accept", "reject"), required=True)
@@ -457,7 +461,8 @@ def main(argv=None):
                     scheduler = make_scheduler(session, root, files, live, services,
                                                show_execution_budget=args.show_execution_budget,
                                                finish_policy=finish_policy,
-                                               parallel_model_calls=getattr(args, "parallel_model_calls", 1))
+                                               parallel_model_calls=getattr(args, "parallel_model_calls", 1),
+                                               stable_prompt_prefix=getattr(args, "stable_prompt_prefix", False))
                     if args.command == "preflight":
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),

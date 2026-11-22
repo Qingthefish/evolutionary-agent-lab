@@ -53,8 +53,11 @@ class MultiAgentScheduler:
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
                  delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False,
-                 finish_policy=None, parallel_model_calls=1):
+                 finish_policy=None, parallel_model_calls=1, stable_prompt_prefix=False):
         self.workflow, self.files, self.root = workflow, files, root
+        if type(stable_prompt_prefix) is not bool:
+            raise RunnerError("Stable prompt prefix requires an explicit boolean setting")
+        self.stable_prompt_prefix = stable_prompt_prefix  # Opt-in; like parallel calls, not persisted.
         if type(parallel_model_calls) is not int or parallel_model_calls not in (1, 2):
             raise RunnerError("Parallel model calls are 1 (sequential, the default) or 2")
         self.parallel_model_calls = parallel_model_calls
@@ -206,7 +209,7 @@ class MultiAgentScheduler:
             raise RunnerError("Acceptance factory returns (trusted callable, version) or explicit review")
         return TaskRunner(gateway, self.clients[actor], mode=self.mode, constraints=self.constraints,
             limits=role.limits, verifier=verifier, verifier_id=version, allow_html=self.allow_html,
-            show_execution_budget=self.show_execution_budget, role={
+            show_execution_budget=self.show_execution_budget, stable_prompt_prefix=self.stable_prompt_prefix, role={
                 "agent": actor, "instructions": role.instructions,
                 "eligible_agents": {key: (peer_description(self.roles[key]) if self.delegation_rules is not None
                                          else self.roles[key].instructions) for key in role.delegates},
