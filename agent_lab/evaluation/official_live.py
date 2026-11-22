@@ -417,6 +417,10 @@ def main(argv=None):
             command.add_argument("--stable-prompt-prefix", action="store_true",
                                  help="Opt-in: send the live execution budget as the last message instead of rewriting "
                                       "the first task message, so earlier prompt text is unchanged between requests")
+
+            command.add_argument("--parallel-web-fetches", type=int, choices=(1, 2, 3, 4), default=1,
+                                 help="Opt-in: overlap the HTTPS fetches of up to N consecutive search_web/retrieve_text "
+                                      "calls in one reply; results are still recorded in call order (default 1, sequential)")
         elif name == "review":
             command.add_argument("--task", required=True)
             command.add_argument("--decision", choices=("accept", "reject"), required=True)
@@ -455,6 +459,8 @@ def main(argv=None):
                     stack.callback(files.close)
                     services = runtime_services(workflow, files, live)
                     stack.callback(services.close)
+                    if services.retrieval is not None:
+                        services.retrieval.allow_concurrent_fetches(getattr(args, "parallel_web_fetches", 1))
                     if args.finish_protocol and not args.show_execution_budget:
                         raise WorkflowError("--finish-protocol requires --show-execution-budget")
                     finish_policy = FinishPolicy(finish_requests=args.finish_requests, min_child=args.min_child_requests) if args.finish_protocol else None
