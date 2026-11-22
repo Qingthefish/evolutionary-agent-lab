@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "purpose": "six-canonical-mid-test-tasks-coordinator-assisted-development-evaluation",
+  "closed_on": "2026-11-23",
+  "benchmark_valid": false,
+  "teacher_score": null,
+  "unattended_completion_rate": null,
+  "source_commit_at_binding": "8a0dcaeda1a7cab200f03fe5b0917f43cd28348f",
+  "runtime_source_sha256": "42bb19f8a23eb65c422b49d14f38c4df3efda990ce33a449c9daf4e27a2a4e1a",
+  "source_archive_sha256": "e104fedbb6db46399936c69251ca2843dfa1e5845441f0a17af6e1af88cf25f2",
+  "provider": "hkgai",
+  "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+  "authorization": {
+    "suite_request_ceiling": 480,
+    "per_root_tree_request_ceiling": 80,
+    "max_output_tokens_per_request": 4096,
+    "socket_timeout_seconds": 90,
+    "scope": "One six-task suite; no resets, root replays or quota balance inference."
+  },
+  "totals": {
+    "terminal_roots": 6,
+    "accepted_with_assistance": 4,
+    "failed_roots": 2,
+    "provider_requests": 375,
+    "known_reported_tokens": 14933867,
+    "attempts_without_parsed_usage": 0
+  },
+  "tasks": [
+    {
+      "scenario": "software-engineering",
+      "sequence": 1,
+      "workflow_state": "succeeded",
+      "provider_requests": 74,
+      "known_reported_tokens": 1774423,
+      "attempts_without_parsed_usage": 0,
+      "observed_models": {
+        "t2_hkgai-v3_fp8_1m_e10": 74
+      },
+      "assignment_to_terminal_wall_seconds": 2276.176929950714,
+      "failed_child_exceptions": 0,
+      "scope": "Coordinator-assisted technical acceptance after developer/QA/root review and repairs.",
+      "sealed_scenario_database_sha256": "295e2b4ee3984bccabfc5ee49e76d75e44aee8920655688d0d3a251c4e57ce66"
+    },
+    {
+      "scenario": "software-engineering",
+      "sequence": 2,
+      "workflow_state": "failed",
+      "provider_requests": 71,
+      "known_reported_tokens": 3555610,
+      "attempts_without_parsed_usage": 0,
+      "observed_models": {
+        "t2_hkgai-v3_fp8_1m_e10": 71
+      },
+      "assignment_to_terminal_wall_seconds": 2470.713889837265,
+      "failed_child_exceptions": 0,
+      "scope": "Failed: delivered/recovered snapshot did not preserve existing booking data; original failed child and root retained.",
+      "sealed_scenario_database_sha256": "295e2b4ee3984bccabfc5ee49e76d75e44aee8920655688d0d3a251c4e57ce66"
+    },
+    {
+      "scenario": "newsroom",
+      "sequence": 1,
+      "workflow_state": "succeeded",
+      "provider_requests": 69,
+      "known_reported_tokens": 2743197,
+      "attempts_without_parsed_usage": 0,
+      "observed_models": {
+        "t2_hkgai-v3_fp8_1m_e10": 69
+      },
+      "assignment_to_terminal_wall_seconds": 2088.20490694046,
+      "failed_child_exceptions": 3,
+      "scope": "Chief-editor-completed draft accepted only after the real owner waived blocking by three failed specialist children; collaboration incomplete.",
+      "sealed_scenario_database_sha256": "440c66727fc23be757831b4d92917cf6a9c8b87a31028201ff63b4cb7b63e921"
+    },
+    {
+      "scenario": "newsroom",
+      "sequence": 2,
+      "workflow_state": "succeeded",
+      "provider_requests": 38,
+      "known_reported_tokens": 1848503,
+      "attempts_without_parsed_usage": 0,
+      "observed_models": {
+        "t2_hkgai-v3_fp8_1m_e10": 38
+      },
+      "assignment_to_terminal_wall_seconds": 8676.636808872223,
+      "failed_child_exceptions": 0,
+      "scope": "Coordinator-assisted acceptance after independent Agent fact-check and same-task scope corrections.",
+      "sealed_scenario_database_sha256": "440c66727fc23be757831b4d92917cf6a9c8b87a31028201ff63b4cb7b63e921"
+    },
+    {
+      "scenario": "securities-fund",
+      "sequence": 1,
+      "workflow_state": "succeeded",
+      "provider_requests": 63,
+      "known_reported_tokens": 1767708,
+      "attempts_without_parsed_usage": 0,
+      "observed_models": {
+        "t2_hkgai-v3_fp8_1m_e10": 63
+      },
+      "assignment_to_terminal_wall_seconds": 4130.328752756119,
+      "failed_child_exceptions": 0,
+      "scope": "Coordinator-assisted acceptance of a simulated proposal after real owner clarification and three reviewed specialist inputs; editorial/evidence limitations retained.",
+      "sealed_scenario_database_sha256": "5c4978d8ca423becb19b9ea4d9bed8af34f7174c00d4f3454c7ec7dbb4619712"
+    },
+    {
+      "scenario": "securities-fund",
+      "sequence": 2,
+      "workflow_state": "failed",
+      "provider_requests": 60,
+      "known_reported_tokens": 3244426,
+      "attempts_without_parsed_usage": 0,
+      "observed_models": {
+        "t2_hkgai-v3_fp8_1m_e10": 60
+      },
+      "assignment_to_terminal_wall_seconds": 1073.7772269248962,
+      "failed_child_exceptions": 0,
+      "scope": "Failed without HTML slides: search-heavy specialist failures, truncated repair replies, exhausted child replacements terminated root and cancelled pending risk task.",
+      "sealed_scenario_database_sha256": "5c4978d8ca423becb19b9ea4d9bed8af34f7174c00d4f3454c7ec7dbb4619712"
+    }
+  ],
+  "timing_note": "Assignment-to-terminal wall time includes pauses, operator/coordinator review and idle time; it is not isolated model latency or presentation-day runtime. Do not silently subtract these intervals.",
+  "scope_notes": [
+    "All root failures retained; no root reopened or replayed during sealing.",
+    "Newsroom Task 1 accepted only after genuine owner exceptions for three failed children; collaboration incomplete.",
+    "Securities Task 1 accepted with recorded editorial/evidence limitations.",
+    "Securities Task 2 failed without an HTML deck; three 4096-token truncated repair replies, then exhausted replacement allowance caused parent failure and pending risk cancellation.",
+    "375 requests covers this six-task suite only, not all-time provider usage.",
+    "Separate same-group pairs and original role prompts preserved. Task 2 posted only after Task 1 terminal; accepted root files carried under the explicit operator-selected policy.",
+    "All coordinator technical reviews were labelled as technical checks, not fabricated human approvals. Real user choices and specific failed-child exceptions remain separately recorded.",
+    "Requested and returned model labels differ (e7/e10); equivalence is unconfirmed.",
+    "Costs, account balance and provider quotas remain unknown. All raw states, rejected revisions, partial files, exports and the frozen runtime are retained privately."
+  ],
+  "securities_task2_failure": {
+    "requests": 60,
+    "tree_request_ceiling": 80,
+    "unused_tree_requests": 20,
+    "root_requests": 3,
+    "original_research_requests": 21,
+    "original_risk_requests": 18,
+    "replacement_research_requests": 18,
+    "pending_replacement_risk_requests": 0,
+    "final_repair_truncated_replies": 3,
+    "truncated_reply_output_limit": 4096,
+    "model_tool_effects_from_truncated_replies": 0,
+    "html_slide_deck_created": false,
+    "direct_root_failure": "Shared child replacement limit exhausted or child already replaced",
+    "cancelled_pending_risk_after_parent_failure": true,
+    "after_request_57": {
+      "shared_requests_remaining": 23,
+      "estimated_token_affordable_requests": 17,
+      "held_for_other_open_task_finish_windows": 6,
+      "reserved_for_parent_integration": 10,
+      "reported_available_to_research": 1
+    },
+    "interpretation": "Shared requests remaining were not all available to the current child. Truncation/finish exhaustion was followed by a scheduler recovery-policy failure; an HKGAI account quota or authentication failure is not established."
+  },
+  "post_closure_repair": {
+    "branch": "fix/S01-child-recovery-20261123",
+    "scope": "Distinguish exhausted child replacement quota from unsafe unresolved effects; preserve parent/sibling control and failed-child review requirements.",
+    "live_model_requests_for_fix": 0,
+    "original_outcomes_changed": false,
+    "live_retest_completed": false,
+    "engineering_verification": {
+      "discovered": 896,
+      "passed": 866,
+      "skipped": 30,
+      "skip_scope": "Actual Docker execution and optional Textual UI not configured",
+      "errors": 0,
+      "failures": 0,
+      "new_model_requests": 0,
+      "runtime_source_sha256": "10d00747ae7260ca64d66b7e9869460f27d2963e447b11992fd1751e7aeb8a26",
+      "unittest_stderr_sha256": "524ac5caabc169f58345b1273bce64e2a919731d146f97a86c5cdaba90d8acdf",
+      "initial_loopback_permission_failure_retained": true
+    }
+  }
+}

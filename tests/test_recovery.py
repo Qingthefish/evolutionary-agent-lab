@@ -124,12 +124,74 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(len(recovery.links(self.w)),0)
         with self.assertRaises(WorkflowError): self.scheduler(2,limits=TreeLimits(tasks=2))
 
-    def test_global_limit_stops_repeated_bad_replacements(self):
+    def exhausted_replacement(self, before_failure=None):
         self.scheduler(1); failed=self.failed()
         child=recovery.replace_failed(self.w,self.root,'coordinator',failed,'Repair')['task_id']
-        self.w.start_task(child,'writer'); self.w.finish_task(child,'writer',error='Still wrong')
-        self.assertEqual(self.scheduler(1).run()['task_state'],'failed')
+        self.w.start_task(child,'writer')
+        if before_failure:
+            before_failure(child)
+        self.w.finish_task(child,'writer',error='Still wrong')
+        return failed, child
+
+    def test_global_limit_refuses_replacement_but_parent_can_request_a_decision(self):
+        self.roles['coordinator']=replace(self.roles['coordinator'],
+            tools=(*self.roles['coordinator'].tools,'ask_human'))
+        failed, child=self.exhausted_replacement()
+        with self.assertRaisesRegex(WorkflowError,'limit exhausted'):
+            recovery.replace_failed(self.w,self.root,'coordinator',child,'One more')
+        self.scripts['coordinator']=Script([response([tool('ask_human',
+            {'prompt':'The replacement failed. How should the remaining requirement be handled?'},'ask')])])
+        result=self.scheduler(1).run()
+        self.assertEqual(result['state'],'blocked')
+        self.assertEqual(result['task_state'],'waiting_input')
+        self.assertEqual(result['needs'][0]['kind'],'waiting_input')
+        self.assertEqual(self.w.task(failed,'user')['state'],'failed')
+        self.assertEqual(self.w.task(child,'user')['state'],'failed')
         self.assertEqual(len(recovery.links(self.w)),1)
+        self.assertEqual(result['budget']['attempts'],1)
+        context=json.dumps(self.scripts['coordinator'].requests[0]['messages'])
+        self.assertIn('Still wrong',context)
+        self.assertIn('No further replacement is permitted',context)
+        self.assertEqual(self.w.db.execute("SELECT count(*) FROM events WHERE task=? "
+            "AND kind='child_replacement_unavailable'",(self.root,)).fetchone()[0],1)
+        with self.assertRaises(WorkflowError):
+            self.w.finish_task(self.root,'coordinator',checks={'pretend':True})
+
+    def test_exhausted_replacement_does_not_cancel_pending_independent_sibling(self):
+        self.exhausted_replacement()
+        sibling=self.w.create_task(self.chat,'coordinator','writer','Write note',parent=self.root)
+        self.scripts['writer']=Script([response([tool(arguments={'path':'note.txt','content':'Hello\n'})])])
+        result=self.scheduler(1).step()
+        self.assertEqual(result['state'],'running')
+        self.assertEqual(result['advanced_task'],sibling)
+        self.assertEqual(self.w.task(self.root,'user')['state'],'running')
+        self.assertEqual(self.w.task(sibling,'user')['state'],'running')
+        self.assertEqual(self.f.read_text(sibling,'writer','note.txt')['content'],'Hello\n')
+        self.assertEqual(result['budget']['attempts'],1)
+        self.assertEqual(len(recovery.links(self.w)),1)
+
+    def test_unknown_effect_still_stops_tree_when_replacement_limit_is_exhausted(self):
+        _, child=self.exhausted_replacement()
+        self.w.db.execute('CREATE TABLE sandbox_runs(task TEXT,status TEXT)')
+        self.w.db.execute("INSERT INTO sandbox_runs VALUES(?,'cleanup_failed')",(child,))
+        with self.assertRaisesRegex(WorkflowError,'reconciliation'):
+            recovery.availability(self.w,self.root,child)
+        result=self.scheduler(1).step()
+        self.assertEqual(result['task_state'],'failed')
+        self.assertIn('reconciliation',result['reason'])
+        self.assertEqual(result['budget']['attempts'],0)
+
+    def test_unreleased_action_is_not_masked_by_exhausted_replacement_limit(self):
+        def unreleased(child):
+            request=self.w.ask_human(child,'writer','user','Critical fixture action',action={'tool':'fixture'})
+            self.w.respond(request,'user',approve=True)
+        _, child=self.exhausted_replacement(before_failure=unreleased)
+        with self.assertRaisesRegex(WorkflowError,'unreleased'):
+            recovery.availability(self.w,self.root,child)
+        result=self.scheduler(1).step()
+        self.assertEqual(result['task_state'],'failed')
+        self.assertIn('unreleased',result['reason'])
+        self.assertEqual(result['budget']['attempts'],0)
 
     def test_denied_or_unreleased_effect_blocks_replacement(self):
         self.scheduler(); self.w.start_task(self.root,'coordinator')

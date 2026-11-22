@@ -9,6 +9,10 @@ import json
 from .core import WorkflowError
 
 
+class ReplacementLimitExceeded(WorkflowError):
+    """No further child may be created; safe parent integration may still proceed."""
+
+
 def configure(workflow, root, maximum):
     if type(maximum) is not int or not 0 <= maximum <= 8:
         raise WorkflowError("Child replacement limit must be an integer from 0 to 8")
@@ -93,8 +97,10 @@ def availability(workflow, parent, failed, *, require_running=True):
     used = workflow.db.execute("""WITH RECURSIVE tree(id) AS (
         SELECT ? UNION ALL SELECT t.id FROM tasks t JOIN tree ON t.parent=tree.id
     ) SELECT count(*) FROM task_retries r JOIN tree ON tree.id=r.parent""", (root['id'],)).fetchone()[0]
-    if policy is None or used >= policy[0] or failed in links(workflow):
-        raise WorkflowError("Shared child replacement limit exhausted or child already replaced")
+    if policy is None:
+        raise WorkflowError("Child replacement is not configured")
+    if failed in links(workflow):
+        raise WorkflowError("Child already replaced")
     # A failed subtree may have side effects. Never use a new attempt to avoid a
     # denial, an unreleased grant, or a provider/tool/sandbox/Git ambiguity.
     from .budget import descendants
@@ -112,6 +118,10 @@ def availability(workflow, parent, failed, *, require_running=True):
         if workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name=?", (table,)).fetchone():
             if workflow.db.execute(f"SELECT 1 FROM {table} WHERE task IN ({marks}) AND {predicate}", ids).fetchone():
                 raise WorkflowError("Unknown execution effects require reconciliation before replacement")
+    # Check effect/approval boundaries even when no replacement remains. The
+    # scheduler may recover from quota exhaustion, never from unresolved effects.
+    if used >= policy[0]:
+        raise ReplacementLimitExceeded("Shared child replacement limit exhausted; no further replacement is permitted")
     return source
 
 

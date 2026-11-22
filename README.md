@@ -54,12 +54,27 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
-**Current acceptance (2026-11-23).** Reviewed contributor changes #75/#76/#77
+**Six-task Mac evaluation (2026-11-23).** All six canonical mid-test tasks have
+now ended: **four coordinator-assisted acceptances and two failures**, using
+**375 actual HKGAI requests**. These are development outcomes, with retained
+reviews and exceptions, rather than unattended completion or teacher scores.
+Software Task 2 failed; Securities Task 2 failed without an HTML deck after
+search-heavy child failures, truncated repair replies and exhausted child
+replacements. The frozen runtime, original states and outputs are sealed
+privately. A local recovery correction keeps the parent and independent
+siblings available after replacement quota exhaustion while retaining failure,
+approval and unknown-effect checks. Its full engineering regression passed
+**866 of 896 checks**, with **30 explicit container/UI skips** and zero model
+calls; real-model retesting remains open.
+[Results and failure analysis](docs/final-report.md#13-six-task-mac-evaluation-23-november)
+· [Sanitized evidence](evaluation/evidence/mid-test-six-20261123.json)
+
+**Integrated baseline before this evaluation.** Reviewed contributor changes #75/#76/#77
 and coordinator corrections are integrated through [PR #79](https://github.com/Qingthefish/evolutionary-agent-lab/pull/79).
 The runtime requires exact explicit failed-child waiver IDs and permits labelled
 recovery only of a failed direct child's already-offered snapshot. Follow-up
 `61a9f86` corrects late repair authorization and the gateway's boolean option
-validation. Latest local engineering checks: **893 discovered, 884 passed, nine
+validation. Baseline engineering checks: **893 discovered, 884 passed, nine
 optional UI skips**, with **21 actual-container checks executed**.
 Optional performance switches remain off; actual HKGAI speed benefits remain
 unmeasured. [Review and limits](docs/final-report.md#12-november-22-coordinator-catch-up)
@@ -121,7 +136,8 @@ ten-minute/live-start arrangement. November 25 remains the week-13 planning
 target; the exact group slot is unconfirmed. The owner prepares the slides
 separately. [Requirements](docs/requirements.md#current-presentation-and-submission-requirements) · [Runbook](docs/final-report.md#9-proposed-presentation-outline)
 
-**Remaining gates.** Complete a full repaired-runtime Software Task 2 delivery,
+**Remaining gates.** Complete repaired-runtime Software Task 2 and Securities
+Task 2 deliveries under a separately recorded development plan,
 check the actual final-link mapping, freeze and rehearse
 on the presentation machine, retain final task results and finish submission.
 Original four-role CLI setup/preflight/read-only export has been rehearsed with
