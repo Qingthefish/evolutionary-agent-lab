@@ -8,7 +8,7 @@ import math
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError, TruncatedCompletion
 from .hkgai import HKGAIClient, HKGAIHTTP
-from .gateway import ToolBudgetError, ToolRequestError
+from .gateway import ToolBudgetError, ToolRequestError, FIX_TOOLS
 from .files import INPUT_PROTOCOL
 from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
 from . import budget, completion
@@ -88,6 +88,13 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 
 FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
 FINISH_EXHAUSTED = "Finish window used without a valid submission or blocker report; "
+# With the protocol, the first run of identical outcomes gets a notice instead of an immediate forced finish; only
+# REPEAT_GRACE more identical outcomes force it. Live Software Task 1 (2026-11-22): a lead re-read one missing path
+# three times and was forced into its finish window with 35 requests unused, so it could not repair the layout.
+REPEAT_GRACE = 2
+REPEAT_NOTICE = ("Your last turns produced the same outcome each time. Repeating it will not change the result: "
+                 "check what actually exists (for example list_files), use a different approach, or hand the work "
+                 "to a role that can do it. Further identical outcomes end your work turns early.")
 # With the protocol, cut-off replies in a row before the finish window is forced. Live Securities Task 2
 # (2026-11-21): forcing after two removed the write-in-parts recovery with 19 requests left.
 FORCE_AFTER_CUTOFFS = 3
@@ -433,10 +440,12 @@ class TaskRunner:
                        if self.show_execution_budget else None)
         self.gateway.restricted = (completion.offered_tools(self.workflow, self.task, self.gateway.allowed, self._phase)
                                    if self._phase else None)
+        rejected = self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='finish_mode_reopened'",
+                                            (self.task,)).fetchone()
+        self.gateway.fix_tools = FIX_TOOLS if self.gateway.restricted is not None and rejected else frozenset()
         if self.gateway.restricted is None:
             return
-        if not self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'",
-                                        (self.task,)).fetchone():
+        if not completion.window_record(self.workflow, self.task)["entered"]:  # Once per opening of the window.
             self.workflow._event(self.task, self.actor, "finish_mode_entered", {
                 "reason": self._phase["reason"], "available": self._phase["available"],
                 "finish_left": self._phase["finish_left"], "tools": sorted(self.gateway.restricted)})
@@ -773,7 +782,10 @@ class TaskRunner:
                 self.workflow._event(self.task, self.actor, 'completion_proposed', {
                     'via': 'tool', 'call_id': calls[-1]['id'], 'attempt': number, 'summary': summary,
                     **({'in_finish_window': self._in_finish(), 'forced_finish': bool(self._phase.get('forced')),
-                        'requests_left_after_proposal': self._phase['available']} if self._phase else {})})
+                        'requests_left_after_proposal': self._phase['available'],
+                        # Disclosed by the system, not the model: the reviewer sees them, and accepting is a waiver.
+                        'unreplaced_failed_subtasks': completion.unreplaced_failed_subtasks(self.workflow, self.task)}
+                       if self._phase else {})})
             return self._verify(number, {'role': 'assistant', 'content': summary}, tool_results=outcomes)
         return self._finish_turn(number, outcomes, signature)
 
@@ -789,13 +801,19 @@ class TaskRunner:
                 state = task_state
             else:
                 state = state or ("paused" if task_state.startswith("waiting_") else "ready")
+            if (repeats == self.limits.repeated_outcomes and state == "ready" and self._phase is not None
+                    and not self._in_finish()):
+                messages = list(messages) + [{"role": "user", "content": _json(
+                    {"kind": "repeated_outcome_notice", "repeats": repeats, "instruction": REPEAT_NOTICE})}]
+                self.workflow._event(self.task, self.actor, "repeated_outcome_warned", {"repeats": repeats})
             transcript = json.loads(session["transcript"]) + messages
             self.workflow.db.execute(
                 "UPDATE runner_sessions SET status=?,transcript=?,last_signature=?,repeats=? WHERE task=?",
                 (state, _json(transcript), digest, repeats, self.task),
             )
             self.workflow.db.execute("UPDATE runner_turns SET status='settled' WHERE task=? AND number=?", (self.task, number))
-        if repeats >= self.limits.repeated_outcomes and state == "ready":
+        grace = REPEAT_GRACE if self._phase is not None and not self._in_finish() else 0
+        if repeats >= self.limits.repeated_outcomes + grace and state == "ready":
             if self._phase and not self._in_finish():
                 self._force_finish("repeated_outcomes")
                 return self.status()
@@ -844,8 +862,14 @@ class TaskRunner:
             transcript = json.loads(session["transcript"]) + [{"role": "user", "content": _json({
                 "kind": "trusted_verification_failure", "error": feedback,
             })}]
-            self.workflow.db.execute("UPDATE runner_sessions SET status='ready',transcript=? WHERE task=?",
-                                     (_json(transcript), self.task))
+            if self.show_execution_budget and any(completion.window_record(self.workflow, self.task)[k] for k in ("entered", "forced")):
+                # Live Software Task 1 (2026-11-22): rejected tasks in a forced finish window could only report a
+                # blocker. The rejection asks for changes, so the window and repeat count start again; a low budget
+                # re-enters the window on the next request.
+                self.workflow._event(self.task, reviewer or self.actor, "finish_mode_reopened",
+                                     {"reason": "rejected_by_review"})
+            self.workflow.db.execute("UPDATE runner_sessions SET status='ready',transcript=?,repeats=0,"
+                                     "last_signature=NULL WHERE task=?", (_json(transcript), self.task))
 
     def recover_tools(self):
         """Trusted controller: call only after the prior worker has stopped.

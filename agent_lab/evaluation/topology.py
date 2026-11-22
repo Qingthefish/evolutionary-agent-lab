@@ -31,7 +31,7 @@ ORDER = "alternating-by-replicate-and-case-v1"
 COORDINATION_TOOLS = frozenset({"delegate_task", "delegate_with_inputs", "retry_failed_task",
                                 "offer_artifact", "accept_artifact", "list_tasks"})
 CAPABILITY_CLASSES = {
-    "filesystem_read": frozenset({"read_text"}),
+    "filesystem_read": frozenset({"read_text", "list_files"}),
     "filesystem_write": frozenset({"create_text", "update_text", "append_text"}),
     "filesystem_delete": frozenset({"delete_text"}),
     "human": frozenset({"ask_human"}),

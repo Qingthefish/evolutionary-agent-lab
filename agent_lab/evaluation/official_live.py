@@ -20,7 +20,7 @@ from .official_session import OfficialScenarioSession, TERMINAL, _workflow
 
 TOOL_POLICY = "software-files-coordination-python-v1"
 TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
-         "create_text", "read_text", "update_text", "append_text", "offer_artifact", "accept_artifact",
+         "create_text", "read_text", "list_files", "update_text", "append_text", "offer_artifact", "accept_artifact",
          "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
 # Proposed 2026-11-18 (owner-approved, pending merge): a parent may replace a failed
 # direct child, carrying explicitly offered snapshots, instead of the whole task
@@ -150,7 +150,9 @@ def _posted_root(session, sequence):
 
 def tools_for_role(scenario, agent, tools):
     if scenario == "software-engineering" and agent == "lead":
-        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text", "run_python"})
+        # The lead coordinates and does not write code, but it can run the integrated deliverable to check it before
+        # submitting (2026-11-22: leads shipped misplaced or outdated files they had no way to run).
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text"})
     return tools
 
 
@@ -215,7 +217,14 @@ def _review_boundaries(scheduler):
         elif has_sessions:
             row = workflow.db.execute("SELECT status FROM runner_sessions WHERE task=?", (task["id"],)).fetchone()
             if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping", "provider_uncertain"}:
-                needs.append({"task": task["id"], "kind": row["status"]})
+                need = {"task": task["id"], "kind": row["status"]}
+                if row["status"] == "awaiting_verification":
+                    proposal = workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
+                                                   "ORDER BY sequence DESC LIMIT 1", (task["id"],)).fetchone()
+                    failed = json.loads(proposal["detail"]).get("unreplaced_failed_subtasks") if proposal else None
+                    if failed:
+                        need["unreplaced_failed_subtasks"] = failed  # Accepting waives exactly these.
+                needs.append(need)
     return needs
 
 
@@ -223,9 +232,41 @@ def _review_boundaries(scheduler):
 _UNCERTAIN = {"calling", "processing", "stopping", "provider_uncertain"}
 
 
+# Proposed 2026-11-22: a gap longer than this, with no controller running and nothing awaiting a human, is
+# not task time. Live Newsroom Task 2: a six-hour operator absence ended the tree on its duration budget.
+IDLE_GRACE_SECONDS = 120
+
+
+def record_controller_idle(scheduler):
+    """Before advancing: exclude the gap since the tree's last event from deadlines when nothing could run.
+
+    Human waits still count (an unanswered request or a pending review means a human, not the controller,
+    was holding the work). Nothing else changes; the gap is recorded per open task as `controller_idle`.
+    """
+    workflow = scheduler.workflow
+    tasks = [task for task in descendants(workflow, scheduler.root) if task["state"] not in TERMINAL]
+    if not tasks:
+        return None
+    ids = [task["id"] for task in tasks]
+    every = [task["id"] for task in descendants(workflow, scheduler.root)]  # Include subtasks that just ended.
+    marks = ",".join("?" * len(every))
+    last = workflow.db.execute(f"SELECT max(timestamp) FROM events WHERE task IN ({marks})", every).fetchone()[0]
+    now = workflow.clock()
+    if last is None or now - last <= IDLE_GRACE_SECONDS:
+        return None
+    if _review_boundaries(scheduler) or any(task["state"].startswith("waiting_") for task in tasks):
+        return None
+    detail = {"from": last, "to": now, "seconds": round(now - last, 3)}
+    with workflow._transaction():
+        for task in ids:
+            workflow._event(task, scheduler.human, "controller_idle", detail)
+    return detail
+
+
 def advance(scheduler, turns):
     if type(turns) is not int or not 1 <= turns <= 8:
         raise WorkflowError("Advance by one to eight turns at a time")
+    record_controller_idle(scheduler)
     if getattr(scheduler, "parallel_model_calls", 1) > 1:
         return _advance_overlapping(scheduler, turns)
     for _ in range(turns):
@@ -280,6 +321,14 @@ def review_proposal(scheduler, task_id, decision, feedback):
         workflow._event(task_id, scheduler.human, "human_review_recorded", {
             "decision": "accepted", "feedback": feedback, "proposal_attempt": state["protocol_attempts"],
         })
+        # Proposed 2026-11-22: the runner attaches unreplaced failed subtasks to each proposal; accepting that
+        # proposal is the human's explicit waiver of exactly those subtasks, nothing else.
+        proposal = workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
+                                       "ORDER BY sequence DESC LIMIT 1", (task_id,)).fetchone()
+        disclosed = (json.loads(proposal["detail"]).get("unreplaced_failed_subtasks") or []) if proposal else []
+        for child in disclosed:
+            workflow._event(task_id, scheduler.human, "failed_subtask_waived",
+                            {"child": child["id"], "basis": "listed with the accepted proposal"})
         return {"human_review_accepted": True}
 
     workflow.finish_task(task_id, task["assignee"], verifier=reviewed_checks)

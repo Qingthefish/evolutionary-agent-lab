@@ -359,6 +359,79 @@ calls, tokens and final states in both modes, 1.49-1.59x faster wall time on
 fan-out graphs (1.55-1.76x with a 1 s synthetic review delay), and 1.0x on a
 dependent chain.
 
+### Replacing a file with an accepted version (proposed)
+
+`accept_artifact` takes an optional `replace_sha256`. Without it, an offered
+version can only be accepted at a new path, and an existing path now gets a
+clear refusal that names the options instead of the generic file error. With
+it, the offered version replaces the existing file only if that file's current
+SHA-256 matches (same check and atomic replace as `update_text`); the
+`artifact_received` receipt records `replaced_sha256`, and the offer stays open
+after any refusal.
+
+Why: in both live Software tasks of 2026-11-22 the lead could not accept the
+developer's fixed files over the existing paths and saw only "File request
+rejected". It stored the fixes as `v2/` or `cli_dashboard_patch.py`, kept
+shipping the old versions, and spent its remaining requests on workarounds; both
+tasks ended failed although the fixed code existed and passed its tests. The
+tool list changes, so a task started before this change cannot be resumed with
+it (the runner configuration check refuses).
+
+### Integration aids for any task (proposed)
+
+The 2026-11-22 Software runs failed at the parent's integration step, not in
+the children's work. These changes are task-agnostic:
+
+- `list_files` (every role): the current files of your own task, with SHA-256
+  and size, from the broker's write records. No directory walk.
+- `accept_artifact` without `path` keeps the producer's path, so a received
+  package keeps its layout. An explicit path still works.
+- `delegate_task` says the child starts with no files; when the parent holds
+  files, the result names how many and points to `delegate_with_inputs`.
+- The software lead may run code (`run_python`) to check the integrated
+  deliverable before submitting; it still cannot write source files.
+- With the completion protocol, the first run of identical outcomes adds a
+  notice asking the agent to change approach; only two more identical outcomes
+  force the finish window (before: forced at the third).
+
+Tool lists change, so tasks started before this change cannot be resumed with it.
+
+### Review recovery and failed subtasks (proposed)
+
+From the 2026-11-22 reruns across all three scenarios:
+
+- A human rejection reopens a forced finish window and resets the repeat
+  count, so the feedback can be acted on (`finish_mode_reopened`). If the
+  budget is still low, the window is re-entered on the next request.
+- An unreplaced failed subtask no longer blocks a proposal. The runner attaches
+  it to the proposal (`unreplaced_failed_subtasks`, also shown in the review
+  need); accepting that proposal is the reviewer's explicit waiver
+  (`failed_subtask_waived`) of exactly those subtasks. Without that, a parent
+  still cannot succeed over a failed child.
+- `retry_failed_task` without input files gets the same "child starts empty"
+  note as `delegate_task`; running a script that does not exist names
+  `list_files` and says only existing task files can run.
+- The finish window also counts tokens: `available` is capped by the requests
+  the shared token budget still affords at this task's latest request size
+  (+15%), so a task reaches its window before tokens run out. Before, only
+  request counts started it, and a Securities Task 2 tree spent its 4,000,000
+  tokens with 11 requests left and every task still open.
+- After a human rejection inside a finish window, file-fix tools (`create_text`,
+  `update_text`, `append_text`, `offer_artifact`, `accept_artifact`,
+  `run_python`) are offered too, still only before a completion call in the same
+  batch. Normal windows offer completion actions only (re-reading tools stay
+  hidden: live windows were spent re-reading when they were offered).
+- `submit_for_verification` refuses a summary that is only placeholder words or
+  contains "placeholder", "lorem ipsum" or "dummy" (live summaries: "x",
+  "Placeholder").
+- While a parent is open, each descendant leaves it an integration reserve of
+  an eighth of the shared cap, at most `min_child` (10 of 80), beyond its finish
+  window: a Securities Task 2 parent had been left 9 of 80 requests to build its
+  deck after its subtasks finished.
+- `advance` records a gap of more than 120 s since the tree's last event as
+  `controller_idle` when nothing awaited a human, and deadlines exclude it. Human
+  answer and review time still counts.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,

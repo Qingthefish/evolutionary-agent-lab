@@ -38,6 +38,7 @@ _SPECS = {
     "list_tasks": ("Read task identities and states in this goal only; absent tasks do not yet exist", {
         "limit": {"type": "integer", "minimum": 1, "maximum": 64}}),
     "read_text": ("Read a file in your assigned task", {"path": _PATH}),
+    "list_files": ("List the files currently in your assigned task with their paths, SHA-256 receipts and sizes", {}),
     "create_text": ("Create a new file without overwriting; returns its current SHA-256 receipt", {"path": _PATH, "content": _CONTENT}),
     "update_text": ("Replace only the exact known task-local version using its current SHA-256 receipt", {
         "path": _PATH, "content": _CONTENT, "expected_sha256": _HASH}),
@@ -53,7 +54,8 @@ _SPECS = {
         "reason": _text("Concrete change in approach based on failure evidence", maximum=2048),
         "input_files": {"type": "object", "minProperties": 0, "maxProperties": 20,
                         "propertyNames": _PATH, "additionalProperties": _HASH}}),
-    "delegate_task": ("Delegate child work to an eligible agent in this conversation", {
+    "delegate_task": ("Delegate child work to an eligible agent in this conversation. The child starts with no files; "
+                      "to give it files, use delegate_with_inputs", {
         "assignee": _text("Agent identifier", maximum=128), "title": _text("Deliverable and constraints")}),
     "delegate_with_inputs": ("Delegate and offer hash-matched input snapshots before the parent waits; child must accept them", {
         "assignee": _text("Agent identifier", maximum=128), "title": _text("Deliverable and constraints"),
@@ -82,8 +84,12 @@ _SPECS = {
     "offer_artifact": ("Offer your task-local file snapshot to another task; use its current path/hash from a file or Python import receipt", {
         "path": _PATH, "target_task": _text("Recipient task identifier", maximum=128),
         "expected_sha256": _HASH}),
-    "accept_artifact": ("Accept a snapshot explicitly offered by another task; Python exports are already your own files and need no acceptance", {
-        "artifact_id": _text("Actual offered artifact identifier, not a file path or Python run identifier", maximum=128), "path": _PATH}),
+    "accept_artifact": ("Accept a snapshot explicitly offered by another task; Python exports are already your own files and need no acceptance. "
+                        "Omit path to keep the producer's own path (keeps a received package's layout). "
+                        "To make an offered version replace an existing file at that path, also pass replace_sha256", {
+        "artifact_id": _text("Actual offered artifact identifier, not a file path or Python run identifier", maximum=128),
+        "path": {**_PATH, "description": "Optional: where to store it in your task; default is the producer's path"},
+        "replace_sha256": {**_HASH, "description": "Optional: the current SHA-256 of the existing file at path, to replace it with the offered version"}}),
     "run_python": ("Execute exact input snapshots in the isolated container. Exports are imported into your task: read or offer them directly, not accept_artifact. Exit zero is not task verification", {
         "entrypoint": _PATH,
         "input_files": {"type": "object", "minProperties": 1, "maxProperties": 20,
@@ -114,7 +120,7 @@ _SPECS = {
         "branch": _text("Writable branch name", maximum=100)}),
 }
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
-_OPTIONAL = {"run_python": frozenset({"replace_outputs"})}
+_OPTIONAL = {"run_python": frozenset({"replace_outputs"}), "accept_artifact": frozenset({"replace_sha256", "path"})}
 _COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
 # A blocker report is the task's final, failed evidence. Live Securities 2026-11-21: two
 # forced window completions both sent report_blocker with the summary "placeholder".
@@ -134,6 +140,18 @@ def blocker_summary_problem(summary):
     if len(summary.strip()) < _BLOCKER_MIN_CHARS and cjk < 20 or count < _BLOCKER_MIN_WORDS:
         return f"it is too short (at least {_BLOCKER_MIN_CHARS} characters and {_BLOCKER_MIN_WORDS} words)"
     return None
+def submission_summary_problem(summary):
+    """Why a submission summary describes nothing, or None (proposed 2026-11-22; live summaries 'x', 'Placeholder')."""
+    words = re.findall(r"[^\W_]+(?:[/'-][^\W_]+)*", summary.lower())
+    if not words or all(word in _PLACEHOLDER_WORDS for word in words):
+        return "it is placeholder text"
+    if re.search(r"placeholder|lorem ipsum|\bdummy\b", summary.lower()):
+        return "it contains placeholder text"
+    return None
+
+
+# Shown in a finish window after a human rejection, so the feedback can be applied before resubmitting.
+FIX_TOOLS = frozenset({"create_text", "update_text", "append_text", "offer_artifact", "accept_artifact", "run_python"})
 # Never accepted inside a finish window, even before a completion call: they open new work or pause.
 _OPENS_WORK = frozenset({"delegate_task", "delegate_with_inputs", "retry_failed_task", "ask_human"})
 
@@ -191,6 +209,7 @@ class ToolGateway:
             raise ToolRequestError("Delegation requires explicit eligible agents")
         self.chat = row["chat"]
         self.restricted = None  # Finish window: the runner offers only these tools for the current turn.
+        self.fix_tools = frozenset()  # After a human rejection inside the window: shown, still batch-only.
         self._batch_completes = False
         workflow.db.executescript("""
             CREATE TABLE IF NOT EXISTS tool_budgets (
@@ -210,7 +229,12 @@ class ToolGateway:
 
     def tools(self):
         result = []
-        for name in sorted(self.allowed if self.restricted is None else self.allowed & self.restricted):
+        # Finish window: the completion actions, plus (after a human rejection only) last-fix tools, which the gateway
+        # accepts only before a completion call in the same batch (proposed 2026-11-22: a rejected lead could not see
+        # the file tools it needed to apply the reviewer's fix). Reading tools stay hidden: live windows were spent
+        # re-reading files when they were offered.
+        offered = self.allowed if self.restricted is None else (self.allowed & (self.restricted | self.fix_tools))
+        for name in sorted(offered):
             description, properties = _SPECS[name]
             # JSON copy keeps callers from mutating the validator's specification.
             properties = json.loads(json.dumps(properties))
@@ -269,6 +293,11 @@ class ToolGateway:
                 and (arguments["assignee"], arguments["title"]) not in self.delegation_rules):
             raise ToolRequestError("Unknown declared child work; use one of the trusted assignee/title pairs: " +
                 json.dumps(sorted((a, t) for a, t in self.delegation_rules if a in self.delegates))[:3000])
+        if name == "submit_for_verification":
+            problem = submission_summary_problem(arguments["summary"])
+            if problem:
+                raise ToolRequestError(f"summary does not describe the delivered work: {problem}. Say what was "
+                                       "delivered, where it is and what is unfinished, then resend")
         if name == "report_blocker":
             problem = blocker_summary_problem(arguments["summary"])
             if problem:  # Refused like any invalid argument: nothing runs, the task stays open and can resend.
@@ -364,7 +393,9 @@ class ToolGateway:
         and must stop after a pause, cancellation, or controller stop.
         """
         if not isinstance(calls, list) or not 1 <= len(calls) <= 16:
-            raise ToolRequestError("Supply between one and sixteen tool proposals")
+            count = len(calls) if isinstance(calls, list) else 0
+            raise ToolRequestError(f"A response may contain at most 16 tool calls; this one had {count}, so none ran. "
+                                   "Send the most important calls first, at most 16 per response")
         last = calls[-1].get("function") if isinstance(calls[-1], dict) else None
         self._batch_completes = isinstance(last, dict) and last.get("name") in _COMPLETION
         for call in calls:
@@ -382,11 +413,6 @@ class ToolGateway:
             raise ToolRequestError('Submit for verification exactly once as the last tool; no batch effects started')
         if blockers and blockers != [len(calls) - 1]:
             raise ToolRequestError('Report a blocker exactly once as the last tool; no batch effects started')
-        if calls[-1]['function']['name'] == 'submit_for_verification':
-            from .completion import submission_refusal
-            refusal = submission_refusal(self.workflow, self.task)
-            if refusal:
-                raise ToolRequestError(refusal.rstrip(".") + ". No call in this batch ran")
         ids = [call["id"] for call in calls]
         if len(set(ids)) != len(ids):
             raise ToolRequestError("Duplicate tool call identifiers")
@@ -451,6 +477,15 @@ class ToolGateway:
             })
         return {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(output, allow_nan=False)}
 
+    def _empty_child_note(self, offered):
+        """Live Software runs (2026-11-22): leads delegated or retried without files and the child rebuilt a
+        stand-in. Say so in the result when the parent holds files and offered none; nothing else changes."""
+        held = self.files.list_files(self.task, self.actor)["count"] if not offered else 0
+        if not held:
+            return None
+        return (f"You hold {held} task file(s) that this child cannot see. If it needs any of them, offer them with "
+                "offer_artifact now, or pass input_files next time (delegate_with_inputs, retry_failed_task).")
+
     def _execute(self, name, args):
         if name == 'submit_for_verification':
             # Only the runner can apply its separately configured verifier.
@@ -485,7 +520,7 @@ class ToolGateway:
                 action={"tool": name, "arguments": args},
             )
             return {"request_id": request, "action": {"tool": name, "arguments": args}}
-        if name in {"read_text", "create_text", "update_text", "append_text", "offer_artifact", "accept_artifact"}:
+        if name in {"read_text", "list_files", "create_text", "update_text", "append_text", "offer_artifact", "accept_artifact"}:
             return getattr(self.files, name)(self.task, self.actor, **args)
         if name == "ask_human":
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}
@@ -521,9 +556,15 @@ class ToolGateway:
             except (WorkflowError, OSError):
                 return {**result, "input_offers": offers, "status": "partial",
                         "error": "Replacement exists but an input offer failed; preserve state and clarify missing inputs"}
-            return {**result, "inputs": "only explicitly offered fresh snapshots", "input_offers": offers, "status": "replaced"}
+            replaced = {**result, "inputs": "only explicitly offered fresh snapshots", "input_offers": offers,
+                        "status": "replaced"}
+            note = self._empty_child_note(len(offers))
+            return {**replaced, "note": note} if note else replaced
         if name == "delegate_task":
-            return {"task_id": self.workflow.create_task(self.chat, self.actor, parent=self.task, **args)}
+            result = {"task_id": self.workflow.create_task(self.chat, self.actor, parent=self.task, **args),
+                      "inputs": "none: the child starts with an empty task workspace"}
+            note = self._empty_child_note(0)
+            return {**result, "note": note} if note else result
         if name == "delegate_with_inputs":
             for path, expected in args["input_files"].items():
                 if self.files.read_text(self.task, self.actor, path)["sha256"] != expected:

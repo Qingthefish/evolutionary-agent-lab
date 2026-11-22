@@ -132,16 +132,27 @@ class Boundaries(unittest.TestCase):
         self.assertIn(FINISH, self.task("lead")["evidence"])
         self.assertIn("token", self.task("lead")["evidence"])
 
-    def test_tokens_can_run_out_before_the_window_starts(self):
+    def test_the_window_starts_while_the_token_budget_still_affords_a_submission(self):
+        # Proposed 2026-11-22 (before: a documented limitation, tokens could run out before the window).
+        def lead(payload, n, state):
+            if window(payload):
+                return reply(("submit_for_verification", {"summary": "Done within the token budget"}))
+            return heavy(1500)(("read_text", {"path": f"x{n}.md"}))
+
+        self.build({"lead": (WORKER, ())}, {"lead": Agent(lead)}, cap=20, tree={"reported_tokens": 9000})
+        self.drive()
+        self.assertGreaterEqual(self.window_requests("lead"), 1)
+        self.assertTrue(self.events("completion_proposed"))
+        used = self.workflow.db.execute("SELECT tokens FROM tree_budgets").fetchone()[0]
+        self.assertLessEqual(used, 9000)
+
+    def test_an_agent_ignoring_its_window_still_stops_at_the_token_cap_with_a_label(self):
         def lead(payload, n, state):
             return heavy(1500)(("read_text", {"path": f"x{n}.md"}))
 
         self.build({"lead": (WORKER, ())}, {"lead": Agent(lead)}, cap=20, tree={"reported_tokens": 4000})
         self.drive()
-        evidence = self.task("lead")["evidence"]
-        self.assertIn("token", evidence)
-        self.assertNotIn(FINISH, evidence)  # Never reached its window: a documented limitation.
-        self.assertEqual(self.window_requests("lead"), 0)
+        self.assertIn("token", self.task("lead")["evidence"])
 
     # --- 3. Shared tree tool calls: counted before use, so they can be held. --------------------
     def test_a_sibling_burning_tool_calls_cannot_take_the_calls_a_blocked_sibling_needs(self):
@@ -207,9 +218,15 @@ class Boundaries(unittest.TestCase):
         self.drive()
         self.assertEqual(self.outcome(self.task("leaf")), "blocker")
         mid_task, lead_task = self.task("mid"), self.task("lead")
-        self.assertEqual(self.outcome(mid_task), "blocker")  # Over a failed leaf only a blocker was offered ...
-        self.assertTrue(self.window_requests("mid"))  # ... and mid still had requests and calls for it.
-        self.assertEqual(self.outcome(lead_task), "blocker")
+        # Over a failed leaf, mid may still propose (the leaf is disclosed with it) and had requests and calls for it.
+        self.assertIn(self.outcome(mid_task), {"proposed", "blocker"})
+        if self.outcome(mid_task) == "blocker":
+            self.assertTrue(self.window_requests("mid"))  # A blocker still had requests and calls in its window.
+        else:  # It proposed in time; the failed leaf travels with the proposal.
+            proposal = self.workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
+                                                "ORDER BY sequence DESC LIMIT 1", (mid_task["id"],)).fetchone()[0]
+            self.assertIn(self.task("leaf")["id"], proposal)
+        self.assertIn(self.outcome(lead_task), {"proposed", "blocker"}, lead_task["evidence"])
         self.assertLessEqual(self.workflow.db.execute("SELECT tool_calls FROM tree_budgets").fetchone()[0], 50)
 
     def test_a_task_short_of_its_own_tool_calls_enters_its_window_in_time(self):
@@ -367,7 +384,9 @@ class Boundaries(unittest.TestCase):
     def test_the_lifecycle_tests_catch_each_mutant_of_the_mechanism(self):
         real_phase, real_budget = completion.phase, budget.finish_budget
         mutants = {
-            "no holds for other open tasks": [patch.object(budget, "held_for_others", lambda *a, **k: 0)],
+            "no holds for other open tasks": [patch.object(budget, "held_for_others", lambda *a, **k: 0),
+                                              patch.object(budget, "integration_reserve", lambda *a, **k: 0)],
+            "no integration reserve for parents": [patch.object(budget, "integration_reserve", lambda *a, **k: 0)],
             "window not sticky": [patch.object(completion, "window_record",
                                                lambda *a, **k: {"entered": False, "used": 0, "forced": None})],
             "every tool offered in the window": [patch.object(completion, "offered_tools", lambda *a, **k: None)],
@@ -384,7 +403,8 @@ class Boundaries(unittest.TestCase):
                  "test_a_root_cut_off_twice_is_routed_to_its_finish_window_not_stopped",
                  "test_replay_newsroom_chief_packages_its_files_in_the_final_requests",
                  "test_a_task_short_of_its_own_tool_calls_enters_its_window_in_time",
-                 "test_a_role_limit_below_the_tree_share_still_opens_the_finish_window"]
+                 "test_a_role_limit_below_the_tree_share_still_opens_the_finish_window",
+                 "test_children_leave_their_parent_an_integration_reserve"]
         caught = {}
         for label, patches in mutants.items():
             suite = unittest.TestSuite()

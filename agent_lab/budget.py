@@ -53,6 +53,10 @@ def provider_pause_seconds(workflow, tasks, now):
     for task in tasks:
         row = workflow.db.execute("SELECT ended FROM tasks WHERE id=?", (task,)).fetchone()
         ended = row["ended"] if row and row["ended"] is not None else now
+        # Proposed 2026-11-22: gaps in which no controller ran and nothing awaited a human are excluded too.
+        for row in workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='controller_idle'", (task,)):
+            detail = json.loads(row["detail"])
+            intervals.append((detail["from"], min(detail["to"], ended)))
         events = workflow.db.execute(
             "SELECT kind,timestamp FROM events WHERE task=? AND kind IN "
             "('provider_decision_required','provider_resend_released') ORDER BY sequence", (task,)).fetchall()
@@ -191,8 +195,10 @@ def _open_others(workflow, root, task):
 
 def window_used(workflow, task):
     """Requests a task has already spent inside its finish window (0 before it is entered)."""
-    entered = workflow.db.execute("SELECT min(sequence) FROM events WHERE task=? AND kind='finish_mode_entered'",
-                                  (task,)).fetchone()[0]
+    floor = workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events WHERE task=? AND kind='finish_mode_reopened'",
+                                (task,)).fetchone()[0]  # A human rejection reopens the window.
+    entered = workflow.db.execute("SELECT min(sequence) FROM events WHERE task=? AND kind='finish_mode_entered' "
+                                  "AND sequence>?", (task, floor)).fetchone()[0]
     if entered is None:
         return 0
     return workflow.db.execute("SELECT count(*) FROM events WHERE task=? AND kind='model_attempt_reserved' AND "
@@ -225,10 +231,60 @@ def finish_budget(workflow, task):
     tool_left = json.loads(scope["limits"])["tool_calls"] - scope["tool_calls"] - held
     if task_calls:
         tool_left = min(tool_left, task_calls["maximum"] - used_calls)
+    affordable = token_requests_left(workflow, task, scope)
+    reserve = integration_reserve(workflow, task, policy, cap)
     return {"policy": policy, "depth": scope["depth"], "cap": cap, "shared_left": shared_left,
             "held_for_other_open_tasks": held, "open_other_tasks": len(others),
-            "available": max(0, shared_left - held), "tool_calls_left": max(0, tool_left),
+            "reserved_for_parent_integration": reserve,
+            "available": max(0, min(shared_left, affordable) - held - reserve), "tool_calls_left": max(0, tool_left),
+            "token_requests_left": affordable,
             "finish_requests": policy.finish_requests}
+
+
+def integration_reserve(workflow, task, policy, cap):
+    """Requests kept for every open ancestor's own integration work, beyond its finish window.
+
+    Proposed 2026-11-22: live Securities Task 2's two subtasks spent 71 of 80 shared requests and the fund manager,
+    who had to build the HTML deck from their work, was left 9 and could not finish it. While a parent is open,
+    each of its descendants leaves it an eighth of the shared cap, at most `min_child` (the policy's smallest useful
+    piece of work): 10 of 80, and 2 of a 17-request test budget, so small budgets still let subtasks work.
+    """
+    each = min(policy.min_child, cap // 8)
+    reserve, row = 0, workflow.db.execute("SELECT parent FROM tasks WHERE id=?", (task,)).fetchone()
+    while row and row["parent"]:
+        parent = workflow.db.execute("SELECT parent,state FROM tasks WHERE id=?", (row["parent"],)).fetchone()
+        if parent["state"] not in TERMINAL:
+            reserve += each
+        row = parent
+    return reserve
+
+
+TOKEN_MARGIN = 1.15
+
+
+def token_requests_left(workflow, task, scope):
+    """Requests the shared token budget still affords at this task's latest request size (with a margin).
+
+    Proposed 2026-11-22: each request resends the whole transcript, so late requests cost the most. Live Securities
+    Task 2 spent its 4,000,000-token budget with 11 requests left and every task still open, because only request
+    counts started the finish window. Before this task has a priced request, the tree's average is used.
+    """
+    limits = json.loads(scope["limits"])
+    limit = limits.get("reported_tokens")
+    if not limit:
+        return limits["model_attempts"] + 1  # No token budget: never the binding constraint.
+    cost = None
+    if workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='runner_turns'").fetchone():
+        row = workflow.db.execute("SELECT response FROM runner_turns WHERE task=? AND response IS NOT NULL "
+                                  "ORDER BY number DESC LIMIT 1", (task,)).fetchone()
+        if row:
+            usage = json.loads(row["response"]).get("usage") or {}
+            cost = usage.get("total_tokens")
+    if not cost and scope["attempts"]:
+        cost = scope["tokens"] / scope["attempts"]
+    if not cost:
+        return limits["model_attempts"] + 1
+    return max(0, int((limit - scope["tokens"]) // (cost * TOKEN_MARGIN)))
 
 
 def record_tokens(workflow, task, count):

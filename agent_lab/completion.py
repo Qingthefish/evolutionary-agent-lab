@@ -11,8 +11,9 @@ recorded state and the shared budget, never from the model's own claims:
 - finish: the task's last R requests (R = FinishPolicy.finish_requests), or R
   requests after a forced finish (consecutive output-limit replies or repeated
   identical outcomes). Only completion actions the gateway would accept are
-  offered: submit_for_verification (unless a failed subtask makes review
-  impossible) and report_blocker. A batch that ends with one of them may still
+  offered: submit_for_verification (any unreplaced failed subtask is attached
+  to the proposal for the reviewer) and report_blocker. A human rejection
+  reopens the window. A batch that ends with one of them may still
   carry the role's other calls first (a handoff, a last fix, a message) through
   the existing batch mechanism; any other batch is refused.
 
@@ -57,12 +58,17 @@ def window_record(workflow, task):
 
     The window is sticky: once entered (budget, output limit or repetition) it lasts
     at most R requests counted from entry, even if other tasks finish and release
-    their holds, or a refused batch spends no tool call.
+    their holds, or a refused batch spends no tool call. A human rejection reopens
+    it: the reviewer asked for changes, so the task may work again; if the budget is
+    still low, the window is re-entered at once.
     """
+    # A human rejection reopens work (proposed 2026-11-22): only window events after the latest reopening count.
+    floor = workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events WHERE task=? AND kind='finish_mode_reopened'",
+                                (task,)).fetchone()[0]
     forced = workflow.db.execute("SELECT sequence,detail FROM events WHERE task=? AND kind='finish_mode_forced' "
-                                 "ORDER BY sequence DESC LIMIT 1", (task,)).fetchone()
-    entered = workflow.db.execute("SELECT min(sequence) FROM events WHERE task=? AND kind='finish_mode_entered'",
-                                  (task,)).fetchone()[0]
+                                 "AND sequence>? ORDER BY sequence DESC LIMIT 1", (task, floor)).fetchone()
+    entered = workflow.db.execute("SELECT min(sequence) FROM events WHERE task=? AND kind='finish_mode_entered' "
+                                  "AND sequence>?", (task, floor)).fetchone()[0]
     used = (workflow.db.execute("SELECT count(*) FROM events WHERE task=? AND kind='model_attempt_reserved' AND "
                                 "sequence>?", (task, entered)).fetchone()[0] if entered else 0)
     return {"entered": entered is not None, "used": used,
@@ -102,8 +108,7 @@ def offered_tools(workflow, task, allowed, state):
     if state is None or state["phase"] != "finish":
         return None
     tools = set(allowed) & COMPLETION_TOOLS
-    if "report_blocker" in tools and submission_refusal(workflow, task):
-        tools.discard("submit_for_verification")  # Review could never accept it: a failed subtask is unreplaced.
+    # A failed subtask no longer removes submit_for_verification: a summary that names it may still be reviewed.
     return frozenset(tools) or None
 
 
@@ -117,13 +122,15 @@ def contract(workflow, task, state, allowed):
              "in the summary. If anything required is unfinished, say so in the summary or use report_blocker.",
              "An invalid argument rejects the whole batch, including handoffs in it; read the error and resend.",
              f"Your last {window} requests are your finish window: only submit_for_verification and report_blocker are "
-             "offered then. Finish deliverable work, including writing or integrating final files, before it."]
+             "offered then (after a review rejection also file-fix tools, in a batch that ends with one of them). "
+             "Finish deliverable work, including writing or integrating final files, before it."]
     if row["parent"]:
         rules.append(f"Offer every deliverable file to your parent task {row['parent']}: with offer_artifact (use that "
                      "task id, not a role name) before, or in the same batch as, the submission.")
     if _children(workflow, task) or "delegate_task" in allowed:
         rules.append("Accept the subtask snapshots you deliver. "
-                     "A failed subtask that is not replaced blocks this task's success.")
+                     "A failed subtask that is not replaced is reported to the reviewer with your proposal: replace "
+                     "it if its work is needed, and say in your summary how its work is covered; the reviewer decides.")
     if "report_blocker" in allowed:
         rules.append("If required work cannot be finished, call report_blocker with what is done and what is missing. "
                      "It ends this task as failed and keeps its files; it is the honest alternative to submitting "
@@ -139,12 +146,13 @@ def contract(workflow, task, state, allowed):
 
 def _finish_instruction(state):
     why = (f"Your work was interrupted ({state['forced'].replace('_', ' ')}). " if state["forced"] else "")
-    return (f"{why}Finish window: {state['finish_left']} request(s) left including this one, and only completion "
-            "actions are available. Call submit_for_verification only for work that is actually done, and name "
-            "anything unfinished or unverified in the summary; call report_blocker if required work is missing. "
-            "A final handoff (offer_artifact, accept_artifact) may come first in the same batch. A human reviewer "
-            "decides; a "
-            "blocker is an honest outcome, not a penalty.")
+    return (f"{why}Finish window: {state['finish_left']} request(s) left including this one. Every response must "
+            "end with submit_for_verification or report_blocker; a final handoff (offer_artifact, accept_artifact) "
+            "or, after a review rejection, a last file fix may come first in the same batch, but no delegation, "
+            "question or re-reading. "
+            "Call submit_for_verification only for work that is actually done, and name anything unfinished or "
+            "unverified in the summary; call report_blocker if required work is missing. A human reviewer decides; "
+            "a blocker is an honest outcome, not a penalty.")
 
 
 def delegation_refusal(workflow, task):
@@ -162,14 +170,20 @@ def delegation_refusal(workflow, task):
             "report_blocker if required work is missing.")
 
 
+def unreplaced_failed_subtasks(workflow, task):
+    """Failed or cancelled direct subtasks that were not replaced, as [{id, assignee, state}].
+
+    Proposed 2026-11-22: these no longer block a proposal. The runner attaches them to every proposal so the
+    human reviewer sees them, and accepting that proposal is the reviewer's explicit waiver. Before, a lead whose
+    deliverable was complete and verified could only report a blocker once a replacement no longer fit the budget.
+    """
+    from .recovery import links
+    replaced = links(workflow)
+    return [{"id": child["id"], "assignee": child["assignee"], "state": child["state"]}
+            for child in _children(workflow, task) if child["state"] in {"failed", "cancelled"}
+            and child["id"] not in replaced]
+
+
 def submission_refusal(workflow, task):
-    """Refuse a proposal that review could never accept: an unreplaced failed subtask."""
-    if budget.finish_budget(workflow, task) is None:
-        return None
-    failed = [child for child in _children(workflow, task) if child["state"] in {"failed", "cancelled"}]
-    if not failed:
-        return None
-    names = ", ".join(f"{child['id']} ({child['assignee']}, {child['state']})" for child in failed)
-    return (f"submit_for_verification: subtask {names} was not completed or replaced, so this task cannot be "
-            "accepted. Replace it with retry_failed_task if enough requests remain, or call report_blocker "
-            "explaining what is done and what is missing.")
+    """Kept for callers of the earlier protocol: failed subtasks are now disclosed, never a refusal."""
+    return None

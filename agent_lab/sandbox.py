@@ -424,7 +424,16 @@ class DockerPythonExecutor:
             self.validate_replacements(task, actor, replacements)
         snapshots = {}
         for path, digest in input_files.items():
-            file = self.files.read_text(task, actor, path)
+            try:
+                file = self.files.read_text(task, actor, path)
+            except WorkflowError as error:
+                if "No such file" in str(error):
+                    # Live Software Task 1 (2026-11-22): a lead without file-writing tools named a script it had
+                    # not written three times. Only existing task files can be run.
+                    raise SandboxError(f"Input file {path} does not exist in your task, so no execution started. "
+                                       "Only existing task files can be run: check list_files and run one of them "
+                                       "(for example the delivered tests), or ask a role that can write files.") from None
+                raise
             if file["sha256"] != digest:
                 raise SandboxError("Input file version changed; no execution started")
             snapshots[path] = file["content"]
