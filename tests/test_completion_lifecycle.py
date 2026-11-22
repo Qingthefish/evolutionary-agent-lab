@@ -227,7 +227,9 @@ class Lifecycle(unittest.TestCase):
             if task["state"] == "succeeded":
                 self.assertIn(task["id"], reviewed)  # I1/I4: success only through an accepted human review.
                 children = [c for c in tasks if c["parent"] == task["id"] and c["id"] not in replaced]
-                self.assertTrue(all(c["state"] == "succeeded" for c in children))  # I2.
+                # I2: every child succeeded, or was disclosed with the proposal and explicitly waived by the reviewer.
+                waived = {d["child"] for t, d in self.events("failed_subtask_waived") if t == task["id"]}
+                self.assertTrue(all(c["state"] == "succeeded" or c["id"] in waived for c in children))
             if task["state"] == "failed":
                 self.assertTrue(task["evidence"])  # I8: a stated reason; artifacts stay in the task.
         for actor, agent in self.agents.items():
@@ -273,7 +275,11 @@ class Lifecycle(unittest.TestCase):
                     if root_style == "offschema":
                         self.assertIn(self.outcome(root), {"exhausted"})
                     elif child_style in {"blocker", "offschema"} and children:
-                        self.assertEqual(self.outcome(root), "blocker")  # Never a proposal over a failed child.
+                        # A proposal over failed children is allowed: the system discloses them with it, and only
+                        # the reviewer's acceptance waives exactly those children (I2).
+                        self.assertEqual(self.outcome(root), "proposed")
+                        disclosed = self.events("completion_proposed", root["id"])[-1][1]["unreplaced_failed_subtasks"]
+                        self.assertEqual({c["id"] for c in disclosed}, {tasks[c]["id"] for c in children})
                     else:
                         self.assertEqual(root["state"], "succeeded")  # Proposed and accepted by the review.
 
@@ -292,8 +298,9 @@ class Lifecycle(unittest.TestCase):
                     self.assertEqual(self.outcome(tasks[child]), "exhausted")
                 root_window = [p for p in self.agents[root_role].requests if window(p)]
                 self.assertGreaterEqual(len(root_window), 1)
-                self.assertEqual(offered(root_window[-1]), {"report_blocker"})  # Failed children: only a blocker.
-                self.assertEqual(self.outcome(tasks[root_role]), "blocker")
+                # Failed children no longer remove the proposal; they are disclosed with it.
+                self.assertEqual(offered(root_window[-1]), {"report_blocker", "submit_for_verification"})
+                self.assertEqual(self.outcome(tasks[root_role]), "proposed")
 
     def test_a_sibling_blocked_in_review_keeps_its_window_while_the_other_spends_everything(self):
         def early(payload, n, state):  # Submits at once; after a later rejection it needs its window.
@@ -530,6 +537,50 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual(len(self.events("repeated_outcome_warned")), 1)
         reads = self.workflow.db.execute("SELECT count(*) FROM tool_calls WHERE name='read_text'").fetchone()[0]
         self.assertEqual(reads, 3 + REPEAT_GRACE)
+
+    def test_a_rejection_reopens_a_forced_window_so_the_feedback_can_be_acted_on(self):
+        def manager(payload, n, state):
+            if b"trusted_verification_failure" in payload and not state.get("fixed"):
+                if "create_text" not in offered(payload):
+                    state["stuck"] = True  # Before the fix: only completion tools after the rejection.
+                    return reply(("report_blocker", {"summary": "Rejected inside a forced finish window and unable to change any file"}))
+                state["fixed"] = True
+                return reply(("create_text", {"path": "proposal.md", "content": "Revised after the review"}))
+            if state.get("fixed"):
+                return reply(("submit_for_verification", {"summary": "proposal.md revised after the review feedback"}))
+            if n <= 3:
+                return cut_off()  # Three cut-offs in a row force the finish window.
+            return reply(("submit_for_verification", {"summary": "First proposal inside the forced finish window"}))
+
+        self.build("securities-fund", {"fund_manager": Agent(manager)}, cap=40)
+        self.drive(review=lambda task, round_: "reject" if round_ == 1 else "accept")
+        tasks = self.check_invariants()
+        self.assertEqual(self.events("finish_mode_forced")[0][1]["reason"], "output_limit")
+        self.assertEqual(len(self.events("finish_mode_reopened")), 1)
+        self.assertFalse(self.agents["fund_manager"].state.get("stuck"))
+        self.assertEqual(tasks["fund_manager"]["state"], "succeeded")
+
+    def test_a_failed_subtask_is_disclosed_with_the_proposal_and_accepting_waives_it(self):
+        def chief(payload, n, state):
+            if n == 1:
+                return reply(("delegate_task", {"assignee": "reporter", "title": "Report"}))
+            return reply(("submit_for_verification", {"summary": "Package complete; the chief editor wrote the report"}))
+
+        self.build("newsroom", {"chief_editor": Agent(chief), "reporter": Agent(worker("blocker"))}, cap=40)
+        state = None
+        seen = {}
+
+        def review(task, round_):
+            need = [n for n in self.scheduler.status().get("needs") or [] if n.get("task") == task]
+            seen[task] = self.events("completion_proposed", task)[-1][1].get("unreplaced_failed_subtasks")
+            return "accept"
+        self.drive(review=review)
+        tasks = self.check_invariants()
+        reporter, chief_id = tasks["reporter"], tasks["chief_editor"]["id"]
+        self.assertEqual(reporter["state"], "failed")
+        self.assertEqual([c["id"] for c in seen[chief_id]], [reporter["id"]])  # The system disclosed it.
+        self.assertEqual([d["child"] for _, d in self.events("failed_subtask_waived")], [reporter["id"]])
+        self.assertEqual(tasks["chief_editor"]["state"], "succeeded")
 
     def test_a_repeat_notice_lets_the_agent_change_course_without_a_forced_finish(self):
         def lead(payload, n, state):

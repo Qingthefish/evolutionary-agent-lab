@@ -53,6 +53,10 @@ def provider_pause_seconds(workflow, tasks, now):
     for task in tasks:
         row = workflow.db.execute("SELECT ended FROM tasks WHERE id=?", (task,)).fetchone()
         ended = row["ended"] if row and row["ended"] is not None else now
+        # Proposed 2026-11-22: gaps in which no controller ran and nothing awaited a human are excluded too.
+        for row in workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='controller_idle'", (task,)):
+            detail = json.loads(row["detail"])
+            intervals.append((detail["from"], min(detail["to"], ended)))
         events = workflow.db.execute(
             "SELECT kind,timestamp FROM events WHERE task=? AND kind IN "
             "('provider_decision_required','provider_resend_released') ORDER BY sequence", (task,)).fetchall()

@@ -388,11 +388,6 @@ class ToolGateway:
             raise ToolRequestError('Submit for verification exactly once as the last tool; no batch effects started')
         if blockers and blockers != [len(calls) - 1]:
             raise ToolRequestError('Report a blocker exactly once as the last tool; no batch effects started')
-        if calls[-1]['function']['name'] == 'submit_for_verification':
-            from .completion import submission_refusal
-            refusal = submission_refusal(self.workflow, self.task)
-            if refusal:
-                raise ToolRequestError(refusal.rstrip(".") + ". No call in this batch ran")
         ids = [call["id"] for call in calls]
         if len(set(ids)) != len(ids):
             raise ToolRequestError("Duplicate tool call identifiers")
@@ -456,6 +451,15 @@ class ToolGateway:
                 "call_id": call["id"], "name": name, "status": status,
             })
         return {"role": "tool", "tool_call_id": call["id"], "content": json.dumps(output, allow_nan=False)}
+
+    def _empty_child_note(self, offered):
+        """Live Software runs (2026-11-22): leads delegated or retried without files and the child rebuilt a
+        stand-in. Say so in the result when the parent holds files and offered none; nothing else changes."""
+        held = self.files.list_files(self.task, self.actor)["count"] if not offered else 0
+        if not held:
+            return None
+        return (f"You hold {held} task file(s) that this child cannot see. If it needs any of them, offer them with "
+                "offer_artifact now, or pass input_files next time (delegate_with_inputs, retry_failed_task).")
 
     def _execute(self, name, args):
         if name == 'submit_for_verification':
@@ -527,17 +531,15 @@ class ToolGateway:
             except (WorkflowError, OSError):
                 return {**result, "input_offers": offers, "status": "partial",
                         "error": "Replacement exists but an input offer failed; preserve state and clarify missing inputs"}
-            return {**result, "inputs": "only explicitly offered fresh snapshots", "input_offers": offers, "status": "replaced"}
+            replaced = {**result, "inputs": "only explicitly offered fresh snapshots", "input_offers": offers,
+                        "status": "replaced"}
+            note = self._empty_child_note(len(offers))
+            return {**replaced, "note": note} if note else replaced
         if name == "delegate_task":
             result = {"task_id": self.workflow.create_task(self.chat, self.actor, parent=self.task, **args),
                       "inputs": "none: the child starts with an empty task workspace"}
-            held = self.files.list_files(self.task, self.actor)["count"]
-            if held:
-                # Live Software Task 2 (2026-11-22): a lead with the whole package delegated without files and the
-                # child rebuilt a stand-in core. Say so in the result; the delegation itself is unchanged.
-                result["note"] = (f"You hold {held} task file(s) that this child cannot see. If it needs any of them, "
-                                  "offer them with offer_artifact now, or delegate with delegate_with_inputs next time.")
-            return result
+            note = self._empty_child_note(0)
+            return {**result, "note": note} if note else result
         if name == "delegate_with_inputs":
             for path, expected in args["input_files"].items():
                 if self.files.read_text(self.task, self.actor, path)["sha256"] != expected:

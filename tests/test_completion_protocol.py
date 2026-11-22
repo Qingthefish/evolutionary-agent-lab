@@ -265,16 +265,14 @@ class CompletionProtocol(unittest.TestCase):
 
     # 4 + 5. A child that never finishes cannot spend the parent's reserve; the parent cannot
     # propose over the failed child and reports an honest blocker instead.
-    def test_unfinished_child_stops_and_the_parent_reports_a_blocker_not_a_success(self):
+    def test_unfinished_child_stops_and_the_parent_proposal_discloses_it_to_the_reviewer(self):
         def dev(payload, n, state):  # Ignores Finish Mode entirely.
             return reply(("create_text", {"path": f"w{n}.txt", "content": "x"}))
 
         def lead(payload, n, state):
             if n == 1:
                 return reply(("delegate_task", {"assignee": "dev", "title": "Implement and test the tool"}))
-            if "submit_for_verification" not in offered(payload):  # Over a failed child only a blocker is offered.
-                return reply(("report_blocker", {"summary": "The dev subtask stopped unfinished; nothing to deliver"}))
-            return reply(("submit_for_verification", {"summary": "Delivered"}))
+            return reply(("submit_for_verification", {"summary": "Delivered what exists; the dev subtask stopped"}))
 
         dev_agent, lead_agent = Agent(dev), Agent(lead)
         self.build({"lead": lead_agent, "dev": dev_agent}, cap=20)
@@ -284,12 +282,15 @@ class CompletionProtocol(unittest.TestCase):
         finish_errors = [r["error"] for p in dev_agent.requests for r in tool_results(p) if not r.get("ok")]
         self.assertTrue(any(e.startswith("create_text: Finish window: create_text is only accepted in a batch that ends with") for e in finish_errors))
         self.assertIn("Finish window used without a valid submission or blocker report", dev_task["evidence"])
-        self.assertEqual(len(lead_agent.requests) - 1, 1)  # The lead's first turn after the child is its blocker.
-        self.assertEqual(offered(lead_agent.requests[-1]), {"report_blocker"})
-        self.assertEqual(self.events("completion_proposed", self.root), [])  # The refused proposal never existed.
+        # Proposed 2026-11-22: the failed child no longer removes the proposal; the system attaches it for the reviewer.
+        proposals = self.events("completion_proposed", self.root)
+        self.assertEqual([c["id"] for c in proposals[-1][1]["unreplaced_failed_subtasks"]], [dev_task["id"]])
         root = self.workflow.task(self.root, "user")
-        self.assertEqual(root["state"], "failed")
-        self.assertIn("Blocker reported by the agent", root["evidence"])
+        waived = [d["child"] for _, d in self.events("failed_subtask_waived", self.root)]
+        if root["state"] == "succeeded":  # Success over a failed child only through the reviewer's explicit waiver.
+            self.assertEqual(waived, [dev_task["id"]])
+        else:
+            self.assertEqual(waived, [])
 
     # 6. Genuinely incomplete work is reported, not forced into a false success; replacement stays auditable.
     def test_a_blocker_is_an_honest_failure_and_replacement_is_audited(self):

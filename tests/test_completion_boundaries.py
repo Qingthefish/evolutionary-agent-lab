@@ -207,9 +207,15 @@ class Boundaries(unittest.TestCase):
         self.drive()
         self.assertEqual(self.outcome(self.task("leaf")), "blocker")
         mid_task, lead_task = self.task("mid"), self.task("lead")
-        self.assertEqual(self.outcome(mid_task), "blocker")  # Over a failed leaf only a blocker was offered ...
-        self.assertTrue(self.window_requests("mid"))  # ... and mid still had requests and calls for it.
-        self.assertEqual(self.outcome(lead_task), "blocker")
+        # Over a failed leaf, mid may still propose (the leaf is disclosed with it) and had requests and calls for it.
+        self.assertIn(self.outcome(mid_task), {"proposed", "blocker"})
+        if self.outcome(mid_task) == "blocker":
+            self.assertTrue(self.window_requests("mid"))  # A blocker still had requests and calls in its window.
+        else:  # It proposed in time; the failed leaf travels with the proposal.
+            proposal = self.workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
+                                                "ORDER BY sequence DESC LIMIT 1", (mid_task["id"],)).fetchone()[0]
+            self.assertIn(self.task("leaf")["id"], proposal)
+        self.assertIn(self.outcome(lead_task), {"proposed", "blocker"}, lead_task["evidence"])
         self.assertLessEqual(self.workflow.db.execute("SELECT tool_calls FROM tree_budgets").fetchone()[0], 50)
 
     def test_a_task_short_of_its_own_tool_calls_enters_its_window_in_time(self):

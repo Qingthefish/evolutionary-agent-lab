@@ -396,6 +396,25 @@ the children's work. These changes are task-agnostic:
 
 Tool lists change, so tasks started before this change cannot be resumed with it.
 
+### Review recovery and failed subtasks (proposed)
+
+From the 2026-11-22 reruns across all three scenarios:
+
+- A human rejection reopens a forced finish window and resets the repeat
+  count, so the feedback can be acted on (`finish_mode_reopened`). If the
+  budget is still low, the window is re-entered on the next request.
+- An unreplaced failed subtask no longer blocks a proposal. The runner attaches
+  it to the proposal (`unreplaced_failed_subtasks`, also shown in the review
+  need); accepting that proposal is the reviewer's explicit waiver
+  (`failed_subtask_waived`) of exactly those subtasks. Without that, a parent
+  still cannot succeed over a failed child.
+- `retry_failed_task` without input files gets the same "child starts empty"
+  note as `delegate_task`; running a script that does not exist names
+  `list_files` and says only existing task files can run.
+- `advance` records a gap of more than 120 s since the tree's last event as
+  `controller_idle` when nothing awaited a human, and deadlines exclude it. Human
+  answer and review time still counts.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,

@@ -118,12 +118,91 @@ class IntegrationRobustnessTests(unittest.TestCase):
         self.assertIn("You hold 1 task file", held["result"]["note"])
         self.assertIn("delegate_with_inputs", held["result"]["note"])
 
+    def test_retrying_a_failed_child_without_inputs_carries_the_same_note(self):
+        from agent_lab import recovery
+        recovery.configure(self.workflow, self.lead, 2)
+        self.workflow.finish_task(self.dev, "dev", error="Synthetic failure")
+        self.files.create_text(self.lead, "lead", "core.py", "core\n")
+        gateway = self.gateway(self.lead, "lead", ["retry_failed_task"], delegates=("dev",))
+        result = json.loads(gateway.dispatch(self.call("retry_failed_task", "r1", failed_task=self.dev,
+                                                       reason="Use the existing package", input_files={}))["content"])
+        self.assertTrue(result["ok"], result)
+        self.assertIn("You hold 1 task file", result["result"]["note"])
+
+    def test_running_a_script_that_does_not_exist_says_what_can_be_run(self):
+        import socket
+        import sys
+        from agent_lab.sandbox import DockerPythonExecutor, SandboxError
+        with tempfile.TemporaryDirectory(dir="/tmp") as directory:
+            path = str(Path(directory) / "d.sock")
+            server = socket.socket(socket.AF_UNIX)
+            server.bind(path)
+            self.addCleanup(server.close)
+            executor = DockerPythonExecutor(self.workflow, self.files, docker_host="unix://" + path,
+                                            image="python@sha256:" + "a" * 64, docker_binary=sys.executable)
+            self.addCleanup(executor.close)
+            with self.assertRaisesRegex(SandboxError, "does not exist in your task.*list_files"):
+                executor.run_python(self.lead, "lead", entrypoint="verify.py", input_files={"verify.py": "0" * 64},
+                                    arguments=[], outputs=[])
+            self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM sandbox_runs").fetchone()[0], 0)
+
     def test_a_missing_source_path_needs_an_explicit_path(self):
         receipt = self.files.create_text(self.dev, "dev", "x.md", "x\n")
         offer = self.files.offer_artifact(self.dev, "dev", "x.md", self.lead, expected_sha256=receipt["sha256"])
         self.workflow.db.execute("DELETE FROM artifact_labels WHERE artifact=?", (offer["artifact_id"],))
         with self.assertRaisesRegex(FileToolError, "explicit path"):
             self.files.accept_artifact(self.lead, "lead", offer["artifact_id"])
+
+
+
+class ControllerIdleTests(unittest.TestCase):
+    """A long gap with no controller running and nothing awaiting a human is not task time (2026-11-22)."""
+
+    def setUp(self):
+        from agent_lab import budget
+        from agent_lab.deepseek import DeepSeekClient
+        from agent_lab.runner import Limits
+        from agent_lab.scheduler import MultiAgentScheduler, Role
+        from test_runner import Script, response, tool
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        self.now = [1000.0]
+        self.workflow = Workflow(root / "state.sqlite3", clock=lambda: self.now[0])
+        self.addCleanup(self.workflow.close)
+        self.workflow.register_actor("user", "human")
+        self.workflow.register_actor("lead", "agent")
+        chat = self.workflow.create_chat("group", ["user", "lead"])
+        self.root = self.workflow.create_task(chat, "user", "lead", "Write notes")
+        self.files = FileTools(self.workflow, root / "files")
+        self.addCleanup(self.files.close)
+        replies = [response([tool("create_text", {"path": f"n{i}.txt", "content": "x"}, f"c{i}")]) for i in range(4)]
+        replies.insert(1, response([tool("ask_human", {"prompt": "Which format?"}, "q")]))
+        self.script = Script(replies)
+        roles = {"lead": Role("lead", ("create_text", "ask_human", "submit_for_verification"), (),
+                              Limits(model_attempts=10, duration_seconds=600))}
+        self.scheduler = MultiAgentScheduler(
+            self.workflow, self.files, self.root, human="user", roles=roles,
+            clients={"lead": DeepSeekClient("synthetic", self.script)}, mode="offline_fixture", constraints=[],
+            verifier_factory=lambda task: None, acceptance_id="idle-test",
+            limits=budget.TreeLimits(model_attempts=10, duration_seconds=600))
+        self.budget = budget
+
+    def elapsed(self):
+        return self.budget.task_elapsed(self.workflow, self.root, self.now[0])
+
+    def test_an_unattended_gap_is_excluded_but_a_human_wait_still_counts(self):
+        from agent_lab.evaluation.official_live import advance
+        advance(self.scheduler, 1)  # create_text
+        self.now[0] += 7200  # Two hours with nobody running the controller and nothing pending.
+        self.assertTrue(advance(self.scheduler, 1))  # ask_human: the task now waits for the requester
+        self.assertLess(self.elapsed(), 60)
+        idle = [json.loads(r[0]) for r in self.workflow.db.execute("SELECT detail FROM events WHERE kind='controller_idle'")]
+        self.assertEqual([round(d["seconds"]) for d in idle], [7200])
+        self.now[0] += 500  # The requester takes a while to answer: human time, counted.
+        advance(self.scheduler, 1)
+        self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM events WHERE kind='controller_idle'").fetchone()[0], 1)
+        self.assertGreaterEqual(self.elapsed(), 500)
 
 
 if __name__ == "__main__":
