@@ -28,7 +28,7 @@ Source: instructor announcement supplied by the user, “Final Project Specifica
 - Final test set: one paragraph says exactly three weeks before final submission.
 - Report paragraph instead refers to mid/final test sets released in the last “3/1 weeks”. Clarify the schedule.
 - The original specification places the final report after week 13. The replacement presentation notice supplied on November 23 sets final submission to **December 19, 2026**; it does not state a cutoff time, timezone or a separate report deadline.
-- Presentation preparation target: Wednesday, 2026-11-25, if the shown 2026-09-02 lecture is week 1. This is a week-count inference; a specific group slot has not been verified. The later clarification below confirms the duration and live-start procedure.
+- Presentation preparation target: Wednesday, 2026-11-25, if the shown 2026-09-02 lecture is week 1. This is a week-count inference; a specific group slot has not been verified. The replacement notice below specifies the talk duration and advance setup/run procedure.
 - The original announcement said dedicated model keys would be distributed later. On 2026-10-26 the instructor's [API announcement](https://canvas.ust.hk/courses/73253/announcements/651390) directed students to the restricted [API Information page](https://canvas.ust.hk/courses/73253/pages/api-information), which now gives the HKGAI address, model and a credential. Do not copy its credential into project documentation. The inspected page does not state quota, pricing or reset policy.
 
 ## Current presentation and submission requirements
