@@ -132,16 +132,27 @@ class Boundaries(unittest.TestCase):
         self.assertIn(FINISH, self.task("lead")["evidence"])
         self.assertIn("token", self.task("lead")["evidence"])
 
-    def test_tokens_can_run_out_before_the_window_starts(self):
+    def test_the_window_starts_while_the_token_budget_still_affords_a_submission(self):
+        # Proposed 2026-11-22 (before: a documented limitation, tokens could run out before the window).
+        def lead(payload, n, state):
+            if window(payload):
+                return reply(("submit_for_verification", {"summary": "Done within the token budget"}))
+            return heavy(1500)(("read_text", {"path": f"x{n}.md"}))
+
+        self.build({"lead": (WORKER, ())}, {"lead": Agent(lead)}, cap=20, tree={"reported_tokens": 9000})
+        self.drive()
+        self.assertGreaterEqual(self.window_requests("lead"), 1)
+        self.assertTrue(self.events("completion_proposed"))
+        used = self.workflow.db.execute("SELECT tokens FROM tree_budgets").fetchone()[0]
+        self.assertLessEqual(used, 9000)
+
+    def test_an_agent_ignoring_its_window_still_stops_at_the_token_cap_with_a_label(self):
         def lead(payload, n, state):
             return heavy(1500)(("read_text", {"path": f"x{n}.md"}))
 
         self.build({"lead": (WORKER, ())}, {"lead": Agent(lead)}, cap=20, tree={"reported_tokens": 4000})
         self.drive()
-        evidence = self.task("lead")["evidence"]
-        self.assertIn("token", evidence)
-        self.assertNotIn(FINISH, evidence)  # Never reached its window: a documented limitation.
-        self.assertEqual(self.window_requests("lead"), 0)
+        self.assertIn("token", self.task("lead")["evidence"])
 
     # --- 3. Shared tree tool calls: counted before use, so they can be held. --------------------
     def test_a_sibling_burning_tool_calls_cannot_take_the_calls_a_blocked_sibling_needs(self):

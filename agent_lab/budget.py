@@ -229,10 +229,40 @@ def finish_budget(workflow, task):
     tool_left = json.loads(scope["limits"])["tool_calls"] - scope["tool_calls"] - held
     if task_calls:
         tool_left = min(tool_left, task_calls["maximum"] - used_calls)
+    affordable = token_requests_left(workflow, task, scope)
     return {"policy": policy, "depth": scope["depth"], "cap": cap, "shared_left": shared_left,
             "held_for_other_open_tasks": held, "open_other_tasks": len(others),
-            "available": max(0, shared_left - held), "tool_calls_left": max(0, tool_left),
+            "available": max(0, min(shared_left, affordable) - held), "tool_calls_left": max(0, tool_left),
+            "token_requests_left": affordable,
             "finish_requests": policy.finish_requests}
+
+
+TOKEN_MARGIN = 1.15
+
+
+def token_requests_left(workflow, task, scope):
+    """Requests the shared token budget still affords at this task's latest request size (with a margin).
+
+    Proposed 2026-11-22: each request resends the whole transcript, so late requests cost the most. Live Securities
+    Task 2 spent its 4,000,000-token budget with 11 requests left and every task still open, because only request
+    counts started the finish window. Before this task has a priced request, the tree's average is used.
+    """
+    limits = json.loads(scope["limits"])
+    limit = limits.get("reported_tokens")
+    if not limit:
+        return limits["model_attempts"] + 1  # No token budget: never the binding constraint.
+    cost = None
+    if workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='runner_turns'").fetchone():
+        row = workflow.db.execute("SELECT response FROM runner_turns WHERE task=? AND response IS NOT NULL "
+                                  "ORDER BY number DESC LIMIT 1", (task,)).fetchone()
+        if row:
+            usage = json.loads(row["response"]).get("usage") or {}
+            cost = usage.get("total_tokens")
+    if not cost and scope["attempts"]:
+        cost = scope["tokens"] / scope["attempts"]
+    if not cost:
+        return limits["model_attempts"] + 1
+    return max(0, int((limit - scope["tokens"]) // (cost * TOKEN_MARGIN)))
 
 
 def record_tokens(workflow, task, count):

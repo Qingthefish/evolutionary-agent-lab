@@ -411,6 +411,11 @@ From the 2026-11-22 reruns across all three scenarios:
 - `retry_failed_task` without input files gets the same "child starts empty"
   note as `delegate_task`; running a script that does not exist names
   `list_files` and says only existing task files can run.
+- The finish window also counts tokens: `available` is capped by the requests
+  the shared token budget still affords at this task's latest request size
+  (+15%), so a task reaches its window before tokens run out. Before, only
+  request counts started it, and a Securities Task 2 tree spent its 4,000,000
+  tokens with 11 requests left and every task still open.
 - `advance` records a gap of more than 120 s since the tree's last event as
   `controller_idle` when nothing awaited a human, and deadlines exclude it. Human
   answer and review time still counts.
