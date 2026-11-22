@@ -359,6 +359,175 @@ calls, tokens and final states in both modes, 1.49-1.59x faster wall time on
 fan-out graphs (1.55-1.76x with a 1 s synthetic review delay), and 1.0x on a
 dependent chain.
 
+### Replacing a file with an accepted version (proposed)
+
+`accept_artifact` takes an optional `replace_sha256`. Without it, an offered
+version can only be accepted at a new path, and an existing path now gets a
+clear refusal that names the options instead of the generic file error. With
+it, the offered version replaces the existing file only if that file's current
+SHA-256 matches (same check and atomic replace as `update_text`); the
+`artifact_received` receipt records `replaced_sha256`, and the offer stays open
+after any refusal.
+
+Why: in both live Software tasks of 2026-11-22 the lead could not accept the
+developer's fixed files over the existing paths and saw only "File request
+rejected". It stored the fixes as `v2/` or `cli_dashboard_patch.py`, kept
+shipping the old versions, and spent its remaining requests on workarounds; both
+tasks ended failed although the fixed code existed and passed its tests. The
+tool list changes, so a task started before this change cannot be resumed with
+it (the runner configuration check refuses).
+
+### Integration aids for any task (proposed)
+
+The 2026-11-22 Software runs failed at the parent's integration step, not in
+the children's work. These changes are task-agnostic:
+
+- `list_files` (every role): the current files of your own task, with SHA-256
+  and size, from the broker's write records. No directory walk.
+- `accept_artifact` without `path` keeps the producer's path, so a received
+  package keeps its layout. An explicit path still works.
+- `delegate_task` says the child starts with no files; when the parent holds
+  files, the result names how many and points to `delegate_with_inputs`.
+- The software lead may run code (`run_python`) to check the integrated
+  deliverable before submitting; it still cannot write source files.
+- With the completion protocol, the first run of identical outcomes adds a
+  notice asking the agent to change approach; only two more identical outcomes
+  force the finish window (before: forced at the third).
+
+Tool lists change, so tasks started before this change cannot be resumed with it.
+
+### Review recovery and failed subtasks (proposed)
+
+From the 2026-11-22 reruns across all three scenarios:
+
+- A human rejection reopens a forced finish window and resets the repeat
+  count, so the feedback can be acted on (`finish_mode_reopened`). If the
+  budget is still low, the window is re-entered on the next request.
+- An unreplaced failed subtask no longer blocks a proposal. The runner attaches
+  it to the proposal (`unreplaced_failed_subtasks`, also shown in the review
+  need); accepting that proposal with each explicit `--waive-failed-subtask`
+  records `failed_subtask_waived` for exactly those reviewed subtasks. Without that, a parent
+  still cannot succeed over a failed child.
+- `retry_failed_task` without input files gets the same "child starts empty"
+  note as `delegate_task`; running a script that does not exist names
+  `list_files` and says only existing task files can run.
+- The finish window also counts tokens: `available` is capped by the requests
+  the shared token budget still affords at this task's latest request size
+  (+15%), so a task reaches its window before tokens run out. Before, only
+  request counts started it, and a Securities Task 2 tree spent its 4,000,000
+  tokens with 11 requests left and every task still open.
+- After a human rejection inside a finish window, file-fix tools (`create_text`,
+  `update_text`, `append_text`, `offer_artifact`, `accept_artifact`,
+  `run_python`) are offered too, still only before a completion call in the same
+  batch. Normal windows offer completion actions only (re-reading tools stay
+  hidden: live windows were spent re-reading when they were offered).
+- `submit_for_verification` refuses a summary that is only placeholder words or
+  contains "placeholder", "lorem ipsum" or "dummy" (live summaries: "x",
+  "Placeholder").
+- While a parent is open, each descendant leaves it an integration reserve of
+  an eighth of the shared cap, at most `min_child` (10 of 80), beyond its finish
+  window: a Securities Task 2 parent had been left 9 of 80 requests to build its
+  deck after its subtasks finished.
+- `advance` records a gap of more than 120 s since the tree's last event as
+  `controller_idle` when nothing awaited a human, and deadlines exclude it. Human
+  answer and review time still counts.
+
+### Coordinator review corrections (November 22)
+
+Receiving a snapshot and accepting a task are distinct. A failed direct child
+may have offered useful output before failing. The parent can explicitly pass
+`allow_failed_source: true` to `accept_artifact` to recover **only an already
+offered** snapshot addressed to that parent. The receipt says `partial: true`
+and `source_state: failed`; the child remains failed. Cancelled sources,
+non-child sources, unoffered private files, wrong recipients, consumed offers
+and stale replacement hashes stay refused. Independent validation remains
+necessary; this is not a solution for a child that failed before offering files.
+
+Accepting a parent proposal does **not** implicitly waive failed child work.
+The reviewer must inspect the failure and explicitly repeat
+`--waive-failed-subtask CHILD_ID` for every disclosed exception that the finished
+deliverable actually covers. Missing, wrong, duplicate or stale waiver IDs
+refuse acceptance without changing the review state. A new failure after the
+proposal requires a new proposal. The child failures remain in the record and
+budget failure rolls back the review/waiver transaction.
+
+These are actual reviewer decisions, not choices to be auto-filled by a model.
+An assistant's technical checks must not be labelled as a human decision.
+The changed artifact schema requires fresh compatible tasks; do not upgrade an
+ongoing teammate run underneath it or bypass the stored configuration guard.
+
+Deadline accounting and evaluation timing also remain distinct. Provider pauses
+and recorded controller-idle intervals can be excluded from **local deadline
+enforcement**. Reported assignment-to-final wall time still includes those
+intervals. Do not present deadline exclusion as faster real execution or an
+instructor-approved timing adjustment.
+
+### Stable prompt prefix (proposed, opt-in)
+
+`advance --stable-prompt-prefix` sends the live execution budget (requests,
+tool calls and seconds left, the completion contract and Finish Mode) as the
+last message of each request instead of rewriting it into the first task
+message. The default is unchanged.
+
+- The model sees the same task context and the same budget view; only the
+  budget's position moves. Only the current view is sent; earlier views are not
+  kept in the conversation.
+- The stored transcript stays append-only: each request repeats the previous
+  one unchanged up to its old budget message. `runner_turns.request` still
+  records exactly what was sent.
+- The option is not part of the persisted run configuration. A resumed task
+  switches layout cleanly in either direction (the first task message is then
+  written without, or again with, the budget block).
+
+Why: inference servers with prefix caching (for example vLLM's automatic prefix
+caching) can skip recomputing a prompt prefix they have already processed. In
+the 2026-11-21 live records the first task message changed on every request
+(271 of 271 consecutive pairs), so only 11-25% of each prompt repeated the
+previous one unchanged; with the budget moved out, 87-94% would have (replay
+of the recorded requests). Provider latency in those records fits about 2.2 s
+per request + 0.075 s per 1,000 prompt tokens + 3.8 s per 1,000 output tokens
+(468 requests, R^2 0.85), so prompt processing was about a third of provider
+time. Whether HKGAI caches prefixes is unknown, so the saving is unmeasured:
+if it does not, this changes nothing but the message order. A short live check
+(the same long prompt sent twice, then a run with the flag) is needed.
+`python -m agent_lab.evaluation.prompt_prefix_benchmark` checks offline that
+every request extends the previous one with the same requests, tool calls and
+final states.
+
+### Overlapping web fetches inside one reply (proposed, opt-in)
+
+`advance --parallel-web-fetches N` (N = 2-4) lets up to N consecutive
+`search_web`/`retrieve_text` calls in one model reply wait for their public
+HTTPS responses at the same time. The default (1) is unchanged.
+
+- Each call is validated and reserved in call order exactly as before (tool-call
+  row, `tool_reserved` event, `reserved` retrieval record). Only the network
+  fetch runs on a worker thread, with no database or file access. Parsing,
+  artifact writes, retrieval records and tool results then settle in call order
+  on the controller thread, so later calls in the same reply see the same files.
+- Any other tool, or a non-web call between web calls, keeps strict serial
+  execution. A tool-budget stop ends reservation; calls already reserved still
+  complete first. An unexpected fetch crash leaves the unsettled calls
+  `reserved` (reported as uncertain), and nothing is resent.
+- Requests, tool calls, tokens and model-visible results are unchanged. Only
+  event order differs: the group's `tool_reserved` events precede its results,
+  and `retrieved_at` is taken when each response is processed, at most one fetch
+  deadline (15 s) after it arrived. A `web_fetches_overlapped` event records
+  the group and its wait. The option is not stored in the run configuration, so
+  existing state directories resume unchanged.
+
+Why: in the 2026-11-21 Securities and Newsroom records, research replies
+usually held 2-4 web calls run one after another (48 of 49 and 63 of 70
+retrieval replies in the two Securities runs), and web retrieval took 108-236 s
+per research-heavy task tree. Replaying the recorded batch sizes and per-call
+latencies through the real runner (`python -m
+agent_lab.evaluation.web_fetch_benchmark --replay COPY.sqlite3`, synthetic
+fetches) cuts that wait by 55-65%: 3.2-4.4 minutes per Securities run (two tasks) and
+2.2 minutes for the Newsroom run, with identical tool records. This is a replay
+estimate, not a live measurement; how the search endpoint and sites respond to
+four concurrent requests is untested, so a short live check is needed before
+relying on it.
+
 ### Recovering an interrupted command
 
 If an `advance` or `review` process stops mid-request, for example from Ctrl-C,

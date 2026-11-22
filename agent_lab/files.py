@@ -6,6 +6,7 @@ Untrusted processes must never run on this host or receive these descriptors.
 
 from contextlib import contextmanager
 import hashlib
+import json
 import os
 from pathlib import Path
 import stat
@@ -128,6 +129,12 @@ class FileTools:
         except FileNotFoundError as error:
             # A live parent re-read a missing path three times after a generic refusal.
             raise FileToolError("No such file or directory at this task path; check the path or create it first") from error
+        except FileExistsError as error:
+            # Live Software runs 2026-11-22: leads saw only the generic refusal below when accepting a fixed
+            # file over an existing path, then stored fixes under other names and shipped the old versions.
+            raise FileToolError("A file already exists at this task path. Use another path, or replace it "
+                                "explicitly: update_text for your own edits, accept_artifact with replace_sha256 "
+                                "set to the existing file's current SHA-256 for an offered version") from error
         except (OSError, UnicodeError) as error:
             raise FileToolError("File request rejected; inspect the task path, content, and file type") from error
 
@@ -187,15 +194,38 @@ class FileTools:
         if not isinstance(expected_sha256, str) or _sha(data) != expected_sha256:
             raise FileToolError("Content digest changed or did not match the expected version")
 
-    def _receipt(self, task, actor, operation, path, data, *, request_id=None, artifact_id=None):
+    def _receipt(self, task, actor, operation, path, data, *, request_id=None, artifact_id=None,
+                 replaced_sha256=None, partial_source=False):
         result = {"path": path, "sha256": _sha(data), "bytes": len(data)}
         detail = dict(result)
         if request_id is not None:
             detail["request_id"] = request_id
         if artifact_id is not None:
             detail["artifact_id"] = artifact_id
+        if replaced_sha256 is not None:
+            detail["replaced_sha256"] = replaced_sha256
+        if partial_source:
+            detail.update(source_state="failed", partial=True)
         self.workflow._event(task, actor, operation, detail)
         return result
+
+    def list_files(self, task, actor):
+        """Current task files from the broker's own write records (no directory walk), sorted by path."""
+        with self._access(task, actor):
+            current = {}
+            for kind, detail in self.workflow.db.execute(
+                    "SELECT kind,detail FROM events WHERE task=? AND kind IN ('file_created','file_updated','file_deleted',"
+                    "'artifact_received','task_input_provided','sandbox_artifact_imported') ORDER BY sequence", (task,)):
+                detail = json.loads(detail)
+                if not isinstance(detail.get("path"), str):
+                    continue
+                if kind == "file_deleted":
+                    current.pop(detail["path"], None)
+                else:
+                    current[detail["path"]] = {"path": detail["path"], "sha256": detail.get("sha256"),
+                                               "bytes": detail.get("bytes")}
+            files = [current[path] for path in sorted(current)]
+            return {"count": len(files), "files": files[:300], "truncated": len(files) > 300}
 
     def read_text(self, task, actor, path):
         with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
@@ -327,22 +357,55 @@ class FileTools:
             })
             return {"artifact_id": identifier, "sha256": _sha(data), "bytes": len(data)}
 
-    def accept_artifact(self, task, actor, artifact_id, path):
+    def accept_artifact(self, task, actor, artifact_id, path=None, *, replace_sha256=None, allow_failed_source=False):
+        """Accept an offered snapshot as a new file, or, with `replace_sha256`, over the exact current version.
+
+        Replacement (proposed 2026-11-22) uses the same version check and atomic replace as
+        update_text; the receipt records the replaced digest. Without it an existing path is refused.
+        Without `path` the producer's own path is kept, so a received package keeps its layout.
+        An explicitly opted-in failed direct child's already-offered snapshot is partial
+        data, never a successful subtask. Cancelled sources remain refused.
+        """
+        if type(allow_failed_source) is not bool:
+            raise FileToolError("Failed-source recovery requires an explicit boolean")
+        if path is None:
+            label = self.workflow.db.execute("SELECT path FROM artifact_labels WHERE artifact=?", (artifact_id,)).fetchone()
+            if label is None:
+                raise FileToolError("This offer records no source path; pass an explicit path")
+            path = label[0]
         with self._access(task, actor) as directory:
             artifact = self.workflow._row("artifacts", artifact_id)
             source = self.workflow._task(artifact["source_task"], actor)
+            partial = (allow_failed_source and source["state"] == "failed" and source["parent"] == task)
             if (artifact["target_task"] != task or artifact["recipient"] != actor
-                    or artifact["consumed"] or source["state"] in {"failed", "cancelled"}):
+                    or artifact["consumed"] or source["state"] == "cancelled"
+                    or source["state"] == "failed" and not partial):
                 raise FileToolError("Artifact is not offered to this task, is consumed, or its source terminated")
             data = self._read(self.handoffs_fd, artifact_id)
             self._expected(data, artifact["sha256"])
             if len(data) != artifact["bytes"]:
                 raise FileToolError("Artifact size does not match its manifest")
             with self._parent(directory, path, create=True) as (parent, name):
-                self._create(parent, name, data)
+                if replace_sha256 is None:
+                    self._create(parent, name, data)
+                else:
+                    self._expected(self._read(parent, name), replace_sha256)
+                    temporary = ".write-" + uuid4().hex
+                    self._create(parent, temporary, data)
+                    try:
+                        os.replace(temporary, name, src_dir_fd=parent, dst_dir_fd=parent)
+                    finally:
+                        try:
+                            os.unlink(temporary, dir_fd=parent)
+                        except FileNotFoundError:
+                            pass
             self.workflow.db.execute("UPDATE artifacts SET consumed=1 WHERE id=?", (artifact_id,))
-            result = self._receipt(task, actor, "artifact_received", path, data, artifact_id=artifact_id)
-            return {**result, "artifact_id": artifact_id}
+            result = self._receipt(task, actor, "artifact_received", path, data, artifact_id=artifact_id,
+                                   replaced_sha256=replace_sha256, partial_source=partial)
+            return ({**result, "artifact_id": artifact_id}
+                    | ({"replaced_sha256": replace_sha256} if replace_sha256 else {})
+                    | ({"source_state": "failed", "partial": True,
+                        "note": "Partial data only: verify it independently; the child remains failed"} if partial else {}))
 
     def text_verifier(self, task, actor, expected):
         """Return a trusted verifier for use inside Workflow.finish_task's transaction.

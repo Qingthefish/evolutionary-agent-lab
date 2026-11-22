@@ -251,11 +251,13 @@ Opening script:
 | 7 / 7:30–9:15 | Actual live status | Show real assignments, tool effects, outputs, human waits or failure evidence from this presentation's run. Report parent and child outcomes separately. Do not force acceptance or label a running task complete. |
 | 8 / 9:15–10:00 | Reflection + close | State the observed result, remaining limits and next engineering steps; point to the repository, architecture, honest report and genuine contribution history. End within 10 minutes. |
 
-The live task runs alongside the talk. The notice requires a start at the
-beginning; it does not state a separate run completion deadline or new scoring
-rule. Do not assume either that every task must finish inside the talk or that
-unbounded continuation is permitted. Preserve the actual state at the end and
-follow the instructor's directions. A service failure is reported with its
+The live task runs alongside the talk. The instructor's reply shown in the
+owner-supplied November 22 screenshot says tasks would normally finish within
+ten minutes; otherwise results may be shared with the instructor and TA later.
+The talk remains ten minutes. Preserve the state at its end and follow up with
+actual results under the authorized runtime limits; no unlimited continuation,
+counter reset, new scoring rule or automatic email submission is inferred.
+A service failure is reported with its
 evidence; an old trace must not silently stand in for the required live start.
 
 ### Live presentation preparation
@@ -347,7 +349,7 @@ gain or supply a teacher score.
 | Field | Status |
 | --- | --- |
 | Official dataset version/hash and exact task count | Mid-test: three scenarios and six ordered tasks, with source hashes recorded by C06. The live task link will arrive during the preceding group's presentation; final task count/bytes are not known yet. |
-| Instructor timing, human intervention, memory reset/repeat and scoring rules | Ten-minute talk and live start are confirmed; other protocol details remain unverified. |
+| Instructor timing, human intervention, memory reset/repeat and scoring rules | Ten-minute talk and live start are confirmed; the supplied instructor reply allows sharing unfinished-run results later. Other protocol details and later sharing deadline remain unverified. |
 | Final revision/configuration and authorized evaluation budget | To freeze for the official run |
 | Official completion rate, execution time and failure/memory analysis | No official results claimed |
 | Presentation/report deadlines and delivery evidence | Method, Mid-test results and Reflection are confirmed slide themes; verify group slot and report date, and retain actual delivery evidence. |
@@ -460,3 +462,78 @@ task was resumed. An earlier local environment lookup failed before transport
 construction. Its record is retained separately; fixing environment export
 released the same unissued reservation once. Known usage is unchanged. The
 failure still does not establish its remote cause or a provider-wide outage.
+
+## 12. November 22 coordinator catch-up
+
+### Contributed results and local evidence
+
+The latest shared main includes #71/#72/#74. The coordinator integration branch
+also preserves the original commits of #75 (`ebfc59d`), #76 (`592f3c0`) and #77
+(`27959f8`), with review corrections rather than rewritten contributor history.
+The [#77 description](https://github.com/Qingthefish/evolutionary-agent-lab/pull/77)
+and supplied screenshots report:
+
+| Scenario | Contributor-reported evidence | Independently verified on coordinator machine |
+| --- | --- | --- |
+| Software | full13 reports both tasks succeeded; full14 failed; latest full16 Task 1 was awaiting final review and Task 2 had not started in the supplied snapshot | None of these raw runs is available locally. Earlier local booking behavior checks remain separate. |
+| Newsroom | full13 and full14 report both tasks succeeded | Raw records not available locally; report is not a held-out result. |
+| Securities | full13 Task 1 succeeded and Task 2 exhausted tokens; full14 reports both tasks succeeded | Raw records not available locally; a later success does not erase the earlier failure. |
+
+No run directories or downloadable evidence attachments were found on #77;
+the owner confirmed they are likely only on the contributor's computer. Do not
+turn these reports into independently accepted outcomes or combine different
+rounds into a six-of-six score. Some reported runs changed revision while in
+progress. Preserve that provenance before comparing time or asserting a fixed
+release's performance. Record actual reviewer identity; technical assistant
+checks must not be labelled as a human answer or decision.
+
+### Current integrated-code checks
+
+Implementation source `d8dec1a` passes **889 discovered / 880 passed / nine
+optional UI skips**, including the existing actual-container checks. The
+coordinator found a plain acceptance implicitly waiving failed children; it
+now requires the exact disclosed `--waive-failed-subtask` IDs, rejects stale
+proposals and rolls back refused reviews. A failed direct child's previously
+offered snapshot can also be explicitly recovered as labelled partial data.
+This does not expose unoffered files, accept cancelled sources, or mark either
+task successful. Ordinary fixtures were updated to explicitly name their
+synthetic waivers; actual-human decisions were not manufactured.
+
+A **fresh real HKGAI known-development probe** on that revision completed in
+**18 actual requests / 86.693 seconds / 124,918 reported tokens**. The coordinator
+delegated the original JSONL input to the coder, the coder wrote source and
+ran it in the digest-pinned no-network sandbox, and the coordinator received
+and read the exact output and delivered the report. Both tasks succeeded under
+their predeclared independent contract. Two actual sandbox executions exited
+zero and confirmed cleanup; six root and five coder criteria pass a separate
+read-only recheck. The original database and file hashes remained unchanged.
+No human decision was requested or simulated. This used 18 of a 32-request
+run cap within the standing 48-request work-round ceiling, one fresh root,
+1024 output tokens per request and 90-second socket timeout. No extra probe
+was started just to spend the remainder.
+
+This is a bounded two-active-role development task with a declared coder
+contract, not a new instructor task, a general-planning proof, a learning
+comparison or a speedup result. It does not reclassify failed historical roots
+or establish the contributor's full Software pair. The requested e7 model
+returned e10-labelled replies; equivalence remains unconfirmed. All three
+performance switches were off. The optional prompt/fetch changes have
+engineering coverage; their actual HKGAI speed advantage remains unmeasured.
+
+### Wednesday technical readiness
+
+| Gate | Current observation / remaining action |
+| --- | --- |
+| Allowed model and complete bounded execution | Fresh local real probe above completed, with source-bound execution, handoff/read and independent checks. This does not guarantee service availability on presentation day. |
+| Original four-role setup and export | Actual CLI init/post/preflight/read-only export rehearsed with `lead/dev/qa/release`, unchanged original mid-test data and zero model calls. The original database hash is unchanged by export. |
+| Unknown task-link ingestion | Similar format is announced; the current adapter remains specific to the canonical mid-test package. Preserve the received final files and review the actual mapping before launch; final import is not yet verified. |
+| Submission and review boundaries | Exact snapshot versions, explicit failed-child waivers and labelled partial recovery are checked. Real clarification/critical-action choices still require the actual human. |
+| Timing | Talk is ten minutes. The instructor reply supplied as a screenshot allows sharing run results with the instructor/TA later if needed. Assignment-to-final wall time remains separate from local deadline pause/idle exclusions. |
+| Frozen presentation machine/configuration | Freeze one reviewed revision, use a fresh state, verify that machine's model key/sandbox and rehearse its launch. Keep optional speed switches off unless a distinct reviewed run establishes their suitability. A different presenter's machine needs its own reproduction. |
+| Mid-test slides and final results | Distinguish contributor reports, locally audited development evidence, engineering checks and actual official results. Obtain raw teammate exports or independently reproduce the required scenarios before claiming acceptance. |
+
+The private `runs/review-readiness-20261122/` package retains the source-bound
+audit, raw live trace, original failures, CLI startup/export rehearsal and
+provided instructor-reply screenshot. It is not a second progress register;
+the [Roadmap](team-roadmap.md) remains the only task/owner record. No slide deck
+was generated; the owner is preparing it separately.

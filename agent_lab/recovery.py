@@ -35,10 +35,16 @@ def links(workflow):
     return {r['failed']: r['replacement'] for r in workflow.db.execute("SELECT failed,replacement FROM task_retries")}
 
 
+def waived(workflow):
+    """Failed subtasks explicitly named as exceptions in an accepted review of the disclosed proposal."""
+    return {json.loads(row['detail'])['child'] for row in workflow.db.execute(
+        "SELECT detail FROM events WHERE kind='failed_subtask_waived'")}
+
+
 def active_tasks(workflow, tasks):
-    """Hide abandoned branches for scheduling only; metrics retain every task."""
+    """Hide abandoned branches for scheduling only; metrics retain every task. Waived failures are resolved."""
     tasks = list(tasks)
-    replaced = links(workflow)
+    replaced = set(links(workflow)) | waived(workflow)
     by_id = {t['id']: t for t in tasks}
     active = []
     for task in tasks:
@@ -53,8 +59,12 @@ def active_tasks(workflow, tasks):
 
 
 def children_complete(workflow, parent):
+    """Every child succeeded, was replaced, or (failed and) was explicitly waived by the human reviewer."""
     replaced = links(workflow)
+    resolved = {json.loads(row['detail'])['child'] for row in workflow.db.execute(
+        "SELECT detail FROM events WHERE task=? AND kind='failed_subtask_waived'", (parent,))}
     return all(t['state'] == 'succeeded' or t['id'] in replaced
+               or (t['id'] in resolved and t['state'] in ('failed', 'cancelled'))
                for t in workflow.db.execute("SELECT id,state FROM tasks WHERE parent=?", (parent,)))
 
 

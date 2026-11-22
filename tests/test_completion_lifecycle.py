@@ -25,7 +25,7 @@ from agent_lab.core import Workflow
 from agent_lab.deepseek import DeepSeekClient
 from agent_lab.evaluation.official_live import POLICIES, review_proposal, tools_for_role, with_completion_tools
 from agent_lab.files import FileTools
-from agent_lab.runner import Limits
+from agent_lab.runner import Limits, REPEAT_GRACE
 from agent_lab.scheduler import MultiAgentScheduler, Role
 
 R = FinishPolicy().finish_requests
@@ -208,7 +208,11 @@ class Lifecycle(unittest.TestCase):
             decision = review(task, rounds[task])
             if decision is None:
                 return state
-            review_proposal(self.scheduler, task, decision, f"Synthetic fixture review: {decision}")
+            # This scripted reviewer deliberately accepts disclosed exceptions. Live reviewers must
+            # inspect them and explicitly name the IDs; an ordinary accept never waives them.
+            disclosed = self.events("completion_proposed", task)[-1][1].get("unreplaced_failed_subtasks", [])
+            review_proposal(self.scheduler, task, decision, f"Synthetic fixture review: {decision}",
+                            waive_failed_subtasks=[child["id"] for child in disclosed] if decision == "accept" else [])
         self.fail("lifecycle did not terminate")
 
     # --- Invariants checked after every run. -----------------------------------------------------
@@ -227,13 +231,18 @@ class Lifecycle(unittest.TestCase):
             if task["state"] == "succeeded":
                 self.assertIn(task["id"], reviewed)  # I1/I4: success only through an accepted human review.
                 children = [c for c in tasks if c["parent"] == task["id"] and c["id"] not in replaced]
-                self.assertTrue(all(c["state"] == "succeeded" for c in children))  # I2.
+                # I2: every child succeeded, or was disclosed with the proposal and explicitly waived by the reviewer.
+                waived = {d["child"] for t, d in self.events("failed_subtask_waived") if t == task["id"]}
+                self.assertTrue(all(c["state"] == "succeeded" or c["id"] in waived for c in children))
             if task["state"] == "failed":
                 self.assertTrue(task["evidence"])  # I8: a stated reason; artifacts stay in the task.
         for actor, agent in self.agents.items():
             for payload in agent.requests:
-                if window(payload):  # I5/I6: the window schema offers completion actions only.
-                    self.assertLessEqual(offered(payload), completion.COMPLETION_TOOLS)
+                if window(payload):  # I5/I6: completion actions only, plus file-fix tools after a review rejection.
+                    from agent_lab.gateway import FIX_TOOLS
+                    self.assertLessEqual(offered(payload), completion.COMPLETION_TOOLS | FIX_TOOLS)
+                    if b"trusted_verification_failure" not in payload:
+                        self.assertLessEqual(offered(payload), completion.COMPLETION_TOOLS)
         for task, entered in self.events("finish_mode_entered"):
             later = self.workflow.db.execute(
                 "SELECT count(*) FROM events WHERE task=? AND kind='model_attempt_reserved' AND sequence>("
@@ -273,7 +282,11 @@ class Lifecycle(unittest.TestCase):
                     if root_style == "offschema":
                         self.assertIn(self.outcome(root), {"exhausted"})
                     elif child_style in {"blocker", "offschema"} and children:
-                        self.assertEqual(self.outcome(root), "blocker")  # Never a proposal over a failed child.
+                        # A proposal over failed children is allowed: the system discloses them with it, and only
+                        # the reviewer's acceptance waives exactly those children (I2).
+                        self.assertEqual(self.outcome(root), "proposed")
+                        disclosed = self.events("completion_proposed", root["id"])[-1][1]["unreplaced_failed_subtasks"]
+                        self.assertEqual({c["id"] for c in disclosed}, {tasks[c]["id"] for c in children})
                     else:
                         self.assertEqual(root["state"], "succeeded")  # Proposed and accepted by the review.
 
@@ -292,8 +305,9 @@ class Lifecycle(unittest.TestCase):
                     self.assertEqual(self.outcome(tasks[child]), "exhausted")
                 root_window = [p for p in self.agents[root_role].requests if window(p)]
                 self.assertGreaterEqual(len(root_window), 1)
-                self.assertEqual(offered(root_window[-1]), {"report_blocker"})  # Failed children: only a blocker.
-                self.assertEqual(self.outcome(tasks[root_role]), "blocker")
+                # Failed children no longer remove the proposal; they are disclosed with it.
+                self.assertEqual(offered(root_window[-1]), {"report_blocker", "submit_for_verification"})
+                self.assertEqual(self.outcome(tasks[root_role]), "proposed")
 
     def test_a_sibling_blocked_in_review_keeps_its_window_while_the_other_spends_everything(self):
         def early(payload, n, state):  # Submits at once; after a later rejection it needs its window.
@@ -335,7 +349,10 @@ class Lifecycle(unittest.TestCase):
                         rejected = True  # Both siblings open; the second has spent its whole window.
                         review_proposal(self.scheduler, first_task, "reject", "Synthetic fixture review: reject")
                     elif waiting and rejected:
-                        review_proposal(self.scheduler, sorted(waiting)[0], "accept", "Synthetic fixture review: accept")
+                        selected = sorted(waiting)[0]
+                        disclosed = self.events("completion_proposed", selected)[-1][1].get("unreplaced_failed_subtasks", [])
+                        review_proposal(self.scheduler, selected, "accept", "Synthetic fixture review: accept",
+                                        waive_failed_subtasks=[child["id"] for child in disclosed])
                     else:
                         break
                 self.assertTrue(rejected)
@@ -526,6 +543,83 @@ class Lifecycle(unittest.TestCase):
         tasks = self.check_invariants()
         self.assertEqual(self.outcome(tasks["fund_manager"]), "blocker")
         self.assertEqual(self.events("finish_mode_forced")[0][1]["reason"], "repeated_outcomes")
+        # A notice comes first; the window is forced only after REPEAT_GRACE more identical outcomes.
+        self.assertEqual(len(self.events("repeated_outcome_warned")), 1)
+        reads = self.workflow.db.execute("SELECT count(*) FROM tool_calls WHERE name='read_text'").fetchone()[0]
+        self.assertEqual(reads, 3 + REPEAT_GRACE)
+
+    def test_a_rejection_reopens_a_forced_window_so_the_feedback_can_be_acted_on(self):
+        def manager(payload, n, state):
+            if b"trusted_verification_failure" in payload and not state.get("fixed"):
+                if "create_text" not in offered(payload):
+                    state["stuck"] = True  # Before the fix: only completion tools after the rejection.
+                    return reply(("report_blocker", {"summary": "Rejected inside a forced finish window and unable to change any file"}))
+                state["fixed"] = True
+                return reply(("create_text", {"path": "proposal.md", "content": "Revised after the review"}))
+            if state.get("fixed"):
+                return reply(("submit_for_verification", {"summary": "proposal.md revised after the review feedback"}))
+            if n <= 3:
+                return cut_off()  # Three cut-offs in a row force the finish window.
+            return reply(("submit_for_verification", {"summary": "First proposal inside the forced finish window"}))
+
+        self.build("securities-fund", {"fund_manager": Agent(manager)}, cap=40)
+        self.drive(review=lambda task, round_: "reject" if round_ == 1 else "accept")
+        tasks = self.check_invariants()
+        self.assertEqual(self.events("finish_mode_forced")[0][1]["reason"], "output_limit")
+        self.assertEqual(len(self.events("finish_mode_reopened")), 1)
+        self.assertFalse(self.agents["fund_manager"].state.get("stuck"))
+        self.assertEqual(tasks["fund_manager"]["state"], "succeeded")
+
+    def test_a_failed_subtask_is_disclosed_with_the_proposal_and_accepting_waives_it(self):
+        def chief(payload, n, state):
+            if n == 1:
+                return reply(("delegate_task", {"assignee": "reporter", "title": "Report"}))
+            return reply(("submit_for_verification", {"summary": "Package complete; the chief editor wrote the report"}))
+
+        self.build("newsroom", {"chief_editor": Agent(chief), "reporter": Agent(worker("blocker"))}, cap=40)
+        state = None
+        seen = {}
+
+        def review(task, round_):
+            need = [n for n in self.scheduler.status().get("needs") or [] if n.get("task") == task]
+            seen[task] = self.events("completion_proposed", task)[-1][1].get("unreplaced_failed_subtasks")
+            return "accept"
+        self.drive(review=review)
+        tasks = self.check_invariants()
+        reporter, chief_id = tasks["reporter"], tasks["chief_editor"]["id"]
+        self.assertEqual(reporter["state"], "failed")
+        self.assertEqual([c["id"] for c in seen[chief_id]], [reporter["id"]])  # The system disclosed it.
+        self.assertEqual([d["child"] for _, d in self.events("failed_subtask_waived")], [reporter["id"]])
+        self.assertEqual(tasks["chief_editor"]["state"], "succeeded")
+
+    def test_children_leave_their_parent_an_integration_reserve(self):
+        # Live Securities Task 2 (2026-11-22): two subtasks spent 71 of 80 requests; the parent could not finish.
+        children = ("research", "risk")
+        agents = {"fund_manager": Agent(coordinator(children, "stall_schema"))}
+        agents.update({c: Agent(worker("offschema")) for c in children})  # Both keep working and ignore windows.
+        self.build("securities-fund", agents, cap=40)  # Shared requests, not tool calls, are the binding limit.
+        self.drive()
+        self.check_invariants()
+        used_by_children = sum(len(self.agents[c].requests) for c in children)
+        reserve = min(FinishPolicy().min_child, 40 // 8)
+        self.assertLessEqual(used_by_children, 40 - R - reserve)  # The parent kept its window and its reserve.
+        self.assertGreater(len(self.agents["fund_manager"].requests), R)
+
+    def test_a_repeat_notice_lets_the_agent_change_course_without_a_forced_finish(self):
+        def lead(payload, n, state):
+            if b"repeated_outcome_notice" in payload and not state.get("written"):
+                state["written"] = True
+                return reply(("create_text", {"path": "analysis.md", "content": "Checked the files; wrote the analysis"}))
+            if state.get("written"):
+                return reply(("submit_for_verification", {"summary": "analysis.md written after the missing input was confirmed"}))
+            return reply(("read_text", {"path": "missing.md"}))
+
+        self.build("securities-fund", {"fund_manager": Agent(lead)}, cap=48)
+        self.drive()
+        tasks = self.check_invariants()
+        self.assertEqual(self.outcome(tasks["fund_manager"]), "proposed")
+        self.assertEqual(self.events("finish_mode_forced"), [])
+        self.assertEqual(len(self.events("repeated_outcome_warned")), 1)
 
     def test_a_handoff_batch_ending_in_completion_is_accepted_but_a_handoff_alone_is_not(self):
         def dev(payload, n, state):

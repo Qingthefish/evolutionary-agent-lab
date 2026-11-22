@@ -54,6 +54,29 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Coordinator catch-up (2026-11-22):** the integration review brings together
+the contributed completion/recovery changes (#77), opt-in stable prompt layout
+(#76) and opt-in overlapping retrieval (#75). It adds explicit failed-child
+review waivers and labelled recovery of a failed direct child's already-offered
+snapshot. No unoffered private file is exposed and no child failure is erased.
+The integrated code passes 880 of 889 engineering checks, with nine optional
+UI skips and actual-container checks executed. A fresh HKGAI development root
+completed input delegation, isolated source execution, checked handoff/read and
+report delivery in 18 requests / 86.693 seconds. Independent read-only audit
+rechecked the six root/five coder criteria and retained the original database.
+This is a bounded known development case, not a six-task score or a learning/
+speedup claim. [Evidence and remaining presentation gates](docs/final-report.md#12-november-22-coordinator-catch-up)
+
+The contributor reports complete Newsroom and Securities pairs and successes
+in an earlier Software round, with the latest Software rerun still incomplete.
+Those `full13/full14/full16` raw records are on the contributor's machine and
+are not attached to the PR. Their outcomes remain contributor-reported, not
+independently verified here; do not combine best results across different
+rounds into a six-of-six claim. Current local four-role setup/preflight/export
+is rehearsed with original mid-test inputs and zero calls. Unknown final-link
+input mapping, final hardware/configuration and actual official outcomes still
+need acceptance. All performance switches remain off for the reviewed check.
+
 **Connection observation (2026-11-22, 16:50 Hong Kong time):** one newly
 owner-requested minimal HKGAI request completed in 1.329 seconds with `OK.`
 and 116 reported tokens. The existing parser accepts it; the punctuation means

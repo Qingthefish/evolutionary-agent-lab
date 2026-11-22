@@ -88,6 +88,7 @@ class TruncatedCompletion(ProviderError):
 
 
 _TOOL_NAME = re.compile(r"[a-z_]{1,64}")
+MAX_PARSED_TOOL_CALLS = 64
 
 
 def truncation_shape(source):
@@ -311,7 +312,10 @@ class DeepSeekClient:
                 raise ValueError()
             check["tool_calls"] = len(calls)
             check["parse_rule"] = "tool_call_limit"
-            if len(calls) > 16:
+            # Proposed 2026-11-22: above the gateway's 16-call batch limit a reply is refused there with feedback and
+            # the task continues; only an absurd count is an invalid completion here. Live Software Task 1: a lead's
+            # 18-call reply stopped the whole task.
+            if len(calls) > MAX_PARSED_TOOL_CALLS:
                 raise ValueError()
             identifiers = set()
             for call in calls:

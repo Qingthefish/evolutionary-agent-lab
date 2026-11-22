@@ -20,7 +20,7 @@ from .official_session import OfficialScenarioSession, TERMINAL, _workflow
 
 TOOL_POLICY = "software-files-coordination-python-v1"
 TOOLS = ("read_messages", "post_message", "list_tasks", "ask_human",
-         "create_text", "read_text", "update_text", "append_text", "offer_artifact", "accept_artifact",
+         "create_text", "read_text", "list_files", "update_text", "append_text", "offer_artifact", "accept_artifact",
          "delegate_task", "delegate_with_inputs", "retry_failed_task", "run_python", "submit_for_verification")
 # Proposed 2026-11-18 (owner-approved, pending merge): a parent may replace a failed
 # direct child, carrying explicitly offered snapshots, instead of the whole task
@@ -150,7 +150,9 @@ def _posted_root(session, sequence):
 
 def tools_for_role(scenario, agent, tools):
     if scenario == "software-engineering" and agent == "lead":
-        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text", "run_python"})
+        # The lead coordinates and does not write code, but it can run the integrated deliverable to check it before
+        # submitting (2026-11-22: leads shipped misplaced or outdated files they had no way to run).
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text"})
     return tools
 
 
@@ -170,7 +172,7 @@ def with_completion_tools(tools):
 
 
 def make_scheduler(session, root, files, live, services, *, show_execution_budget=False, finish_policy=None,
-                   parallel_model_calls=1):
+                   parallel_model_calls=1, stable_prompt_prefix=False):
     policy = scenario_policy(session)
     second = session._root(2)
     allow_html = session.scenario["id"] == "securities-fund" and second is not None and second["root"] == root
@@ -196,7 +198,8 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
         show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS,
-        finish_policy=finish_policy, parallel_model_calls=parallel_model_calls)
+        finish_policy=finish_policy, parallel_model_calls=parallel_model_calls,
+        stable_prompt_prefix=stable_prompt_prefix)
 
 
 def _review_boundaries(scheduler):
@@ -215,7 +218,15 @@ def _review_boundaries(scheduler):
         elif has_sessions:
             row = workflow.db.execute("SELECT status FROM runner_sessions WHERE task=?", (task["id"],)).fetchone()
             if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping", "provider_uncertain"}:
-                needs.append({"task": task["id"], "kind": row["status"]})
+                need = {"task": task["id"], "kind": row["status"]}
+                if row["status"] == "awaiting_verification":
+                    proposal = workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
+                                                   "ORDER BY sequence DESC LIMIT 1", (task["id"],)).fetchone()
+                    failed = json.loads(proposal["detail"]).get("unreplaced_failed_subtasks") if proposal else None
+                    if failed:
+                        need["unreplaced_failed_subtasks"] = failed
+                        need["required_failed_subtask_waivers"] = [child["id"] for child in failed]
+                needs.append(need)
     return needs
 
 
@@ -223,9 +234,41 @@ def _review_boundaries(scheduler):
 _UNCERTAIN = {"calling", "processing", "stopping", "provider_uncertain"}
 
 
+# Proposed 2026-11-22: a gap longer than this, with no controller running and nothing awaiting a human, is
+# not task time. Live Newsroom Task 2: a six-hour operator absence ended the tree on its duration budget.
+IDLE_GRACE_SECONDS = 120
+
+
+def record_controller_idle(scheduler):
+    """Before advancing: exclude the gap since the tree's last event from deadlines when nothing could run.
+
+    Human waits still count (an unanswered request or a pending review means a human, not the controller,
+    was holding the work). Nothing else changes; the gap is recorded per open task as `controller_idle`.
+    """
+    workflow = scheduler.workflow
+    tasks = [task for task in descendants(workflow, scheduler.root) if task["state"] not in TERMINAL]
+    if not tasks:
+        return None
+    ids = [task["id"] for task in tasks]
+    every = [task["id"] for task in descendants(workflow, scheduler.root)]  # Include subtasks that just ended.
+    marks = ",".join("?" * len(every))
+    last = workflow.db.execute(f"SELECT max(timestamp) FROM events WHERE task IN ({marks})", every).fetchone()[0]
+    now = workflow.clock()
+    if last is None or now - last <= IDLE_GRACE_SECONDS:
+        return None
+    if _review_boundaries(scheduler) or any(task["state"].startswith("waiting_") for task in tasks):
+        return None
+    detail = {"from": last, "to": now, "seconds": round(now - last, 3)}
+    with workflow._transaction():
+        for task in ids:
+            workflow._event(task, scheduler.human, "controller_idle", detail)
+    return detail
+
+
 def advance(scheduler, turns):
     if type(turns) is not int or not 1 <= turns <= 8:
         raise WorkflowError("Advance by one to eight turns at a time")
+    record_controller_idle(scheduler)
     if getattr(scheduler, "parallel_model_calls", 1) > 1:
         return _advance_overlapping(scheduler, turns)
     for _ in range(turns):
@@ -263,9 +306,14 @@ def _advance_overlapping(scheduler, turns):
     return result
 
 
-def review_proposal(scheduler, task_id, decision, feedback):
+def review_proposal(scheduler, task_id, decision, feedback, *, waive_failed_subtasks=()):
     if decision not in {"accept", "reject"} or not feedback.strip() or len(feedback) > 4096:
         raise WorkflowError("Provide concrete review evidence or feedback")
+    if (not isinstance(waive_failed_subtasks, (list, tuple))
+            or any(not isinstance(child, str) or not child for child in waive_failed_subtasks)
+            or len(set(waive_failed_subtasks)) != len(waive_failed_subtasks)
+            or decision != "accept" and waive_failed_subtasks):
+        raise WorkflowError("Use distinct explicit failed-subtask waiver IDs only with an acceptance")
     runner = scheduler.runner(task_id)
     if decision == "reject":
         runner.review_failed(feedback, reviewer=scheduler.human)
@@ -277,9 +325,23 @@ def review_proposal(scheduler, task_id, decision, feedback):
         state = runner.status()
         if state["runner_state"] != "awaiting_verification":
             raise WorkflowError("No current proposal is awaiting review")
+        proposal = workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
+                                       "ORDER BY sequence DESC LIMIT 1", (task_id,)).fetchone()
+        disclosed = (json.loads(proposal["detail"]).get("unreplaced_failed_subtasks") or []) if proposal else []
+        from ..completion import unreplaced_failed_subtasks
+        current = unreplaced_failed_subtasks(workflow, task_id)
+        if {child["id"] for child in current} != {child["id"] for child in disclosed}:
+            raise WorkflowError("Failed subtasks changed after the proposal; reject and obtain a new proposal")
+        if set(waive_failed_subtasks) != {child["id"] for child in disclosed}:
+            raise WorkflowError("Acceptance requires explicit failed-subtask waivers matching the disclosed proposal; "
+                                "inspect the failures and name each with --waive-failed-subtask")
         workflow._event(task_id, scheduler.human, "human_review_recorded", {
             "decision": "accepted", "feedback": feedback, "proposal_attempt": state["protocol_attempts"],
+            "waive_failed_subtasks": list(waive_failed_subtasks),
         })
+        for child in disclosed:
+            workflow._event(task_id, scheduler.human, "failed_subtask_waived",
+                            {"child": child["id"], "basis": "explicitly named in the accepted review"})
         return {"human_review_accepted": True}
 
     workflow.finish_task(task_id, task["assignee"], verifier=reviewed_checks)
@@ -364,10 +426,20 @@ def main(argv=None):
             command.add_argument("--parallel-model-calls", type=int, choices=(1, 2), default=1,
                                  help="Opt-in: overlap the provider requests of up to two independent ready tasks "
                                       "(default 1, sequential)")
+            command.add_argument("--stable-prompt-prefix", action="store_true",
+                                 help="Opt-in: send the live execution budget as the last message instead of rewriting "
+                                      "the first task message, so earlier prompt text is unchanged between requests")
+
+            command.add_argument("--parallel-web-fetches", type=int, choices=(1, 2, 3, 4), default=1,
+                                 help="Opt-in: overlap the HTTPS fetches of up to N consecutive search_web/retrieve_text "
+                                      "calls in one reply; results are still recorded in call order (default 1, sequential)")
         elif name == "review":
             command.add_argument("--task", required=True)
             command.add_argument("--decision", choices=("accept", "reject"), required=True)
             command.add_argument("--feedback", required=True)
+            command.add_argument("--waive-failed-subtask", action="append", default=[],
+                                 help="Explicitly waive this failed child disclosed in the current proposal; "
+                                      "repeat for each reviewed exception (accept only)")
         elif name == "reconcile":
             command.add_argument("--task", required=True)
             command.add_argument("--action", choices=tuple(RECONCILE), required=True)
@@ -402,13 +474,16 @@ def main(argv=None):
                     stack.callback(files.close)
                     services = runtime_services(workflow, files, live)
                     stack.callback(services.close)
+                    if services.retrieval is not None:
+                        services.retrieval.allow_concurrent_fetches(getattr(args, "parallel_web_fetches", 1))
                     if args.finish_protocol and not args.show_execution_budget:
                         raise WorkflowError("--finish-protocol requires --show-execution-budget")
                     finish_policy = FinishPolicy(finish_requests=args.finish_requests, min_child=args.min_child_requests) if args.finish_protocol else None
                     scheduler = make_scheduler(session, root, files, live, services,
                                                show_execution_budget=args.show_execution_budget,
                                                finish_policy=finish_policy,
-                                               parallel_model_calls=getattr(args, "parallel_model_calls", 1))
+                                               parallel_model_calls=getattr(args, "parallel_model_calls", 1),
+                                               stable_prompt_prefix=getattr(args, "stable_prompt_prefix", False))
                     if args.command == "preflight":
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
@@ -422,7 +497,8 @@ def main(argv=None):
                     elif args.command == "reconcile":
                         result = reconcile(scheduler, args.task, args.action, args.reason, human=session.human)
                     else:
-                        review_proposal(scheduler, args.task, args.decision, args.feedback)
+                        review_proposal(scheduler, args.task, args.decision, args.feedback,
+                                        waive_failed_subtasks=args.waive_failed_subtask)
                         result = scheduler.status()
         print(json.dumps(result, ensure_ascii=False, indent=2))
     except (WorkflowError, OSError, ValueError) as error:

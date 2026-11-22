@@ -8,7 +8,7 @@ import math
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError, TruncatedCompletion
 from .hkgai import HKGAIClient, HKGAIHTTP
-from .gateway import ToolBudgetError, ToolRequestError
+from .gateway import ToolBudgetError, ToolRequestError, FIX_TOOLS
 from .files import INPUT_PROTOCOL
 from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
 from . import budget, completion
@@ -87,7 +87,15 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
 
 
 FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
+CURRENT_BUDGET_SCOPE = "Current local limits for this request; replaces every earlier budget view."
 FINISH_EXHAUSTED = "Finish window used without a valid submission or blocker report; "
+# With the protocol, the first run of identical outcomes gets a notice instead of an immediate forced finish; only
+# REPEAT_GRACE more identical outcomes force it. Live Software Task 1 (2026-11-22): a lead re-read one missing path
+# three times and was forced into its finish window with 35 requests unused, so it could not repair the layout.
+REPEAT_GRACE = 2
+REPEAT_NOTICE = ("Your last turns produced the same outcome each time. Repeating it will not change the result: "
+                 "check what actually exists (for example list_files), use a different approach, or hand the work "
+                 "to a role that can do it. Further identical outcomes end your work turns early.")
 # With the protocol, cut-off replies in a row before the finish window is forced. Live Securities Task 2
 # (2026-11-21): forcing after two removed the write-in-parts recovery with 19 requests left.
 FORCE_AFTER_CUTOFFS = 3
@@ -143,12 +151,19 @@ class PreparedTurn:
     number: int
     transcript: list
     tools: list
+    messages: list = None  # What is sent when it differs from the stored transcript (stable prompt prefix).
 
 
 class TaskRunner:
     def __init__(self, gateway, client, *, mode, constraints, limits=Limits(),
-                 verifier=None, verifier_id=None, role=None, allow_html=False, show_execution_budget=False):
+                 verifier=None, verifier_id=None, role=None, allow_html=False, show_execution_budget=False,
+                 stable_prompt_prefix=False):
         self.gateway, self.client = gateway, client
+        if type(stable_prompt_prefix) is not bool:
+            raise RunnerError("Stable prompt prefix requires an explicit boolean setting")
+        # Opt-in, not in the persisted configuration: the live budget is sent as a trailing message
+        # instead of being rewritten into the first task message, so earlier messages stay byte-identical.
+        self.stable_prompt_prefix = stable_prompt_prefix
         self.workflow, self.task, self.actor = gateway.workflow, gateway.task, gateway.actor
         self.limits, self.mode, self.verifier = limits, mode, verifier
         if type(show_execution_budget) is not bool:
@@ -396,9 +411,17 @@ class TaskRunner:
         context = json.loads(transcript[1]['content'])
         if not isinstance(context, dict) or transcript[1]['role'] != 'user':
             raise RunnerError('Trusted task context is unavailable; no model call released')
+        if self.stable_prompt_prefix:
+            # The same budget view, as the latest message of this request only. The stored transcript keeps
+            # the task context without it, so every earlier message (and the provider's prefix) is unchanged.
+            if 'execution_budget' in context:
+                del context['execution_budget']
+                transcript[1] = {**transcript[1], 'content': _json(context)}
+            return transcript, transcript + [{'role': 'user', 'content': _json(
+                {'kind': 'execution_budget', 'scope': CURRENT_BUDGET_SCOPE, 'execution_budget': data})}]
         context['execution_budget'] = data
         transcript[1] = {**transcript[1], 'content': _json(context)}
-        return transcript
+        return transcript, transcript
 
     def _shared_view(self, data, cap):
         """Consistent remaining requests and the completion contract (proposed 2026-11-19).
@@ -433,10 +456,12 @@ class TaskRunner:
                        if self.show_execution_budget else None)
         self.gateway.restricted = (completion.offered_tools(self.workflow, self.task, self.gateway.allowed, self._phase)
                                    if self._phase else None)
+        rejected = self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='finish_mode_reopened'",
+                                            (self.task,)).fetchone()
+        self.gateway.fix_tools = FIX_TOOLS if self.gateway.restricted is not None and rejected else frozenset()
         if self.gateway.restricted is None:
             return
-        if not self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'",
-                                        (self.task,)).fetchone():
+        if not completion.window_record(self.workflow, self.task)["entered"]:  # Once per opening of the window.
             self.workflow._event(self.task, self.actor, "finish_mode_entered", {
                 "reason": self._phase["reason"], "available": self._phase["available"],
                 "finish_left": self._phase["finish_left"], "tools": sorted(self.gateway.restricted)})
@@ -541,7 +566,8 @@ class TaskRunner:
     def call(self, prepared):
         """Provider I/O only: no workflow, file or tool access. Safe on a worker thread."""
         try:
-            return self.client.complete(prepared.transcript, tools=prepared.tools)
+            return self.client.complete(prepared.transcript if prepared.messages is None else prepared.messages,
+                                        tools=prepared.tools)
         except ProviderError as error:  # Includes TruncatedCompletion; handled by apply().
             return error
 
@@ -592,12 +618,13 @@ class TaskRunner:
                 transcript = self._append_input_offers(self._append_child_results(self._append_human_responses(session)))
                 number = session["attempts"] + 1
                 self._enter_phase(number)
+                messages = transcript
                 if self.budget_context:
-                    transcript = self._budget_context(transcript, session, number)
+                    transcript, messages = self._budget_context(transcript, session, number)
                 tools = self.gateway.tools()
                 self.workflow.db.execute(
                     "INSERT INTO runner_turns(task,number,status,request,started) VALUES(?,?,'calling',?,?)",
-                    (self.task, number, _json({"messages": transcript, "tools": tools,
+                    (self.task, number, _json({"messages": messages, "tools": tools,
                      "finish_mode": self.gateway.restricted is not None,
                      "event_floor": self.workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events").fetchone()[0]}),
                      self.workflow.clock()),
@@ -609,7 +636,7 @@ class TaskRunner:
                 self.workflow._event(self.task, self.actor, "model_attempt_reserved", {"number": number, "mode": self.mode})
         if reason is not None:
             return self._limit_stop(reason)
-        return PreparedTurn(self.task, number, transcript, tools)
+        return PreparedTurn(self.task, number, transcript, tools, None if messages is transcript else messages)
 
     def apply(self, prepared, result):
         """Record the provider outcome and apply its tools through the trusted gateway (controller thread)."""
@@ -673,17 +700,26 @@ class TaskRunner:
         except ToolRequestError as error:
             outcomes = [self._tool_error(call, str(error)) for call in calls]
             return self._settle(number, calls, outcomes)
-        outcomes = []
-        for call in calls:
+        outcomes, index = [], 0
+        while index < len(calls):
+            call = calls[index]
             if self._expired():
                 return self._limit_stop("Task duration budget exhausted during tool batch; partial artifacts retained")
             if self._session()["status"] != "processing":
                 return self.status()
             if self.workflow.task(self.task, self.actor)["state"] != "running":
                 outcomes.append(self._tool_error(call, "Not executed: task paused or terminated"))
+                index += 1
                 continue
+            # Opt-in only: consecutive web calls overlap their fetches; results still settle in call order.
+            group = calls[index:index + self.gateway.overlap_length(calls, index)]
+            index += len(group)
             try:
-                outcomes.append(self.gateway.dispatch(call))
+                if len(group) > 1:
+                    outcomes.extend(self._tool_error(item, str(result)) if isinstance(result, ToolRequestError) else result
+                                    for item, result in zip(group, self.gateway.dispatch_retrievals(group)))
+                else:
+                    outcomes.append(self.gateway.dispatch(call))
             except ToolBudgetError as error:
                 return self._stop(str(error))
             except ToolRequestError as error:
@@ -773,7 +809,10 @@ class TaskRunner:
                 self.workflow._event(self.task, self.actor, 'completion_proposed', {
                     'via': 'tool', 'call_id': calls[-1]['id'], 'attempt': number, 'summary': summary,
                     **({'in_finish_window': self._in_finish(), 'forced_finish': bool(self._phase.get('forced')),
-                        'requests_left_after_proposal': self._phase['available']} if self._phase else {})})
+                        'requests_left_after_proposal': self._phase['available'],
+                        # Disclosed by the system, not the model: the reviewer sees them, and accepting is a waiver.
+                        'unreplaced_failed_subtasks': completion.unreplaced_failed_subtasks(self.workflow, self.task)}
+                       if self._phase else {})})
             return self._verify(number, {'role': 'assistant', 'content': summary}, tool_results=outcomes)
         return self._finish_turn(number, outcomes, signature)
 
@@ -789,13 +828,19 @@ class TaskRunner:
                 state = task_state
             else:
                 state = state or ("paused" if task_state.startswith("waiting_") else "ready")
+            if (repeats == self.limits.repeated_outcomes and state == "ready" and self._phase is not None
+                    and not self._in_finish()):
+                messages = list(messages) + [{"role": "user", "content": _json(
+                    {"kind": "repeated_outcome_notice", "repeats": repeats, "instruction": REPEAT_NOTICE})}]
+                self.workflow._event(self.task, self.actor, "repeated_outcome_warned", {"repeats": repeats})
             transcript = json.loads(session["transcript"]) + messages
             self.workflow.db.execute(
                 "UPDATE runner_sessions SET status=?,transcript=?,last_signature=?,repeats=? WHERE task=?",
                 (state, _json(transcript), digest, repeats, self.task),
             )
             self.workflow.db.execute("UPDATE runner_turns SET status='settled' WHERE task=? AND number=?", (self.task, number))
-        if repeats >= self.limits.repeated_outcomes and state == "ready":
+        grace = REPEAT_GRACE if self._phase is not None and not self._in_finish() else 0
+        if repeats >= self.limits.repeated_outcomes + grace and state == "ready":
             if self._phase and not self._in_finish():
                 self._force_finish("repeated_outcomes")
                 return self.status()
@@ -844,8 +889,14 @@ class TaskRunner:
             transcript = json.loads(session["transcript"]) + [{"role": "user", "content": _json({
                 "kind": "trusted_verification_failure", "error": feedback,
             })}]
-            self.workflow.db.execute("UPDATE runner_sessions SET status='ready',transcript=? WHERE task=?",
-                                     (_json(transcript), self.task))
+            if self.show_execution_budget and any(completion.window_record(self.workflow, self.task)[k] for k in ("entered", "forced")):
+                # Live Software Task 1 (2026-11-22): rejected tasks in a forced finish window could only report a
+                # blocker. The rejection asks for changes, so the window and repeat count start again; a low budget
+                # re-enters the window on the next request.
+                self.workflow._event(self.task, reviewer or self.actor, "finish_mode_reopened",
+                                     {"reason": "rejected_by_review"})
+            self.workflow.db.execute("UPDATE runner_sessions SET status='ready',transcript=?,repeats=0,"
+                                     "last_signature=NULL WHERE task=?", (_json(transcript), self.task))
 
     def recover_tools(self):
         """Trusted controller: call only after the prior worker has stopped.
