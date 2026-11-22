@@ -2103,7 +2103,110 @@
       "combined_work_ceiling": 178,
       "launched": true,
       "source_commit": "d8dec1a",
-      "automatic_retry": false
+      "automatic_retry": false,
+      "task1": {
+        "task1_state": "succeeded",
+        "requests": 63,
+        "reported_tokens": 2015011,
+        "unknown_usage_responses": 0,
+        "elapsed_wall_seconds": 1708.368911266327,
+        "database_sha256": "5216e8482ae2716ba11540055685b75673d22fc21b9c8549bd4cb66497795fbb",
+        "readonly_snapshot_sha256": "b4094c5dcad8f96ff5d2b0b641ef3d9bfcff0501c6e2f7b5f603f32443bd1e7a",
+        "technical_assistant_intervention": true,
+        "actual_human_decisions": 0,
+        "controller_acceptance_incident_retained": true,
+        "independent_tests_before": {
+          "passed": 9,
+          "failed": 1
+        },
+        "independent_tests_after": {
+          "passed": 10,
+          "failed": 0
+        },
+        "active_roles": [
+          "lead",
+          "dev"
+        ],
+        "teacher_score": null,
+        "result_sha256": "e542c994b9844e12154a904dd14372efa8b65a0072f8372a194dc442d2f62f85",
+        "independent_negative_verdict_sha256": "18d2c57b105143b8a99b451a4411ec6342b324b8cc04988c58dcf34b4e3dd2e2",
+        "independent_repaired_verdict_sha256": "fa406025733e9bf79fde3991be90ab0c5ec730c7be17c6b87aa66c37c6351db5",
+        "root_acceptance_sha256": "8196640b50efd1191db20cc7595eac433530524a5b3eb7d0feee0cc96dd2d839",
+        "task1_export_manifest_sha256": "8c5029e4dfc639e9f2c239f0a39b11f3432898fe70177b495ee10fd8f4a77115",
+        "root_snapshot_sha256": "b4094c5dcad8f96ff5d2b0b641ef3d9bfcff0501c6e2f7b5f603f32443bd1e7a",
+        "ten_minute_target_met": false,
+        "memory_learning_gain_claimed": false
+      },
+      "task2": {
+        "requests": 78,
+        "reported_tokens": 3103263,
+        "unknown_usage_responses": 0,
+        "elapsed_wall_seconds": 2027.2792818546295,
+        "independent_formal_proposal_tests": {
+          "tests": 16,
+          "passed": 14,
+          "failed": 2
+        },
+        "teacher_score": null,
+        "database_sha256": "8559d20c594961fb574584de3b93077a396d18678916dad76b1ae2d022f7d278",
+        "closed_snapshot_sha256": "1438086713e79dd69c125fe7bb511ce84e0700b94b4e88960b7535d3561b43d4",
+        "automatic_retry": false,
+        "request_budget_closed": true,
+        "raw_failures_preserved": true,
+        "same_group_as_task1": true,
+        "technical_feedback_provided": true,
+        "diagnosis": {
+          "review_before_finish_did_not_authorize_later_fix_tools": true,
+          "gateway_advertised_boolean_but_rejected_actual_boolean": true,
+          "child_left_latest_repair_unoffered": true,
+          "lead_cannot_write_or_start_replacement_with_remaining_budget": true,
+          "source_unchanged_during_run": true
+        },
+        "state": "failed",
+        "accepted_outcome": false,
+        "carried_exact_snapshots": 9,
+        "carry_receipts_sha256": "452093682e147ecef4db8d587940ae5b4033073c2e77e2facd9dc69fbee42ac0",
+        "result_sha256": "ed34c9400ce1ca5918edcd14316190b1efc4daf3e7c0d5ba85da6ea7971fbbb6",
+        "formal_independent_verdict_sha256": "8a0bb629ce82a15384ff3468aa1d12041e3a79d51eaab245f3c7496ebfebf27f",
+        "closed_export_manifest_sha256": "62e774daf65e6766e8d547eb8db3cb5cb1a06dfee3db43e207404cf3da95e6f2"
+      },
+      "actual_additional_requests": 141,
+      "unused_additional_requests": 19,
+      "combined_work_actual_requests": 159,
+      "closed": true
+    },
+    "integration_pr": "https://github.com/Qingthefish/evolutionary-agent-lab/pull/79",
+    "integration_merge": "243fb921d61f01ea767977ef2a8c6ee37860d198",
+    "repair_gateway_followup": {
+      "source_commit": "61a9f868c35b12fe2163defbcc1e152c7e406549",
+      "live_model_requests": 0,
+      "failed_task2_reclassified": false,
+      "regression": {
+        "discovered": 893,
+        "passed": 884,
+        "optional_ui_skips": 9,
+        "actual_container_checks": 21,
+        "log_sha256": "ef4b0b008a64b5e531c758f562ff4bd5990159f4736ccb15310733ba51323cbc"
+      },
+      "corrections": [
+        "Trusted rejection before the first finish window preserves repair tools when that window arrives later; no budget increase or fabricated human rejection",
+        "Actual JSON booleans accepted at the model gateway; failed direct-child recovery stays explicit, partial and limited to offered snapshots"
+      ],
+      "negative_and_repaired_regression_logs": {
+        "repair-regression-before.log": "deb838258c9ad4e07998359e587639e3b42810d315aaac8739702f764ab314d9",
+        "repair-regression-after.log": "05bf5de577b1252bde9134244e555b4a33be5ed9d8c3713a7d15df4b1c71b4ef",
+        "boolean-regression-before.log": "4c242e0c644c34cadce23c5aab7a47b7a7e5725d1151eb5ea0186d7d8e78f0e7",
+        "boolean-regression-after.log": "f750523c19e44f827add73fdfa21adbb95aa0154c56cb2e511610f9949697364"
+      },
+      "role_policies_budgets_and_approval_boundaries_unchanged": true,
+      "new_real_model_acceptance_claimed": false,
+      "remaining_gates": [
+        "Fresh real-model validation of the repaired workflow",
+        "Unknown final task input mapping",
+        "Actual presentation-machine freeze and rehearsal",
+        "R09 scoped runtime GitHub push and genuine action-bound approval",
+        "Final official results and submission materials"
+      ]
     }
   }
 }

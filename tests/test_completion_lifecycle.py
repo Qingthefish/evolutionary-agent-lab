@@ -455,6 +455,48 @@ class Lifecycle(unittest.TestCase):
         self.assertIn("Blocker reported by the agent", tasks["fund_manager"]["evidence"])  # ... then failed honestly.
         self.assertEqual(self.events("human_review_recorded")[0][1]["decision"], "rejected")
 
+    def _early_rejection_then_late_repair(self, *, human_reviewer):
+        def manager(payload, number, state):
+            if number == 1:
+                return reply(("create_text", {"path": "reviewed.md", "content": "incorrect draft"}))
+            for receipt in receipts(payload):
+                if receipt["path"] == "reviewed.md": state["sha256"] = receipt["sha256"]
+            if number == 2:
+                return reply(("submit_for_verification", {"summary": "Initial draft ready for independent review"}))
+            if not window(payload):
+                return reply(("post_message", {"body": f"Reviewing the requested correction, step {number}"}))
+            if "update_text" not in offered(payload):
+                state["repair_hidden"] = True
+                return reply(("report_blocker", {"summary": "Review requested a file correction, but the later finish window hid the repair tools"}))
+            return reply(("update_text", {"path": "reviewed.md", "content": "independently requested correction",
+                                          "expected_sha256": state["sha256"]}),
+                         ("submit_for_verification", {"summary": "reviewed.md corrected after independent feedback"}))
+
+        agent = Agent(manager)
+        self.build("newsroom", {"chief_editor": agent}, cap=12)
+        first = self.drive(review=lambda task, round_: None)
+        self.assertEqual(first["state"], "blocked")
+        self.assertFalse(self.events("finish_mode_entered"))  # Rejected before any finish window.
+        if human_reviewer:
+            review_proposal(self.scheduler, self.root, "reject", "Synthetic human review: correct reviewed.md")
+        else:
+            self.scheduler.runner(self.root).review_failed("Trusted technical check: correct reviewed.md", reviewer=None)
+        self.drive()
+        tasks = self.check_invariants()
+        self.assertFalse(agent.state.get("repair_hidden"))
+        self.assertEqual(tasks["chief_editor"]["state"], "succeeded")
+        from agent_lab.inspection import ArtifactInspector
+        self.assertEqual(ArtifactInspector(self.workflow, self.files).read_file(self.root, "requester", "reviewed.md")["content"],
+                         "independently requested correction")
+        decisions = [event[1]["decision"] for event in self.events("human_review_recorded")]
+        self.assertEqual(decisions, ["rejected", "accepted"] if human_reviewer else ["accepted"])
+
+    def test_human_rejection_before_window_keeps_repairs_available_when_window_arrives(self):
+        self._early_rejection_then_late_repair(human_reviewer=True)
+
+    def test_technical_rejection_before_window_keeps_repairs_without_inventing_human_rejection(self):
+        self._early_rejection_then_late_repair(human_reviewer=False)
+
     def test_a_root_cut_off_twice_is_routed_to_its_finish_window_not_stopped(self):
         def lead(payload, n, state):  # Live Software Task 2: two consecutive cut-off replies stopped the root.
             if n in (1, 2, 3):  # The window is forced after FORCE_AFTER_CUTOFFS (3) in a row.

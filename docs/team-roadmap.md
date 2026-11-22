@@ -885,6 +885,46 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   `runs/review-readiness-20261122/`; this is the sole task register.
   [Current evidence and readiness](final-report.md#12-november-22-coordinator-catch-up)
 
+- **2026-11-22 original Software Task 1 replay:** continued the S01/S02
+  maintenance above on frozen `d8dec1a`; original instructor prompt and roles,
+  two active roles (lead/dev). The first developer proposal failed a
+  deterministic independent first-initialization race check (nine/ten passed).
+  Concrete technical feedback led to an Agent repair; all ten unchanged
+  independent checks then passed in the actual container. Exact revised
+  source receipt/read, lead reruns of 12 generated tests, usage delivery and
+  both succeeded states were checked. Technical assistant acceptance is
+  distinguished from an actual human decision and teacher scoring. The
+  complete Task 1 replay used 63 requests, 2,015,011 reported tokens and
+  1,708.369 seconds including review/repair; no ten-minute success claimed.
+  A private controller acceptance exception was reconciled by inspecting the
+  persisted state without reissuing acceptance; its original trace remains.
+  Task 1 has a sealed read-only snapshot/export. Task 2 continued in the same
+  group with nine exact carried snapshots and ended failed after 78 requests,
+  3,103,263 reported tokens and 2,027.279 seconds. Its first formal proposal
+  passed 14/16 independent checks; cross-hour occupancy was wrong, and the
+  partial repair was not checked/re-offered before its developer reported a
+  blocker. The lead never obtained a complete revised delivery. Both roots
+  stay terminal: 141/160 pair requests used, 19 unused, no automatic replay.
+  With the distinct 18-request development check this work used 159/178 actual
+  requests. Original raw failures, technical checks and whole-pair export remain.
+  [Evidence and limits](final-report.md#original-software-task-1-reproduction)
+
+- **2026-11-22 repair-gateway follow-up:** the same owner-requested S01
+  maintenance continues on `fix/S01-review-repair-20261122`, implementation
+  `61a9f86`, integrated into the original-task review branch. Always record
+  bounded repair authorization for a trusted rejection under the finish
+  policy, including rejection before the first window; human/technical
+  provenance and all allowances stay distinct. Correct the coordinator-added
+  partial-recovery boolean's missing gateway validation branch. New end-to-end
+  checks cover both literal boolean choices and recovery only of the offered
+  snapshot, leaving an unoffered edit private and the child failed. Negative
+  reproductions are retained. Full suite: 893 discovered, 884 passed, nine UI
+  skips, 21 actual-container checks executed. Zero further model calls; the
+  failed Task 2 is not reclassified. Fresh live repair validation, the final
+  input/machine freeze and R09 remain open. README now presents one current
+  status summary; existing report/evidence retain historical results, with no
+  additional progress Markdown. [Follow-up](final-report.md#original-software-task-2-outcome-and-repair-follow-up)
+
 ## Starting a Codex session
 
 ```text

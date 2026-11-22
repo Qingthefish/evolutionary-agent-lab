@@ -369,6 +369,9 @@ class ToolGateway:
                 value.encode("utf-8")
             except UnicodeError:
                 raise ToolRequestError("Argument is not valid UTF-8") from None
+        elif kind == "boolean":
+            if type(value) is not bool:
+                raise ToolRequestError(f"Tool argument '{label}' must be a boolean")
         elif kind == "integer":
             if type(value) is not int or not spec["minimum"] <= value <= spec["maximum"]:
                 raise ToolRequestError(f"Tool argument '{label}' must be an integer from "

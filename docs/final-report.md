@@ -520,14 +520,114 @@ returned e10-labelled replies; equivalence remains unconfirmed. All three
 performance switches were off. The optional prompt/fetch changes have
 engineering coverage; their actual HKGAI speed advantage remains unmeasured.
 
+### Original Software Task 1 reproduction
+
+The original instructor booking-system prompt was replayed on frozen runtime
+`d8dec1a`, with the original four available roles and two active roles
+(`lead`, `dev`). The root and its developer child both reached **succeeded**
+under coordinator-assisted independent technical acceptance. This is a replay
+of a known mid-test task, not a new held-out score, teacher acceptance or an
+unattended/autonomous-evaluation result.
+
+The first developer proposal passed nine of ten independent behavioral tests.
+A deterministic two-process check exposed a lost confirmed booking: a slow
+first initializer overwrote a store that another process had already booked
+into. Concrete technical rejection returned that interleaving to the developer.
+The Agent moved initialization under the writer lock with absence rechecked
+inside it, added a regression and reran its checks. The unchanged independent
+suite then passed all ten tests in the actual no-network container, including
+overlap shapes, adjacent/separate bookings, cancellation, persistence,
+validation, command-line use, six competing bookers and the first-init race.
+This is demonstrated repair under feedback; it is not a memory-learning gain.
+
+Exact hashes bind the reviewed source to the developer's revised offer and
+the lead's receipt/read for all six reviewed delivery files. The lead reran
+the current 12 generated unit tests and the CLI/concurrency demonstrations,
+submitted the complete package and provided usage instructions. All actual
+isolated executions retain their results and cleanup evidence, including
+earlier failed CLI attempts. Generated tests supplement the independent checks.
+
+The record is **63 requests / 2,015,011 reported tokens / 1,708.369 seconds
+(28.47 minutes)** from assignment to final technical acceptance. This includes
+controller/review/repair time and exceeds the ten-minute target; local deadline
+exclusions are not subtracted from wall time. Output cap was 4,096 tokens and
+socket timeout 90 seconds under the owner's concrete expanded-budget judgment;
+the per-task ceiling was 80, not a teacher quota. All optional performance
+switches stayed off. Requested e7/returned e10 labels remain unconfirmed as
+equivalent. No actual human decision was requested or simulated.
+
+A private review-controller error is retained separately: runner setup inside
+its acceptance callback committed SQLite state before the outer commit raised
+an error. Read-only reconciliation confirmed that the exact checks, technical
+review event and developer success had actually persisted; acceptance was not
+replayed. The helper now constructs the runner before the transaction, and
+the lead's later acceptance completed normally. The frozen platform source
+was not changed during the experiment. This incident is part of provenance,
+not an erased failure or a new model attempt.
+
+The accepted Task 1 state was copied read-only and exported before Task 2 was
+posted. Task 2 then ran in the **same group** with nine exact broker-carried
+Task 1 snapshots, without a copied historical answer. Its separate result is
+below. Original records and source-bound manifests remain in the private
+readiness package. [Whitelisted figures and hashes](../evaluation/evidence/development-summary.json)
+
+### Original Software Task 2 outcome and repair follow-up
+
+The original interactive-dashboard prompt produced a formal developer proposal
+whose **16 independent behavioral checks passed 14 and failed two**. Both failed
+checks concern cross-hour occupancy: all reserved minutes were grouped by a
+booking's start hour, omitting time occupied in subsequent hours. For example,
+09:00-10:30 and 09:30-10:30 bookings plus a next-day 10:00-11:00 booking occupy
+90 minutes in the 09h bucket and 120 in 10h; the candidate reported 150 and 60.
+A different midday fixture independently exposed the same error. Its 26
+self-written tests had passed, illustrating why those alone are insufficient.
+The independent tests also exercised actual booking-record input, date ranges,
+cancellations, utilization, charts, interactive selection and report output.
+
+After concrete feedback, the developer wrote a partial revision but did not
+finish its regression, rerun or revised snapshot offers. It reported a blocker,
+which is terminal failure rather than a checkpoint. The lead could not obtain
+and complete the revised package. **Task 2 failed**, using **78 requests /
+3,103,263 reported tokens / 2,027.279 seconds (33.79 minutes)**. The two root
+outcomes are therefore one accepted technical replay and one failed replay;
+no six-task score or teacher grade is inferred. Their 141 requests leave 19 of
+the declared 160 unused. With the separate 18-request development probe, this
+work totals 159 actual requests within its concrete 178 ceiling. The pair is
+closed; the remainder is not permission to replay a terminal task or add roots.
+
+Two platform defects were isolated after the frozen run:
+
+- A trusted rejection before any finish window did not record the later repair
+  authorization. When that task eventually entered its window, promised repair
+  tools were hidden. Now the rejection records that authorization whenever the
+  finish policy is configured, without replenishing requests or tokens. Human
+  rejection and technical feedback retain distinct provenance.
+- The coordinator's earlier `allow_failed_source` addition advertised a JSON
+  boolean, but the gateway validator lacked the boolean branch and rejected
+  even literal `true`/`false`. This is a missed positive gateway path in that
+  earlier review. The corrected gateway accepts actual booleans only. Its new
+  end-to-end check recovers only an already-offered direct-child snapshot,
+  never an unoffered later edit, and leaves the child failed.
+
+Implementation `61a9f86` passed **893 discovered / 884 passed / nine optional UI
+skips**, with 21 actual-container checks executed. The two early-rejection
+regressions failed before the change and pass afterwards; the real gateway
+path likewise failed before its correction and now passes with invalid-type
+refusals retained. **Zero model requests** were used for this follow-up. The
+frozen failed Task 2 database, raw replies, independent failures and whole-pair
+export are unchanged. These engineering fixes have **not** been rerun through
+a fresh real HKGAI Task 2 and do not retroactively accept it. Software lead
+write restrictions and all budgets/approval/isolation boundaries are unchanged.
+
 ### Wednesday technical readiness
 
 | Gate | Current observation / remaining action |
 | --- | --- |
-| Allowed model and complete bounded execution | Fresh local real probe above completed, with source-bound execution, handoff/read and independent checks. This does not guarantee service availability on presentation day. |
+| Allowed model and complete bounded execution | The bounded development probe and original Software Task 1 completed under their independent technical checks. Task 2 failed; the follow-up repair source has engineering validation but no new real-model acceptance. Service availability on presentation day is not guaranteed. |
 | Original four-role setup and export | Actual CLI init/post/preflight/read-only export rehearsed with `lead/dev/qa/release`, unchanged original mid-test data and zero model calls. The original database hash is unchanged by export. |
 | Unknown task-link ingestion | Similar format is announced; the current adapter remains specific to the canonical mid-test package. Preserve the received final files and review the actual mapping before launch; final import is not yet verified. |
 | Submission and review boundaries | Exact snapshot versions, explicit failed-child waivers and labelled partial recovery are checked. Real clarification/critical-action choices still require the actual human. |
+| Remaining original tool evidence | R09's actual Agent-runtime GitHub push still needs a designated test branch, a suitably scoped runtime credential and the genuine action-bound human approval. Coordinator Git pushes and local-remote fixtures do not close that gate. |
 | Timing | Talk is ten minutes. The instructor reply supplied as a screenshot allows sharing run results with the instructor/TA later if needed. Assignment-to-final wall time remains separate from local deadline pause/idle exclusions. |
 | Frozen presentation machine/configuration | Freeze one reviewed revision, use a fresh state, verify that machine's model key/sandbox and rehearse its launch. Keep optional speed switches off unless a distinct reviewed run establishes their suitability. A different presenter's machine needs its own reproduction. |
 | Mid-test slides and final results | Distinguish contributor reports, locally audited development evidence, engineering checks and actual official results. Obtain raw teammate exports or independently reproduce the required scenarios before claiming acceptance. |
