@@ -1957,5 +1957,51 @@
     "expired_task_resumed": false,
     "result_sha256": "a7b094a92ce95a9238661cdeb317f2d2f796df34db3fd286fc8a60d564d6939e",
     "cause_or_provider_wide_outage_established": false
+  },
+  "service_observation_20261122": {
+    "started_at": "2026-11-22T16:50:05.338821+08:00",
+    "kind": "minimal_text_only_availability_observation",
+    "request_source_commit": "b86c8d79abbf9c81f6cac4c2ef31dfff1396db11",
+    "retained_response_parser_checked_at_commit": "640ece1c69b47b50b5cd201a22f49ae34422dd6c",
+    "http_completed": true,
+    "assistant_content": "OK.",
+    "exact_requested_content": false,
+    "finish_reason": "stop",
+    "duration_seconds": 1.328663290999998,
+    "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+    "returned_model": "t2_hkgai-v3_fp8_1m_e10",
+    "model_label_equivalence_confirmed": false,
+    "reported_tokens": 116,
+    "prompt_tokens": 88,
+    "completion_tokens": 28,
+    "response_sha256": "b8fdd3b51814c01ec9ec55f6db2f4546bc1982b44c37b588ff6770d413ddb970",
+    "cumulative_round_actual_requests": 11,
+    "unknown_usage_attempts_retained": 6,
+    "tools_dispatched": 0,
+    "automatic_retry": false,
+    "old_or_expired_workflow_resumed": false,
+    "full_workflow_or_official_pass_established": false,
+    "scope": "One owner-requested plain-text POST; no provider-wide cause, quota or complete tool compatibility inferred. Prior failures unchanged."
+  },
+  "presentation_clarification_20261122": {
+    "source": "https://canvas.ust.hk/courses/73253/announcements/658936",
+    "notification_received_utc": "2026-11-20T16:54:09Z",
+    "verified_on": "2026-11-22",
+    "presentation_minutes": 10,
+    "task_link_received": "during the preceding group",
+    "live_run_start": "when our presentation begins",
+    "format_statement": "similar to mid-test, not verified identical schema",
+    "tasks_involve_web_search": false,
+    "required_slide_themes": [
+      "Method",
+      "Mid-test results",
+      "Reflection"
+    ],
+    "group_slot_verified": false,
+    "separate_run_completion_deadline_stated": false,
+    "historical_recording_replaces_live_start": false,
+    "new_search_integration_started": false,
+    "credentials_included": false,
+    "sanitized_notice_sha256": "7fa5efd81625fa284eaad9f0ffa92ec6abb3a6c9daad5a80571c4a5797ab3413"
   }
 }

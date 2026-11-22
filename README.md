@@ -54,6 +54,15 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Connection observation (2026-11-22, 16:50 Hong Kong time):** one newly
+owner-requested minimal HKGAI request completed in 1.329 seconds with `OK.`
+and 116 reported tokens. The existing parser accepts it; the punctuation means
+the exact `OK` instruction was not followed verbatim. The requested/returned
+model labels remain `e7`/`e10`, with equivalence unconfirmed. This establishes
+a minimal text response, not tool compatibility or a complete scenario. The
+round now retains 11 actual requests, including earlier failures; old tasks
+were not resumed and no provider-wide cause or account balance is inferred.
+
 **Current verified status (2026-11-20).** No complete instructor mid-test task
 has been independently established in the coordinator's records. A real
 developer's booking source passed 26 independent actual-container checks, but
@@ -82,7 +91,8 @@ source was reproduced unchanged in the configured no-network container. All
 26 independent behavior checks and ten original generated tests passed; a
 changed-source negative control was refused before execution. This uses zero
 new model requests and does not accept the unfinished parent or either official
-task. [Provenance and limits](docs/final-report.md#recorded-artifact-fallback)
+task. The later presentation clarification requires a live start; this retained
+material is auxiliary. [Provenance and limits](docs/final-report.md#recorded-artifact-fallback)
 
 **Evaluation review (November 20):** integrated review of the contributed
 memory-effect and ordinary-batch readers checked seven retained memory reports
@@ -93,10 +103,13 @@ error path that could start a later replicate. The reviewed source passed
 768 checks, including 21 actual-container checks, with nine optional UI skips.
 [Evidence and limits](docs/final-report.md#retained-evidence-reanalysis)
 
-**Presentation preparation:** the existing report now explains the platform in
-plain terms and gives a proposed eight-slide/nine-minute story, a source-bound
-recorded workflow walkthrough and honest mid-test limitations. November 25 is
-the week-13 planning target; exact group time/duration remains unconfirmed.
+**Presentation preparation:** the verified instructor clarification sets
+**10 minutes**, requires starting the live run at the beginning, and asks for
+Method, Mid-test results and Reflection. The task link arrives during the
+preceding group's presentation; its format will be similar to the mid-test,
+and tasks will not involve web search. The report's proposed eight-slide plan
+now runs alongside the live task. Recorded workflows remain auxiliary evidence.
+November 25 is the week-13 planning target; the group slot remains unconfirmed.
 [Presentation story and runbook](docs/final-report.md#9-proposed-presentation-outline)
 
 **Current position (2026-11-14).** Minho’s configured WSL reproduction passed **621 engineering checks**, including **19 actual-container and nine UI checks**. The coordinator’s clean Python 3.12 check passed 16 setup steps and 593 core tests with 28 explicit Docker/UI skips. The two core jobs and the Textual job also passed on main. [D04 evidence](evaluation/evidence/d04-setup-reproduction.json) · [Main Actions run](https://github.com/Qingthefish/evolutionary-agent-lab/actions/runs/43595395085)

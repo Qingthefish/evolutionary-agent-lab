@@ -28,8 +28,32 @@ Source: instructor announcement supplied by the user, “Final Project Specifica
 - Final test set: one paragraph says exactly three weeks before final submission.
 - Report paragraph instead refers to mid/final test sets released in the last “3/1 weeks”. Clarify the schedule.
 - Final report is due after week 13; exact due date is not supplied.
-- Presentation preparation target: Wednesday, 2026-11-25, if the shown 2026-09-02 lecture is week 1. This is a week-count inference; a specific group slot and duration have not been verified. The November 20 mailbox search found no separate presentation timetable.
+- Presentation preparation target: Wednesday, 2026-11-25, if the shown 2026-09-02 lecture is week 1. This is a week-count inference; a specific group slot has not been verified. The later clarification below confirms the duration and live-start procedure.
 - The original announcement said dedicated model keys would be distributed later. On 2026-10-26 the instructor's [API announcement](https://canvas.ust.hk/courses/73253/announcements/651390) directed students to the restricted [API Information page](https://canvas.ust.hk/courses/73253/pages/api-information), which now gives the HKGAI address, model and a credential. Do not copy its credential into project documentation. The inspected page does not state quota, pricing or reset policy.
+
+## Verified presentation clarification
+
+The instructor's [Presentation Clarification](https://canvas.ust.hk/courses/73253/announcements/658936),
+received on 2026-11-21 at 00:54 Hong Kong time and read on November 22,
+adds these official instructions:
+
+- Each group has **10 minutes** for its final-project presentation.
+- The next group receives the agent task link while the preceding group is
+  presenting and may use that interval to set up its agents.
+- **Start the run when the presentation begins.** A historical recording is
+  auxiliary evidence, not a replacement for this live start.
+- The task data format will be **similar** to the mid-test. This does not
+  establish that the final link supplies the identical ZIP/schema or prompts.
+- Presentation tasks **will not involve web search**. The optional supplied
+  search credential is not a new model key or an instruction to integrate a
+  new service. Keep it out of public files. R06 remains part of the original
+  platform requirements; it is not a dependency of these live tasks.
+- Slides must cover **Method**, **Mid-test results**, and **Reflection**:
+  system design, results/key observations, and what worked/did not/was learned.
+
+The clarification does not specify a group slot, task count, separate run
+completion deadline, scoring/reset/repeat policy, model change or quota.
+It does not move the original report deadline to presentation day.
 
 ## Questions affecting design
 
