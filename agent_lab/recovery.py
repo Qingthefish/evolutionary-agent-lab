@@ -36,7 +36,7 @@ def links(workflow):
 
 
 def waived(workflow):
-    """Failed subtasks a human reviewer explicitly waived by accepting the proposal that disclosed them."""
+    """Failed subtasks explicitly named as exceptions in an accepted review of the disclosed proposal."""
     return {json.loads(row['detail'])['child'] for row in workflow.db.execute(
         "SELECT detail FROM events WHERE kind='failed_subtask_waived'")}
 

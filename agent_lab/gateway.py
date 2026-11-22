@@ -89,10 +89,13 @@ _SPECS = {
         "expected_sha256": _HASH}),
     "accept_artifact": ("Accept a snapshot explicitly offered by another task; Python exports are already your own files and need no acceptance. "
                         "Omit path to keep the producer's own path (keeps a received package's layout). "
-                        "To make an offered version replace an existing file at that path, also pass replace_sha256", {
+                        "To replace an existing file pass replace_sha256. An already-offered failed direct child's "
+                        "snapshot may be recovered with allow_failed_source=true as partial data; the child stays failed "
+                        "and independent verification is still required", {
         "artifact_id": _text("Actual offered artifact identifier, not a file path or Python run identifier", maximum=128),
         "path": {**_PATH, "description": "Optional: where to store it in your task; default is the producer's path"},
-        "replace_sha256": {**_HASH, "description": "Optional: the current SHA-256 of the existing file at path, to replace it with the offered version"}}),
+        "replace_sha256": {**_HASH, "description": "Optional: the current SHA-256 of the existing file at path, to replace it with the offered version"},
+        "allow_failed_source": {"type": "boolean", "description": "Explicit opt-in to recover a failed direct child's already-offered partial snapshot; never accepts its task"}}),
     "run_python": ("Execute exact input snapshots in the isolated container. Exports are imported into your task: read or offer them directly, not accept_artifact. Exit zero is not task verification", {
         "entrypoint": _PATH,
         "input_files": {"type": "object", "minProperties": 1, "maxProperties": 20,
@@ -123,7 +126,8 @@ _SPECS = {
         "branch": _text("Writable branch name", maximum=100)}),
 }
 _GIT_TOOLS = frozenset(name for name in _SPECS if name.startswith("git_"))
-_OPTIONAL = {"run_python": frozenset({"replace_outputs"}), "accept_artifact": frozenset({"replace_sha256", "path"})}
+_OPTIONAL = {"run_python": frozenset({"replace_outputs"}),
+             "accept_artifact": frozenset({"replace_sha256", "path", "allow_failed_source"})}
 _COMPLETION = frozenset({"submit_for_verification", "report_blocker"})
 _WEB = frozenset({"search_web", "retrieve_text"})
 # A blocker report is the task's final, failed evidence. Live Securities 2026-11-21: two

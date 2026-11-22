@@ -208,7 +208,11 @@ class Lifecycle(unittest.TestCase):
             decision = review(task, rounds[task])
             if decision is None:
                 return state
-            review_proposal(self.scheduler, task, decision, f"Synthetic fixture review: {decision}")
+            # This scripted reviewer deliberately accepts disclosed exceptions. Live reviewers must
+            # inspect them and explicitly name the IDs; an ordinary accept never waives them.
+            disclosed = self.events("completion_proposed", task)[-1][1].get("unreplaced_failed_subtasks", [])
+            review_proposal(self.scheduler, task, decision, f"Synthetic fixture review: {decision}",
+                            waive_failed_subtasks=[child["id"] for child in disclosed] if decision == "accept" else [])
         self.fail("lifecycle did not terminate")
 
     # --- Invariants checked after every run. -----------------------------------------------------
@@ -345,7 +349,10 @@ class Lifecycle(unittest.TestCase):
                         rejected = True  # Both siblings open; the second has spent its whole window.
                         review_proposal(self.scheduler, first_task, "reject", "Synthetic fixture review: reject")
                     elif waiting and rejected:
-                        review_proposal(self.scheduler, sorted(waiting)[0], "accept", "Synthetic fixture review: accept")
+                        selected = sorted(waiting)[0]
+                        disclosed = self.events("completion_proposed", selected)[-1][1].get("unreplaced_failed_subtasks", [])
+                        review_proposal(self.scheduler, selected, "accept", "Synthetic fixture review: accept",
+                                        waive_failed_subtasks=[child["id"] for child in disclosed])
                     else:
                         break
                 self.assertTrue(rejected)

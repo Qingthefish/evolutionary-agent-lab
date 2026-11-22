@@ -174,7 +174,7 @@ def unreplaced_failed_subtasks(workflow, task):
     """Failed or cancelled direct subtasks that were not replaced, as [{id, assignee, state}].
 
     Proposed 2026-11-22: these no longer block a proposal. The runner attaches them to every proposal so the
-    human reviewer sees them, and accepting that proposal is the reviewer's explicit waiver. Before, a lead whose
+    human reviewer sees them; acceptance requires explicitly naming each waived child. Before, a lead whose
     deliverable was complete and verified could only report a blocker once a replacement no longer fit the budget.
     """
     from .recovery import links

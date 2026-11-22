@@ -117,6 +117,61 @@ class AcceptReplaceTests(unittest.TestCase):
         self.assertTrue(done["ok"])
         self.assertEqual(self.content(), "fixed\n")
 
+    def test_partial_failed_child_snapshot_is_explicit_and_does_not_accept_either_task(self):
+        offer = self.offer()
+        self.workflow.finish_task(self.dev, "dev", error="Completed core.py but could not finish required documentation")
+        with self.assertRaises(FileToolError):
+            self.files.accept_artifact(self.lead, "lead", offer["artifact_id"], "recovered.py")
+        receipt = self.files.accept_artifact(self.lead, "lead", offer["artifact_id"], "recovered.py",
+                                             allow_failed_source=True)
+        self.assertTrue(receipt["partial"])
+        self.assertEqual(receipt["source_state"], "failed")
+        self.assertEqual(self.content("recovered.py"), "fixed\n")
+        self.assertEqual(self.workflow.task(self.dev, "user")["state"], "failed")
+        with self.assertRaisesRegex(Exception, "parent cannot succeed"):
+            self.workflow.finish_task(self.lead, "lead", checks={"candidate_file_exists": True})
+        self.assertEqual(self.workflow.task(self.lead, "user")["state"], "running")
+        event = json.loads(self.workflow.db.execute(
+            "SELECT detail FROM events WHERE kind='artifact_received' ORDER BY sequence DESC LIMIT 1").fetchone()[0])
+        self.assertTrue(event["partial"])
+
+    def test_failed_source_opt_in_does_not_accept_a_cancelled_child_or_other_task(self):
+        offer = self.offer()
+        with self.workflow._transaction():
+            self.workflow._transition(self.workflow._task(self.dev, "dev"), "cancelled")
+            self.workflow._event(self.dev, "user", "cancelled", {"reason": "Synthetic cancellation fixture"})
+        with self.assertRaises(FileToolError):
+            self.files.accept_artifact(self.lead, "lead", offer["artifact_id"], "cancelled.py",
+                                       allow_failed_source=True)
+        self.assertEqual(self.consumed(offer["artifact_id"]), 0)
+
+    def test_failed_snapshot_still_requires_the_current_replacement_digest(self):
+        offer = self.offer()
+        self.workflow.finish_task(self.dev, "dev", error="Synthetic partial child failure")
+        with self.assertRaises(FileToolError):
+            self.files.accept_artifact(self.lead, "lead", offer["artifact_id"], "app/core.py",
+                                       replace_sha256=sha("stale\n"), allow_failed_source=True)
+        self.assertEqual(self.content(), "old\n")
+        self.assertEqual(self.consumed(offer["artifact_id"]), 0)
+
+    def test_partial_recovery_cannot_cross_to_a_sibling_recipient(self):
+        sibling = self.workflow.create_task(self.workflow.task(self.lead, "user")["chat"],
+                                            "lead", "dev", "Other task", parent=self.lead)
+        self.workflow.start_task(sibling, "dev")
+        file = self.files.create_text(self.dev, "dev", "shared.py", "partial\n")
+        offer = self.files.offer_artifact(self.dev, "dev", "shared.py", sibling, expected_sha256=file["sha256"])
+        self.workflow.finish_task(self.dev, "dev", error="Synthetic partial failure")
+        with self.assertRaises(FileToolError):
+            self.files.accept_artifact(sibling, "dev", offer["artifact_id"], allow_failed_source=True)
+
+    def test_partial_recovery_boolean_is_validated_by_the_model_gateway(self):
+        gateway = ToolGateway(self.workflow, self.files, self.lead, "lead", human="user",
+                              allowed=["accept_artifact"], max_calls=8)
+        call = {"id": "partial", "type": "function", "function": {"name": "accept_artifact", "arguments":
+            json.dumps({"artifact_id": "unavailable", "allow_failed_source": "true"})}}
+        with self.assertRaises(ToolRequestError):
+            gateway.validate_batch([call])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -224,7 +224,8 @@ def _review_boundaries(scheduler):
                                                    "ORDER BY sequence DESC LIMIT 1", (task["id"],)).fetchone()
                     failed = json.loads(proposal["detail"]).get("unreplaced_failed_subtasks") if proposal else None
                     if failed:
-                        need["unreplaced_failed_subtasks"] = failed  # Accepting waives exactly these.
+                        need["unreplaced_failed_subtasks"] = failed
+                        need["required_failed_subtask_waivers"] = [child["id"] for child in failed]
                 needs.append(need)
     return needs
 
@@ -305,9 +306,14 @@ def _advance_overlapping(scheduler, turns):
     return result
 
 
-def review_proposal(scheduler, task_id, decision, feedback):
+def review_proposal(scheduler, task_id, decision, feedback, *, waive_failed_subtasks=()):
     if decision not in {"accept", "reject"} or not feedback.strip() or len(feedback) > 4096:
         raise WorkflowError("Provide concrete review evidence or feedback")
+    if (not isinstance(waive_failed_subtasks, (list, tuple))
+            or any(not isinstance(child, str) or not child for child in waive_failed_subtasks)
+            or len(set(waive_failed_subtasks)) != len(waive_failed_subtasks)
+            or decision != "accept" and waive_failed_subtasks):
+        raise WorkflowError("Use distinct explicit failed-subtask waiver IDs only with an acceptance")
     runner = scheduler.runner(task_id)
     if decision == "reject":
         runner.review_failed(feedback, reviewer=scheduler.human)
@@ -319,17 +325,23 @@ def review_proposal(scheduler, task_id, decision, feedback):
         state = runner.status()
         if state["runner_state"] != "awaiting_verification":
             raise WorkflowError("No current proposal is awaiting review")
-        workflow._event(task_id, scheduler.human, "human_review_recorded", {
-            "decision": "accepted", "feedback": feedback, "proposal_attempt": state["protocol_attempts"],
-        })
-        # Proposed 2026-11-22: the runner attaches unreplaced failed subtasks to each proposal; accepting that
-        # proposal is the human's explicit waiver of exactly those subtasks, nothing else.
         proposal = workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
                                        "ORDER BY sequence DESC LIMIT 1", (task_id,)).fetchone()
         disclosed = (json.loads(proposal["detail"]).get("unreplaced_failed_subtasks") or []) if proposal else []
+        from ..completion import unreplaced_failed_subtasks
+        current = unreplaced_failed_subtasks(workflow, task_id)
+        if {child["id"] for child in current} != {child["id"] for child in disclosed}:
+            raise WorkflowError("Failed subtasks changed after the proposal; reject and obtain a new proposal")
+        if set(waive_failed_subtasks) != {child["id"] for child in disclosed}:
+            raise WorkflowError("Acceptance requires explicit failed-subtask waivers matching the disclosed proposal; "
+                                "inspect the failures and name each with --waive-failed-subtask")
+        workflow._event(task_id, scheduler.human, "human_review_recorded", {
+            "decision": "accepted", "feedback": feedback, "proposal_attempt": state["protocol_attempts"],
+            "waive_failed_subtasks": list(waive_failed_subtasks),
+        })
         for child in disclosed:
             workflow._event(task_id, scheduler.human, "failed_subtask_waived",
-                            {"child": child["id"], "basis": "listed with the accepted proposal"})
+                            {"child": child["id"], "basis": "explicitly named in the accepted review"})
         return {"human_review_accepted": True}
 
     workflow.finish_task(task_id, task["assignee"], verifier=reviewed_checks)
@@ -425,6 +437,9 @@ def main(argv=None):
             command.add_argument("--task", required=True)
             command.add_argument("--decision", choices=("accept", "reject"), required=True)
             command.add_argument("--feedback", required=True)
+            command.add_argument("--waive-failed-subtask", action="append", default=[],
+                                 help="Explicitly waive this failed child disclosed in the current proposal; "
+                                      "repeat for each reviewed exception (accept only)")
         elif name == "reconcile":
             command.add_argument("--task", required=True)
             command.add_argument("--action", choices=tuple(RECONCILE), required=True)
@@ -482,7 +497,8 @@ def main(argv=None):
                     elif args.command == "reconcile":
                         result = reconcile(scheduler, args.task, args.action, args.reason, human=session.human)
                     else:
-                        review_proposal(scheduler, args.task, args.decision, args.feedback)
+                        review_proposal(scheduler, args.task, args.decision, args.feedback,
+                                        waive_failed_subtasks=args.waive_failed_subtask)
                         result = scheduler.status()
         print(json.dumps(result, ensure_ascii=False, indent=2))
     except (WorkflowError, OSError, ValueError) as error:

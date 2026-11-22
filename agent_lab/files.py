@@ -194,7 +194,8 @@ class FileTools:
         if not isinstance(expected_sha256, str) or _sha(data) != expected_sha256:
             raise FileToolError("Content digest changed or did not match the expected version")
 
-    def _receipt(self, task, actor, operation, path, data, *, request_id=None, artifact_id=None, replaced_sha256=None):
+    def _receipt(self, task, actor, operation, path, data, *, request_id=None, artifact_id=None,
+                 replaced_sha256=None, partial_source=False):
         result = {"path": path, "sha256": _sha(data), "bytes": len(data)}
         detail = dict(result)
         if request_id is not None:
@@ -203,6 +204,8 @@ class FileTools:
             detail["artifact_id"] = artifact_id
         if replaced_sha256 is not None:
             detail["replaced_sha256"] = replaced_sha256
+        if partial_source:
+            detail.update(source_state="failed", partial=True)
         self.workflow._event(task, actor, operation, detail)
         return result
 
@@ -354,13 +357,17 @@ class FileTools:
             })
             return {"artifact_id": identifier, "sha256": _sha(data), "bytes": len(data)}
 
-    def accept_artifact(self, task, actor, artifact_id, path=None, *, replace_sha256=None):
+    def accept_artifact(self, task, actor, artifact_id, path=None, *, replace_sha256=None, allow_failed_source=False):
         """Accept an offered snapshot as a new file, or, with `replace_sha256`, over the exact current version.
 
         Replacement (proposed 2026-11-22) uses the same version check and atomic replace as
         update_text; the receipt records the replaced digest. Without it an existing path is refused.
         Without `path` the producer's own path is kept, so a received package keeps its layout.
+        An explicitly opted-in failed direct child's already-offered snapshot is partial
+        data, never a successful subtask. Cancelled sources remain refused.
         """
+        if type(allow_failed_source) is not bool:
+            raise FileToolError("Failed-source recovery requires an explicit boolean")
         if path is None:
             label = self.workflow.db.execute("SELECT path FROM artifact_labels WHERE artifact=?", (artifact_id,)).fetchone()
             if label is None:
@@ -369,8 +376,10 @@ class FileTools:
         with self._access(task, actor) as directory:
             artifact = self.workflow._row("artifacts", artifact_id)
             source = self.workflow._task(artifact["source_task"], actor)
+            partial = (allow_failed_source and source["state"] == "failed" and source["parent"] == task)
             if (artifact["target_task"] != task or artifact["recipient"] != actor
-                    or artifact["consumed"] or source["state"] in {"failed", "cancelled"}):
+                    or artifact["consumed"] or source["state"] == "cancelled"
+                    or source["state"] == "failed" and not partial):
                 raise FileToolError("Artifact is not offered to this task, is consumed, or its source terminated")
             data = self._read(self.handoffs_fd, artifact_id)
             self._expected(data, artifact["sha256"])
@@ -392,8 +401,11 @@ class FileTools:
                             pass
             self.workflow.db.execute("UPDATE artifacts SET consumed=1 WHERE id=?", (artifact_id,))
             result = self._receipt(task, actor, "artifact_received", path, data, artifact_id=artifact_id,
-                                   replaced_sha256=replace_sha256)
-            return {**result, "artifact_id": artifact_id} | ({"replaced_sha256": replace_sha256} if replace_sha256 else {})
+                                   replaced_sha256=replace_sha256, partial_source=partial)
+            return ({**result, "artifact_id": artifact_id}
+                    | ({"replaced_sha256": replace_sha256} if replace_sha256 else {})
+                    | ({"source_state": "failed", "partial": True,
+                        "note": "Partial data only: verify it independently; the child remains failed"} if partial else {}))
 
     def text_verifier(self, task, actor, expected):
         """Return a trusted verifier for use inside Workflow.finish_task's transaction.
