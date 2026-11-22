@@ -384,7 +384,9 @@ class Boundaries(unittest.TestCase):
     def test_the_lifecycle_tests_catch_each_mutant_of_the_mechanism(self):
         real_phase, real_budget = completion.phase, budget.finish_budget
         mutants = {
-            "no holds for other open tasks": [patch.object(budget, "held_for_others", lambda *a, **k: 0)],
+            "no holds for other open tasks": [patch.object(budget, "held_for_others", lambda *a, **k: 0),
+                                              patch.object(budget, "integration_reserve", lambda *a, **k: 0)],
+            "no integration reserve for parents": [patch.object(budget, "integration_reserve", lambda *a, **k: 0)],
             "window not sticky": [patch.object(completion, "window_record",
                                                lambda *a, **k: {"entered": False, "used": 0, "forced": None})],
             "every tool offered in the window": [patch.object(completion, "offered_tools", lambda *a, **k: None)],
@@ -401,7 +403,8 @@ class Boundaries(unittest.TestCase):
                  "test_a_root_cut_off_twice_is_routed_to_its_finish_window_not_stopped",
                  "test_replay_newsroom_chief_packages_its_files_in_the_final_requests",
                  "test_a_task_short_of_its_own_tool_calls_enters_its_window_in_time",
-                 "test_a_role_limit_below_the_tree_share_still_opens_the_finish_window"]
+                 "test_a_role_limit_below_the_tree_share_still_opens_the_finish_window",
+                 "test_children_leave_their_parent_an_integration_reserve"]
         caught = {}
         for label, patches in mutants.items():
             suite = unittest.TestSuite()

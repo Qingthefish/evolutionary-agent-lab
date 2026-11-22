@@ -122,7 +122,8 @@ def contract(workflow, task, state, allowed):
              "in the summary. If anything required is unfinished, say so in the summary or use report_blocker.",
              "An invalid argument rejects the whole batch, including handoffs in it; read the error and resend.",
              f"Your last {window} requests are your finish window: only submit_for_verification and report_blocker are "
-             "offered then. Finish deliverable work, including writing or integrating final files, before it."]
+             "offered then (after a review rejection also file-fix tools, in a batch that ends with one of them). "
+             "Finish deliverable work, including writing or integrating final files, before it."]
     if row["parent"]:
         rules.append(f"Offer every deliverable file to your parent task {row['parent']}: with offer_artifact (use that "
                      "task id, not a role name) before, or in the same batch as, the submission.")
@@ -145,12 +146,13 @@ def contract(workflow, task, state, allowed):
 
 def _finish_instruction(state):
     why = (f"Your work was interrupted ({state['forced'].replace('_', ' ')}). " if state["forced"] else "")
-    return (f"{why}Finish window: {state['finish_left']} request(s) left including this one, and only completion "
-            "actions are available. Call submit_for_verification only for work that is actually done, and name "
-            "anything unfinished or unverified in the summary; call report_blocker if required work is missing. "
-            "A final handoff (offer_artifact, accept_artifact) may come first in the same batch. A human reviewer "
-            "decides; a "
-            "blocker is an honest outcome, not a penalty.")
+    return (f"{why}Finish window: {state['finish_left']} request(s) left including this one. Every response must "
+            "end with submit_for_verification or report_blocker; a final handoff (offer_artifact, accept_artifact) "
+            "or, after a review rejection, a last file fix may come first in the same batch, but no delegation, "
+            "question or re-reading. "
+            "Call submit_for_verification only for work that is actually done, and name anything unfinished or "
+            "unverified in the summary; call report_blocker if required work is missing. A human reviewer decides; "
+            "a blocker is an honest outcome, not a penalty.")
 
 
 def delegation_refusal(workflow, task):

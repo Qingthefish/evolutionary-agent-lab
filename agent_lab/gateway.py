@@ -140,6 +140,18 @@ def blocker_summary_problem(summary):
     if len(summary.strip()) < _BLOCKER_MIN_CHARS and cjk < 20 or count < _BLOCKER_MIN_WORDS:
         return f"it is too short (at least {_BLOCKER_MIN_CHARS} characters and {_BLOCKER_MIN_WORDS} words)"
     return None
+def submission_summary_problem(summary):
+    """Why a submission summary describes nothing, or None (proposed 2026-11-22; live summaries 'x', 'Placeholder')."""
+    words = re.findall(r"[^\W_]+(?:[/'-][^\W_]+)*", summary.lower())
+    if not words or all(word in _PLACEHOLDER_WORDS for word in words):
+        return "it is placeholder text"
+    if re.search(r"placeholder|lorem ipsum|\bdummy\b", summary.lower()):
+        return "it contains placeholder text"
+    return None
+
+
+# Shown in a finish window after a human rejection, so the feedback can be applied before resubmitting.
+FIX_TOOLS = frozenset({"create_text", "update_text", "append_text", "offer_artifact", "accept_artifact", "run_python"})
 # Never accepted inside a finish window, even before a completion call: they open new work or pause.
 _OPENS_WORK = frozenset({"delegate_task", "delegate_with_inputs", "retry_failed_task", "ask_human"})
 
@@ -197,6 +209,7 @@ class ToolGateway:
             raise ToolRequestError("Delegation requires explicit eligible agents")
         self.chat = row["chat"]
         self.restricted = None  # Finish window: the runner offers only these tools for the current turn.
+        self.fix_tools = frozenset()  # After a human rejection inside the window: shown, still batch-only.
         self._batch_completes = False
         workflow.db.executescript("""
             CREATE TABLE IF NOT EXISTS tool_budgets (
@@ -216,7 +229,12 @@ class ToolGateway:
 
     def tools(self):
         result = []
-        for name in sorted(self.allowed if self.restricted is None else self.allowed & self.restricted):
+        # Finish window: the completion actions, plus (after a human rejection only) last-fix tools, which the gateway
+        # accepts only before a completion call in the same batch (proposed 2026-11-22: a rejected lead could not see
+        # the file tools it needed to apply the reviewer's fix). Reading tools stay hidden: live windows were spent
+        # re-reading files when they were offered.
+        offered = self.allowed if self.restricted is None else (self.allowed & (self.restricted | self.fix_tools))
+        for name in sorted(offered):
             description, properties = _SPECS[name]
             # JSON copy keeps callers from mutating the validator's specification.
             properties = json.loads(json.dumps(properties))
@@ -275,6 +293,11 @@ class ToolGateway:
                 and (arguments["assignee"], arguments["title"]) not in self.delegation_rules):
             raise ToolRequestError("Unknown declared child work; use one of the trusted assignee/title pairs: " +
                 json.dumps(sorted((a, t) for a, t in self.delegation_rules if a in self.delegates))[:3000])
+        if name == "submit_for_verification":
+            problem = submission_summary_problem(arguments["summary"])
+            if problem:
+                raise ToolRequestError(f"summary does not describe the delivered work: {problem}. Say what was "
+                                       "delivered, where it is and what is unfinished, then resend")
         if name == "report_blocker":
             problem = blocker_summary_problem(arguments["summary"])
             if problem:  # Refused like any invalid argument: nothing runs, the task stays open and can resend.

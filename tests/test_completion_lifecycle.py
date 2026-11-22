@@ -234,8 +234,11 @@ class Lifecycle(unittest.TestCase):
                 self.assertTrue(task["evidence"])  # I8: a stated reason; artifacts stay in the task.
         for actor, agent in self.agents.items():
             for payload in agent.requests:
-                if window(payload):  # I5/I6: the window schema offers completion actions only.
-                    self.assertLessEqual(offered(payload), completion.COMPLETION_TOOLS)
+                if window(payload):  # I5/I6: completion actions only, plus file-fix tools after a review rejection.
+                    from agent_lab.gateway import FIX_TOOLS
+                    self.assertLessEqual(offered(payload), completion.COMPLETION_TOOLS | FIX_TOOLS)
+                    if b"trusted_verification_failure" not in payload:
+                        self.assertLessEqual(offered(payload), completion.COMPLETION_TOOLS)
         for task, entered in self.events("finish_mode_entered"):
             later = self.workflow.db.execute(
                 "SELECT count(*) FROM events WHERE task=? AND kind='model_attempt_reserved' AND sequence>("
@@ -581,6 +584,19 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual([c["id"] for c in seen[chief_id]], [reporter["id"]])  # The system disclosed it.
         self.assertEqual([d["child"] for _, d in self.events("failed_subtask_waived")], [reporter["id"]])
         self.assertEqual(tasks["chief_editor"]["state"], "succeeded")
+
+    def test_children_leave_their_parent_an_integration_reserve(self):
+        # Live Securities Task 2 (2026-11-22): two subtasks spent 71 of 80 requests; the parent could not finish.
+        children = ("research", "risk")
+        agents = {"fund_manager": Agent(coordinator(children, "stall_schema"))}
+        agents.update({c: Agent(worker("offschema")) for c in children})  # Both keep working and ignore windows.
+        self.build("securities-fund", agents, cap=40)  # Shared requests, not tool calls, are the binding limit.
+        self.drive()
+        self.check_invariants()
+        used_by_children = sum(len(self.agents[c].requests) for c in children)
+        reserve = min(FinishPolicy().min_child, 40 // 8)
+        self.assertLessEqual(used_by_children, 40 - R - reserve)  # The parent kept its window and its reserve.
+        self.assertGreater(len(self.agents["fund_manager"].requests), R)
 
     def test_a_repeat_notice_lets_the_agent_change_course_without_a_forced_finish(self):
         def lead(payload, n, state):

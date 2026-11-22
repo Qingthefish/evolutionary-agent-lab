@@ -8,7 +8,7 @@ import math
 from .core import WorkflowError
 from .deepseek import DeepSeekClient, DeepSeekHTTP, ProviderError, TruncatedCompletion
 from .hkgai import HKGAIClient, HKGAIHTTP
-from .gateway import ToolBudgetError, ToolRequestError
+from .gateway import ToolBudgetError, ToolRequestError, FIX_TOOLS
 from .files import INPUT_PROTOCOL
 from .model_context import ACTION_GUIDANCE, CONTEXT_POLICY, REQUIRED_ACTION_POLICY, REQUIRED_ACTION_GUIDANCE
 from . import budget, completion
@@ -440,6 +440,9 @@ class TaskRunner:
                        if self.show_execution_budget else None)
         self.gateway.restricted = (completion.offered_tools(self.workflow, self.task, self.gateway.allowed, self._phase)
                                    if self._phase else None)
+        rejected = self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='finish_mode_reopened'",
+                                            (self.task,)).fetchone()
+        self.gateway.fix_tools = FIX_TOOLS if self.gateway.restricted is not None and rejected else frozenset()
         if self.gateway.restricted is None:
             return
         if not completion.window_record(self.workflow, self.task)["entered"]:  # Once per opening of the window.

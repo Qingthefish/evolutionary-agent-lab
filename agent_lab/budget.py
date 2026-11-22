@@ -195,8 +195,10 @@ def _open_others(workflow, root, task):
 
 def window_used(workflow, task):
     """Requests a task has already spent inside its finish window (0 before it is entered)."""
-    entered = workflow.db.execute("SELECT min(sequence) FROM events WHERE task=? AND kind='finish_mode_entered'",
-                                  (task,)).fetchone()[0]
+    floor = workflow.db.execute("SELECT coalesce(max(sequence),0) FROM events WHERE task=? AND kind='finish_mode_reopened'",
+                                (task,)).fetchone()[0]  # A human rejection reopens the window.
+    entered = workflow.db.execute("SELECT min(sequence) FROM events WHERE task=? AND kind='finish_mode_entered' "
+                                  "AND sequence>?", (task, floor)).fetchone()[0]
     if entered is None:
         return 0
     return workflow.db.execute("SELECT count(*) FROM events WHERE task=? AND kind='model_attempt_reserved' AND "
@@ -230,11 +232,31 @@ def finish_budget(workflow, task):
     if task_calls:
         tool_left = min(tool_left, task_calls["maximum"] - used_calls)
     affordable = token_requests_left(workflow, task, scope)
+    reserve = integration_reserve(workflow, task, policy, cap)
     return {"policy": policy, "depth": scope["depth"], "cap": cap, "shared_left": shared_left,
             "held_for_other_open_tasks": held, "open_other_tasks": len(others),
-            "available": max(0, min(shared_left, affordable) - held), "tool_calls_left": max(0, tool_left),
+            "reserved_for_parent_integration": reserve,
+            "available": max(0, min(shared_left, affordable) - held - reserve), "tool_calls_left": max(0, tool_left),
             "token_requests_left": affordable,
             "finish_requests": policy.finish_requests}
+
+
+def integration_reserve(workflow, task, policy, cap):
+    """Requests kept for every open ancestor's own integration work, beyond its finish window.
+
+    Proposed 2026-11-22: live Securities Task 2's two subtasks spent 71 of 80 shared requests and the fund manager,
+    who had to build the HTML deck from their work, was left 9 and could not finish it. While a parent is open,
+    each of its descendants leaves it an eighth of the shared cap, at most `min_child` (the policy's smallest useful
+    piece of work): 10 of 80, and 2 of a 17-request test budget, so small budgets still let subtasks work.
+    """
+    each = min(policy.min_child, cap // 8)
+    reserve, row = 0, workflow.db.execute("SELECT parent FROM tasks WHERE id=?", (task,)).fetchone()
+    while row and row["parent"]:
+        parent = workflow.db.execute("SELECT parent,state FROM tasks WHERE id=?", (row["parent"],)).fetchone()
+        if parent["state"] not in TERMINAL:
+            reserve += each
+        row = parent
+    return reserve
 
 
 TOKEN_MARGIN = 1.15

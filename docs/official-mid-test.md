@@ -416,6 +416,18 @@ From the 2026-11-22 reruns across all three scenarios:
   (+15%), so a task reaches its window before tokens run out. Before, only
   request counts started it, and a Securities Task 2 tree spent its 4,000,000
   tokens with 11 requests left and every task still open.
+- After a human rejection inside a finish window, file-fix tools (`create_text`,
+  `update_text`, `append_text`, `offer_artifact`, `accept_artifact`,
+  `run_python`) are offered too, still only before a completion call in the same
+  batch. Normal windows offer completion actions only (re-reading tools stay
+  hidden: live windows were spent re-reading when they were offered).
+- `submit_for_verification` refuses a summary that is only placeholder words or
+  contains "placeholder", "lorem ipsum" or "dummy" (live summaries: "x",
+  "Placeholder").
+- While a parent is open, each descendant leaves it an integration reserve of
+  an eighth of the shared cap, at most `min_child` (10 of 80), beyond its finish
+  window: a Securities Task 2 parent had been left 9 of 80 requests to build its
+  deck after its subtasks finished.
 - `advance` records a gap of more than 120 s since the tree's last event as
   `controller_idle` when nothing awaited a human, and deadlines exclude it. Human
   answer and review time still counts.

@@ -146,6 +146,17 @@ class IntegrationRobustnessTests(unittest.TestCase):
                                     arguments=[], outputs=[])
             self.assertEqual(self.workflow.db.execute("SELECT count(*) FROM sandbox_runs").fetchone()[0], 0)
 
+    def test_submission_summaries_that_describe_nothing_are_refused(self):
+        from agent_lab.gateway import submission_summary_problem
+        for bad in ("x", "Placeholder", "placeholder2", "Placeholder check batch header - see following actions",
+                    "TODO", " ", "lorem ipsum dolor"):
+            with self.subTest(bad=bad):
+                self.assertIsNotNone(submission_summary_problem(bad))
+        for good in ("Done", "Delivered", "Delivered booking.py with 15 passing tests; see README.md",
+                     "已完成报告，见 report.md"):
+            with self.subTest(good=good):
+                self.assertIsNone(submission_summary_problem(good))
+
     def test_a_missing_source_path_needs_an_explicit_path(self):
         receipt = self.files.create_text(self.dev, "dev", "x.md", "x\n")
         offer = self.files.offer_artifact(self.dev, "dev", "x.md", self.lead, expected_sha256=receipt["sha256"])
