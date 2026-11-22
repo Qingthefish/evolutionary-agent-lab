@@ -54,7 +54,7 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
-**Current acceptance (2026-11-22).** Reviewed contributor changes #75/#76/#77
+**Current acceptance (2026-11-23).** Reviewed contributor changes #75/#76/#77
 and coordinator corrections are integrated through [PR #79](https://github.com/Qingthefish/evolutionary-agent-lab/pull/79).
 The runtime requires exact explicit failed-child waiver IDs and permits labelled
 recovery only of a failed direct child's already-offered snapshot. Follow-up
@@ -77,6 +77,17 @@ or ten-minute completion. In the same group, the bounded Task 2 replay ended
 statistic repair was not fully checked or handed back. Its tool/repair defects
 were then corrected offline; no repaired-runtime Task 2 success is claimed. [Evidence and limits](docs/final-report.md#original-software-task-1-reproduction)
 
+**Repair validation.** A separate real-model regression on `bddf523` completed
+failed-snapshot recovery, an explicitly linked replacement, isolated repair
+and exact result receipt/read in **16 requests / 233.234 seconds**. Its failed
+seed was a labelled zero-model fixture. A larger known-package repair remains
+paused after a DNS-stage failure; it is not accepted. Its actual implementation
+now passes all **16 independent dashboard checks**. After the coding assistant
+corrected mistaken expectations in one model-edited test, a separate artifact
+also passed all **38 original unit tests**, without modifying the model's
+implementation or the independent checker. This repairs an artifact, not the
+original same-group Task 2 outcome. [Scope and retained failures](docs/final-report.md#scoped-recovery-and-artifact-validation)
+
 **Other evidence.** A fresh known-development HKGAI root completed delegated
 input, isolated execution, checked handoff/read and report delivery in **18
 requests / 86.693 seconds**. Earlier bounded real private clarification,
@@ -92,6 +103,10 @@ and Securities pairs and earlier Software successes. Their `full13/full14/full16
 raw records are not attached to the PR or available locally, so these remain
 contributor-reported outcomes. Do not combine best results across different
 rounds into a six-of-six claim. The local Software replay is recorded separately.
+New [PR #81](https://github.com/Qingthefish/evolutionary-agent-lab/pull/81)
+reports a further Software Task 1 success and Task 2 delivery failure on
+`bddf523`; its raw full17 state is likewise unavailable locally and its review
+is pending. This follow-up preserves that separate contributor branch.
 
 **Wednesday presentation.** The instructor specifies **10 minutes**, a task
 link during the preceding group, and a live start when our talk begins. The
@@ -101,7 +116,7 @@ reply permits sharing unfinished run results later; the talk still stays within
 ten minutes. November 25 is the week-13 planning target; the exact group slot
 is unconfirmed. The owner is preparing the slides separately. [Runbook](docs/final-report.md#9-proposed-presentation-outline)
 
-**Remaining gates.** Verify the repaired runtime on a fresh authorized case,
+**Remaining gates.** Complete a full repaired-runtime Software Task 2 delivery,
 check the actual final-link mapping, freeze and rehearse
 on the presentation machine, retain final task results and finish submission.
 Original four-role CLI setup/preflight/read-only export has been rehearsed with
@@ -109,7 +124,8 @@ zero calls, which does not verify an unknown final input. R09's actual Agent-
 runtime GitHub push still needs its designated test branch, scoped credential
 and genuine action-bound approval; coordinator pushes/local-remote fixtures do
 not establish it. Teacher quota/pricing are unknown; local request ceilings
-are experiment limits. Use the [Roadmap](docs/team-roadmap.md) as the sole task,
+are experiment limits. The [Terminal operating guide](docs/official-mid-test.md#operating-from-the-presentation-mac)
+distinguishes the local platform from remote model inference. Use the [Roadmap](docs/team-roadmap.md) as the sole task,
 owner and progress register, with the instructor [requirements](docs/requirements.md)
 as the primary project authority. Historical observations live in the report
 and retained evidence rather than competing current-status paragraphs.

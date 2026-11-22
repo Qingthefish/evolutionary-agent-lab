@@ -2208,5 +2208,133 @@
         "Final official results and submission materials"
       ]
     }
+  },
+  "recovery_validation_20261122": {
+    "completed_date": "2026-11-23",
+    "runtime_source_commit": "bddf5235111e040ca0166cba3c65e400529fd36d",
+    "runtime_code_changed": false,
+    "work_round": {
+      "actual_requests": 43,
+      "responses_received": 42,
+      "known_reported_tokens": 777947,
+      "unknown_usage_attempts": 1,
+      "model_roots": 3,
+      "unused_requests": 5,
+      "previous_closed_round_requests": 159,
+      "combined_work_actual_requests": 202
+    },
+    "closed": true,
+    "minimized_recovery": {
+      "classification": "completed minimized recovery regression with a zero-model controlled failed seed",
+      "actual_requests": 16,
+      "reported_tokens": 125533,
+      "elapsed_wall_seconds": 233.234365940094,
+      "root_state": "succeeded",
+      "checks": {
+        "controlled_failed_seed_preserved": true,
+        "partial_inputs_received_and_read": true,
+        "explicit_linked_replacement_succeeded": true,
+        "child_required_files_present": true,
+        "child_frozen_input_and_checker": true,
+        "child_source_repaired": true,
+        "child_correct_primary_metrics": true,
+        "child_independent_verdict_passed": true,
+        "child_actual_current_source_execution": true,
+        "delivered_and_read_occupancy.py": true,
+        "delivered_and_read_metrics.json": true,
+        "delivered_and_read_verification.json": true,
+        "report_delivered": true,
+        "no_failed_child_waiver": true
+      },
+      "independent_data_checks": {
+        "groups": 3,
+        "datasets": 5
+      },
+      "source_database_sha256": "19277d6d81782e57540657397787b8ff1b82d438e78a2eeb61455281323fa089",
+      "snapshot_sha256": "ad3aa13119ef251a64c7f287f6a87a22b20d12be88f4fc2343ae3c7c2027e469",
+      "official_task2_pass": false,
+      "full_dashboard_acceptance": false,
+      "early_rejection_path_claimed_live": false
+    },
+    "known_package_1024": {
+      "classification": "failed known full-package repair at 1024-token ceiling",
+      "actual_requests": 10,
+      "reported_tokens": 154721,
+      "root_state": "failed",
+      "reasoning_only_cutoffs": 5,
+      "code_writes": 0,
+      "sandbox_runs": 0,
+      "official_task2_pass": false
+    },
+    "known_package_4096": {
+      "classification": "paused known full-package repair at 4096-output ceiling; not accepted",
+      "actual_requests": 17,
+      "responses_received": 16,
+      "reported_tokens": 497693,
+      "unknown_usage_attempts": 1,
+      "reasoning_only_cutoffs": 3,
+      "root_state": "running",
+      "execution_state": "blocked_provider_uncertain",
+      "provider_failure": {
+        "kind": "dns",
+        "phase": "opening",
+        "request_bytes": 137481,
+        "response_bytes": null,
+        "duration_seconds": 0.016756999997596722,
+        "http_status": null,
+        "request_may_have_been_processed": true,
+        "automatic_retry": false
+      },
+      "actual_sandbox_jobs": 5,
+      "all_sandbox_jobs_cleaned": true,
+      "required_package_files_present": false,
+      "original_task2_pass": false,
+      "source_database_sha256": "eef5c72a37887d585daa7744993f58d674af3b4c52bcc47fa5dd1f5720d82708",
+      "paused_snapshot_sha256": "054ddd45c0a2fa09eb85cddb48e5e88baaf6bdc0c4fab61bfd4bc768ff0e564c",
+      "automatic_retry": false,
+      "service_wide_outage_claimed": false
+    },
+    "independent_partial_review": {
+      "independent_passed": 16,
+      "independent_tests": 16,
+      "unit_tests": 38,
+      "unit_failures": 1,
+      "live_task_accepted": false,
+      "execution_sha256": "66bfe7750931ab140795db0592dfe491f40df1443c4db840eb5c9b58ba4edada"
+    },
+    "assistant_corrected_artifact": {
+      "passed": true,
+      "independent_tests": 16,
+      "original_unit_tests": 38,
+      "unit_failures": 0,
+      "unit_errors": 0,
+      "unit_skips": 0,
+      "cleanup_confirmed": true,
+      "new_model_requests": 0,
+      "live_task_accepted": false,
+      "official_task2_pass": false,
+      "live_database_sha256": "eef5c72a37887d585daa7744993f58d674af3b4c52bcc47fa5dd1f5720d82708",
+      "live_database_unchanged": true,
+      "source_manifest_sha256": "67f2292fafafc2c876731872a5965ff6f6eb0434ecbe036ed05894721dd03db5",
+      "execution_sha256": "7a70cf3cae821b2ddad8ccacb957d3862b4968c985b5bb1cc8a373eb286d56c5",
+      "model_implementation_unchanged": true,
+      "original_dashboard_methods_preserved": 26,
+      "unrelated_dashboard_methods_unchanged": 25,
+      "assistant_corrections": "Incorrect half-open end-boundary and total-duration expectations in one model-edited test; accurate usage/evidence documents",
+      "first_incomplete_assistant_correction_preserved": true
+    },
+    "independent_recovery_audit_sha256": "54326ebe28d5c3388be58c1b2bf9b0c0b5afb4202e372a15bcdffe7d64ac36b9",
+    "private_result_hashes": {
+      "result.json": "5bf2be0b88599245ba10e9ab9f2e10badd63ea8ea2257763d33784987ea5b710",
+      "package-repair/result.json": "ab24f450ba9cb446e5c38d439c82d978f7dc5a1d55f8edb4c2ab745fac9d2912",
+      "package-repair-4k/result.json": "5c2f5ab06bc99497da3cd4af955d42a5d69835c1943f47391880654bac233296",
+      "assistant-corrected-artifact-002/source-manifest.json": "67f2292fafafc2c876731872a5965ff6f6eb0434ecbe036ed05894721dd03db5",
+      "assistant-corrected-artifact-002/execution.json": "7a70cf3cae821b2ddad8ccacb957d3862b4968c985b5bb1cc8a373eb286d56c5",
+      "assistant-corrected-artifact-002/review-summary.json": "a6863df6ba5109eb3f95731947c6204ae5d3a970c1b674a49a048a363e6ad804"
+    },
+    "teacher_score": null,
+    "learning_gain_claimed": false,
+    "same_group_official_task2_success_claimed": false,
+    "human_decisions_simulated": false
   }
 }

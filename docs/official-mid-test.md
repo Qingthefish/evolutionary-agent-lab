@@ -1,11 +1,44 @@
 # Instructor mid-test input adapter (C06)
 
+**Current scope (November 22).** The original Software Task 1 replay reached
+independent technical acceptance; its same-group Task 2 replay failed. Later
+repair diagnostics are separate development evidence. Use the
+[current results and limits](final-report.md#12-november-22-coordinator-catch-up)
+for acceptance rather than treating the historical notes below as current state.
+
+## Operating from the presentation Mac
+
+The platform is a local Python application, started from Terminal; Codex is
+the development assistant. Conversation state, files and the configured isolated
+code runner live on that Mac. HKGAI performs model inference remotely, so the
+live run needs a working network and the course credential. The credential is
+not the model itself or a statement of account balance. Local request limits
+bound an experiment; the teacher's quota and pricing remain unknown.
+
+Before presentation day, freeze and rehearse one reviewed revision, environment,
+configuration and cached execution image on the actual presenting machine.
+During the preceding group's talk, preserve and inspect the supplied final
+task files and check how they map into the runtime. The importer below supports
+the issued canonical mid-test ZIP; it does not automatically accept an arbitrary
+link or an unverified final package. Start model execution when our talk begins.
+
+The prepared command sequence is: initialize/post the task, perform the
+zero-model-call preflight, then advance the run. Inspect status when it stops;
+give the real answer or review decision when needed, continue within the same
+allowance, and export the recorded results. Reopening state does not reset
+requests or authorize replay of an uncertain attempt. Routine operation should
+need the rehearsed Terminal commands and actual human decisions; live source
+editing is not the planned presentation workflow. The owner prepares the slides
+and speech separately. See the [live runbook](final-report.md#9-proposed-presentation-outline).
+
+## Retained development observations
+
 The reviewed S01 commands cover all three mid-test scenario policies. A real
 software Task 1 trial stopped after two HKGAI requests on November 16. The first
 completed group/task reads. The second failed completion parsing before any
 tool effect. Its failed record is retained. The new diagnostic labels will
-identify the failed structural check in a future reply. All six tasks still
-need complete live execution and independent outcome review.
+identify the failed structural check in a future reply. Complete outcomes had
+not been verified at that date; the current report records later acceptance.
 
 On November 19, two fresh software trials each stopped on the second reply
 with `finish_reason=length` at the 1,024 output-token cap. Adding compact
@@ -16,8 +49,10 @@ authorization. The default ceiling is 1,024, and the configured plan value must
 fit the selected ceiling. Existing task configurations cannot acquire the new
 setting on resume.
 
-A reply cut off at the ceiling is still discarded unread and runs no tool; a
-second consecutive cut-off stops the task. The notice before the next request
+A reply cut off at the ceiling is still discarded unread and runs no tool.
+Without the optional finish protocol, a second consecutive cut-off stops the
+task; that protocol instead forces completion after its configured cutoff
+streak (three by default). The notice before the next request
 names what filled the reply (the tool call and its argument size, reasoning or
 text), and gives file-splitting advice only to roles that can write files. Only
 sizes are recorded (the `output_limit_reached` event's `shape`), never text.
@@ -185,8 +220,9 @@ scenario's plan to the matching identifier; a different value is refused.
 
 All three share coordination and file tools, the same limits and review by
 the trusted human. In the software policy the lead retains coordination,
-inspection and handoff tools; source writing/updating and Python execution
-belong to the specialist roles. The original role prompts remain intact, and
+inspection and handoff tools and can execute the received integrated package
+to verify it. File creation/updating stays with the specialist roles. The
+original role prompts remain intact, and
 agents still choose their tasks, criteria and delegation sequence. Pass `--docker-host` and
 `--image` only for a policy with the Python sandbox; the newsroom commands
 take neither and refuse them. `preflight` prints the policy and tool list
@@ -197,15 +233,14 @@ between commands; `preflight`, `review` and `reconcile` still dispatch no tool,
 so they make no search or retrieval request.
 
 The authorized budget is the request cap in the plan. Each root's
-reported-token stop is a runaway guard set to 11,250 tokens per request of its
-share, so 270,000 tokens for a 24-request root. That ratio is the one the
-retained HKGAI development plans used (180,000 tokens for 16 requests). With
-the earlier shared defaults a task would have stopped at 32,000 tokens, about
-six replies at the usage seen in retained runs. The request cap, the
-1,024-token output cap and the defaults used by other runs are unchanged, and
-`preflight` prints the thresholds. A root that already started keeps its
-original limits and refuses different ones, so the retained 2026-11-16 Task 1
-can still be inspected and exported but not advanced under the new values.
+reported-token stop is a runaway guard currently set to 50,000 tokens per
+request of its share: 4,000,000 for an 80-request root. This is not reserved
+provider credit, a billing estimate or a teacher limit. Earlier retained plans
+used different token guards and keep their original values. Output tokens have
+a separate default ceiling of 1,024, with explicitly authorized selections up
+to 4,096 as described above. `preflight` prints the actual thresholds. A root
+that already started keeps its original configuration and refuses different
+limits; old records can be inspected/exported without acquiring the new values.
 
 For a **fresh run**, add `--show-execution-budget` consistently to `preflight`,
 `advance`, `review` and `reconcile` to show each role the current remaining local

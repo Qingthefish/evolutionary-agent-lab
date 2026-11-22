@@ -925,6 +925,31 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   status summary; existing report/evidence retain historical results, with no
   additional progress Markdown. [Follow-up](final-report.md#original-software-task-2-outcome-and-repair-follow-up)
 
+- **2026-11-22–23 scoped recovery validation:** Qingthefish, owner-requested
+  Codex-assisted S01/S02 maintenance on `docs/S01-recovery-evidence-20261122`,
+  unchanged runtime `bddf523`. A real minimized recovery case completed in
+  16 requests / 233.234 seconds / 125,533 reported tokens, with all 14 checks,
+  explicit linked replacement and exact partial/final receipt/read. Its failed
+  seed was a labelled zero-model control, not an invented model failure.
+  Full known-candidate repair at 1024 failed after ten calls and five reasoning
+  cutoffs without code effects. A fresh explicitly approved 4096 case used
+  17 calls (16 responses, 497,693 known tokens) before a DNS-stage pause;
+  no replay or technical acceptance followed. Its exact implementation passed
+  all 16 independent dashboard checks, but its modified histogram unit test
+  was wrong. The assistant corrected end-boundary/total expectations and docs
+  in a separate artifact; the final container check passed 16 independent plus
+  38 original tests, zero skips/errors/failures, with cleanup. All original
+  test methods, 25 unrelated method bodies and protected files were preserved.
+  The first incomplete assistant correction and audit-helper incidents remain.
+  Round closed at 43/48 requests, three model roots and one unknown-usage
+  attempt, with five requests unused; previous 159-request round unchanged.
+  No production code changed or new full-suite result claimed. Original Task 2
+  stays failed, full repair root stays paused/unaccepted; final input/machine
+  rehearsal and R09 remain open. Updated the existing Terminal operating guide
+  and corrected stale lead-execution/token-guard descriptions. Raw evidence is
+  in ignored `runs/recovery-regression-20261122/`; no additional progress
+  Markdown. [Checked scope](final-report.md#scoped-recovery-and-artifact-validation)
+
 ## Starting a Codex session
 
 ```text

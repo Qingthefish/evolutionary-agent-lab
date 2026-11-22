@@ -487,6 +487,16 @@ progress. Preserve that provenance before comparing time or asserting a fixed
 release's performance. Record actual reviewer identity; technical assistant
 checks must not be labelled as a human answer or decision.
 
+A later fetch found contributor [PR #81](https://github.com/Qingthefish/evolutionary-agent-lab/pull/81)
+at `3892b0f`, a documentation-only full17 rerun on `bddf523`: Task 1 is reported
+succeeded (77 requests), Task 2 failed (75), with 49 candidate tests and correct
+cross-hour occupancy. These are separate contributed observations, not this
+machine's accepted artifacts or part of its 202-request accounting. The raw
+full17 state is not local. The PR also reports a Software HTML dashboard;
+check that against the documented format boundary before any compliance claim
+(the existing course-specific HTML exception is Securities Task 2). This
+follow-up leaves that branch and PR intact for a distinct review.
+
 ### Current integrated-code checks
 
 Implementation source `d8dec1a` passes **889 discovered / 880 passed / nine
@@ -619,17 +629,78 @@ export are unchanged. These engineering fixes have **not** been rerun through
 a fresh real HKGAI Task 2 and do not retroactively accept it. Software lead
 write restrictions and all budgets/approval/isolation boundaries are unchanged.
 
+### Scoped recovery and artifact validation
+
+The November 22–23 follow-up used unchanged runtime `bddf523` and a single
+cumulative development allowance. These cases have deliberately narrower
+claims than the original same-group Software evaluation:
+
+| Case | Actual model requests / known reported tokens | Observed outcome |
+| --- | --- | --- |
+| Minimized failed-snapshot recovery | 16 / 125,533 | Succeeded in 233.234 seconds; all 14 predeclared execution/handoff criteria passed. |
+| Known full dashboard repair, 1,024 output tokens | 10 / 154,721 | Failed. Five reasoning-only cutoffs, no code writes or sandbox jobs; the Agent reported a specific blocker. |
+| Same known candidate in a fresh 4,096-output-token case | 17 / 497,693 known, plus one unknown-usage attempt | Paused at a DNS-stage provider failure after 16 responses; no automatic replay or acceptance. |
+
+The first case starts from a controlled zero-model failed child, whose bad
+cross-hour output was independently reproduced in the container. The real
+coordinator received/read its three offered snapshots with the corrected
+boolean gateway option, created an explicitly linked replacement, and obtained
+the replacement's repaired source, metrics and verification through actual
+receipt/read. Five data fixtures in three independent check groups passed.
+The controlled child remains failed; the replacement and root succeeded.
+This establishes the bounded recovery path, not the full original dashboard,
+early-rejection path, human decision or memory-learning benefit.
+
+The full-package cases use immutable offered Task 2 snapshots and the accepted
+booking files, not unoffered partial edits. Their contract freezes the 16
+independent behavior checks, original booking source/tests and all 26 dashboard
+test methods; only the histogram method may change to correct its semantics.
+The 4,096-token selection was explicitly authorized for at most 22 calls,
+sharing the round's 48-call ceiling. Five actual container jobs retained
+cleanup; three reasoning-only replies were still truncated. There is no basis
+to infer general speed gains or provider balance from these observations.
+
+A separate zero-model technical review of the paused case's exact files found
+that its implementation now passes all **16 independent behavior checks**.
+Its 38 original unit tests had one failing method: the model-edited histogram
+test incorrectly expected a booking ending at 10:00 to occupy the 10h bucket,
+and summed 60 + 30 + 60 minutes as 180. The assistant corrected those assertions
+in a separate artifact and updated its documentation, preserving the model's
+implementation, all 26 test methods, the 25 unrelated methods and every frozen
+checker/booking file. The final actual container run passed **16 independent
+checks and 38 original unit tests**, with zero failures/errors/skips and
+confirmed cleanup. The assistant's first correction missed the bad total;
+that failed execution remains alongside the successful correction.
+
+Audit-helper incidents are also retained: AST fingerprints initially compared
+different Python versions; comparing exact baseline/current files under one
+interpreter fixes the audit without relaxing the tests. A nonzero container
+execution exports no verdict file, so its retained transcript, rather than an
+assumed imported output, supplies the partial-check evidence. Neither incident
+changed the live source or task state.
+
+The complete work round is closed at **43/48 attempted requests across three
+model roots**, with **777,947 known reported tokens and one unknown-usage
+attempt**. Five requests remain unused. Added to the previously closed 159,
+these two rounds total 202 attempted requests, not all-time account usage.
+The paused root remains unaccepted; the separate corrected artifact does not
+turn it or the original failed Task 2 into a successful autonomous run.
+Original databases, snapshots, failed artifacts and replies remain unchanged.
+Later read-only DNS resolution succeeded; one DNS failure does not establish
+a provider-wide outage or an exhausted quota. No provider options, teacher
+model, runtime roles or production code were changed in this follow-up.
+
 ### Wednesday technical readiness
 
 | Gate | Current observation / remaining action |
 | --- | --- |
-| Allowed model and complete bounded execution | The bounded development probe and original Software Task 1 completed under their independent technical checks. Task 2 failed; the follow-up repair source has engineering validation but no new real-model acceptance. Service availability on presentation day is not guaranteed. |
+| Allowed model and complete bounded execution | The bounded development probe, original Software Task 1 and minimized recovery case completed their independent contracts. Original Task 2 failed; a separate assistant-corrected artifact passes 16+38 checks, but the full repaired-runtime workflow remains unaccepted. Service availability on presentation day is not guaranteed. |
 | Original four-role setup and export | Actual CLI init/post/preflight/read-only export rehearsed with `lead/dev/qa/release`, unchanged original mid-test data and zero model calls. The original database hash is unchanged by export. |
 | Unknown task-link ingestion | Similar format is announced; the current adapter remains specific to the canonical mid-test package. Preserve the received final files and review the actual mapping before launch; final import is not yet verified. |
 | Submission and review boundaries | Exact snapshot versions, explicit failed-child waivers and labelled partial recovery are checked. Real clarification/critical-action choices still require the actual human. |
 | Remaining original tool evidence | R09's actual Agent-runtime GitHub push still needs a designated test branch, a suitably scoped runtime credential and the genuine action-bound human approval. Coordinator Git pushes and local-remote fixtures do not close that gate. |
 | Timing | Talk is ten minutes. The instructor reply supplied as a screenshot allows sharing run results with the instructor/TA later if needed. Assignment-to-final wall time remains separate from local deadline pause/idle exclusions. |
-| Frozen presentation machine/configuration | Freeze one reviewed revision, use a fresh state, verify that machine's model key/sandbox and rehearse its launch. Keep optional speed switches off unless a distinct reviewed run establishes their suitability. A different presenter's machine needs its own reproduction. |
+| Frozen presentation machine/configuration | Freeze one reviewed revision, use a fresh state, verify that machine's model key/sandbox and rehearse its Terminal launch. Codex develops the platform; local Python runs it and remote HKGAI supplies inference. Keep optional speed switches off unless separately validated. A different presenter's machine needs its own reproduction. |
 | Mid-test slides and final results | Distinguish contributor reports, locally audited development evidence, engineering checks and actual official results. Obtain raw teammate exports or independently reproduce the required scenarios before claiming acceptance. |
 
 The private `runs/review-readiness-20261122/` package retains the source-bound
