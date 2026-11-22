@@ -925,6 +925,24 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   status summary; existing report/evidence retain historical results, with no
   additional progress Markdown. [Follow-up](final-report.md#original-software-task-2-outcome-and-repair-follow-up)
 
+- **2026-11-22 Software pair rerun on `bddf523` (full17):** owner-requested
+  contributor rerun of the original pair on merged main, no code change, four
+  original roles, output cap 4,096, 80-request tree limit, all performance
+  switches off. It is separate from the closed `d8dec1a` pair and adds 152
+  requests beyond that pair's ceiling. **Task 1 succeeded**: 77 requests,
+  31.3 minutes. Dev and QA were accepted after independent reruns (30 tests;
+  no forced double booking). Release notes failed and were explicitly waived,
+  with open defects D1–D3 disclosed. **Task 2 failed**: 75 requests,
+  35.5 minutes. The candidate passed 49 tests and the cross-hour occupancy
+  check. It was rejected because its own summary said the README dashboard
+  section and VERIFICATION.md were missing. With two finish requests left, its
+  rework hit the 4,096-token ceiling. The replacement dev and the lead also
+  produced cut-off replies (9 of 75 overall). No dashboard file reached the
+  lead. All reviews are labelled technical acceptance, not human decisions; the
+  owner answered the one clarification. Raw run state stays in ignored
+  `runs/full17-sw-state/`. The end-of-task truncation pattern remains open.
+  [Rerun record](final-report.md#software-pair-rerun-on-bddf523-full17)
+
 ## Starting a Codex session
 
 ```text

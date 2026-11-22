@@ -77,6 +77,14 @@ or ten-minute completion. In the same group, the bounded Task 2 replay ended
 statistic repair was not fully checked or handed back. Its tool/repair defects
 were then corrected offline; no repaired-runtime Task 2 success is claimed. [Evidence and limits](docs/final-report.md#original-software-task-1-reproduction)
 
+**Software rerun on merged main `bddf523` (full17).** A separate owner-requested
+rerun, with no code change, found **Task 1 succeeded** (77 requests / 31.3
+minutes) and **Task 2 failed** (75 requests / 35.5 minutes). Task 2's candidate
+passed 49 tests and the cross-hour occupancy check that failed before. It was
+rejected because its documentation was incomplete. Later replies were cut off
+at the 4,096-token ceiling, so no revised delivery reached the lead. Reviews
+are technical acceptance, not human decisions. [Rerun record](docs/final-report.md#software-pair-rerun-on-bddf523-full17)
+
 **Other evidence.** A fresh known-development HKGAI root completed delegated
 input, isolated execution, checked handoff/read and report delivery in **18
 requests / 86.693 seconds**. Earlier bounded real private clarification,
