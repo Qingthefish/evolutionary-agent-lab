@@ -1074,6 +1074,21 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   outcome and itself makes zero model calls; the active known-six trial
   retains its frozen source, counters and separate technical reviews.
 
+- **2026-11-23 five-minute presentation draft:** Continued owner-requested
+  S02 maintenance on `docs/S02-five-minute-deck-20261123`. Prepared five
+  editable slides, English speaking notes and Chinese rehearsal hints in the
+  required 2/1/1/1-minute order. Rendered and visually reviewed every slide;
+  native tables remain editable. The classroom-result page explicitly waits
+  for the unreleased task, and the mid-test page labels the fresh known-task
+  checkpoint and review assistance rather than claiming an instructor score.
+  The editable source snapshot, previews and delivery metadata are retained
+  privately inside the course project; the reusable [speaking notes](presentation-speaking-notes.txt)
+  accompany the existing SOP. No product PPT workflow, runtime change or
+  fabricated classroom output was added. Actual Mac presentation rehearsal,
+  offline PowerPoint opening, final input mapping and final S02 acceptance
+  remain open. Deck preparation makes zero HKGAI calls; the separately
+  authorized six-task run continues with its original cumulative counter.
+
 ## Starting a Codex session
 
 ```text
