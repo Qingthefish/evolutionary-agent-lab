@@ -875,3 +875,97 @@ skips**. The live regressions are bound to their recorded development source;
 this final control-edge correction has its own offline evidence rather than a
 fabricated model rerun. Raw failures, intermediate source versions and original
 sealed records remain private. [Sanitized evidence](../evaluation/evidence/quality-execution-20261123.json)
+
+## 15. Fresh known-six assisted development
+
+The November 23–24 quality-mode trial completed all **six original mid-test
+tasks with coordinator-assisted technical acceptance**. Three fresh groups
+used the original four role prompts and original ordered task pairs, without
+copying earlier trial outputs or memories at initialization. Each accepted
+Task 1 snapshot was then carried into Task 2 in its same group. The model
+runtime remained frozen at source digest `26836023601da1dc2d44d5d70075a1234956bea17b87d5509fd17051a3cb119a`.
+Actual settings were 8,192 output tokens, a 180-second socket wait and quality
+execution without the experimental forced completion window. Inspected numeric
+extensions retained counters, prior plans and intermediate failures.
+
+| Original task | Technical outcome | Actual requests | Known reported tokens | Task wall seconds | Summed turn seconds |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Software 1: booking system | Accepted after behavioral repairs | 103 | 3,165,344 | 17,642.47 | 957.03 |
+| Software 2: usage dashboard | Accepted after integration and frontend repairs | 212 | 35,560,824 | 26,291.55 | 4,907.24 |
+| Newsroom 1 | Accepted unpublished delivery package | 74 | 4,219,568 | 14,580.26 | 929.38 |
+| Newsroom 2: AI-authorship fact-check | Accepted after statistical/content corrections | 69 | 5,549,532 | 4,798.68 | 1,037.25 |
+| Securities 1 | Accepted simulated allocation and risk analysis | 75 | 2,481,780 | 17,642.15 | 671.11 |
+| Securities 2: semiconductor outlook | Accepted 16-section HTML presentation | 100 | 8,557,894 | 21,988.63 | 1,516.32 |
+
+Task wall time includes operator, review and idle pauses. Summed turn duration
+includes provider calls and local tools; it is neither end-to-end duration nor
+pure model latency. The interleaved task wall times must not be added as the
+suite's elapsed duration. These long development timings do not demonstrate
+presentation-day speed. Total usage was **633 requests / 59,534,942 known
+reported tokens**, plus unknown usage for four retained connection failures.
+A separate effect-free health request is outside the six-task counter. Together
+with the selected preceding 573-call trials, the selected ledger is **1,207
+requests**; this is not lifetime account usage, cost or an unlimited balance.
+Requested `e7` and returned `e10` model suffixes still have unconfirmed
+equivalence. No failure was silently retried.
+
+The final booking implementation passed 14 independent behavioral checks.
+The dashboard exposed two actual defects: a carry-in booking contributed
+minutes without its count, and per-hour rounding lost a one-minute booking
+split across two hours. Final Python/public-entry checks cover these cases,
+cancellation cohorts, matching averages, hour/day conservation, unused rooms
+and byte-for-byte preservation of the original records. The final exact source
+passed **51 generated regressions** in the pinned no-network sandbox and **28
+independent arithmetic/export/static-wiring checks**. Source inspection and
+syntax parsing verify the emitted raw-record calculation, single totals path,
+render functions, DOM targets and initialization. **No browser was executed**;
+visual layout and actual control interactions remain unverified. Direct
+narrowing of the old prebuilt-matrix helper and matrix-only renderer
+reconstruction are not certified; the documented public command supplies the
+original booking records.
+
+Review itself also required correction. At request 576, the coordinator
+incorrectly described the frontend as reading raw records; the 22 passing
+checks then covered the public Python range and export data, not the actual
+interactive path. This assertion was explicitly corrected at 601. Corrected
+checks rejected the old matrix path and then a repair that removed rendering
+functions and doubled totals, before accepting the final source. The model
+later replaced its usage document with a single table row. The reviewer
+reconstructed the exact earlier model-authored document from successful tool
+history; the model restored it and submitted the final deliverable. All five
+explicit technical-feedback interventions and the original failed revisions
+remain in the record. Genuine owner replies, including the AI-use/cheating
+editorial distinction, and later delegated routine choices are attributed.
+No failed child was waived in this fresh trial.
+
+The semiconductor deck retained checked research/risk handoffs and 20
+independently recomputed stress combinations. A small displayed recovery
+rounding discrepancy remains disclosed: the 40% severe scenario says 40.9%
+rather than 40.8%, about 0.055 percentage point difference. Slide navigation
+source and JavaScript syntax were checked, with browser behavior untested.
+
+Continuation also reproduced a platform control defect: an inspected,
+explicitly resend-decided historical transport error still blocked a later
+numeric extension. [PR #93](https://github.com/Qingthefish/evolutionary-agent-lab/pull/93)
+matches only the exact earlier retryable failure and later resend decision;
+unresolved errors, nonempty responses and unknown effects remain refused.
+Twelve focused checks and the full **922-check** engineering suite passed
+**901 checks, with 21 explicit container skips**, making zero model requests.
+All three required CI checks passed. During the trial, only this separately
+versioned extension control was imported with an explicit audit record; the
+model runtime stayed frozen. Main was updated only after sealing the trial.
+
+All 557 files in the final seal were hash-verified; the earlier canonical
+seal's 314 files and 47 selected files from the earlier four fresh acceptances
+were unchanged. A read-only archival script initially assumed the newsroom
+had a sandbox table; the partial archive/error was retained and a corrected
+archive sealed without model calls or outcome changes. Accepted outputs are
+packaged separately from drafts and raw traces.
+
+This is a completed **known-task assisted development trial**. Raising
+allowances helped preserve useful work, but the changed repairs and reviews
+prevent a causal claim that removing limits alone produced the result.
+The record demonstrates concrete fixes and deliverable completion, including
+remaining failure modes; it does not establish monotonic improvement, general
+learning, an unattended completion rate, teacher scores or unseen-task success.
+[Sanitized evidence and exact per-task timing](../evaluation/evidence/known-six-assisted-20261124.json)

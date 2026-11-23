@@ -54,6 +54,21 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Fresh known-six development (November 23–24).** All six original mid-test
+tasks reached **coordinator-assisted technical acceptance**, using **633 actual
+HKGAI requests**, 59,534,942 known reported tokens and four retained attempts
+with unknown usage. The three groups started fresh with their original four
+roles; each Task 2 continued its accepted Task 1 in the same group. Larger
+quality allowances, concrete repairs and explicit review assistance all changed
+the conditions, so this is not an isolated measurement of raising limits,
+unattended 6/6, a teacher grade or held-out accuracy. The final dashboard passed
+51 generated regressions and 28 independent arithmetic/export/static-wiring
+checks; its JavaScript syntax and critical formulas were inspected. Browser
+visuals and actual interactions remain untested. The original four-assisted,
+two-failed 375-call trial below stays unchanged.
+[Complete results, timing and retained mistakes](docs/final-report.md#15-fresh-known-six-assisted-development)
+· [Sanitized evidence](evaluation/evidence/known-six-assisted-20261124.json)
+
 **Six-task Mac evaluation (2026-11-23).** All six canonical mid-test tasks have
 now ended: **four coordinator-assisted acceptances and two failures**, using
 **375 actual HKGAI requests**. These are development outcomes, with retained

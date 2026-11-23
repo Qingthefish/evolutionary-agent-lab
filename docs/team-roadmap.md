@@ -649,7 +649,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run the official evaluation**
 
-- **Stage / status:** M5 / In progress (live software rehearsal started)
+- **Stage / status:** M5 / In progress (known-six assisted trial closed; official/unseen evaluation remains open)
 - **Owner:** Qingthefish (owner-requested continuation, Codex-assisted)
 - **Dependencies / configuration:** C06, A07, the official dataset and authorized runtime access.
 - **Scope:** Official raw run records, complete result counts and metrics.
@@ -1121,6 +1121,41 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   reviewed control-only correction for an audited extension; its source hash
   and before/after settings must be recorded. This does not change task tools,
   prompts, model execution or acceptance, and is not a six-task score gain.
+
+### S01 continuation: known-six closure, November 24
+
+- **Scope / owner:** Qingthefish, owner-authorized Codex-assisted continuation;
+  evidence maintenance on `docs/S01-known-six-results-20261124`. The known-six
+  development trial is closed; S01's official/unseen evaluation gate remains
+  open.
+- **Outcome:** Six coordinator-assisted technical acceptances, **633 actual
+  HKGAI requests / 59,534,942 known reported tokens**, four retained unknown-usage
+  failures, and one separately counted health request. Original role/task pairs,
+  same-group Task 1→2 carryover and frozen model runtime were preserved. No
+  failed-child waiver was used. The canonical 375-call four-assisted/two-failed
+  result remains unchanged.
+- **Checks / corrections:** Final dashboard: actual 51-test regression and 28
+  independent arithmetic/export/static-wiring checks, plus JS syntax and source
+  inspection. Retained the incorrect reviewer inference at 576 and correction
+  at 601, failed frontend repairs, five attributed technical-feedback events
+  and exact history-based recovery of overwritten model-authored instructions.
+  Browser visuals/control execution remain unverified; direct prebuilt-matrix
+  narrowing and matrix-only renderer reconstruction are not certified.
+- **Platform correction:** [PR #93](https://github.com/Qingthefish/evolutionary-agent-lab/pull/93)
+  merged as `9b8f4a5` after the trial was sealed. Exact inspected transport
+  resend history no longer falsely blocks an audited extension; unresolved
+  errors/effects still stop. Twelve focused checks pass; full regression
+  **901/922 passed, 21 explicit container skips**, zero model calls. Three
+  required CI checks passed. The same reviewed control-only correction was
+  explicitly audited during extensions, without changing the frozen model
+  runtime.
+- **Preservation / limits:** Hash-verified 557 sealed files, all 314 original
+  sealed files and 47 selected earlier accepted files. Actual wall times include
+  review/operator pauses and do not establish classroom speed. This is neither
+  an unattended 6/6 nor a teacher score, held-out accuracy or a measured learning
+  gain. No PPT/UI work or new provider was added in this continuation.
+  [Results and limits](final-report.md#15-fresh-known-six-assisted-development)
+  · [Sanitized evidence](../evaluation/evidence/known-six-assisted-20261124.json)
 
 ## Starting a Codex session
 
