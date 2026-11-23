@@ -20,7 +20,10 @@ from . import budget, completion
 # A provider server error (HTTP 5xx) also returns no completion and pauses the same
 # way (proposed 2026-11-18 after live HTTP 500 and 502 replies). A malformed HTTP
 # reply (http_protocol) and HTTP 4xx (authentication, quota, rate limit) still fail.
-TRANSPORT_FAILURES = frozenset({"timeout", "dns", "tls", "connection_closed", "connection_refused", "transport"})
+# invalid_stream (2026-11-23): an opt-in stream ended in a provider error event or malformed event, with no
+# completion; like a dropped connection it may have been processed, so only the operator may resend.
+TRANSPORT_FAILURES = frozenset({"timeout", "dns", "tls", "connection_closed", "connection_refused", "transport",
+                                "invalid_stream"})
 
 
 def operator_decision_failure(diagnostics):

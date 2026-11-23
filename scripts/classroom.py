@@ -82,6 +82,7 @@ def credential(config, *, required=True):
 def live(config):
     return LiveConfig(model=config['model'],api_key=credential(config),provider='hkgai',allow_network=True,
         max_output_tokens=8192,socket_timeout=180,execution_profile='quality',pause_on_limits=True,
+        stream_responses=True,
         role_limits=Limits(model_attempts=256,reported_tokens=32768000,duration_seconds=14400),
         tree_limits=TreeLimits(tasks=16,depth=4,model_attempts=256,reported_tokens=32768000,
                                duration_seconds=14400,tool_calls=1536),

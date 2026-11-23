@@ -46,7 +46,7 @@ class ProviderError(Exception):
                  request_may_have_been_processed=True, completion_check=None):
         kinds = {"provider_error", "network_disabled", "invalid_request", "http_status", "unexpected_response",
                  "oversized_response", "timeout", "dns", "tls", "connection_closed", "connection_refused",
-                 "http_protocol", "transport", "invalid_completion"}
+                 "http_protocol", "transport", "invalid_completion", "invalid_stream"}
         phases = {"unknown", "preflight", "opening", "reading", "parsing"}
         if (not isinstance(kind, str) or kind not in kinds or not isinstance(phase, str) or phase not in phases
                 or any(v is not None and (type(v) is not int or v < 0) for v in (request_bytes, response_bytes))
@@ -165,17 +165,108 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+class StreamAssemblyError(ValueError):
+    """A server-sent event stream that cannot be rebuilt into one strict completion."""
+
+
+def assemble_stream(lines, *, max_bytes):
+    """Rebuild one non-streaming chat completion body from server-sent event lines (proposed 2026-11-23).
+
+    The result goes through the unchanged strict completion parser, so tool-call,
+    finish-reason, usage and identity checks are identical to non-streaming replies.
+    Only `data:` events are read; a `[DONE]` line ends the stream.
+    """
+    content, reasoning, calls = [], [], {}
+    seen_content = seen_reasoning = False
+    identity, model, usage, finish, role = None, None, None, None, None
+    size = 0
+    for raw in lines:
+        line = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+        line = line.strip()
+        if not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if data == "[DONE]":
+            break
+        event = strict_json(data.encode("utf-8"))
+        if not isinstance(event, dict) or "error" in event:
+            raise StreamAssemblyError("Provider stream reported an error")
+        identity = event.get("id", identity)
+        model = event.get("model", model)
+        if event.get("usage") is not None:
+            usage = event["usage"]
+        choices = event.get("choices") or []
+        if not isinstance(choices, list) or len(choices) > 1:
+            raise StreamAssemblyError("Unexpected stream choice count")
+        for choice in choices:
+            delta = choice.get("delta") if isinstance(choice, dict) else None
+            if not isinstance(delta, dict):
+                raise StreamAssemblyError("Unexpected stream delta")
+            role = delta.get("role") or role
+            for key, parts in (("content", content), ("reasoning", reasoning), ("reasoning_content", reasoning)):
+                value = delta.get(key)
+                if value is None:
+                    continue
+                if not isinstance(value, str):
+                    raise StreamAssemblyError("Unexpected stream text")
+                parts.append(value)
+                size += len(value)
+                if key == "content":
+                    seen_content = True
+                else:
+                    seen_reasoning = True
+            for call in delta.get("tool_calls") or []:
+                if not isinstance(call, dict) or type(call.get("index")) is not int or not 0 <= call["index"] < 1024:
+                    raise StreamAssemblyError("Unexpected stream tool call")
+                entry = calls.setdefault(call["index"], {"id": None, "type": "function",
+                                                         "function": {"name": "", "arguments": ""}})
+                if call.get("id"):
+                    entry["id"] = call["id"]
+                if call.get("type"):
+                    entry["type"] = call["type"]
+                function = call.get("function") or {}
+                for key in ("name", "arguments"):
+                    value = function.get(key)
+                    if value is not None:
+                        if not isinstance(value, str):
+                            raise StreamAssemblyError("Unexpected stream tool call")
+                        entry["function"][key] += value
+                        size += len(value)
+            if choice.get("finish_reason") is not None:
+                finish = choice["finish_reason"]
+        if size > max_bytes:
+            raise StreamAssemblyError("Assembled completion exceeds byte limit")
+    message = {"role": role or "assistant", "content": "".join(content) if seen_content else None}
+    if seen_reasoning:
+        message["reasoning"] = "".join(reasoning)
+    if calls:
+        message["tool_calls"] = [calls[index] for index in sorted(calls)]
+    body = {"choices": [{"finish_reason": finish, "message": message}]}
+    for key, value in (("id", identity), ("model", model), ("usage", usage)):
+        if value is not None:
+            body[key] = value
+    return json.dumps(body, ensure_ascii=False).encode("utf-8")
+
+
 class DeepSeekHTTP:
     """A trusted application must explicitly authorize network use and supply a key.
 
     Only the official endpoint is supported; HKGAI uses a separate fixed-host subclass.
     Timeout is a socket-operation timeout, not an end-to-end task deadline.
+    With `stream=True` the reply arrives as server-sent events and is rebuilt into
+    the same single completion body (proposed 2026-11-23): HKGAI's gateway answered
+    504 after about 124 s to non-streaming requests still generating, while a
+    streamed 8,192-token reply completed in 139 s.
     """
 
     endpoint = "https://api.deepseek.com/chat/completions"
     max_bytes = 2 * 1024 * 1024
+    max_stream_bytes = 32 * 1024 * 1024
 
-    def __init__(self, api_key, *, allow_network=False, timeout=30):
+    def __init__(self, api_key, *, allow_network=False, timeout=30, stream=False):
+        if type(stream) is not bool:
+            raise ProviderError("Streaming selection must be explicit")
+        self.stream = stream
         if not isinstance(api_key, str) or not api_key.strip() or any(c.isspace() for c in api_key):
             raise ProviderError("Supply a nonempty API key without whitespace")
         if (type(timeout) not in (int, float) or not math.isfinite(timeout)
@@ -194,10 +285,17 @@ class DeepSeekHTTP:
         if not isinstance(payload, bytes) or len(payload) > self.max_bytes:
             raise ProviderError("Invalid or oversized request", kind="invalid_request", phase="preflight",
                                 request_may_have_been_processed=False)
-        request = urllib.request.Request(
-            self.endpoint, data=payload, method="POST",
-            headers={"Authorization": "Bearer " + self._api_key, "Content-Type": "application/json"},
-        )
+        headers = {"Authorization": "Bearer " + self._api_key, "Content-Type": "application/json"}
+        if self.stream:
+            try:
+                body = json.loads(payload)
+            except ValueError:
+                raise ProviderError("Invalid request", kind="invalid_request", phase="preflight",
+                                    request_may_have_been_processed=False) from None
+            body.update(stream=True, stream_options={"include_usage": True})
+            payload = json.dumps(body, allow_nan=False).encode("utf-8")
+            headers["Accept"] = "text/event-stream"
+        request = urllib.request.Request(self.endpoint, data=payload, method="POST", headers=headers)
         # No redirects or automatic retries: an interrupted POST may have been charged.
         started = time.monotonic()
         phase, response_bytes, status = "opening", None, None
@@ -213,6 +311,21 @@ class DeepSeekHTTP:
                 if response.status != 200 or response.geturl() != self.endpoint:
                     raise failure("Unexpected provider HTTP response", "unexpected_response")
                 phase = "reading"
+                if self.stream:
+                    response_bytes = 0
+
+                    def lines():
+                        nonlocal response_bytes
+                        for line in response:
+                            response_bytes += len(line)
+                            if response_bytes > self.max_stream_bytes:
+                                raise StreamAssemblyError("Provider stream exceeds byte limit")
+                            yield line
+                    try:
+                        return assemble_stream(lines(), max_bytes=self.max_bytes)
+                    except ValueError:  # Includes malformed JSON/UTF-8 events; socket errors propagate below.
+                        raise failure("Provider stream could not be assembled; no tools released",
+                                      "invalid_stream") from None
                 data = response.read(self.max_bytes + 1)
                 response_bytes = len(data)
             if len(data) > self.max_bytes:
