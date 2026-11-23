@@ -822,6 +822,26 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   historical cumulative 480. Dynamic browser behavior and broader fresh
   scenario success remain unestablished. [Results and limits](final-report.md#14-quality-execution-audit-and-regressions)
 
+- **2026-11-23 presentation operator and SOP:** Qingthefish, owner-requested
+  Codex-assisted S01/S02 maintenance on `fix/S01-classroom-sop-20261123`.
+  Added the [Chinese operating SOP](presentation-sop.md), a Mac entry file and
+  a standard-library operator around existing runtime services. Ordinary
+  UTF-8 goals/attachments retain their contents (including BOM/CRLF), and the
+  supported role ZIP retains original roles, prompts and sequential groups.
+  Unknown packages fail closed rather than becoming default-role tasks.
+  Open/import/export make zero model calls. Prepared a separate local Textual
+  8.2.8 environment; checked the live-mode header, task/artifact/approval tabs,
+  input custody/export and the actual Mac launcher with zero new requests.
+  Nine entry-point regressions and the existing nine UI interactions pass;
+  final Python 3.12 engineering regression is **898 passed / 919 discovered**,
+  with **21 explicit actual-container skips**. The core runtime hash remains
+  unchanged, so the ongoing six-task trial is preserved. Its inspected
+  132-request checkpoint had three independently reviewed intermediate
+  proposals accepted, no full scenario accepted, and the second tasks unposted;
+  no original score was rewritten. Final classroom format, timed manual
+  operation and unknown-task performance remain unverified.
+  [Readiness scope](../evaluation/evidence/classroom-readiness-20261123.json)
+
 ### S02
 
 

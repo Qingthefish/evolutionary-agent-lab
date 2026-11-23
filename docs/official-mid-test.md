@@ -66,6 +66,11 @@ after choosing a revised approach; adding budget alone cannot clear it.
 
 ## Operating from the presentation Mac
 
+Use the [step-by-step Chinese presentation SOP](presentation-sop.md) for the
+Mac launcher, original-text/attachment input, original-role package handling,
+human questions/review, result export and recovery. The fixed six-question
+development operators are not the importer for an unknown classroom task.
+
 The platform is a local Python application, started from Terminal; Codex is
 the development assistant. Conversation state, files and the configured isolated
 code runner live on that Mac. HKGAI performs model inference remotely, so the
