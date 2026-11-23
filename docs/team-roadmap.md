@@ -1105,6 +1105,23 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   human operation, current API availability and unknown-task performance are
   not inferred from local checks. This maintenance changes no runtime code.
 
+- **2026-11-24 inspected-resend extension correction:** Continued owner-requested
+  S01 maintenance on `fix/S01-resolved-transport-extension-20261124` in an
+  isolated worktree, leaving the active six-task model runtime frozen. A
+  genuine synthetic transport interruption, inspected resend and budget pause
+  reproduced a false extension rejection: retained historical `provider_error`
+  rows were mistaken for unresolved effects. Numeric extension now recognizes
+  only an exact failed turn with no delivered response and a later explicit
+  resend record. Error rows, unknown usage and counters remain unchanged;
+  later unresolved turns, delivered responses and current unknown effects
+  still refuse. The new failing regression passes with the correction,
+  alongside negative controls. All 12 focused quality checks and 901 of 922
+  full engineering checks passed, with 21 explicit actual-container skips and
+  zero real model calls. A separately versioned trusted operator may use this
+  reviewed control-only correction for an audited extension; its source hash
+  and before/after settings must be recorded. This does not change task tools,
+  prompts, model execution or acceptance, and is not a six-task score gain.
+
 ## Starting a Codex session
 
 ```text
