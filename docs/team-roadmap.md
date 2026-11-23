@@ -1089,6 +1089,22 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   remain open. Deck preparation makes zero HKGAI calls; the separately
   authorized six-task run continues with its original cumulative counter.
 
+- **2026-11-24 operator walkthrough and attendance update:** Owner-requested
+  S01/S02 documentation maintenance on `docs/S01-in-person-sop-20261124`.
+  Read the new instructor/TA notification requiring all students to attend
+  physically in the classroom, while retaining the existing Zoom procedure.
+  Expanded the same SOP with the link-to-file input path, ordinary TXT/MD
+  import, original-role ZIP boundary, clickable Terminal tabs, rendered
+  Markdown preview and export steps. Distinguished posting a message from
+  executing a task, and recommended English preparation without inventing an
+  English-only rule. The final package format remains unknown. Verified the
+  local launcher, UI dependency, credential presence and Docker socket with
+  zero model requests; no matching project process was running. The known-six
+  run remains at 516 counted attempts, four technically accepted roots and
+  two provider-uncertain roots, with no replay or outcome rewrite. Actual
+  human operation, current API availability and unknown-task performance are
+  not inferred from local checks. This maintenance changes no runtime code.
+
 ## Starting a Codex session
 
 ```text

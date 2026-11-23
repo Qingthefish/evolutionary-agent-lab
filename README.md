@@ -176,6 +176,12 @@ rehearsal and a timed five-minute presentation alongside usable, substantially
 correct outputs; the [classroom review scope](docs/presentation-sop.md#周三的准备优先级)
 does not require repeating every development boundary check during the talk.
 
+The later [attendance notice](https://canvas.ust.hk/courses/73253/announcements/659506),
+received November 23 at 23:22 Hong Kong time, requires **all students to attend
+in the classroom**. The same Zoom/screen-sharing arrangements remain in place.
+The [input-to-output walkthrough](docs/presentation-sop.md#从收到题到看到结果按你实际操作的顺序)
+explains the current TXT/ZIP inputs, clickable Terminal interface and exported results.
+
 **Remaining gates.** Complete repaired-runtime Software Task 2 and Securities
 Task 2 deliveries under a separately recorded development plan,
 check the actual final-link mapping, freeze and rehearse

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "source_kind": "Connected Outlook read of instructor/TA Canvas notification",
+  "checked_on": "2026-11-24",
+  "notification_received_utc": "2026-11-23T15:22:54Z",
+  "notification_received_hong_kong": "2026-11-23T23:22:54+08:00",
+  "announcement_url": "https://canvas.ust.hk/courses/73253/announcements/659506",
+  "notice_body_sha256": "990dca7e5e9f6f192c9b40b367450286f851d4914ee7dabe8d1d8d04cd34603a",
+  "all_students_physically_attend_classroom": true,
+  "other_previous_arrangements_unchanged": true,
+  "same_zoom_screen_sharing_still_applies": true,
+  "own_presentation_computer_still_applies": true,
+  "task_file_extension_added": false,
+  "english_only_rule_added": false,
+  "additional_runtime_limit_added": false,
+  "new_model_requests": 0,
+  "credentials_or_personal_recipients_included": false
+}
