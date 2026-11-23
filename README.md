@@ -68,14 +68,37 @@ approval and unknown-effect checks. Its full engineering regression passed
 calls. A separate 80-request known-task repeat then produced an 11-slide HTML
 candidate, but content review rejected it and the repair remained incomplete.
 A further seven-request artifact repair stopped on two consecutive 4,096-token
-cutoffs, with no corrected HTML saved. The round used **462/480 requests** in
-total; the original six-task result remains unchanged. Ordinary execution now
+cutoffs, with no corrected HTML saved. Its next 18-call derivative produced
+revised files and paused, unaccepted, at cumulative **480 requests**; the
+original six-task result remains unchanged. Ordinary execution now
 allows smaller counted actions after consecutive cutoffs within the existing
-budgets; the optional finish protocol remains separate. Live validation of
-this latest truncation correction remains open. Its full offline regression
-passed **869/899 checks**, with **30 explicit container/UI skips**.
+budgets; the optional finish protocol remains separate. The 18-call derivative
+exercised this recovery without accepting its incomplete goal. That correction's
+offline regression passed **869/899 checks**, with **30 explicit container/UI skips**.
 [Results and failure analysis](docs/final-report.md#13-six-task-mac-evaluation-23-november)
 · [Sanitized evidence](evaluation/evidence/mid-test-six-20261123.json)
+
+**Quality execution audit (2026-11-23).** Re-read the original instructor
+specification and replacement presentation notice. Historical 80/480-call,
+4,096-output and 90-second settings are local experiment choices, not course
+scoring rules. Fresh quality-mode plans select larger operating allowances;
+budget exhaustion preserves work for an audited same-goal extension, and
+stagnation pauses for a revised approach. The software lead may write its own
+integration files; private workspaces, critical-action approval, source/effect
+checks and independent acceptance stay enforced. Old bindings remain available
+for reproduction. The full release regression passed **880/910 checks**, with
+**30 explicit container/UI skips**.
+
+Two real HKGAI regressions used **93 new requests**: an **81-call known-artifact
+HTML repair**, technically accepted after independent rejection/correction and
+an actual bad/good checker control; and the existing **12-call code/execution/
+handoff contract**, completed through its predeclared automatic criteria.
+Returned replies were not truncated at the selected 8,192-token ceiling; one
+connection-closed request retains unknown usage and its counted inspected
+resend. These are separate development outcomes, not an improved six-task score.
+[Quality-mode commands](docs/official-mid-test.md#quality-mode-for-fresh-development)
+· [Results and limits](docs/final-report.md#14-quality-execution-audit-and-regressions)
+· [Sanitized evidence](evaluation/evidence/quality-execution-20261123.json)
 
 **Integrated baseline before this evaluation.** Reviewed contributor changes #75/#76/#77
 and coordinator corrections are integrated through [PR #79](https://github.com/Qingthefish/evolutionary-agent-lab/pull/79).
@@ -152,8 +175,9 @@ Original four-role CLI setup/preflight/read-only export has been rehearsed with
 zero calls, which does not verify an unknown final input. R09's actual Agent-
 runtime GitHub push still needs its designated test branch, scoped credential
 and genuine action-bound approval; coordinator pushes/local-remote fixtures do
-not establish it. Teacher quota/pricing are unknown; local request ceilings
-are experiment limits. The [Terminal operating guide](docs/official-mid-test.md#operating-from-the-presentation-mac)
+not establish it. The owner relays permission for reasonable HKGAI coursework
+use; operating checkpoints are local controls, not teacher limits or measured
+account balance. The [Terminal operating guide](docs/official-mid-test.md#operating-from-the-presentation-mac)
 distinguishes the local platform from remote model inference. Use the [Roadmap](docs/team-roadmap.md) as the sole task,
 owner and progress register, with the instructor [requirements](docs/requirements.md)
 as the primary project authority. Historical observations live in the report

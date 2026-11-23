@@ -5,6 +5,7 @@ from contextlib import ExitStack
 from dataclasses import asdict, dataclass, replace
 import json
 import os
+import sys
 from pathlib import Path
 
 from ..budget import FinishPolicy, TreeLimits, descendants
@@ -31,6 +32,7 @@ CHILD_REPLACEMENTS = 2
 # T1/T2 finished at 41-45; Securities T1 ran out at 46 with four roles. Token and tool-call
 # caps scale with the share (TOKENS_PER_REQUEST, tool scale below).
 MAX_SCENARIO_ATTEMPTS = 160
+OUTPUT_CEILINGS = (1024, 2048, 4096, 8192, 16384)
 CONSTRAINTS = [
     "Use local files and the supplied Python sandbox with standard-library dependencies. "
     "Deliver runnable source and Markdown or plain-text instructions. No external services are configured.",
@@ -96,16 +98,19 @@ def scenario_policy(session):
 
 
 def runtime_config(session, plan, sequence, *, docker_host, image, allow_network, environ=None,
-                   output_token_ceiling=1024):
+                   output_token_ceiling=1024, execution_profile='legacy', socket_timeout=None):
     if type(sequence) is not int or sequence not in (1, 2):
         raise WorkflowError("Select task 1 or 2")
     policy = scenario_policy(session)
     config = plan.config["runtime"]
     attempts, tokens = config["per_scenario_model_attempts"], config["max_output_tokens"]
-    if type(output_token_ceiling) is not int or output_token_ceiling not in (1024, 2048, 4096):
-        raise WorkflowError("Use an explicitly authorized output ceiling of 1024, 2048 or 4096")
+    if execution_profile not in {'legacy', 'quality'}:
+        raise WorkflowError("Select legacy or quality execution")
+    quality = execution_profile == 'quality'
+    if type(output_token_ceiling) is not int or output_token_ceiling not in OUTPUT_CEILINGS:
+        raise WorkflowError("Select an explicitly authorized output ceiling: 1024, 2048, 4096, 8192 or 16384")
     if (config["provider"] != "hkgai" or config["tool_policy"] != policy.identifier or not config["model"]
-            or type(attempts) is not int or not 2 <= attempts <= MAX_SCENARIO_ATTEMPTS
+            or type(attempts) is not int or not 2 <= attempts <= (16384 if quality else MAX_SCENARIO_ATTEMPTS)
             or type(tokens) is not int or not 1 <= tokens <= output_token_ceiling):
         raise WorkflowError("Review the HKGAI model, this scenario's tool policy and bounded scenario budget first")
     if policy.python and (not docker_host or not image):
@@ -115,18 +120,22 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
     # Separate persisted root limits sum to the scenario cap. Restarting does
     # not reclaim calls, and both roots retain their original allocation.
     root_attempts = (attempts + (sequence == 1)) // 2
-    root_tokens = root_attempts * TOKENS_PER_REQUEST
+    root_tokens = root_attempts * (128000 if quality else TOKENS_PER_REQUEST)
     # Tool-call caps grow with the request share; shares up to 24 keep the reviewed 40/128.
     scale = -(-root_attempts // 24)
     key = (os.environ if environ is None else environ).get(config["api_key_env"], "")
     return LiveConfig(
         model=config["model"], api_key=key, provider="hkgai", allow_network=allow_network,
-        socket_timeout=90, max_output_tokens=tokens, tool_calls=40 * scale, require_tool_actions=True,
-        tree_limits=TreeLimits(tasks=8, depth=3, model_attempts=root_attempts, duration_seconds=14400,
+        socket_timeout=(180 if quality else 90) if socket_timeout is None else socket_timeout,
+        max_output_tokens=tokens, tool_calls=min(1000, 40 * scale), require_tool_actions=True,
+        tree_limits=TreeLimits(tasks=16 if quality else 8, depth=4 if quality else 3,
+                               model_attempts=root_attempts, duration_seconds=14400,
                                reported_tokens=root_tokens, tool_calls=128 * scale),
         role_limits=Limits(model_attempts=root_attempts, duration_seconds=14400, reported_tokens=root_tokens),
         docker_host=docker_host if policy.python else None, python_image=image if policy.python else None,
         enable_web=policy.web,
+        execution_profile=execution_profile, pause_on_limits=quality,
+        child_retries=8 if quality else CHILD_REPLACEMENTS,
     )
 
 
@@ -148,8 +157,10 @@ def _posted_root(session, sequence):
     return posted["root"]
 
 
-def tools_for_role(scenario, agent, tools):
-    if scenario == "software-engineering" and agent == "lead":
+def tools_for_role(scenario, agent, tools, *, execution_profile='legacy'):
+    if execution_profile not in {'legacy', 'quality'}:
+        raise WorkflowError("Select legacy or quality execution")
+    if execution_profile == 'legacy' and scenario == "software-engineering" and agent == "lead":
         # The lead coordinates and does not write code, but it can run the integrated deliverable to check it before
         # submitting (2026-11-22: leads shipped misplaced or outdated files they had no way to run).
         return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text"})
@@ -187,7 +198,8 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         "and delegate focused deliverables to eligible peers."
     )
     def role_tools(agent):
-        tools = tools_for_role(session.scenario["id"], agent, policy.tools)
+        tools = tools_for_role(session.scenario["id"], agent, policy.tools,
+                               execution_profile=getattr(live, 'execution_profile', 'legacy'))
         return with_completion_tools(tools) if finish_policy is not None else tools
 
     roles = {entry["id"]: Role(entry["prompt"], role_tools(entry["id"]),
@@ -197,7 +209,8 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         clients=live_clients(live, roles), mode="live", constraints=constraints,
         verifier_factory=lambda task: None, acceptance_id=policy.acceptance_id,
         limits=live.tree_limits, executor=services.executor, retrieval=services.retrieval, allow_html=allow_html,
-        show_execution_budget=show_execution_budget, child_retries=CHILD_REPLACEMENTS,
+        show_execution_budget=show_execution_budget, child_retries=getattr(live, 'child_retries', CHILD_REPLACEMENTS),
+        pause_on_limits=getattr(live, 'pause_on_limits', False),
         finish_policy=finish_policy, parallel_model_calls=parallel_model_calls,
         stable_prompt_prefix=stable_prompt_prefix)
 
@@ -217,8 +230,9 @@ def _review_boundaries(scheduler):
             needs.append({"task": task["id"], "kind": task["state"], "requests": pending})
         elif has_sessions:
             row = workflow.db.execute("SELECT status FROM runner_sessions WHERE task=?", (task["id"],)).fetchone()
-            if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping", "provider_uncertain"}:
-                need = {"task": task["id"], "kind": row["status"]}
+            if row and row["status"] in {"awaiting_verification", "calling", "processing", "stopping", "provider_uncertain", 'budget_paused', 'progress_paused'}:
+                need = {"task": task["id"], "kind": {'budget_paused':'execution_budget',
+                    'progress_paused':'progress_review'}.get(row['status'],row['status'])}
                 if row["status"] == "awaiting_verification":
                     proposal = workflow.db.execute("SELECT detail FROM events WHERE task=? AND kind='completion_proposed' "
                                                    "ORDER BY sequence DESC LIMIT 1", (task["id"],)).fetchone()
@@ -282,6 +296,17 @@ def advance(scheduler, turns):
     if needs:
         return scheduler.status() | {"state": "blocked", "needs": needs}
     return result
+
+
+def run_to_boundary(scheduler):
+    """Use the inspected plan until a real boundary, without an eight-turn UI cap."""
+    while True:
+        result = advance(scheduler, 1)
+        if result['state'] != 'running':
+            return result
+        current = result['budget']
+        print(f"Requests {current['attempts']}/{current['limits']['model_attempts']}; goal {result['task_state']}",
+              file=sys.stderr, flush=True)
 
 
 def _advance_overlapping(scheduler, turns):
@@ -349,7 +374,8 @@ def review_proposal(scheduler, task_id, decision, feedback, *, waive_failed_subt
 
 # Which recorded state each operator action may resolve. None of them sends a
 # model request or re-runs a tool; an unknown provider response stays unknown.
-RECONCILE = {"release-claim": {"ready", "paused", "awaiting_verification", None},
+RECONCILE = {"release-claim": {"ready", "paused", "awaiting_verification", "budget_paused", "progress_paused", None},
+             "resume-progress": {'progress_paused'},
              "abort": {"calling", "processing", "stopping", "provider_uncertain"},
              "recover-tools": {"processing"},
              # Proposed 2026-11-18: after a transport failure, release one new counted
@@ -389,6 +415,8 @@ def reconcile(scheduler, task_id, action, reason, *, human):
         scheduler.runner(task_id).recover_tools()
     elif action == "resend":
         scheduler.runner(task_id).resend_after_transport_failure(reason)
+    elif action == 'resume-progress':
+        scheduler.runner(task_id).resume_progress(reason)
     with workflow._transaction():
         workflow._event(task_id, human, "official_reconciliation_recorded", {
             "action": action, "reason": reason, "runner_state_before": before,
@@ -405,13 +433,18 @@ def main(argv=None):
     parser.add_argument("--state-dir", required=True)
     parser.add_argument("--sequence", type=int, choices=(1, 2), required=True)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("preflight", "advance", "review", "reconcile"):
+    for name in ("preflight", "advance", "run", "review", "reconcile", "extend"):
         command = commands.add_parser(name, allow_abbrev=False)
         # Required only by a policy with the Python tool; checked per scenario.
         command.add_argument("--docker-host")
         command.add_argument("--image")
-        command.add_argument("--output-token-ceiling", type=int, choices=(1024, 2048, 4096), default=1024,
+        command.add_argument("--output-token-ceiling", type=int, choices=OUTPUT_CEILINGS, default=1024,
                              help="Explicitly authorized per-request output ceiling; default 1024")
+        command.add_argument('--execution-profile', choices=('legacy', 'quality'), default='legacy',
+                             help='Quality: plan-selected larger allowances, preserve work and pause at limits; '
+                                  'legacy preserves existing experiment bindings')
+        command.add_argument('--socket-timeout', type=float,
+                             help='Per-request socket wait in seconds, up to 600; quality defaults to 180')
         command.add_argument("--show-execution-budget", action="store_true",
                              help="Expose current local limits without fixing a workflow; select consistently for a fresh run")
         command.add_argument("--finish-protocol", action="store_true",
@@ -421,8 +454,11 @@ def main(argv=None):
                              help="Last requests of every open task kept as its finish window (completion only)")
         command.add_argument("--min-child-requests", type=int, default=FINISH_POLICY.min_child,
                              help="Work requests a new subtask needs beyond its own finish window")
-        if name == "advance":
-            command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
+        if name in {'advance', 'run'}:
+            if name == 'advance':
+                command.add_argument("--turns", type=int, choices=range(1, 9), default=1)
+            else:
+                command.add_argument('--allow-model-requests', action='store_true', required=True)
             command.add_argument("--parallel-model-calls", type=int, choices=(1, 2), default=1,
                                  help="Opt-in: overlap the provider requests of up to two independent ready tasks "
                                       "(default 1, sequential)")
@@ -446,6 +482,11 @@ def main(argv=None):
             command.add_argument("--reason", required=True)
             command.add_argument("--confirm-stopped", action="store_true",
                                  help="Confirm that no other advance or review process is still running")
+        elif name == 'extend':
+            command.add_argument('--new-config', required=True, help='Inspected plan with only the request allowance increased')
+            command.add_argument('--expected-config-sha256', required=True)
+            command.add_argument('--reason', required=True)
+            command.add_argument('--confirm-stopped', action='store_true', required=True)
     answer = commands.add_parser("answer", allow_abbrev=False)
     answer.add_argument("--request", required=True)
     answer.add_argument("--text", required=True)
@@ -467,8 +508,9 @@ def main(argv=None):
                 if args.command == "reconcile" and not args.confirm_stopped:
                     raise WorkflowError("Confirm with --confirm-stopped that the interrupted process has exited")
                 live = runtime_config(session, plan, args.sequence, docker_host=args.docker_host,
-                                      image=args.image, allow_network=args.command == "advance",
-                                      output_token_ceiling=args.output_token_ceiling)
+                                      image=args.image, allow_network=args.command in {"advance", 'run'},
+                                      output_token_ceiling=args.output_token_ceiling,
+                                      execution_profile=args.execution_profile, socket_timeout=args.socket_timeout)
                 with ExitStack() as stack:
                     files = FileTools(workflow, Path(args.state_dir) / "files")
                     stack.callback(files.close)
@@ -485,15 +527,38 @@ def main(argv=None):
                                                parallel_model_calls=getattr(args, "parallel_model_calls", 1),
                                                stable_prompt_prefix=getattr(args, "stable_prompt_prefix", False))
                     if args.command == "preflight":
+                        from ..execution_control import configuration_sha256
                         policy = scenario_policy(session)
                         result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
                                                        "tool_policy": policy.identifier, "tools": list(policy.tools),
                                                        "role_tools": {actor: list(role.tools) for actor, role in scheduler.roles.items()},
                                                        "show_execution_budget": args.show_execution_budget,
                                                        "finish_policy": asdict(finish_policy) if finish_policy else None,
+                                                       "execution_profile": live.execution_profile,
+                                                       "pause_on_limits": live.pause_on_limits,
+                                                       "configuration_sha256": configuration_sha256(workflow, root),
                                                        "configuration": services.configuration()}
+                    elif args.command == 'extend':
+                        from ..execution_control import extend_execution
+                        proposed = OfficialMidTestPlan(args.new_config)
+                        previous = json.loads(json.dumps(plan.config))
+                        changed = json.loads(json.dumps(proposed.config))
+                        previous['runtime'].pop('per_scenario_model_attempts')
+                        changed['runtime'].pop('per_scenario_model_attempts')
+                        if previous != changed or plan.dataset != proposed.dataset:
+                            raise WorkflowError('Budget extension may only change the planned request allowance')
+                        amended = runtime_config(session, proposed, args.sequence, docker_host=args.docker_host,
+                            image=args.image, allow_network=False, output_token_ceiling=args.output_token_ceiling,
+                            execution_profile=args.execution_profile, socket_timeout=args.socket_timeout)
+                        roles = {actor: replace(role, limits=amended.role_limits, tool_calls=amended.tool_calls)
+                                 for actor, role in scheduler.roles.items()}
+                        result = extend_execution(workflow, root, session.human, tree_limits=amended.tree_limits,
+                            roles=roles, reason=args.reason, expected_sha256=args.expected_config_sha256,
+                            plan_amendment=(plan.sha256, proposed.sha256))
                     elif args.command == "advance":
                         result = advance(scheduler, args.turns)
+                    elif args.command == 'run':
+                        result = run_to_boundary(scheduler)
                     elif args.command == "reconcile":
                         result = reconcile(scheduler, args.task, args.action, args.reason, human=session.human)
                     else:

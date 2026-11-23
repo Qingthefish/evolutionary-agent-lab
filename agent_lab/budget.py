@@ -59,12 +59,13 @@ def provider_pause_seconds(workflow, tasks, now):
             intervals.append((detail["from"], min(detail["to"], ended)))
         events = workflow.db.execute(
             "SELECT kind,timestamp FROM events WHERE task=? AND kind IN "
-            "('provider_decision_required','provider_resend_released') ORDER BY sequence", (task,)).fetchall()
+            "('provider_decision_required','provider_resend_released','execution_paused','execution_budget_paused',"
+            "'execution_budget_resumed','execution_progress_resumed','execution_limits_extended') ORDER BY sequence", (task,)).fetchall()
         start = None
         for event in events:
-            if event["kind"] == "provider_decision_required" and start is None:
+            if event["kind"] in {'provider_decision_required', 'execution_paused', 'execution_budget_paused'} and start is None:
                 start = event["timestamp"]
-            elif event["kind"] == "provider_resend_released" and start is not None:
+            elif event["kind"] in {'provider_resend_released', 'execution_budget_resumed', 'execution_progress_resumed', 'execution_limits_extended'} and start is not None:
                 intervals.append((start, event["timestamp"]))
                 start = None
         if start is not None:

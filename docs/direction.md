@@ -70,6 +70,17 @@ Use a versioned development plan to inspect selected live cases, budgets, roles 
 
 ## Delivery gates
 
+November 23 owner decision: use quality execution for fresh development rather
+than treating earlier small experiment budgets as product limits. Keep the
+instructor's completion/time metrics and presentation schedule visible, allow
+larger plan-selected responses and request pools, preserve work at an operating
+boundary, and permit an explicit audited extension of the same nonterminal
+goal. The extension must not reset usage, change tools/provider/review policy,
+resume a terminal trial or replay uncertain effects. The experimental forced
+finish protocol is incompatible with quality mode. Legacy bindings remain
+available for reproduction. Ordinary technical verification need not imitate
+a human approval; critical human decisions remain separate.
+
 November 23 ordinary-output recovery correction: a fully received,
 usage-accounted length-limited reply does not by itself fail the goal after
 two occurrences. Discard its incomplete tool arguments, give smaller-action

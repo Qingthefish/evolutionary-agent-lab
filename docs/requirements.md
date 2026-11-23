@@ -80,6 +80,36 @@ a planning estimate, not a separately stated execution deadline.
 
 ## Questions affecting design
 
+### November 23 operating-rule audit
+
+Re-read the original full instructor notification, linked to the
+[October 14 specification](https://canvas.ust.hk/courses/73253/announcements/648693),
+alongside the replacement presentation notice. The specification requires
+automatic completion-rate **and execution-time** reporting. Neither notice
+sets an 80/480-request allowance, a 4,096-token output ceiling, a two-child
+replacement allowance or an automatic failure after an operating budget ends.
+The approximately 16.5-minute preparation window remains a scheduling estimate;
+prepare results for our presentation turn rather than inventing a separate
+runtime scoring rule. Quality and time must both remain visible.
+
+| Rule | Authority / purpose | Current decision |
+| --- | --- | --- |
+| DeepSeek/HKGAI; isolated agent workspaces and memory; clarification and permission before critical actions; required formats and minimal UI | Instructor requirements | Preserve these boundaries. |
+| Every ordinary output needs a manual human decision | Not an instructor requirement | Predeclared independent technical checks may accept routine work; human decisions remain real when needed. |
+| Fixed 80/480 calls, 1,024/4,096 output tokens and 90-second socket wait | Historical operator selections | Retain old experiments. Fresh quality-mode plans select suitable allowances, output up to 16,384 and socket waits up to 600 seconds; the reviewed live choice is 8,192/180. |
+| Budget exhaustion means the goal failed and siblings are cancelled | Internal implementation, not a rubric | Quality mode pauses with artifacts/counters intact. An inspected, logged extension can resume the same goal. |
+| Repeated identical actions or forced completion-only windows | Internal loop control / optional experiment | Quality mode warns, then pauses for a revised approach; it does not force a premature completion-only window. |
+| Software lead cannot write its own integration files | Earlier role-tool choice | Quality mode permits task-local writes while preserving every private-workspace boundary. |
+| Snapshot hashes, effect reconciliation and independent goal checks | Engineering controls against stale output, duplicate effects and unsupported success | Preserve; they are implementation safeguards, not extra teacher scoring criteria. |
+
+The owner now relays that the instructor permits freely using HKGAI for
+reasonable coursework, excluding extremely long or unreasonably large request
+batches, and explicitly authorizes this product audit and live regression.
+The historical 480-call round is closed as an allowance, without changing its
+task outcomes. New batches record proportionate operating allowances and
+cumulative usage; an allowance is not an asserted provider balance or an
+unlimited automatic retry policy. See the [quality-mode runbook](official-mid-test.md#quality-mode-for-fresh-development).
+
 The instructor's mid-test package was supplied on 2026-11-15. It defines three
 four-agent scenarios with two sequential tasks per same group and real human
 dialogue. The [C06 adapter](official-mid-test.md) reads the original local package

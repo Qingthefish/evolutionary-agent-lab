@@ -112,7 +112,7 @@ class ProviderTests(unittest.TestCase):
         with patch("urllib.request.build_opener") as opener, self.assertRaisesRegex(ProviderError, "Network disabled"):
             transport(b"{}")
         opener.assert_not_called()
-        for timeout in [True, 0, float("inf"), -1, 121]:
+        for timeout in [True, 0, float("inf"), -1, 601]:
             with self.assertRaises(ProviderError):
                 DeepSeekHTTP("test-secret", timeout=timeout)
 

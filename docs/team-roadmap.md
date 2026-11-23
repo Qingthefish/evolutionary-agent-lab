@@ -799,7 +799,31 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   latest correction remains open. The full offline suite passed **869/899**
   checks with **30 explicit container/UI skips**. [Failure analysis](final-report.md#13-six-task-mac-evaluation-23-november)
 
+- **2026-11-23 quality execution audit and release:** Qingthefish,
+  owner-requested Codex-assisted S01 continuation on
+  `fix/S01-quality-execution-20261123`. Re-read the original specification and
+  replacement presentation notice; removed superseded standing work-round
+  limits from contributor instructions while preserving all experiment records.
+  Added an explicit quality profile with plan-selected request/output/time
+  allowances, budget/stagnation pauses, atomic same-goal numeric extensions,
+  continuous run-to-boundary CLI and Software-lead private integration writes.
+  No provider/tool/approval/isolation or acceptance boundary is silently widened.
+  The final source passed **880/910 checks**, with **30 explicit container/UI
+  skips**. Two additional negative checks caught and then verified a paused
+  transcript's orphaned/partially executed tool-call recovery, with no effect
+  replay. On the recorded development revision, **93 actual HKGAI requests**
+  completed an 81-call technically reviewed known-HTML repair and the existing
+  12-call code/execution/checked-handoff contract. The first HTML proposal's
+  generated checks missed semantic contradictions; independent rejection,
+  Agent correction and actual bad/good checker controls are retained. One
+  connection-closed request retains unknown usage and an explicit inspected
+  counted resend. The original six-task **375-call, four-assisted/two-failed**
+  result is unchanged; the intervening 18-call derivative remains paused at
+  historical cumulative 480. Dynamic browser behavior and broader fresh
+  scenario success remain unestablished. [Results and limits](final-report.md#14-quality-execution-audit-and-regressions)
+
 ### S02
+
 
 **Finish submission materials**
 

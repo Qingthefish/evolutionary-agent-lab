@@ -159,8 +159,11 @@ class PreparedTurn:
 class TaskRunner:
     def __init__(self, gateway, client, *, mode, constraints, limits=Limits(),
                  verifier=None, verifier_id=None, role=None, allow_html=False, show_execution_budget=False,
-                 stable_prompt_prefix=False):
+                 stable_prompt_prefix=False, pause_on_limits=False):
         self.gateway, self.client = gateway, client
+        if type(pause_on_limits) is not bool:
+            raise RunnerError("Budget pausing requires an explicit boolean setting")
+        self.pause_on_limits = pause_on_limits
         if type(stable_prompt_prefix) is not bool:
             raise RunnerError("Stable prompt prefix requires an explicit boolean setting")
         # Opt-in, not in the persisted configuration: the live budget is sent as a trailing message
@@ -226,6 +229,8 @@ class TaskRunner:
                         "execution": gateway.execution_configuration(),
                         "human": gateway.human, "verifier_id": verifier_id,
                         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest()}
+        if pause_on_limits:
+            settings['pause_on_limits'] = True
         if self.budget_context:
             settings['budget_context'] = 'local-reservations-v1'
         if self.budget_context or self.require_tool_actions or allow_html:
@@ -299,6 +304,8 @@ class TaskRunner:
         if state == "awaiting_verification" and task["state"] in {"succeeded", "failed", "cancelled"}:
             state = task["state"]
         return {"mode": self.mode, "runner_state": state, "task_state": task["state"],
+                **({'needs': 'execution_budget' if state == 'budget_paused' else 'progress_review'}
+                   if state in {'budget_paused', 'progress_paused'} else {}),
                 "protocol_attempts": session["attempts"],
                 "live_model_attempts": session["attempts"] if self.mode == "live" else 0,
                 "reported_tokens": session["tokens"], "unknown_usage_attempts": uncertain,
@@ -307,12 +314,44 @@ class TaskRunner:
 
     def _limit_stop(self, reason):
         """Stop on a hard limit; inside the finish window say that the window ended without a completion."""
+        if self.pause_on_limits:
+            return self._pause(reason, 'budget_paused')
         if (self.show_execution_budget and not reason.startswith(FINISH_EXHAUSTED) and self.workflow.db.execute(
                 "SELECT 1 FROM events WHERE task=? AND kind='finish_mode_entered'", (self.task,)).fetchone()):
             reason = FINISH_EXHAUSTED + reason
         if reason.startswith(FINISH_EXHAUSTED):
             self.workflow._event(self.task, self.actor, "finish_window_exhausted", {"reason": reason})
         return self._stop(reason)
+
+    def _pause(self, reason, status):
+        """Keep the goal/artifacts alive; another call requires trusted intervention."""
+        with self.workflow._transaction():
+            current = self._session()
+            if current['status'] != status:
+                if self.workflow.db.execute(
+                        "SELECT 1 FROM tool_calls WHERE task=? AND status='reserved'", (self.task,)).fetchone():
+                    raise RunnerError('Uncertain tool effects require reconciliation, not a budget resume')
+                turn = self.workflow.db.execute("SELECT * FROM runner_turns WHERE task=? AND number=?",
+                                                (self.task, current['attempts'])).fetchone()
+                if turn and turn['status'] in {'received', 'processing'} and turn['response']:
+                    response = json.loads(turn['response'])
+                    if response['finish_reason'] == 'tool_calls':
+                        outcomes = self._recorded_outcomes(turn, response['message']['tool_calls'],
+                                                           'Not executed: operating budget pause')
+                        transcript = json.loads(current['transcript']) + outcomes
+                        self.workflow.db.execute('UPDATE runner_sessions SET transcript=? WHERE task=?',
+                                                 (_json(transcript), self.task))
+                self.workflow.db.execute("UPDATE runner_sessions SET status=?,stop_reason=? WHERE task=?",
+                                         (status, reason, self.task))
+                # Preserve actual committed results and explicit non-execution
+                # results for the remaining calls. Resuming must neither replay
+                # an effect nor send orphaned tool calls back to the provider.
+                self.workflow.db.execute("UPDATE runner_turns SET status='settled' WHERE task=? "
+                                         "AND response IS NOT NULL AND status IN ('received','processing')", (self.task,))
+                self.workflow._event(self.task, self.actor, 'execution_paused', {
+                    'reason': reason, 'runner_state': status, 'attempts': current['attempts'],
+                    'outcome': 'undecided', 'automatic_resume': False})
+        return self.status()
 
     def _stop(self, reason):
         # Persist a stop claim before terminating; a crash can safely finalize it.
@@ -328,6 +367,24 @@ class TaskRunner:
                     raise
         with self.workflow._transaction():
             self.workflow.db.execute("UPDATE runner_sessions SET status='stopped' WHERE task=?", (self.task,))
+        return self.status()
+
+    def resume_progress(self, reason):
+        """Trusted progress decision; no model request, success or effect replay."""
+        if not isinstance(reason, str) or not 1 <= len(reason.strip()) <= 4096:
+            raise RunnerError('Give a concrete revised approach before continuing')
+        with self.workflow._transaction():
+            current = self._session()
+            if not self.pause_on_limits or current['status'] != 'progress_paused':
+                raise RunnerError('Only a quality-mode progress pause can use this decision')
+            transcript = json.loads(current['transcript'])
+            transcript.append({'role': 'user', 'content': _json({
+                'kind': 'progress_review', 'instruction': reason,
+                'scope': 'Continue the original goal within its existing allowance; no approval or success granted.'})})
+            self.workflow.db.execute("UPDATE runner_sessions SET status='ready',stop_reason=NULL,repeats=0,"
+                "last_signature=NULL,transcript=? WHERE task=?", (_json(transcript), self.task))
+            self.workflow._event(self.task, self.gateway.human, 'execution_progress_resumed', {
+                'reason': reason, 'attempts_unchanged': current['attempts'], 'model_calls': 0})
         return self.status()
 
     def resend_after_transport_failure(self, reason):
@@ -695,11 +752,11 @@ class TaskRunner:
         try:
             self.gateway.validate_batch(calls)
         except ToolBudgetError as error:
-            if not self._phase:
+            if not self._phase and not self.pause_on_limits:
                 return self._stop(str(error))  # Without the protocol, behaviour is unchanged.
             # With the protocol a batch too large for the remaining tool calls is refused with feedback; a single
             # completion call still fits, because the window starts in time and other tasks' windows are held.
-            hint = (" In the finish window send only submit_for_verification or report_blocker." if self._in_finish()
+            hint = (" In the finish window send only submit_for_verification or report_blocker." if self._phase and self._in_finish()
                     else " Send fewer calls in one batch.")
             outcomes = [self._tool_error(call, f"{str(error).rstrip('.')}.{hint} No call in this batch ran")
                         for call in calls]
@@ -728,7 +785,7 @@ class TaskRunner:
                 else:
                     outcomes.append(self.gateway.dispatch(call))
             except ToolBudgetError as error:
-                return self._stop(str(error))
+                return self._limit_stop(str(error)) if self.pause_on_limits else self._stop(str(error))
             except ToolRequestError as error:
                 outcomes.append(self._tool_error(call, str(error)))
         if self._expired():
@@ -832,7 +889,7 @@ class TaskRunner:
                 state = task_state
             else:
                 state = state or ("paused" if task_state.startswith("waiting_") else "ready")
-            if (repeats == self.limits.repeated_outcomes and state == "ready" and self._phase is not None
+            if (repeats == self.limits.repeated_outcomes and state == "ready" and (self._phase is not None or self.pause_on_limits)
                     and not self._in_finish()):
                 messages = list(messages) + [{"role": "user", "content": _json(
                     {"kind": "repeated_outcome_notice", "repeats": repeats, "instruction": REPEAT_NOTICE})}]
@@ -843,13 +900,15 @@ class TaskRunner:
                 (state, _json(transcript), digest, repeats, self.task),
             )
             self.workflow.db.execute("UPDATE runner_turns SET status='settled' WHERE task=? AND number=?", (self.task, number))
-        grace = REPEAT_GRACE if self._phase is not None and not self._in_finish() else 0
+        grace = REPEAT_GRACE if (self._phase is not None or self.pause_on_limits) and not self._in_finish() else 0
         if repeats >= self.limits.repeated_outcomes + grace and state == "ready":
             if self._phase and not self._in_finish():
                 self._force_finish("repeated_outcomes")
                 return self.status()
             if self._phase:
                 return self._limit_stop(FINISH_EXHAUSTED + "repeated identical outcomes; partial artifacts retained")
+            if self.pause_on_limits:
+                return self._pause("Repeated identical outcomes need a progress review; artifacts retained", 'progress_paused')
             return self._stop("Repeated identical proposals/outcomes; stopping without evidence of progress")
         return self.status()
 
@@ -903,31 +962,15 @@ class TaskRunner:
             self.workflow.db.execute("UPDATE runner_sessions SET status='ready',transcript=?,repeats=0,"
                                      "last_signature=NULL WHERE task=?", (_json(transcript), self.task))
 
-    def recover_tools(self):
-        """Trusted controller: call only after the prior worker has stopped.
-
-        Reconstruct recorded results, skip unstarted proposals, and never replay
-        effects. A reserved tool or unknown provider response needs reconciliation.
-        """
-        session = self._session()
-        if session["status"] != "processing":
-            raise RunnerError("Only a stored tool response can be recovered; unknown provider calls need reconciliation")
-        turn = self.workflow.db.execute("SELECT * FROM runner_turns WHERE task=? AND number=?",
-                                        (self.task, session["attempts"])).fetchone()
-        response = json.loads(turn["response"])
-        if response["finish_reason"] != "tool_calls":
-            raise RunnerError("Interrupted verification requires trusted inspection, not automatic replay")
-        calls = response["message"]["tool_calls"]
+    def _recorded_outcomes(self, turn, calls, skipped):
+        """Read exact committed results for this turn; never dispatch a tool."""
         floor = json.loads(turn["request"])["event_floor"]
-        if self.show_execution_budget:  # A fresh process: rebuild this turn's phase from persisted records.
-            self._phase = completion.phase(self.workflow, self.task,
-                                           role_left=self.limits.model_attempts - session["attempts"])
         outcomes = []
         for call in calls:
             record = self.workflow.db.execute("SELECT * FROM tool_calls WHERE task=? AND call_id=?",
                                               (self.task, call["id"])).fetchone()
             if record is None:
-                outcomes.append(self._tool_error(call, "Not executed: interrupted batch"))
+                outcomes.append(self._tool_error(call, skipped))
             elif record["status"] == "reserved" or record["result"] is None:
                 raise RunnerError("Tool effect is uncertain; inspect artifacts before reconciling or aborting")
             elif not self.workflow.db.execute(
@@ -939,6 +982,23 @@ class TaskRunner:
                 raise RunnerError("Recorded tool proposal differs; do not reuse its result")
             else:
                 outcomes.append({"role": "tool", "tool_call_id": call["id"], "content": record["result"]})
+        return outcomes
+
+    def recover_tools(self):
+        """Trusted recovery: keep committed results, skip unstarted calls, never replay."""
+        session = self._session()
+        if session["status"] != "processing":
+            raise RunnerError("Only a stored tool response can be recovered; unknown provider calls need reconciliation")
+        turn = self.workflow.db.execute("SELECT * FROM runner_turns WHERE task=? AND number=?",
+                                        (self.task, session["attempts"])).fetchone()
+        response = json.loads(turn["response"])
+        if response["finish_reason"] != "tool_calls":
+            raise RunnerError("Interrupted verification requires trusted inspection, not automatic replay")
+        calls = response["message"]["tool_calls"]
+        if self.show_execution_budget:
+            self._phase = completion.phase(self.workflow, self.task,
+                                           role_left=self.limits.model_attempts - session["attempts"])
+        outcomes = self._recorded_outcomes(turn, calls, 'Not executed: interrupted batch')
         return self._settle(session["attempts"], calls, outcomes, allow_submission=False)
 
     def run(self):

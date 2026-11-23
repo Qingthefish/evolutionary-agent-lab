@@ -806,3 +806,72 @@ continued independent verification. The full offline regression passed **869/899
 container/UI skips**. Real-model validation of this latest correction remains open. Search relevance, earlier drafting, content quality
 and output-size management remain separate limitations. The owner continues
 to prepare the presentation slides independently.
+
+## 14. Quality execution audit and regressions
+
+The owner requested a full review of self-imposed operating rules on November
+23, rather than another short-budget retry. We re-read the complete October
+14 specification through its original notification and retained the replacement
+presentation notice. The instructor requires completion-rate and execution-time
+reporting, private workspaces/memory, permitted providers, supported formats,
+minimal UI and real human clarification/critical-action permission. Neither
+notice sets the historical 80/480-request or 4,096-token limits. The owner also
+relays permission for reasonable HKGAI coursework use, excluding extremely long
+or unreasonably large request batches. This updates development authorization,
+without asserting an account balance or changing historical results.
+
+Fresh quality-mode plans can select suitable request pools, up to 16,384
+output tokens and socket waits up to 600 seconds; the actual regressions used
+**8,192 output tokens / 180 seconds**. Model/tool/token/duration exhaustion
+preserves a nonterminal task, artifacts and counters, returning a distinct
+operating need. An atomic extension can increase numeric capacities on the
+same goal after inspecting its exact configuration. It cannot change tools,
+provider/model, instructions, output ceiling or acceptance, reopen a terminal
+trial, reset usage or replay uncertain effects. Repeated identical outcomes
+warn and pause for a revised approach. Quality mode keeps the experimental
+forced completion-only window off, and lets the Software lead write its own
+integration files. Legacy bindings remain reproducible.
+
+The preceding 18-request ordinary-mode repair produced revised HTML and notes,
+then paused at the old cumulative **480-call** allowance without acceptance.
+That checkpoint remains preserved; it is not retroactively marked failed or
+passed. A new proportionate development allowance used **93/120 new requests**:
+
+| Known-development regression | Actual outcome | Requests / known reported tokens | Timing and limits |
+| --- | --- | --- | --- |
+| Semiconductor HTML integration repair | Technically accepted after an independent semantic rejection and correction; browser behavior untested | 81 / 6,354,487, plus one request with unknown parsed usage | 2,093.29 seconds assignment-to-acceptance; 1,622.10 seconds from first request to last response. Includes review/operator waiting. |
+| Existing A05 order-summary code/execution/handoff contract | Coder and coordinator automatically accepted under predeclared source, isolated-execution, numeric and actual receipt/read criteria | 12 / 73,021 | 680.79 seconds assignment-to-completion, including waiting before dispatch; request window 24.96 seconds. This narrower interval is not the instructor's total-time metric. |
+
+The HTML repair's first proposal passed its generated presence/value checks,
+but independent review found a contradictory forward-P/E denominator in the
+risk table, an unsupported observed-cycle-peak assertion, a causal deduction
+from revenue growth alone, repeated unverified drawdown figures and overstated
+checker/specialist disclosures. The Agent repaired the current files and
+added whole-deck consistency checks. We then ran the **same current checker**
+in the pinned no-network sandbox against both the retained rejected revision
+and current candidate: exit **1** for the known bad input, exit **0** for the
+current input, with cleanup confirmed. Selected source/numeric checks and
+independent stress arithmetic were rechecked. This accepts a known-artifact
+integration repair with disclosed limitations, not unattended original-scenario
+collaboration, every causal claim or dynamic browser behavior.
+
+All **92 returned replies** in these two regressions completed without length
+truncation; the largest used **8,079 output tokens**. Securities request 22
+closed its connection while opening after about 19 seconds, before completion
+or tool release. Its counted attempt and unknown usage remain. After inspecting
+the no-tool-effect record, the operator explicitly released a new counted
+request; no hidden automatic reissue occurred. The A05 result also passed a
+separate current-source/input, exact JSON/numeric, cleanup and same-output-hash
+recheck, without any fabricated human review. It remains a bounded known
+contract, not general code correctness or a benchmark score.
+
+Release review found one additional pause/resume edge: a known response could
+leave unanswered tool calls in the resumed transcript. Two negative regression
+failures reproduced it, including a partially executed batch. The correction
+preserves exact committed results, explicitly skips unstarted calls and never
+replays an effect or accepts a pending proposal. The final source passed the
+complete **910-check** offline suite: **880 passed, 30 explicit container/UI
+skips**. The live regressions are bound to their recorded development source;
+this final control-edge correction has its own offline evidence rather than a
+fabricated model rerun. Raw failures, intermediate source versions and original
+sealed records remain private. [Sanitized evidence](../evaluation/evidence/quality-execution-20261123.json)

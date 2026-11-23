@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "classification": "owner-requested operating-policy audit and known-development regressions; not an official six-task score",
+  "date": "2026-11-23",
+  "teacher_source": "https://canvas.ust.hk/courses/73253/announcements/648693",
+  "teacher_source_kind": "Full original notification re-read through connected Outlook; replacement presentation screenshot retained separately",
+  "teacher_text_snapshot_sha256": "17a0f006d480dfcb1d2db64f8b7c0fc9c79045b4c4f7f5a6f176075496442bfb",
+  "authorization": {
+    "owner_relays_reasonable_HKGAI_use": true,
+    "new_request_allowance": 120,
+    "new_requests_used": 93,
+    "historical_requests_preserved": 480,
+    "max_output_tokens": 8192,
+    "socket_timeout_seconds": 180,
+    "work_checkpoint_minutes": 45,
+    "teacher_numeric_call_or_output_limit": false
+  },
+  "live_runtime_source_sha256": "2c34abb2c380c71f34037e78340ca20485e1a98bf2da1fb7401da33d00941a12",
+  "semiconductor_repair": {
+    "state": "succeeded",
+    "requests": 81,
+    "known_reported_tokens": 6354487,
+    "attempts_without_parsed_usage": 1,
+    "observed_models": {
+      "t2_hkgai-v3_fp8_1m_e10": 80
+    },
+    "length_stops": 0,
+    "max_observed_completion_tokens": 8079,
+    "assignment_to_terminal_wall_seconds": 2093.2900891304016,
+    "first_request_to_last_response_seconds": 1622.0968458652496
+  },
+  "code_handoff_regression": {
+    "state": "succeeded",
+    "requests": 12,
+    "known_reported_tokens": 73021,
+    "attempts_without_parsed_usage": 0,
+    "observed_models": {
+      "t2_hkgai-v3_fp8_1m_e10": 12
+    },
+    "length_stops": 0,
+    "max_observed_completion_tokens": 1478,
+    "assignment_to_terminal_wall_seconds": 680.7912821769714,
+    "first_request_to_last_response_seconds": 24.958538055419922,
+    "independent_recheck": {
+      "current_source_and_input_execution": true,
+      "cleanup_confirmed": true,
+      "exact_numeric_schema": true,
+      "root_child_same_output_hash": true,
+      "runtime_automatic_acceptance_without_human_decision": true
+    }
+  },
+  "checker_controls": {
+    "same_source": true,
+    "known_bad_exit_code": 1,
+    "current_candidate_exit_code": 0,
+    "new_model_requests": 0,
+    "actual_isolated_execution": true
+  },
+  "scope_notes": [
+    "Original six-task 375-request/four-assisted/two-failed outcome unchanged.",
+    "The intermediate 18-call repair remains paused and unaccepted at historical cumulative 480.",
+    "Securities repair is a known-artifact integration repair after a technical rejection, not unattended original-scenario success.",
+    "Request 22 connection closed before completion/tool release; usage stays unknown and its counted request is retained. An explicit inspected resend released a new counted request, with no tool effect replay.",
+    "Code case is the existing bounded A05 order-summary contract, not a new benchmark or general planning proof.",
+    "Current checks cover selected numerical/source and consistency properties, not all possible causal claims.",
+    "Browser rendering/navigation has not been dynamically tested.",
+    "Assignment-to-terminal time includes preparation idle and technical review. The request-window figures are separate and must not be reported as teacher-defined execution time."
+  ],
+  "release_runtime_source_sha256": "26836023601da1dc2d44d5d70075a1234956bea17b87d5509fd17051a3cb119a",
+  "post_live_control_correction": {
+    "scope": "Pair every paused response tool call with its exact committed result or an explicit not-executed error before resuming, without effect replay.",
+    "initial_negative_regression_failures": 2,
+    "source_changed_after_live_regressions": true,
+    "live_regression_rerun_on_final_hash": false,
+    "targeted_offline_positive_and_negative_checks_passed": true
+  },
+  "engineering_verification": {
+    "discovered": 910,
+    "passed": 880,
+    "skipped": 30,
+    "failures": 0,
+    "errors": 0,
+    "skip_scope": "21 actual-container and nine optional UI checks unconfigured; real sandbox jobs checked separately",
+    "unittest_stderr_sha256": "a93751e74bac611dbda2f0ca59afd553dfb10e7b2e9c80a6a9b17ba58c7eb9e6"
+  }
+}
