@@ -48,6 +48,14 @@ December 19. The inspected notice supplies no answer key or detailed grading
 rubric. The separate [presentation-order announcement](https://canvas.ust.hk/courses/73253/announcements/659125)
 links a roster, but our team's exact slot has not been verified.
 
+On November 24, independently read the additional [In-Person Attendance
+Required notice](https://canvas.ust.hk/courses/73253/announcements/659506),
+received November 23 at 15:22:54 UTC (23:22 Hong Kong time). **All students must
+attend the presentation session physically in the classroom.** All other
+arrangements remain unchanged, including the shared Zoom meeting and use of
+our own computer. The notice does not add a task file extension, an English-only
+presentation rule or a new time limit. [Sanitized source record](../evaluation/evidence/presentation-attendance-20261124.json)
+
 - **5 minutes per team, followed by 30 seconds for transition.** There will
   normally be **no Q&A**. Designate **one member** to present for the team.
 - Skip background introductions and go straight to method and results:
@@ -59,7 +67,7 @@ links a roster, but our team's exact slot has not been verified.
   | In-class test results | 1 minute | Show outputs and briefly explain results |
   | Reflection | 1 minute | What worked, what did not, and what was learned |
 
-- All teams join **the same Zoom meeting** and share their screens. Prepare
+- All students attend **in the classroom**; teams also join **the same Zoom meeting** and share their screens. Prepare
   slides and the demonstration environment on **our own computer**.
 - Receive the agent task link **three presentation slots before our turn**,
   giving time to **set up and run the agents before presenting**. The first
