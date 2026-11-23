@@ -91,7 +91,7 @@ class OfficialChildReplacement(unittest.TestCase):
     def scheduler(self, lead, dev):
         return MultiAgentScheduler(self.workflow, self.files, self.root, human="user",
             roles={"lead": Role("Lead fixture", ("delegate_task", "accept_artifact", "retry_failed_task"), ("dev",)),
-                   "dev": Role("Dev fixture", ("create_text", "offer_artifact"))},
+                   "dev": Role("Dev fixture", ("create_text", "offer_artifact"), limits=Limits(model_attempts=4))},
             clients={"lead": DeepSeekClient("synthetic-replacement", lead),
                      "dev": DeepSeekClient("synthetic-replacement", dev)},
             mode="offline_fixture", constraints=[], acceptance_id="fixture-replacement",
@@ -133,6 +133,7 @@ class OfficialChildReplacement(unittest.TestCase):
         tasks = {t["id"]: t for t in budget.descendants(self.workflow, self.root)}
         failed = [t for t in tasks.values() if t["assignee"] == "dev" and t["state"] == "failed"]
         self.assertEqual(len(failed), 1)  # The original failed child stays failed in the record.
+        self.assertEqual(scheduler.runner(failed[0]["id"]).status()["protocol_attempts"], 4)
         self.assertNotEqual(self.workflow.task(self.root, "user")["state"], "failed")
         (link,) = self.workflow.db.execute("SELECT failed,replacement FROM task_retries").fetchall()
         self.assertEqual(link[0], failed[0]["id"])

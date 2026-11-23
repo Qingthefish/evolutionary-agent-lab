@@ -8,6 +8,7 @@ only. Scripted replies only; no model capability is claimed.
 """
 
 import json
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -101,6 +102,37 @@ class OutputLimitNotice(unittest.TestCase):
             {"function": {"name": "read_text", "arguments": "{}"}}] * 6}), LEAD_TOOLS, 4096)
         self.assertIn("6 tool call(s) (read_text)", many)
         self.assertIn("one tool call per response", many)
+
+    def test_ordinary_mode_can_write_in_parts_after_empty_hkgai_cutoffs(self):
+        # Live 2026-11-23: both length replies exposed zero content/tool arguments.
+        # The valid later write must still run, and append must preserve its first part.
+        def tool(name, arguments, identifier):
+            return {"finish_reason": "tool_calls", "message": {"role": "assistant", "content": None,
+                "tool_calls": [{"id": identifier, "type": "function", "function": {
+                    "name": name, "arguments": json.dumps(arguments)}}]}}
+
+        first = "<section>first</section>"
+        second = "<section>second</section>"
+        sent, notices = self.run_replies(["create_text", "append_text", "submit_for_verification"],
+            cut_off(), cut_off(), tool("create_text", {"path": "deck.md", "content": first}, "write-first"),
+            tool("append_text", {"path": "deck.md", "content": second,
+                                 "expected_sha256": hashlib.sha256(first.encode()).hexdigest()}, "write-second"), done())
+        self.assertEqual(len(sent), 5)
+        self.assertEqual(self.files.read_text(self.task, "lead", "deck.md")["content"], first + second)
+        notice = next(n for n in notices if n["consecutive_cut_offs"] == 2)
+        self.assertIn("Make the next response small", notice["instruction"])
+        self.assertNotIn("only completion actions", notice["instruction"])
+        self.assertEqual(self.workflow.task(self.task, "user")["state"], "running")
+
+    def test_repeated_cutoff_advice_shrinks_without_claiming_an_inactive_finish_window(self):
+        shape = {"tool_calls": [], "content_chars": 0, "reasoning_chars": 0}
+        for streak, size in ((2, "1,000"), (4, "512")):
+            text = output_limit_instruction(shape, ["create_text", "append_text"], 4096, streak=streak)
+            self.assertIn(f"at most about {size} characters", text)
+            self.assertNotIn("Only completion actions", text)
+            self.assertNotIn("only completion actions", text)
+        protocol = output_limit_instruction(shape, LEAD_TOOLS, 4096, streak=2, finish_protocol=True)
+        self.assertIn("After 1 more cut-off in a row only completion actions remain", protocol)
 
     def test_hkgai_drops_unfinished_arguments_so_the_size_is_not_understated(self):
         # Live Newsroom fact checker, 2026-11-21: 4,096 completion tokens, 31 visible argument characters.

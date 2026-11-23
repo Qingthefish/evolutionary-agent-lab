@@ -767,9 +767,42 @@ the original source. The corrected source passed the complete **896-check**
 engineering suite: **866 passed, 30 container/UI checks explicitly skipped**.
 An initial restricted run could not bind local loopback servers and is kept;
 the successful run permitted local loopback. These are synthetic engineering
-checks and made zero model requests. The correction has **not** been retested
-with a real HKGAI task, and original outcomes remain unchanged. Search
-relevance, repeated searching, earlier drafting and compact repair output
-remain separate limitations. The owner continues to prepare presentation
-slides independently; the missing task-required HTML deck is a failed Agent
-deliverable, not an omitted presentation artifact from the coding assistant.
+checks and made zero model requests. The original outcomes remain unchanged.
+
+A separate known-task development repeat on `b87f927` used **80 requests**
+and **3,899,725 reported tokens**. The parent survived exhausted replacement
+quota and produced an **11-slide HTML candidate**, demonstrating that specific
+recovery change. Independent content review rejected reversed valuation
+ordering, a wrong forward-P/E definition, unsupported historical/concentration
+claims and notes listing a validation output that did not exist. Stress
+arithmetic had actual isolated-execution evidence; browser behavior was not
+validated. Two failed specialist replacements still lacked genuine reviewer
+exceptions. This is neither an accepted deck nor a new six-task result.
+
+The attempted repair at request 79 exposed a separate experimental finish-mode
+conflict: a valid partial file write was refused because it did not submit in
+the same batch. Request 80 was truncated; no revised deck was saved. The repeat
+was closed failed without another provider call. Asking for a whole-deck
+correction in its final two calls was also an operator planning error.
+
+A distinct ordinary-mode repair of that known rejected artifact then used
+**seven requests / 199,545 reported tokens**. Calls six and seven both ended at
+the **4,096 output-token ceiling**, exposed no completed tool calls and ran no
+tools. The ordinary runner's two-consecutive-cutoff rule failed the task,
+despite **18 requests remaining** in the cumulative **480-request** allowance.
+The seven-call task had read sources and saved a source snapshot, but had not
+written a corrected HTML deck. No timeout or provider account-quota failure
+was established. Both failed derivatives are preserved, bringing cumulative
+development usage to **462 requests**, without changing the canonical 375-call
+suite or its four assisted acceptances/two failures.
+
+The focused correction permits ordinary-mode length recovery through smaller
+actions within the same counted attempt, token and duration budgets. Incomplete
+tool arguments remain discarded; unknown effects, provider failures and
+independent review retain their existing boundaries. The optional finish
+protocol is unchanged. Synthetic checks cover two empty HKGAI-shaped cutoffs
+followed by actual create/append, refusal to exceed the attempt allowance and
+continued independent verification. The full offline regression passed **869/899 checks**, with **30 explicit
+container/UI skips**. Real-model validation of this latest correction remains open. Search relevance, earlier drafting, content quality
+and output-size management remain separate limitations. The owner continues
+to prepare the presentation slides independently.

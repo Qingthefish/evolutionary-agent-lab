@@ -55,12 +55,17 @@ fit the selected ceiling. Existing task configurations cannot acquire the new
 setting on resume.
 
 A reply cut off at the ceiling is still discarded unread and runs no tool.
-Without the optional finish protocol, a second consecutive cut-off stops the
-task; that protocol instead forces completion after its configured cutoff
-streak (three by default). The notice before the next request
+Without the optional finish protocol, consecutive cut-offs can recover through
+smaller actions within the existing attempt, token and duration budgets; they
+no longer terminate the task after two replies. The optional protocol still
+forces completion after its configured cutoff streak (three by default).
+The notice before the next request
 names what filled the reply (the tool call and its argument size, reasoning or
 text), and gives file-splitting advice only to roles that can write files. Only
 sizes are recorded (the `output_limit_reached` event's `shape`), never text.
+Each continuation is a new counted request, not execution of partial tool
+arguments. Transport failures and unknown effects retain their separate stop
+and reconciliation rules. These local limits are not instructor time limits.
 
 The November 18 integration review checked the later interrupted-state recovery
 command as well. It tightened file export against linked task directories,
