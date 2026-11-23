@@ -10,7 +10,7 @@ import json
 
 from . import budget
 from .core import WorkflowError
-from .runner import Limits
+from .runner import Limits, operator_decision_failure
 
 
 def _json(value):
@@ -22,6 +22,27 @@ def configuration_sha256(workflow, root):
     if row is None:
         raise WorkflowError('No configured execution exists for this root')
     return hashlib.sha256(row['config'].encode()).hexdigest()
+
+
+def _inspected_transport_resends(workflow, tasks):
+    """Exact failed turns with a later explicit resend decision; history stays intact."""
+    released = set()
+    for task in tasks:
+        failures = set()
+        for event in workflow.db.execute(
+                "SELECT kind,detail FROM events WHERE task=? AND kind IN "
+                "('provider_request_failed','provider_resend_released') ORDER BY sequence", (task,)):
+            detail = json.loads(event['detail'])
+            if event['kind'] == 'provider_request_failed':
+                number, diagnostics = detail.get('number'), detail.get('diagnostics')
+                if (type(number) is int and isinstance(diagnostics, dict) and 'kind' in diagnostics
+                        and operator_decision_failure(diagnostics)):
+                    failures.add(number)
+            else:
+                number = detail.get('after_attempt')
+                if type(number) is int and number in failures:
+                    released.add((task, number))
+    return released
 
 
 def extend_execution(workflow, root, human, *, tree_limits, roles, reason, expected_sha256,
@@ -50,7 +71,6 @@ def extend_execution(workflow, root, human, *, tree_limits, roles, reason, expec
         marks = ','.join('?' for _ in ids)
         for table, predicate in (
             ('runner_sessions', "status IN ('calling','processing','stopping','provider_uncertain')"),
-            ('runner_turns', "status != 'settled'"),
             ('tool_calls', "status='reserved'"),
             ('sandbox_runs', "status NOT IN ('cleaned','reconciled')"),
             ('git_operations', "status IN ('started','unknown','uncertain')"),
@@ -58,6 +78,14 @@ def extend_execution(workflow, root, human, *, tree_limits, roles, reason, expec
             if workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name=?", (table,)).fetchone() and workflow.db.execute(
                     f'SELECT 1 FROM {table} WHERE task IN ({marks}) AND {predicate}', ids).fetchone():
                 raise WorkflowError('Resolve outstanding or uncertain effects before extending execution')
+        if workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='runner_turns'").fetchone():
+            released = _inspected_transport_resends(workflow, ids)
+            for turn in workflow.db.execute(
+                    f"SELECT task,number,status,response,ended FROM runner_turns WHERE task IN ({marks}) "
+                    "AND status != 'settled'", ids):
+                if (turn['status'] != 'provider_error' or turn['response'] is not None or turn['ended'] is None
+                        or (turn['task'], turn['number']) not in released):
+                    raise WorkflowError('Resolve outstanding or uncertain effects before extending execution')
         before = budget.status(workflow, root)
         after = asdict(tree_limits)
         if any(after[k] < v for k, v in before['limits'].items()) or after == before['limits']:

@@ -89,6 +89,10 @@ checks and independent acceptance stay enforced. Old bindings remain available
 for reproduction. The full release regression passed **880/910 checks**, with
 **30 explicit container/UI skips**.
 
+An explicitly inspected transport resend also permits a later audited numeric
+extension while retaining the old error row and unknown usage. A new unresolved
+failure, an unprocessed response or an uncertain tool effect still blocks extension.
+
 Two real HKGAI regressions used **93 new requests**: an **81-call known-artifact
 HTML repair**, technically accepted after independent rejection/correction and
 an actual bad/good checker control; and the existing **12-call code/execution/

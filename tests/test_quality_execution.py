@@ -114,6 +114,62 @@ class QualityExecution(unittest.TestCase):
         with self.assertRaisesRegex(WorkflowError, 'nonterminal'):
             self.extend()
 
+    def test_inspected_transport_resend_can_extend_without_erasing_unknown_usage(self):
+        scheduler = self.build(2)
+        normal_transport = self.client.transport
+        self.client.transport = lambda payload: (_ for _ in ()).throw(
+            ProviderError('Synthetic connection close', kind='connection_closed', phase='opening'))
+        scheduler.run()
+        runner = scheduler.runner(self.root)
+        self.assertEqual(runner.status()['runner_state'], 'provider_uncertain')
+        runner.resend_after_transport_failure('Inspected failed request; no tool was released')
+        self.client.transport = normal_transport
+        self.assertEqual(scheduler.run()['needs'][0]['kind'], 'execution_budget')
+        self.assertEqual(self.files.read_text(self.root, 'writer', 'result.md')['content'], 'first')
+        before = budget.status(self.w, self.root)
+        roles = {a: replace(r, limits=replace(r.limits, model_attempts=5), tool_calls=64)
+                 for a, r in self.roles.items()}
+        limits = replace(self.limits, model_attempts=5)
+        changed = self.extend(roles=roles, limits=limits)
+        for key in ('attempts', 'tokens', 'tool_calls'):
+            self.assertEqual(changed['budget'][key], before[key])
+        self.assertEqual(self.w.db.execute('SELECT status,response FROM runner_turns WHERE number=1').fetchone()[:],
+                         ('provider_error', None))
+        resumed = self.reopen(roles, limits)
+        self.assertEqual(resumed.run()['needs'][0]['kind'], 'independent_verification')
+        self.assertEqual(self.files.read_text(self.root, 'writer', 'result.md')['content'], 'first-second')
+        self.assertEqual(resumed.runner(self.root).status()['unknown_usage_attempts'], 1)
+        self.assertEqual(budget.status(self.w, self.root)['attempts'], 4)
+
+    def test_resend_for_an_older_failure_cannot_clear_a_later_unresolved_turn(self):
+        scheduler = self.build(4)
+        self.client.transport = lambda payload: (_ for _ in ()).throw(
+            ProviderError('Synthetic connection close', kind='connection_closed', phase='opening'))
+        scheduler.run()
+        scheduler.runner(self.root).resend_after_transport_failure('Inspect only failed turn one')
+        scheduler.run()  # Turn two has not had an operator decision.
+        # Even a damaged session label cannot turn the older decision into a waiver.
+        self.w.db.execute("UPDATE runner_sessions SET status='ready' WHERE task=?", (self.root,))
+        self.w.db.commit()
+        before = configuration_sha256(self.w, self.root), budget.status(self.w, self.root)
+        with self.assertRaisesRegex(WorkflowError, 'uncertain effects'):
+            self.extend(limits=replace(self.limits, model_attempts=6),
+                        roles={a: replace(r, limits=replace(r.limits, model_attempts=6))
+                               for a, r in self.roles.items()})
+        self.assertEqual((configuration_sha256(self.w, self.root), budget.status(self.w, self.root)), before)
+
+    def test_historical_error_with_delivered_response_is_not_effect_free(self):
+        scheduler = self.build(2)
+        self.client.transport = lambda payload: (_ for _ in ()).throw(
+            ProviderError('Synthetic connection close', kind='connection_closed', phase='opening'))
+        scheduler.run()
+        scheduler.runner(self.root).resend_after_transport_failure('Inspect failed transport')
+        self.w.db.execute('UPDATE runner_turns SET response=? WHERE task=? AND number=1',
+                          (reply().decode(), self.root))
+        self.w.db.commit()
+        with self.assertRaisesRegex(WorkflowError, 'uncertain effects'):
+            self.extend()
+
     def test_stagnation_pauses_without_failure_and_needs_a_new_approach(self):
         self.replies = [reply('read_text', {'path':'missing.md'}, identifier=f'read-{n}') for n in range(5)]
         s = self.build(10)
