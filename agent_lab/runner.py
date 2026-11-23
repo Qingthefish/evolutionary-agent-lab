@@ -89,7 +89,7 @@ def model_context_conditions(declared, *, require_tool_actions=False, allow_html
     return result
 
 
-FILE_WRITERS = frozenset({"create_text", "update_text", "append_text"})
+FILE_WRITERS = frozenset({"create_text", "update_text", "append_text", "replace_text"})
 CURRENT_BUDGET_SCOPE = "Current local limits for this request; replaces every earlier budget view."
 FINISH_EXHAUSTED = "Finish window used without a valid submission or blocker report; "
 # With the protocol, the first run of identical outcomes gets a notice instead of an immediate forced finish; only
@@ -133,7 +133,9 @@ def output_limit_instruction(shape, allowed, max_tokens=None, streak=1, *, finis
     if FILE_WRITERS & set(allowed):
         parts.append(f"Write long files in parts of at most about {part:,} characters, one part per response"
                      + (": the first with create_text then append_text for each further part"
-                        if "append_text" in allowed else ", across several smaller files") + ".")
+                        if "append_text" in allowed else ", across several smaller files") + "."
+                     + (" To change part of an existing file, send only that passage with replace_text instead of "
+                        "rewriting the whole file." if "replace_text" in allowed else ""))
     else:
         parts.append("You cannot write files, so keep briefs and messages short: state the deliverable, constraints "
                      "and acceptance checks in a few lines and let the subtask design the details.")

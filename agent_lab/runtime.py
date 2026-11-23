@@ -366,6 +366,10 @@ def live_roles(members, config=None):
         if config and config.child_retries:
             tools = tuple(dict.fromkeys((*tools, "retry_failed_task", "update_text")))
             instructions += " On child failure inspect its evidence; a bounded retry must preserve the identical assignment and acceptance, with a concrete repair reason. Denials and unknown effects cannot be retried."
+        if config and config.execution_profile == 'quality' and "update_text" in tools:
+            # Proposed 2026-11-23: write long files in parts and fix passages without resending whole files
+            # (rehearsal writer cut off twice at 8,192 tokens rewriting a document). Legacy roles are unchanged.
+            tools = tuple(dict.fromkeys((*tools, "append_text", "replace_text")))
         if config and config.enable_delete:
             tools = (*tools, "delete_text")
             instructions += " Delete only an exact version of your own task-local text through delete_text; read its current SHA-256 first. This requests human approval and pauses; approval release belongs to the trusted human controller, never to you."

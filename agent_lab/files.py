@@ -318,6 +318,39 @@ class FileTools:
                     pass
             return self._receipt(task, actor, "file_updated", path, data)
 
+    def replace_text(self, task, actor, path, old_text, new_text, *, expected_sha256):
+        """Replace one exact passage of the known version without resending the whole file.
+
+        Proposed 2026-11-23: a classroom rehearsal writer twice used all 8,192 output
+        tokens resending a whole document through update_text to change a section.
+        old_text must occur exactly once; same version check, byte limit and atomic
+        replace as update_text. Recorded as an ordinary file update.
+        """
+        if not isinstance(old_text, str) or not old_text:
+            raise FileToolError("old_text must be the exact nonempty passage to replace")
+        if not isinstance(new_text, str):
+            raise FileToolError("new_text must be text")
+        with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
+            current = self._read(parent, name)
+            self._expected(current, expected_sha256)
+            text = bytes(current).decode("utf-8")
+            count = text.count(old_text)
+            if count != 1:
+                raise FileToolError("old_text was not found in this version; read the file and copy the passage exactly"
+                                    if count == 0 else
+                                    f"old_text occurs {count} times; include enough surrounding lines to make it unique")
+            data = self._encode(text.replace(old_text, new_text, 1))
+            temporary = ".write-" + uuid4().hex
+            self._create(parent, temporary, data)
+            try:
+                os.replace(temporary, name, src_dir_fd=parent, dst_dir_fd=parent)
+            finally:
+                try:
+                    os.unlink(temporary, dir_fd=parent)
+                except FileNotFoundError:
+                    pass
+            return self._receipt(task, actor, "file_updated", path, data)
+
     def delete_text(self, task, actor, path, *, expected_sha256, request_id=None):
         with self._access(task, actor) as directory, self._parent(directory, path) as (parent, name):
             if request_id is not None:

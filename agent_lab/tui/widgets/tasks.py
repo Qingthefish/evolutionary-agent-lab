@@ -26,6 +26,8 @@ class TasksPane(Pane):
                 with Horizontal(classes="button-row"):
                     yield Button("Advance", id="task-advance", tooltip="Run this task's scheduler until it pauses")
                     yield Button("Review…", id="task-review", tooltip="Accept/reject a proposal awaiting review")
+                    yield Button("Resend…", id="task-resend", variant="warning",
+                                 tooltip="After a network/HTTP 5xx failure: release one counted resend")
                     yield Button("Recover claim", id="task-recover", variant="warning")
             with VerticalScroll(classes="main", id="task-inspector"):
                 yield Static("Select a task", id="task-summary", classes="card")
@@ -224,6 +226,18 @@ class TasksPane(Pane):
                 "Type 'accept' to record a passing human review check, or describe what is wrong to return "
                 "the proposal for repair. Only use this for proposals awaiting independent verification.",
                 placeholder="accept  |  feedback for repair"), decided)
+        elif event.button.id == "task-resend":
+            def resend(reason):
+                if reason is None or not reason.strip():
+                    return
+                self.app.run_backend(lambda: self.controller.resend(task, reason), advance=task,
+                                     success="One counted resend released")
+            self.app.push_screen(TextPromptScreen(
+                "Resend after a provider failure?",
+                "Only for a task stopped by a network or HTTP 5xx failure (provider_uncertain). The failed request "
+                "may already have been processed and billed; a resend counts as a new request and never replays tool "
+                "effects. Type the reason (for example: HTTP 504, network restored) to resend and continue.",
+                placeholder="reason for this one resend"), resend)
         elif event.button.id == "task-recover":
             def confirmed(ok):
                 if ok:
