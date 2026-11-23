@@ -265,6 +265,15 @@ The [GitHub Actions workflow](.github/workflows/checks.yml) runs on pull request
 
 ## Run the terminal control center
 
+For the presenting Mac, use the [Chinese classroom SOP](docs/presentation-sop.md)
+and [Mac launcher](打开平台.command). The prepared local entry point imports a
+verbatim text goal and bounded text attachments before opening the existing
+live interface, or validates a supported instructor role ZIP before opening
+its sequential operator. Import/open/export do not call a model; unknown role
+packages are refused rather than assigned the default team. Local settings,
+credentials, environments and run data remain ignored. The final classroom
+package and a complete timed operator rehearsal are not yet verified.
+
 An optional [Textual](https://textual.textualize.io/) dashboard exposes conversations, the live task tree and execution inspector, artifacts, candidate memory, approvals, and execution logs on top of the existing workflow, gateway, scheduler, and file broker. Textual is the only extra dependency; the core package and its tests remain standard-library only. Use a separate ignored environment to preserve the clean core venv:
 
 ```bash

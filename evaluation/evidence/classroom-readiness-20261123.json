@@ -1,0 +1,38 @@
+{
+  "classification": "Presentation operator engineering and local preparation; not a task-performance score",
+  "date": "2026-11-23",
+  "base_commit": "253a94b99be4d6f4dc24874262015956d543317f",
+  "unchanged_core_runtime_sha256": "26836023601da1dc2d44d5d70075a1234956bea17b87d5509fd17051a3cb119a",
+  "checks": {
+    "python": "3.12.12",
+    "textual": "8.2.8",
+    "engineering_discovered": 919,
+    "engineering_passed": 898,
+    "actual_container_checks_skipped": 21,
+    "engineering_failures": 0,
+    "engineering_errors": 0,
+    "entry_point_tests_passed": 9,
+    "existing_ui_interactions_passed": 9,
+    "mac_launcher_menu_and_doctor": "executed",
+    "configured_live_ui_header_and_task_artifact_approval_tabs": "headless interaction checked",
+    "original_text_and_attachment_import_export": "checked, including UTF-8 BOM and CRLF",
+    "issued_mid_test_archive_staging_and_original_roles": "zero-call checked",
+    "unknown_role_archive_default_team_fallback": "refused",
+    "new_model_requests": 0
+  },
+  "current_known_six_task_checkpoint": {
+    "requests": 132,
+    "full_goals_accepted_at_checkpoint": 0,
+    "proposals_technically_reviewed_and_accepted_in_this_step": 3,
+    "cumulative_intermediate_tasks_succeeded_at_checkpoint": 4,
+    "second_tasks_posted_at_checkpoint": 0,
+    "human_reviews_fabricated": false,
+    "original_six_task_results_changed": false
+  },
+  "unverified": [
+    "The final Wednesday input package and its schema",
+    "A timed, complete manual presenter rehearsal",
+    "Model/API availability at presentation time",
+    "Unknown-task correctness or completion within the advance preparation window"
+  ]
+}
