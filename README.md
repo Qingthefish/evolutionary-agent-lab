@@ -164,8 +164,10 @@ computer. Skip background introductions: Method 2 minutes, Mid-test results
 require web search; DeepSeek or HKGAI is permitted. **Final submission is
 December 19, 2026**; the cutoff time is not stated. This replaces the previous
 ten-minute/live-start arrangement. November 25 remains the week-13 planning
-target; the exact group slot is unconfirmed. The owner prepares the slides
-separately. [Requirements](docs/requirements.md#current-presentation-and-submission-requirements) · [Runbook](docs/final-report.md#9-proposed-presentation-outline)
+target; the exact group slot is unconfirmed. A separate five-slide presentation
+draft and [speaking notes](docs/presentation-speaking-notes.txt) are prepared;
+the classroom-result page and manual timed rehearsal remain open.
+[Requirements](docs/requirements.md#current-presentation-and-submission-requirements) · [Runbook](docs/final-report.md#9-proposed-presentation-outline)
 
 The connected Outlook notification independently confirms the replacement
 [notice](https://canvas.ust.hk/courses/73253/announcements/659120). It supplies
