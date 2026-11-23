@@ -59,8 +59,12 @@ class LiveConfig:
     enable_collaboration: bool = False
     require_tool_actions: bool = False
     enable_python_docs_search: bool = False
+    execution_profile: str = 'legacy'
+    pause_on_limits: bool = False
 
     def __post_init__(self):
+        if self.execution_profile not in {'legacy', 'quality'} or type(self.pause_on_limits) is not bool:
+            raise RuntimeSetupError("Select an explicit execution profile and budget pause policy")
         if not isinstance(self.provider, str) or self.provider not in {"deepseek", "hkgai"}:
             raise RuntimeSetupError("Use only DeepSeek or the issued HKGAI service; no provider fallback")
         if not isinstance(self.model, str) or not self.model.strip() or len(self.model) > 128:
@@ -70,8 +74,8 @@ class LiveConfig:
         if type(self.max_output_tokens) is not int or not 1 <= self.max_output_tokens <= 16384:
             raise RuntimeSetupError("Output token limit must be an integer from 1 to 16384")
         if (type(self.allow_network) is not bool or type(self.socket_timeout) not in (int, float)
-                or not 0 < self.socket_timeout <= 120 or not math.isfinite(self.socket_timeout)):
-            raise RuntimeSetupError("Use explicit network authorization and a finite socket timeout up to 120 seconds")
+                or not 0 < self.socket_timeout <= 600 or not math.isfinite(self.socket_timeout)):
+            raise RuntimeSetupError("Use explicit network authorization and a finite socket timeout up to 600 seconds")
         if (not isinstance(self.role_limits, Limits) or not isinstance(self.tree_limits, TreeLimits)
                 or type(self.tool_calls) is not int or not 1 <= self.tool_calls <= 1000):
             raise RuntimeSetupError("Supply validated task/tree limits and a bounded per-task tool-call limit")
@@ -140,10 +144,14 @@ class RuntimeServices:
                 backend.close()
 
     def configuration(self):
-        return {"web": self.retrieval.configuration() if self.retrieval else None,
+        result = {"web": self.retrieval.configuration() if self.retrieval else None,
                 "memory": {"namespace": self.memory.namespace, "capture": "terminal-observation-and-candidate-v1"} if self.memory else None,
                 "execution": self.executor.configuration() if self.executor else None,
                 "git": self.git.configuration() if self.git else None}
+        if self.config.execution_profile == 'quality':
+            result['execution_control'] = {'profile': 'quality', 'pause_on_limits': self.config.pause_on_limits,
+                'socket_timeout': self.config.socket_timeout, 'max_output_tokens': self.config.max_output_tokens}
+        return result
 
 
 def _text_expectations(items):
@@ -485,7 +493,7 @@ def build_live_scheduler(workflow, files, root, *, human, live, policy=None, ser
         executor=services.executor if services else None, git=services.git if services else None,
         retrieval=services.retrieval if services else None, capture_memory=live.enable_memory, child_retries=live.child_retries,
         delegation_rules=tuple((r.assignee, r.title) for r in policy.child_rules) if policy.declared_subtasks_only else None,
-        delegation_inputs=policy_delegation_inputs(policy))
+        delegation_inputs=policy_delegation_inputs(policy), pause_on_limits=live.pause_on_limits)
 
 
 def add_live_arguments(parser):
@@ -495,7 +503,9 @@ def add_live_arguments(parser):
     parser.add_argument("--api-key-env", help="Name of the environment variable holding the issued key")
     parser.add_argument("--constraint", action="append", default=[], help="Original task constraint (repeatable)")
     parser.add_argument("--max-output-tokens", type=int, default=2048)
-    parser.add_argument("--socket-timeout", type=float, default=30, help="Provider socket-operation timeout in seconds (at most 120); not a task deadline or retry policy")
+    parser.add_argument("--socket-timeout", type=float, default=30, help="Provider socket-operation timeout in seconds (at most 600); not a task deadline or retry policy")
+    parser.add_argument('--execution-profile', choices=('legacy', 'quality'), default='legacy',
+                        help='Quality preserves unfinished work at operating limits; numeric allowances remain explicit')
     parser.add_argument("--task-attempts", type=int, default=8)
     parser.add_argument("--tree-attempts", type=int, default=48)
     parser.add_argument("--task-seconds", type=float, default=300, help="Task wall-time limit including human waiting")
@@ -523,6 +533,7 @@ def live_config_from_args(args):
                 or args.enable_web or args.enable_memory or args.enable_delete or args.enable_collaboration or args.memory_namespace != "runtime-development"
                 or getattr(args, 'require_tool_actions', False)
                 or getattr(args, 'enable_python_docs_search', False)
+                or getattr(args, 'execution_profile', 'legacy') != 'legacy'
                 or getattr(args, 'task_seconds', 300) != 300 or getattr(args, 'tree_seconds', 900) != 900
                 or getattr(args, 'task_reported_tokens', 32000) != 32000 or getattr(args, 'tree_reported_tokens', 128000) != 128000
                 or args.docker_host or args.python_image or args.child_retries):
@@ -534,6 +545,8 @@ def live_config_from_args(args):
     if not key:
         raise RuntimeSetupError("The explicitly named API-key environment variable is not set")
     return LiveConfig(model=args.model, api_key=key, provider=args.provider, allow_network=True,
+        execution_profile=getattr(args, 'execution_profile', 'legacy'),
+        pause_on_limits=getattr(args, 'execution_profile', 'legacy') == 'quality',
         constraints=tuple(args.constraint), max_output_tokens=args.max_output_tokens, socket_timeout=args.socket_timeout,
         role_limits=replace(Limits(), model_attempts=args.task_attempts, duration_seconds=getattr(args, 'task_seconds', 300),
                             reported_tokens=getattr(args, 'task_reported_tokens', 32000)),

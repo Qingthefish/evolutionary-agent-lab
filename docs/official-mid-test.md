@@ -1,10 +1,68 @@
 # Instructor mid-test input adapter (C06)
 
-**Current scope (November 22).** The original Software Task 1 replay reached
-independent technical acceptance; its same-group Task 2 replay failed. Later
-repair diagnostics are separate development evidence. Use the
-[current results and limits](final-report.md#12-november-22-coordinator-catch-up)
+**Current scope (November 23).** The canonical six-task suite ended with four
+assisted acceptances and two failures. Known-artifact repairs remain separate
+development evidence. Use the
+[current results and limits](final-report.md#13-six-task-mac-evaluation-23-november)
 for acceptance rather than treating the historical notes below as current state.
+
+## Quality mode for fresh development
+
+Use `--execution-profile quality` for new quality-first runs. Legacy mode keeps
+old experiment bindings reproducible; do not attach new settings to an old
+run without an explicit migration/fork. Numeric examples here are operator
+choices, not teacher rules or an assertion of HKGAI account balance.
+
+- Select an appropriate request allowance in a **fresh** plan. For example,
+  `per_scenario_model_attempts: 256` allocates 128 requests to each sequential
+  task, shared with its children. The earlier 80-call share is not the quality
+  profile's hard ceiling.
+- Select `max_output_tokens: 8192` and `--output-token-ceiling 8192` together.
+  Supported explicit ceilings extend to 16,384. Larger replies still need
+  sensible file splitting; they do not establish better factual accuracy.
+- Quality mode defaults to a **180-second socket-operation timeout**,
+  configurable through `--socket-timeout` up to 600 seconds. This is not the
+  assignment-to-output deadline. Token/tool guards scale with the request pool;
+  all observed provider usage is retained.
+- Request/token/duration exhaustion preserves the nonterminal goal and its
+  children, returning `execution_budget`. Repeated identical outcomes first
+  warn, then return `progress_review`. Neither boundary is content acceptance
+  or a fatal task outcome. Paused time is excluded from operating deadline
+  guards, while reported total assignment-to-output wall time remains visible.
+- The software lead can write its **own** integration files. Workspace and
+  artifact-transfer boundaries stay enforced. Quality mode allows eight bounded
+  child replacements and keeps the experimental forced finish protocol off.
+
+After preparing an original scenario session and selecting its backend, the
+continuous command runs to a real boundary without the short `advance`
+command's eight-turn control limit:
+
+```bash
+python -m agent_lab.evaluation.official_live --config "$QUALITY_RUN/plan.json" --state-dir "$QUALITY_RUN/state" --sequence 1 run --execution-profile quality --output-token-ceiling 8192 --allow-model-requests
+```
+
+Define `QUALITY_RUN` as that fresh scenario directory. Add the explicit
+`--docker-host` and digest-pinned `--image` arguments for Software/Securities;
+Newsroom has no Python backend. The command stops on completion, independent
+verification, human input/approval, a progress/budget pause or a provider/effect
+problem. It does not invent human replies, accept arbitrary prose automatically
+or resend a failed provider request. Routine tasks may instead have predeclared
+independent automatic criteria, as in the existing sandbox/handoff regression.
+
+To extend the **same quality-mode goal**, first stop its controller and inspect
+`preflight` (including `configuration_sha256`). Save a second plan changing only
+`per_scenario_model_attempts`; retain the old plan and all records. Then use:
+
+```bash
+python -m agent_lab.evaluation.official_live --config "$QUALITY_RUN/plan.json" --state-dir "$QUALITY_RUN/state" --sequence 1 extend --execution-profile quality --output-token-ceiling 8192 --new-config "$QUALITY_RUN/plan-extended.json" --expected-config-sha256 "$REVIEWED_CONFIG_SHA256" --reason "Inspected partial work; continue the original goal" --confirm-stopped
+```
+
+Use the new plan for subsequent commands. Extension is atomic, keeps the actual
+request/token/tool counts and permits no provider, instructions, tool-scope,
+review-policy or output-ceiling change. Terminal trials and uncertain effects
+cannot be extended this way. A stagnation pause instead uses
+`reconcile --action resume-progress --task TASK_ID --reason ... --confirm-stopped`
+after choosing a revised approach; adding budget alone cannot clear it.
 
 ## Operating from the presentation Mac
 

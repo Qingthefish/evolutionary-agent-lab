@@ -209,6 +209,37 @@ With runtime memory explicitly enabled, `record_lesson` stages at most eight con
 
 `integrated-demo` uses fixed synthetic decisions and actual configured backends to exercise source retrieval, input handoff, isolated execution, independent output checks, approved local-remote commit/push, restart and later scoped memory selection. Its model-call count is zero; its Git remote and human approval are explicitly disposable/scripted. The actual-container negative case rejects wrong executed output before any push. This establishes engineering integration, not autonomous-model performance, a GitHub push or improved learning.
 
+## Execution controls and task outcomes
+
+The quality execution profile separates an operating boundary from goal
+correctness. `runner_sessions` can hold `budget_paused` or `progress_paused`
+while the core task remains nonterminal. The scheduler returns an explicit
+need rather than failing the parent/cancelling its children. Existing legacy
+bindings retain their earlier limit behavior. Quality mode is incompatible
+with the optional forced completion-only finish protocol.
+
+`execution_control.extend_execution` is a trusted controller operation, never
+a model tool. It requires the creating human identity, an idle controller,
+an exact configuration digest, a concrete reason and no unresolved effects.
+It atomically increases numeric tree/role/tool capacities, records prior/new
+bindings and unchanged counters, and releases budget pauses. It cannot change
+role instructions, tools, provider/model, acceptance or output ceiling, restart
+a terminal trial, or clear a stagnation pause. The official CLI also binds the
+inspected old/new plans in the same transaction. A progress pause instead
+requires an explicit revised approach through `resume-progress`.
+
+When pausing after a known tool-call response, retain exact committed results
+for that turn and explicit non-execution errors for unstarted calls. The next
+request must contain no orphaned tool calls. Reserved/unknown effects still
+require reconciliation; a budget extension never executes the stored batch.
+
+No ordinary result is accepted merely because a budget was increased or a
+file exists. Trusted automatic criteria remain available for routine code,
+source/execution and handoff contracts. Actual human clarification/critical
+action approval remains separate. Both total wall time and pauses are
+retained; excluding a pause from an operating guard does not hide it from
+the instructor's execution-time metric.
+
 ## Isolated Python execution
 
 The optional `sandbox_output` artifact criterion connects execution to the shared root/child acceptance policy. Its trusted JSON selector declares an entrypoint, exact arguments and distinct input paths. The current code/data hashes must match the latest matching job, which must have exit code zero, no interruption, a pinned isolated-backend configuration, confirmed cleanup and a hash-checked export checkpoint. A run-bound import event must confirm the current output; matching text or an unbound old log is insufficient. New jobs retain their entrypoint/arguments/output list, and imports retain the run ID without changing file-tool return shapes or rewriting old evidence. Explicit cleanup/export recovery can confirm a saved result without rerunning code; missing/conflicting evidence fails. Verification itself only reads files/records. A later matching failed job cannot borrow an earlier success; changed code/data require another matching execution. Content/behavior checks remain separate independent criteria: execution success alone does not establish arbitrary program correctness. Runtime setup and plan inspection refuse these contracts without a configured executor. Existing policies without this opt-in criterion retain their acceptance behavior.

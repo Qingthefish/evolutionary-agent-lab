@@ -163,8 +163,8 @@ class DeepSeekHTTP:
         if not isinstance(api_key, str) or not api_key.strip() or any(c.isspace() for c in api_key):
             raise ProviderError("Supply a nonempty API key without whitespace")
         if (type(timeout) not in (int, float) or not math.isfinite(timeout)
-                or not 0 < timeout <= 120):
-            raise ProviderError("Socket timeout must be between zero and 120 seconds")
+                or not 0 < timeout <= 600):
+            raise ProviderError("Socket timeout must be between zero and 600 seconds")
         if type(allow_network) is not bool:
             raise ProviderError("Network authorization must be explicit")
         self._api_key = api_key

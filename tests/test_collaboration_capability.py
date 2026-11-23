@@ -155,7 +155,7 @@ class CollaborationCapabilityTests(unittest.TestCase):
     def test_plan_timeout_is_reviewed_bounded_and_does_not_enable_retry(self):
         raw=json.loads(PLAN.read_text());raw['cases']=str(PLAN.parent/'collaboration')
         path=self.root/'timeouts.json'
-        for timeout in (True,0,121,'90'):
+        for timeout in (True,0,601,'90'):
             path.write_text(json.dumps({**raw,'socket_timeout':timeout}))
             with self.subTest(timeout=timeout),self.assertRaises(WorkflowError):DevelopmentPlan(path)
         path.write_text(json.dumps({**raw,'socket_timeout':30}))

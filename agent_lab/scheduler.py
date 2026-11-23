@@ -53,8 +53,11 @@ class MultiAgentScheduler:
                  constraints, verifier_factory, acceptance_id, limits=budget.TreeLimits(),
                  memory=None, executor=None, git=None, retrieval=None, capture_memory=False, child_retries=0, message_floor=0,
                  delegation_rules=None, delegation_inputs=None, allow_html=False, show_execution_budget=False,
-                 finish_policy=None, parallel_model_calls=1, stable_prompt_prefix=False):
+                 finish_policy=None, parallel_model_calls=1, stable_prompt_prefix=False, pause_on_limits=False):
         self.workflow, self.files, self.root = workflow, files, root
+        if type(pause_on_limits) is not bool or (pause_on_limits and finish_policy is not None):
+            raise RunnerError("Budget pausing is explicit and cannot use the experimental forced finish protocol")
+        self.pause_on_limits = pause_on_limits
         if type(stable_prompt_prefix) is not bool:
             raise RunnerError("Stable prompt prefix requires an explicit boolean setting")
         self.stable_prompt_prefix = stable_prompt_prefix  # Opt-in; like parallel calls, not persisted.
@@ -143,6 +146,8 @@ class MultiAgentScheduler:
             settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
         if show_execution_budget:
             settings["show_execution_budget"] = True
+        if pause_on_limits:
+            settings['pause_on_limits'] = True
         if finish_policy is not None:
             settings["finish_policy"] = {"version": "completion-protocol-v2", **asdict(finish_policy)}
         if git is not None:  # Absent key keeps configurations persisted before Git support unchanged.
@@ -209,7 +214,8 @@ class MultiAgentScheduler:
             raise RunnerError("Acceptance factory returns (trusted callable, version) or explicit review")
         return TaskRunner(gateway, self.clients[actor], mode=self.mode, constraints=self.constraints,
             limits=role.limits, verifier=verifier, verifier_id=version, allow_html=self.allow_html,
-            show_execution_budget=self.show_execution_budget, stable_prompt_prefix=self.stable_prompt_prefix, role={
+            show_execution_budget=self.show_execution_budget, stable_prompt_prefix=self.stable_prompt_prefix,
+            pause_on_limits=self.pause_on_limits, role={
                 "agent": actor, "instructions": role.instructions,
                 "eligible_agents": {key: (peer_description(self.roles[key]) if self.delegation_rules is not None
                                          else self.roles[key].instructions) for key in role.delegates},
@@ -234,20 +240,31 @@ class MultiAgentScheduler:
             self.workflow.finish_task(self.root, root["assignee"], error=reason)
         return self.status() | {"state": "terminal", "reason": reason}
 
+    def _budget_stop(self, reason):
+        if not self.pause_on_limits:
+            return self._fail(reason)
+        with self.workflow._transaction():
+            if not self.workflow.db.execute("SELECT 1 FROM events WHERE task=? AND kind='execution_budget_paused' "
+                    "AND json_extract(detail,'$.reason')=?", (self.root, reason)).fetchone():
+                self.workflow._event(self.root, self.human, 'execution_budget_paused', {
+                    'reason': reason, 'outcome': 'undecided', 'automatic_resume': False})
+        return self.status() | {'state': 'blocked', 'needs': [
+            {'task': self.root, 'kind': 'execution_budget', 'reason': reason}]}
+
     def _advance(self):
         if self.workflow.task(self.root, self.human)["state"] in {"succeeded", "failed", "cancelled"}:
             return self.status() | {"state": "terminal"}
         try:
             budget.check(self.workflow, self.root, after_response=True)
         except budget.TreeBudgetError as error:
-            return self._fail(str(error))
+            return self._budget_stop(str(error))
         tasks = budget.descendants(self.workflow, self.root)
         sessions = {}
         if self.workflow.db.execute("SELECT 1 FROM sqlite_master WHERE name='runner_sessions'").fetchone():
             sessions = {row["task"]: row for row in self.workflow.db.execute("""
                 WITH RECURSIVE tree(id) AS (
                     SELECT ? UNION ALL SELECT t.id FROM tasks t JOIN tree ON t.parent=tree.id
-                ) SELECT s.task,s.status FROM runner_sessions s JOIN tree ON tree.id=s.task
+                ) SELECT s.task,s.status,s.stop_reason FROM runner_sessions s JOIN tree ON tree.id=s.task
             """, (self.root,))}
         uncertain = [{"task": key, "kind": "reconciliation", "runner_state": row["status"]}
                      for key, row in sessions.items() if row["status"] in {"calling", "processing", "stopping", "provider_uncertain"}]
@@ -284,7 +301,7 @@ class MultiAgentScheduler:
                 return self._fail("Delegated task has no trusted configured role")
             if (budget.task_elapsed(self.workflow, task["id"], self.workflow.clock())
                     >= self.roles[task["assignee"]].limits.duration_seconds):
-                return self._fail("Assigned task duration exhausted; partial artifacts retained")
+                return self._budget_stop("Assigned task duration exhausted; partial artifacts retained")
         needs = []
         if self.parallel_model_calls > 1:
             return self._advance_parallel(active, sessions, needs)
@@ -308,6 +325,11 @@ class MultiAgentScheduler:
                 "SELECT id,kind,responder,prompt,action FROM requests WHERE task=? AND answered=0 ORDER BY rowid",
                 (task["id"],))]
             needs.append({"task": task["id"], "kind": task["state"], "requests": requests})
+            return False
+        if task['id'] in sessions and sessions[task['id']]['status'] in {'budget_paused', 'progress_paused'}:
+            state = sessions[task['id']]['status']
+            needs.append({'task': task['id'], 'kind': 'execution_budget' if state == 'budget_paused' else 'progress_review',
+                          'reason': sessions[task['id']]['stop_reason']})
             return False
         if any(child["parent"] == task["id"] and child["state"] not in {"succeeded", "failed"} for child in active):
             return False  # A parent waits for every open child.
