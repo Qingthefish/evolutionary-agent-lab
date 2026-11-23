@@ -23,7 +23,8 @@
   "current_known_six_task_checkpoint": {
     "requests": 132,
     "full_goals_accepted_at_checkpoint": 0,
-    "intermediate_proposals_technically_accepted_at_checkpoint": 3,
+    "proposals_technically_reviewed_and_accepted_in_this_step": 3,
+    "cumulative_intermediate_tasks_succeeded_at_checkpoint": 4,
     "second_tasks_posted_at_checkpoint": 0,
     "human_reviews_fabricated": false,
     "original_six_task_results_changed": false

@@ -836,8 +836,8 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   final Python 3.12 engineering regression is **898 passed / 919 discovered**,
   with **21 explicit actual-container skips**. The core runtime hash remains
   unchanged, so the ongoing six-task trial is preserved. Its inspected
-  132-request checkpoint had three independently reviewed intermediate
-  proposals accepted, no full scenario accepted, and the second tasks unposted;
+  132-request checkpoint had three further intermediate proposals accepted
+  (four accepted children cumulatively), no full scenario accepted, and the second tasks unposted;
   no original score was rewritten. Final classroom format, timed manual
   operation and unknown-task performance remain unverified.
   [Readiness scope](../evaluation/evidence/classroom-readiness-20261123.json)
