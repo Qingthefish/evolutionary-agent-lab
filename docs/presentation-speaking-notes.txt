@@ -1,0 +1,24 @@
+Five-minute course presentation — speaking notes
+Draft: classroom result page must be filled after the task is released.
+Current fresh known-task checkpoint: 4 accepted, 2 in progress.
+Not an instructor score or a held-out evaluation.
+
+Slide 1 — 0:00–1:00
+METHOD, first 60 seconds. We built a collaboration platform around HKGAI rather than one long chat. A coordinator receives the goal and creates subtasks for specialists. Each agent owns task files and private experience records. Agents share selected artifacts through the broker, with the exact version recorded, instead of reading another agent’s workspace. A human can join the group or use a private conversation. When a material question or a critical action needs a real decision, the workflow pauses and resumes the same task after the reply. In the examples today, the evidence will show the actual agents, tool calls, files and human interventions.
+中文提示：这一页直接讲系统怎样协作，不讲背景。控制在一分钟。资料依据：README.md、docs/architecture.md、docs/presentation-sop.md。
+
+Slide 2 — 1:00–2:00
+METHOD, second 60 seconds. The model proposes structured tool actions. Trusted code checks task ownership, arguments and authorization before the action runs. Generated Python executes in a digest-pinned container without network access, and files move through the artifact broker. The interface exposes tasks, artifacts, pending questions and logs. A tool returning successfully does not prove that the whole goal is correct, so we inspect the required output and its execution evidence. We also changed long-task handling: reaching a selected operating allowance preserves the task and artifacts for an inspected continuation instead of declaring a content failure. Each agent has private experience records, but our bounded memory experiments do not establish a general learning improvement.
+中文提示：从工具调用讲到隔离、验收和恢复，讲满第二分钟。不要说所有功能都已在未知题验证。来源：docs/architecture.md、docs/requirements.md、docs/final-report.md。
+
+Slide 3 — 2:00–3:00
+MID-TEST RESULTS, 60 seconds. We use the instructor’s six published tasks across software, newsroom and securities scenarios. The original round recorded four accepted roots and two failures. Those records are retained. In the fresh quality run, four tasks are accepted at this checkpoint, while the room dashboard and semiconductor slides are still in progress. These are known development tasks with human or independent technical-review assistance, not a held-out autonomous score. The useful finding is the failure mechanism: a request allowance could interrupt a long workflow, but extra calls alone do not guarantee correct results. Independent checks also found an actual booking-time precision bug and statistical interpretation errors in a draft article. We preserve the artifacts and use specific feedback to repair those problems.
+中文提示：提交前用这轮的最终结果更新本页和这段讲稿。不要拼接不同轮次的最好结果。此页当前是明确标注的开发检查点。数据依据：原六题封存结果以及新六题逐任务验收记录。
+
+Slide 4 — 3:00–4:00
+IN-CLASS RESULTS, 60 seconds, to complete after the task is released. This page intentionally contains no invented classroom result. Before presenting, replace the input with a brief description of the actual task, show one readable output or execution result, and report the actual completion state and elapsed time. If the goal is still running or awaiting review, say so and identify the remaining step. Do not substitute an old mid-test output for a classroom result.
+中文提示：周三提前三个时段收到链接后才填写本页。先保存原题和开始时间，再运行。上台时展示一个实际产物；未完成就写进行中，切勿把旧题结果冒充课堂结果。邮件原文：https://canvas.ust.hk/courses/73253/announcements/659120。
+
+Slide 5 — 4:00–5:00
+REFLECTION, 60 seconds. Our strongest engineering result is that the platform preserves tasks, files and evidence across human questions and operating pauses. The experiments also show why a successful tool call is not a reliable completion metric by itself: we found concrete data-integrity and statistical interpretation mistakes in plausible-looking outputs. Higher operating allowances helped long tasks continue, but they did not replace source selection, independent arithmetic checks or a clear final handoff. We also need to distinguish product capability from classroom readiness. Before the presentation we need a full rehearsal on this Mac, and before the December 19 submission we will finish the outstanding delivery tests and document actual timing, failures and human interventions. We do not claim that the current known-task results establish unseen-task accuracy or a general memory-learning advantage.
+中文提示：反思讲具体教训，不承诺未知题成功率。项目仍有改进时间；12月19日最终提交。来源：逐任务技术验收记录、docs/final-report.md、老师11月22日通知。

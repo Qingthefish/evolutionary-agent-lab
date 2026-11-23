@@ -1055,6 +1055,40 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   boundaries. Unknown final-input mapping and the actual group slot remain
   open. [Current requirements](requirements.md#current-presentation-and-submission-requirements)
 
+- **2026-11-23 classroom priorities clarification:** Owner-requested S01/S02
+  documentation maintenance on `docs/S02-classroom-priorities-20261123`.
+  Independently read the original instructor Canvas notification from the
+  connected Outlook mailbox and retained a private copy. The notice confirms
+  the five-minute format and preparation procedure, frames the session as
+  sharing and learning, and permits improvement before December 19. It
+  supplies no answer key or detailed rubric; the canonical mid-test archive
+  contains roles/tasks rather than reference answers. Clarified the existing
+  SOP: prioritize the complete Mac workflow and a timed presentation, inspect
+  required functionality/outputs and material correctness, and keep optional
+  polish and development boundary coverage separate from classroom gates.
+  A process exit alone is not content acceptance, and unverified outputs may
+  be shown only with their actual status. Final-input mapping, an actual
+  five-minute slide deck and complete manual rehearsal remain unaccepted.
+  Checked the evidence JSON and its 300-second section total plus whitespace
+  consistency. This maintenance changes no runtime code or evaluation
+  outcome and itself makes zero model calls; the active known-six trial
+  retains its frozen source, counters and separate technical reviews.
+
+- **2026-11-23 five-minute presentation draft:** Continued owner-requested
+  S02 maintenance on `docs/S02-five-minute-deck-20261123`. Prepared five
+  editable slides, English speaking notes and Chinese rehearsal hints in the
+  required 2/1/1/1-minute order. Rendered and visually reviewed every slide;
+  native tables remain editable. The classroom-result page explicitly waits
+  for the unreleased task, and the mid-test page labels the fresh known-task
+  checkpoint and review assistance rather than claiming an instructor score.
+  The editable source snapshot, previews and delivery metadata are retained
+  privately inside the course project; the reusable [speaking notes](presentation-speaking-notes.txt)
+  accompany the existing SOP. No product PPT workflow, runtime change or
+  fabricated classroom output was added. Actual Mac presentation rehearsal,
+  offline PowerPoint opening, final input mapping and final S02 acceptance
+  remain open. Deck preparation makes zero HKGAI calls; the separately
+  authorized six-task run continues with its original cumulative counter.
+
 ## Starting a Codex session
 
 ```text

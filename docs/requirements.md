@@ -39,6 +39,15 @@ announced ten-minute format. The screenshot is retained privately; its
 [sanitized requirements and source hash](../evaluation/evidence/presentation-update-20261123.json)
 record supplied evidence, not an independently fetched Canvas announcement.
 
+On November 23 the same replacement notice was independently read from the
+connected Outlook mailbox as a Canvas notification received at
+2026-11-22 15:56:09 UTC. Its original [Presentation Updates announcement](https://canvas.ust.hk/courses/73253/announcements/659120)
+confirms the arrangements below and explicitly frames the session as an
+opportunity to share work and learn, with further improvements possible before
+December 19. The inspected notice supplies no answer key or detailed grading
+rubric. The separate [presentation-order announcement](https://canvas.ust.hk/courses/73253/announcements/659125)
+links a roster, but our team's exact slot has not been verified.
+
 - **5 minutes per team, followed by 30 seconds for transition.** There will
   normally be **no Q&A**. Designate **one member** to present for the team.
 - Skip background introductions and go straight to method and results:

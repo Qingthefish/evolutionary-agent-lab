@@ -164,8 +164,17 @@ computer. Skip background introductions: Method 2 minutes, Mid-test results
 require web search; DeepSeek or HKGAI is permitted. **Final submission is
 December 19, 2026**; the cutoff time is not stated. This replaces the previous
 ten-minute/live-start arrangement. November 25 remains the week-13 planning
-target; the exact group slot is unconfirmed. The owner prepares the slides
-separately. [Requirements](docs/requirements.md#current-presentation-and-submission-requirements) · [Runbook](docs/final-report.md#9-proposed-presentation-outline)
+target; the exact group slot is unconfirmed. A separate five-slide presentation
+draft and [speaking notes](docs/presentation-speaking-notes.txt) are prepared;
+the classroom-result page and manual timed rehearsal remain open.
+[Requirements](docs/requirements.md#current-presentation-and-submission-requirements) · [Runbook](docs/final-report.md#9-proposed-presentation-outline)
+
+The connected Outlook notification independently confirms the replacement
+[notice](https://canvas.ust.hk/courses/73253/announcements/659120). It supplies
+no answer key or detailed marking rubric. Prioritize a complete Mac operator
+rehearsal and a timed five-minute presentation alongside usable, substantially
+correct outputs; the [classroom review scope](docs/presentation-sop.md#周三的准备优先级)
+does not require repeating every development boundary check during the talk.
 
 **Remaining gates.** Complete repaired-runtime Software Task 2 and Securities
 Task 2 deliveries under a separately recorded development plan,
