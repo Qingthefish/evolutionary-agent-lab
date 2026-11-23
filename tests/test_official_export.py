@@ -82,14 +82,14 @@ class ScenarioExport(unittest.TestCase):
                               ("ask_human", {"prompt": "Synthetic fixture question?"})]),
                        reply(),
                        reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length"),
-                       # one truncation continues; the second consecutive one fails the task.
+                       # Two cutoffs consume the remaining fixture allowance without tool effects.
                        reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length")]
             roles = {role["id"]: Role(role["prompt"], ("ask_human", "create_text", "post_message"))
                      for role in session.scenario["roles"]}
             scheduler = MultiAgentScheduler(workflow, files, root, human="requester", roles=roles,
                 clients={role: DeepSeekClient("synthetic-export", lambda payload: replies.pop(0)) for role in roles},
                 mode="offline_fixture", constraints=[], acceptance_id="fixture-export",
-                verifier_factory=lambda task: None, limits=budget.TreeLimits(model_attempts=6))
+                verifier_factory=lambda task: None, limits=budget.TreeLimits(model_attempts=4))
             scheduler.run()
             request = workflow.db.execute("SELECT id FROM requests WHERE task=?", (root,)).fetchone()[0]
             workflow.respond(request, "requester", answer="Synthetic fixture answer")
@@ -144,7 +144,7 @@ class ScenarioExport(unittest.TestCase):
         self.assertEqual((second["state"], second["tasks"]), ("not_posted", []))
         (task,) = first["tasks"]
         self.assertEqual((first["root"], task["task"]["state"]), (root, "failed"))
-        self.assertIn("output-token limit on consecutive attempts", task["stop_reason"])
+        self.assertIn("budget exhausted", task["stop_reason"])
         self.assertGreaterEqual(first["elapsed_seconds"], 0)
         self.assertGreaterEqual(first["human_wait_seconds"], 0)
         usage = [turn["usage"] for turn in task["runner"]["turns"]]

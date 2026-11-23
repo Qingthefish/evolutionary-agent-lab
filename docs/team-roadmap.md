@@ -782,6 +782,23 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   correction. Search relevance, earlier drafting and output-size management
   remain open. [Six-task evidence and limits](final-report.md#13-six-task-mac-evaluation-23-november)
 
+- **2026-11-23 truncation and incremental repair:** Qingthefish,
+  owner-requested Codex-assisted S01 continuation on
+  `fix/S01-incremental-finish-20261123`. The separate known-task repeat on
+  `b87f927` used 80 requests and produced an 11-slide HTML candidate after
+  parent recovery, but content review rejected it. Its final partial repair
+  was blocked by the experimental finish window and then truncated; the
+  failed repeat remains preserved. A separate ordinary-mode artifact repair
+  failed after seven calls because calls six/seven reached 4,096 output tokens
+  and the runner stopped on the consecutive cutoffs. No corrected HTML was
+  saved. Cumulative usage is **462/480**, with the original six-task **375-call,
+  four-assisted/two-failed** result unchanged. Ordinary recovery now retains
+  file tools and gives progressively smaller-action guidance within existing
+  budgets, without releasing incomplete calls or changing independent review.
+  The optional finish protocol is unchanged; real-model validation of this
+  latest correction remains open. The full offline suite passed **869/899**
+  checks with **30 explicit container/UI skips**. [Failure analysis](final-report.md#13-six-task-mac-evaluation-23-november)
+
 ### S02
 
 **Finish submission materials**

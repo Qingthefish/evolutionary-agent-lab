@@ -65,7 +65,15 @@ privately. A local recovery correction keeps the parent and independent
 siblings available after replacement quota exhaustion while retaining failure,
 approval and unknown-effect checks. Its full engineering regression passed
 **866 of 896 checks**, with **30 explicit container/UI skips** and zero model
-calls; real-model retesting remains open.
+calls. A separate 80-request known-task repeat then produced an 11-slide HTML
+candidate, but content review rejected it and the repair remained incomplete.
+A further seven-request artifact repair stopped on two consecutive 4,096-token
+cutoffs, with no corrected HTML saved. The round used **462/480 requests** in
+total; the original six-task result remains unchanged. Ordinary execution now
+allows smaller counted actions after consecutive cutoffs within the existing
+budgets; the optional finish protocol remains separate. Live validation of
+this latest truncation correction remains open. Its full offline regression
+passed **869/899 checks**, with **30 explicit container/UI skips**.
 [Results and failure analysis](docs/final-report.md#13-six-task-mac-evaluation-23-november)
 · [Sanitized evidence](evaluation/evidence/mid-test-six-20261123.json)
 

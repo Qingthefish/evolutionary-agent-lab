@@ -91,9 +91,9 @@ class ContinuityAfterFailure(unittest.TestCase):
                                   ("ask_human", {"prompt": "Synthetic fixture question?"})]),
                            # A reply cut off at the output limit: rejected, no tool released.
                            reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length"),
-                           # one truncation continues; the second consecutive one fails the task.
+                           # Cutoffs consume this fixture's three-call allowance without tool effects.
                            reply([("create_text", {"path": "late.txt", "content": "never written"})], reason="length")]
-                one = self.scheduler(workflow, files, session, first, lambda payload: replies.pop(0), first_share)
+                one = self.scheduler(workflow, files, session, first, lambda payload: replies.pop(0), 3)
                 self.assertEqual(one.run()["state"], "blocked")
                 with self.assertRaisesRegex(WorkflowError, "Task 1 must finish"):
                     session.post(2, second_role)  # Waiting on the requester is not terminal.
@@ -114,9 +114,9 @@ class ContinuityAfterFailure(unittest.TestCase):
                 self.assertEqual((failed["state"], pending["state"]), ("failed", "pending"))
                 self.assertEqual([r["prompt"] for r in failed["requests"]], ["Synthetic fixture question?"])
                 self.assertTrue(failed["runner"]["synthetic"])
-                # the first truncation continues, the second consecutive one stops.
+                # Both cutoffs count; the fixture's explicit shared allowance stops further requests.
                 self.assertEqual(failed["runner"]["attempts"], 3)
-                self.assertIn("output-token limit on consecutive attempts", failed["runner"]["stop_reason"])
+                self.assertIn("budget exhausted", failed["runner"]["stop_reason"])
                 for turn in failed["runner"]["turns"][1:]:  # Received in full: usage is known, nothing ran.
                     self.assertEqual((turn["finish_reason"], turn["usage"], turn["tool_names"]),
                                      ("length", {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2}, []))
@@ -137,7 +137,7 @@ class ContinuityAfterFailure(unittest.TestCase):
                 two = self.scheduler(workflow, files, session, second["root"],
                                      lambda payload: self.fail("No Task 2 request in this check"), second_share)
                 used = [budget.status(workflow, root) for root in (first, second["root"])]
-                self.assertEqual([(u["attempts"], u["limits"]["model_attempts"]) for u in used], [(3, 24), (0, 23)])  # one extra counted attempt
+                self.assertEqual([(u["attempts"], u["limits"]["model_attempts"]) for u in used], [(3, 3), (0, 23)])
                 self.assertEqual(two.status()["task_state"], "pending")
                 after = session.status()["tasks"]
                 self.assertEqual((after[0]["state"], after[0]["root"]), ("failed", first))

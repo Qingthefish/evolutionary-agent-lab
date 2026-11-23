@@ -70,6 +70,15 @@ Use a versioned development plan to inspect selected live cases, budgets, roles 
 
 ## Delivery gates
 
+November 23 ordinary-output recovery correction: a fully received,
+usage-accounted length-limited reply does not by itself fail the goal after
+two occurrences. Discard its incomplete tool arguments, give smaller-action
+guidance and permit another counted turn within the existing task/tree
+allowance. Do not reset limits or replay unknown effects. Optional finish
+mode remains a separate explicit experiment. This addresses an observed
+seven-call known-artifact repair failure, not an instructor timing rule or a
+claim of improved live completion.
+
 The [Roadmap](team-roadmap.md#finish-line-and-milestones) holds the delivery stages, card dependencies and live task records. This document records design choices only. First demonstrate the live slice, then cover the announcement, stabilize/evaluate, and apply the official protocol when issued. Private/group interaction, all required tools, per-agent learning and genuine contribution evidence remain part of the finish line.
 
 ## Feasibility and dependencies

@@ -101,7 +101,7 @@ REPEAT_NOTICE = ("Your last turns produced the same outcome each time. Repeating
 FORCE_AFTER_CUTOFFS = 3
 
 
-def output_limit_instruction(shape, allowed, max_tokens=None, streak=1):
+def output_limit_instruction(shape, allowed, max_tokens=None, streak=1, *, finish_protocol=False):
     """A notice that names what filled the response (proposed 2026-11-21, pending owner review).
 
     Live 2026-11-21: a Software lead without file tools was told to split long documents
@@ -133,14 +133,16 @@ def output_limit_instruction(shape, allowed, max_tokens=None, streak=1):
         parts.append("You cannot write files, so keep briefs and messages short: state the deliverable, constraints "
                      "and acceptance checks in a few lines and let the subtask design the details.")
     if streak >= 2:
-        small = max(500, max_tokens) if max_tokens else 2000
+        small = max(128, min(1000, (max_tokens or 2000) // (2 ** min(streak - 1, 3))))
         left = FORCE_AFTER_CUTOFFS - streak
         parts.append(f"This is cut-off {streak} in a row. Make the next response small: one tool call with at most "
                      f"about {small:,} characters of content"
                      + (" (write only the first part of the file now and append the rest later)"
                         if FILE_WRITERS & set(allowed) else "") + "."
-                     + (f" After {left} more cut-off{'s' if left != 1 else ''} in a row only completion actions remain."
-                        if left > 0 else " Only completion actions remain now."))
+                     + ((f" After {left} more cut-off{'s' if left != 1 else ''} in a row only completion actions remain."
+                         if left > 0 else " Only completion actions remain now.") if finish_protocol else
+                        " Keep using the available repair tools within the remaining task budget; do not rewrite "
+                        "the whole deliverable in one response."))
     return " ".join(parts)
 
 
@@ -738,8 +740,9 @@ class TaskRunner:
 
         The provider reply was received in full, so its usage is known and
         counted. Its message and tool calls are discarded unread and nothing
-        runs. The task continues once, with a notice in a later counted
-        attempt; a second consecutive truncation stops the task as before.
+        runs. Further attempts use the existing task/tree allowance, with
+        progressively smaller-action guidance. A length stop alone is not a
+        task failure; attempt, token and duration limits still apply.
         """
         response = {"message": {"role": "assistant", "content": None, "tool_calls": []}, "finish_reason": "length",
                     "usage": error.usage, "response_id": error.response_id, "model": error.model,
@@ -761,27 +764,23 @@ class TaskRunner:
             budget.record_tokens(self.workflow, self.task, error.usage["total_tokens"])
             self.workflow._event(self.task, self.actor, "provider_request_failed",
                                  {"number": number, "mode": self.mode, "diagnostics": error.diagnostics()})
-            stop = consecutive and not self._phase  # Without the protocol, behaviour is unchanged.
             self.workflow._event(self.task, self.actor, "output_limit_reached",
                                  {"number": number, "usage": error.usage, "consecutive": consecutive,
-                                  "task_continues": not stop, "tools_released": 0, "shape": error.shape})
+                                  "task_continues": True, "tools_released": 0, "shape": error.shape})
             if current["status"] != "calling" or current["attempts"] != number:
                 return self.status()
             if streak >= FORCE_AFTER_CUTOFFS and self._phase and not self._in_finish():
                 self._force_finish("output_limit")
-            if not stop:
-                transcript.append({"role": "user", "content": _json({
-                    "kind": "output_limit_notice", "max_output_tokens": self.client.max_tokens,
-                    "cut_off": error.shape,
-                    "consecutive_cut_offs": streak,
-                    "instruction": output_limit_instruction(error.shape, self.gateway.allowed, self.client.max_tokens,
-                                                            streak=streak if self._phase else 1)})})
-                task_state = self.workflow.task(self.task, self.actor)["state"]
-                self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
-                                         ("paused" if task_state.startswith("waiting_") else "ready",
-                                          _json(transcript), self.task))
-        if stop:
-            return self._stop("Provider output reached the output-token limit on consecutive attempts; no tools released")
+            transcript.append({"role": "user", "content": _json({
+                "kind": "output_limit_notice", "max_output_tokens": self.client.max_tokens,
+                "cut_off": error.shape,
+                "consecutive_cut_offs": streak,
+                "instruction": output_limit_instruction(error.shape, self.gateway.allowed, self.client.max_tokens,
+                                                        streak=streak, finish_protocol=bool(self._phase))})})
+            task_state = self.workflow.task(self.task, self.actor)["state"]
+            self.workflow.db.execute("UPDATE runner_sessions SET status=?,transcript=? WHERE task=?",
+                                     ("paused" if task_state.startswith("waiting_") else "ready",
+                                      _json(transcript), self.task))
         if self._expired() or self._session()["tokens"] > self.limits.reported_tokens:
             return self._limit_stop("Provider response exceeded duration or reported token budget; no tools released")
         try:
