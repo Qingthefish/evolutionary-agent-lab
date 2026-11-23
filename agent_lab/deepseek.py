@@ -91,11 +91,24 @@ _TOOL_NAME = re.compile(r"[a-z_]{1,64}")
 MAX_PARSED_TOOL_CALLS = 64
 
 
-def truncation_shape(source):
+def reported_reasoning_tokens(usage):
+    """The provider's reported hidden-reasoning token count, or None when absent or malformed.
+
+    Measurement only (proposed 2026-11-23): HKGAI reports it under
+    usage.completion_tokens_details.reasoning_tokens. It never changes budgets or acceptance.
+    """
+    details = usage.get("completion_tokens_details") if isinstance(usage, dict) else None
+    value = details.get("reasoning_tokens") if isinstance(details, dict) else None
+    return value if type(value) is int and value >= 0 else None
+
+
+def truncation_shape(source, usage=None):
     """Sizes only of a length-stopped message (proposed 2026-11-21, pending owner review).
 
     Which tool was being written and how many characters each part reached, so the
     notice can name the oversized part. Never text, argument values or reasoning.
+    Reasoning is counted from DeepSeek's `reasoning_content` or HKGAI's `reasoning`
+    field (2026-11-23 probe: HKGAI returned only `reasoning`, so earlier shapes said 0).
     """
     def chars(value):
         return len(value) if isinstance(value, str) else 0
@@ -108,8 +121,11 @@ def truncation_shape(source):
         tools.append({"name": name if isinstance(name, str) and _TOOL_NAME.fullmatch(name) else "unknown",
                       "argument_chars": chars(function.get("arguments")) if isinstance(function, dict) else 0})
     source = source if isinstance(source, dict) else {}
+    reasoning = source.get("reasoning_content")
+    if not isinstance(reasoning, str):
+        reasoning = source.get("reasoning")
     return {"tool_calls": tools, "content_chars": chars(source.get("content")),
-            "reasoning_chars": chars(source.get("reasoning_content"))}
+            "reasoning_chars": chars(reasoning), "reasoning_tokens": reported_reasoning_tokens(usage)}
 
 
 def _truncated_identity(data):
@@ -218,6 +234,7 @@ class Completion:
     usage: dict
     response_id: str
     model: str
+    reasoning_tokens: int | None = None  # Measurement only; budgets use usage["total_tokens"].
 
 
 class DeepSeekClient:
@@ -288,7 +305,7 @@ class DeepSeekClient:
             check["parse_rule"] = "finish_reason"
             if reason == "length":
                 truncated = _truncated_identity(data)
-                shape = truncation_shape(source)
+                shape = truncation_shape(source, data.get("usage"))
             if not isinstance(reason, str) or reason not in {"stop", "tool_calls"}:
                 raise ValueError()
             check["parse_rule"] = "role"
@@ -360,4 +377,5 @@ class DeepSeekClient:
             raise ProviderError("Invalid, incomplete, or unsupported provider completion; no tools released",
                 kind="invalid_completion", phase="parsing", request_bytes=len(encoded), response_bytes=len(raw),
                 completion_check=check) from None
-        return Completion(message, reason, counts, data["id"], data["model"])
+        return Completion(message, reason, counts, data["id"], data["model"],
+                          reported_reasoning_tokens(data["usage"]))
