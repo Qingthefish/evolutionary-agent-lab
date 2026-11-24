@@ -98,7 +98,8 @@ def scenario_policy(session):
 
 
 def runtime_config(session, plan, sequence, *, docker_host, image, allow_network, environ=None,
-                   output_token_ceiling=1024, execution_profile='legacy', socket_timeout=None):
+                   output_token_ceiling=1024, execution_profile='legacy', socket_timeout=None,
+                   stream_responses=False):
     if type(sequence) is not int or sequence not in (1, 2):
         raise WorkflowError("Select task 1 or 2")
     policy = scenario_policy(session)
@@ -134,7 +135,7 @@ def runtime_config(session, plan, sequence, *, docker_host, image, allow_network
         role_limits=Limits(model_attempts=root_attempts, duration_seconds=14400, reported_tokens=root_tokens),
         docker_host=docker_host if policy.python else None, python_image=image if policy.python else None,
         enable_web=policy.web,
-        execution_profile=execution_profile, pause_on_limits=quality,
+        execution_profile=execution_profile, pause_on_limits=quality, stream_responses=stream_responses,
         child_retries=8 if quality else CHILD_REPLACEMENTS,
     )
 
@@ -163,7 +164,10 @@ def tools_for_role(scenario, agent, tools, *, execution_profile='legacy'):
     if execution_profile == 'legacy' and scenario == "software-engineering" and agent == "lead":
         # The lead coordinates and does not write code, but it can run the integrated deliverable to check it before
         # submitting (2026-11-22: leads shipped misplaced or outdated files they had no way to run).
-        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text"})
+        return tuple(tool for tool in tools if tool not in {"create_text", "update_text", "append_text", "replace_text"})
+    if execution_profile == 'quality' and "update_text" in tools and "replace_text" not in tools:
+        # Proposed 2026-11-23: fix a passage without resending the whole file; legacy policies stay unchanged.
+        tools = tuple(dict.fromkeys((*tools, "replace_text")))
     return tools
 
 
@@ -196,6 +200,8 @@ def make_scheduler(session, root, files, live, services, *, show_execution_budge
         "Use a small batch of short tool calls per turn. Divide source into small modules "
         "that fit individual file writes, write any longer file in parts with create_text then append_text, "
         "and delegate focused deliverables to eligible peers."
+        + (" To change part of an existing file, use replace_text with only that passage instead of rewriting it."
+           if getattr(live, 'execution_profile', 'legacy') == 'quality' else "")
     )
     def role_tools(agent):
         tools = tools_for_role(session.scenario["id"], agent, policy.tools,
@@ -445,6 +451,9 @@ def main(argv=None):
                                   'legacy preserves existing experiment bindings')
         command.add_argument('--socket-timeout', type=float,
                              help='Per-request socket wait in seconds, up to 600; quality defaults to 180')
+        command.add_argument('--stream-responses', action='store_true',
+                             help='Opt-in: receive replies as server-sent events so long generations are not cut off '
+                                  'by the provider gateway; select consistently for every command of a run')
         command.add_argument("--show-execution-budget", action="store_true",
                              help="Expose current local limits without fixing a workflow; select consistently for a fresh run")
         command.add_argument("--finish-protocol", action="store_true",
@@ -510,7 +519,8 @@ def main(argv=None):
                 live = runtime_config(session, plan, args.sequence, docker_host=args.docker_host,
                                       image=args.image, allow_network=args.command in {"advance", 'run'},
                                       output_token_ceiling=args.output_token_ceiling,
-                                      execution_profile=args.execution_profile, socket_timeout=args.socket_timeout)
+                                      execution_profile=args.execution_profile, socket_timeout=args.socket_timeout,
+                                      stream_responses=args.stream_responses)
                 with ExitStack() as stack:
                     files = FileTools(workflow, Path(args.state_dir) / "files")
                     stack.callback(files.close)
@@ -549,7 +559,8 @@ def main(argv=None):
                             raise WorkflowError('Budget extension may only change the planned request allowance')
                         amended = runtime_config(session, proposed, args.sequence, docker_host=args.docker_host,
                             image=args.image, allow_network=False, output_token_ceiling=args.output_token_ceiling,
-                            execution_profile=args.execution_profile, socket_timeout=args.socket_timeout)
+                            execution_profile=args.execution_profile, socket_timeout=args.socket_timeout,
+                                      stream_responses=args.stream_responses)
                         roles = {actor: replace(role, limits=amended.role_limits, tool_calls=amended.tool_calls)
                                  for actor, role in scheduler.roles.items()}
                         result = extend_execution(workflow, root, session.human, tree_limits=amended.tree_limits,
