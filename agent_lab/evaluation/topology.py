@@ -32,7 +32,7 @@ COORDINATION_TOOLS = frozenset({"delegate_task", "delegate_with_inputs", "retry_
                                 "offer_artifact", "accept_artifact", "list_tasks"})
 CAPABILITY_CLASSES = {
     "filesystem_read": frozenset({"read_text", "list_files"}),
-    "filesystem_write": frozenset({"create_text", "update_text", "append_text"}),
+    "filesystem_write": frozenset({"create_text", "update_text", "append_text", "replace_text"}),
     "filesystem_delete": frozenset({"delete_text"}),
     "human": frozenset({"ask_human"}),
     "conversation": frozenset({"post_message", "read_messages"}),

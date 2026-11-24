@@ -61,8 +61,11 @@ class LiveConfig:
     enable_python_docs_search: bool = False
     execution_profile: str = 'legacy'
     pause_on_limits: bool = False
+    stream_responses: bool = False  # Opt-in: avoids HKGAI's ~120 s gateway 504 on long replies (2026-11-23).
 
     def __post_init__(self):
+        if type(self.stream_responses) is not bool:
+            raise RuntimeSetupError("Select streaming explicitly")
         if self.execution_profile not in {'legacy', 'quality'} or type(self.pause_on_limits) is not bool:
             raise RuntimeSetupError("Select an explicit execution profile and budget pause policy")
         if not isinstance(self.provider, str) or self.provider not in {"deepseek", "hkgai"}:
@@ -109,7 +112,8 @@ def live_clients(live, roles):
         raise RuntimeSetupError("Provider clients require LiveConfig")
     http, client = ((DeepSeekHTTP, DeepSeekClient) if live.provider == "deepseek"
                     else (HKGAIHTTP, HKGAIClient))
-    transport = http(live.api_key, allow_network=live.allow_network, timeout=live.socket_timeout)
+    transport = http(live.api_key, allow_network=live.allow_network, timeout=live.socket_timeout,
+                     stream=live.stream_responses)
     return {a: client(live.model, transport, max_tokens=live.max_output_tokens,
                       tool_choice='required' if live.require_tool_actions else 'auto') for a in roles}
 
@@ -362,6 +366,10 @@ def live_roles(members, config=None):
         if config and config.child_retries:
             tools = tuple(dict.fromkeys((*tools, "retry_failed_task", "update_text")))
             instructions += " On child failure inspect its evidence; a bounded retry must preserve the identical assignment and acceptance, with a concrete repair reason. Denials and unknown effects cannot be retried."
+        if config and config.execution_profile == 'quality' and "update_text" in tools:
+            # Proposed 2026-11-23: write long files in parts and fix passages without resending whole files
+            # (rehearsal writer cut off twice at 8,192 tokens rewriting a document). Legacy roles are unchanged.
+            tools = tuple(dict.fromkeys((*tools, "append_text", "replace_text")))
         if config and config.enable_delete:
             tools = (*tools, "delete_text")
             instructions += " Delete only an exact version of your own task-local text through delete_text; read its current SHA-256 first. This requests human approval and pauses; approval release belongs to the trusted human controller, never to you."

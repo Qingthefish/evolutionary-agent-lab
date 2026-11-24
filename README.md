@@ -54,6 +54,31 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Classroom reliability integration (November 24).** Teammate proposals
+[#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) and
+[#92](https://github.com/Qingthefish/evolutionary-agent-lab/pull/92) add opt-in
+streamed replies, quality-profile exact-passage editing and explicit operator
+resend controls on both classroom paths. Independent review additionally
+rejects mixed/incomplete/malformed streams, bounds actual encoded bytes and
+single-line reads, and refuses overlapping edit matches. All **952 engineering
+checks passed**, with actual configured containers and Textual, zero skips and
+zero model calls. These are general workflow changes, not answers to the six
+mid-test tasks. The original role-package adapter remains specific to its
+issued ZIP contract; ordinary TXT/MD tasks use the separate generic team.
+
+A new author-created laboratory CSV-QC task used that actual ordinary intake,
+with fresh files, no old-six answers or memory, and no web tools. It completed
+through specialist delegation, isolated execution, exact handoff and technical
+review in **43 HKGAI requests / 766,126 reported tokens**. The first proposal
+passed **9/12** independent datasets, losing raw rejected-field whitespace;
+after explicit feedback the repaired child and final coordinator delivery each
+passed the same **12/12**. Actual task wall time was **2,653.22 seconds** including
+review/idle, versus **211.29 seconds** summed turn duration including tools.
+This single assisted development smoke is not an unseen-classroom success rate
+or proof that the known-six result generalizes.
+[Generalization audit, new-task result and limits](docs/final-report.md#16-classroom-integration-and-new-task-audit)
+· [Sanitized evidence](evaluation/evidence/classroom-integration-20261124.json)
+
 **Fresh known-six development (November 23–24).** All six original mid-test
 tasks reached **coordinator-assisted technical acceptance**, using **633 actual
 HKGAI requests**, 59,534,942 known reported tokens and four retained attempts

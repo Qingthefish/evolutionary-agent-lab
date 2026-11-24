@@ -82,6 +82,7 @@ def credential(config, *, required=True):
 def live(config):
     return LiveConfig(model=config['model'],api_key=credential(config),provider='hkgai',allow_network=True,
         max_output_tokens=8192,socket_timeout=180,execution_profile='quality',pause_on_limits=True,
+        stream_responses=True,
         role_limits=Limits(model_attempts=256,reported_tokens=32768000,duration_seconds=14400),
         tree_limits=TreeLimits(tasks=16,depth=4,model_attempts=256,reported_tokens=32768000,
                                duration_seconds=14400,tool_calls=1536),
@@ -178,7 +179,8 @@ def official(config,directory):
     if not 1<=index<=len(cases):raise ValueError('请选择列出的场景编号。')
     case=cases[index-1];d=Path(spec['cases'][case]['directory'])
     common=['--config',d/'plan.json','--state-dir',d/'state']
-    backend=['--execution-profile','quality','--output-token-ceiling',8192,'--socket-timeout',180,'--show-execution-budget']
+    backend=['--execution-profile','quality','--output-token-ceiling',8192,'--socket-timeout',180,'--show-execution-budget',
+             '--stream-responses']
     if case!='newsroom':backend+=['--docker-host',config['docker_host'],'--image',config['python_image']]
     with (d/'operator.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -187,7 +189,7 @@ def official(config,directory):
             tasks=status['tasks']
             for t in tasks:print('第%s题：%s  %s'%(t['sequence'],t['state'],t.get('root','')))
             current=next((t for t in tasks if t['state'] not in TERMINAL and t['state']!='not_posted'),None)
-            print('r 继续运行  v 检查/验收  a 回答/决定  n 发布同组下一题  e 导出  q 返回')
+            print('r 继续运行  v 检查/验收  a 回答/决定  u 网络中断后重发  n 发布同组下一题  e 导出  q 返回')
             choice=input('操作：').strip().lower()
             if choice=='q':return
             if choice=='e':
@@ -240,6 +242,21 @@ def official(config,directory):
                     ids=input('如需豁免失败子任务，逐项填入明确 ID（通常留空；不自动豁免）：').split()
                     for identifier in ids:extra+=['--waive-failed-subtask',identifier]
                 call('agent_lab.evaluation.official_live',[*prefix,'review',*backend,'--task',task,'--decision',decision,'--feedback',feedback,*extra],d,config)
+            elif choice=='u':
+                # Proposed 2026-11-23: a 504/connection failure leaves provider_uncertain with no menu action.
+                # One counted resend per explicit confirmation; nothing is retried automatically.
+                value=call('agent_lab.evaluation.official_live',[*prefix,'preflight',*backend],d,config)
+                stuck=list(dict.fromkeys(n['task'] for n in value.get('needs',[])
+                    if 'provider_uncertain' in {n.get('runner_state'),n.get('kind')}))
+                if not stuck:print('没有因网络中断而停住的任务。');continue
+                print('因网络或服务中断停住的任务：',' '.join(stuck))
+                print('该次请求可能已被服务处理且计费；重发会再计一次请求，不会重放已执行的工具效果。')
+                task=input('确认重发的 task ID（空行取消）：').strip()
+                if task not in stuck:continue
+                reason=input('写明原因（例如：HTTP 504，网络已恢复）：').strip()
+                if not reason:continue
+                print(call('agent_lab.evaluation.official_live',[*prefix,'reconcile',*backend,'--task',task,'--action','resend',
+                    '--reason',reason,'--confirm-stopped'],d,config))
             elif choice=='a':
                 request=input('request ID：').strip()
                 print('只填写你本人的真实答案；approve/deny 是对该条精确操作的决定，批准后仍须单独 release。')
@@ -261,7 +278,7 @@ def official_decision(config,d,sequence,root,request,action):
         live_settings=runtime_config(session,plan,sequence,docker_host=config['docker_host'] if python else None,
             image=config['python_image'] if python else None,allow_network=False,
             environ={config['key_env']:'offline-human-decision'},output_token_ceiling=8192,
-            execution_profile='quality',socket_timeout=180)
+            execution_profile='quality',socket_timeout=180,stream_responses=True)
         services=runtime_services(w,files,live_settings)
         scheduler=make_scheduler(session,root,files,live_settings,services,show_execution_budget=True)
         req=w.request(request,session.human)

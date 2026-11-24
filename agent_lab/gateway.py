@@ -48,6 +48,11 @@ _SPECS = {
     "append_text": ("Append text to the end of your exact known task-local file version using its current SHA-256 receipt. "
                     "Write a file too long for one response in parts: create_text the first part, then append_text the rest", {
         "path": _PATH, "content": _CONTENT, "expected_sha256": _HASH}),
+    "replace_text": ("Change one exact passage of your known task-local file version without resending the whole file. "
+                     "old_text must be copied exactly from the current version and occur once in it; it is replaced by "
+                     "new_text. Use this instead of update_text to fix part of a long file", {
+        "path": _PATH, "old_text": _text("Exact passage to replace; must occur exactly once", maximum=65536),
+        "new_text": _CONTENT, "expected_sha256": _HASH}),
     "delete_text": ("Request human approval to delete the exact version; pauses task", {
         "path": _PATH, "expected_sha256": _HASH}),
     "ask_human": ("Ask the configured human for missing information; pauses task", {
@@ -159,7 +164,8 @@ def submission_summary_problem(summary):
 
 
 # Shown in a finish window after a human rejection, so the feedback can be applied before resubmitting.
-FIX_TOOLS = frozenset({"create_text", "update_text", "append_text", "offer_artifact", "accept_artifact", "run_python"})
+FIX_TOOLS = frozenset({"create_text", "update_text", "append_text", "replace_text", "offer_artifact", "accept_artifact",
+                       "run_python"})
 # Never accepted inside a finish window, even before a completion call: they open new work or pause.
 _OPENS_WORK = frozenset({"delegate_task", "delegate_with_inputs", "retry_failed_task", "ask_human"})
 
@@ -599,7 +605,8 @@ class ToolGateway:
                 action={"tool": name, "arguments": args},
             )
             return {"request_id": request, "action": {"tool": name, "arguments": args}}
-        if name in {"read_text", "list_files", "create_text", "update_text", "append_text", "offer_artifact", "accept_artifact"}:
+        if name in {"read_text", "list_files", "create_text", "update_text", "append_text", "replace_text", "offer_artifact",
+                    "accept_artifact"}:
             return getattr(self.files, name)(self.task, self.actor, **args)
         if name == "ask_human":
             return {"request_id": self.workflow.ask_human(self.task, self.actor, self.human, args["prompt"])}

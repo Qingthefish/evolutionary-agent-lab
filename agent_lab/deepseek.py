@@ -46,7 +46,7 @@ class ProviderError(Exception):
                  request_may_have_been_processed=True, completion_check=None):
         kinds = {"provider_error", "network_disabled", "invalid_request", "http_status", "unexpected_response",
                  "oversized_response", "timeout", "dns", "tls", "connection_closed", "connection_refused",
-                 "http_protocol", "transport", "invalid_completion"}
+                 "http_protocol", "transport", "invalid_completion", "invalid_stream"}
         phases = {"unknown", "preflight", "opening", "reading", "parsing"}
         if (not isinstance(kind, str) or kind not in kinds or not isinstance(phase, str) or phase not in phases
                 or any(v is not None and (type(v) is not int or v < 0) for v in (request_bytes, response_bytes))
@@ -91,11 +91,24 @@ _TOOL_NAME = re.compile(r"[a-z_]{1,64}")
 MAX_PARSED_TOOL_CALLS = 64
 
 
-def truncation_shape(source):
+def reported_reasoning_tokens(usage):
+    """The provider's reported hidden-reasoning token count, or None when absent or malformed.
+
+    Measurement only (proposed 2026-11-23): HKGAI reports it under
+    usage.completion_tokens_details.reasoning_tokens. It never changes budgets or acceptance.
+    """
+    details = usage.get("completion_tokens_details") if isinstance(usage, dict) else None
+    value = details.get("reasoning_tokens") if isinstance(details, dict) else None
+    return value if type(value) is int and value >= 0 else None
+
+
+def truncation_shape(source, usage=None):
     """Sizes only of a length-stopped message (proposed 2026-11-21, pending owner review).
 
     Which tool was being written and how many characters each part reached, so the
     notice can name the oversized part. Never text, argument values or reasoning.
+    Reasoning is counted from DeepSeek's `reasoning_content` or HKGAI's `reasoning`
+    field (2026-11-23 probe: HKGAI returned only `reasoning`, so earlier shapes said 0).
     """
     def chars(value):
         return len(value) if isinstance(value, str) else 0
@@ -108,8 +121,11 @@ def truncation_shape(source):
         tools.append({"name": name if isinstance(name, str) and _TOOL_NAME.fullmatch(name) else "unknown",
                       "argument_chars": chars(function.get("arguments")) if isinstance(function, dict) else 0})
     source = source if isinstance(source, dict) else {}
+    reasoning = source.get("reasoning_content")
+    if not isinstance(reasoning, str):
+        reasoning = source.get("reasoning")
     return {"tool_calls": tools, "content_chars": chars(source.get("content")),
-            "reasoning_chars": chars(source.get("reasoning_content"))}
+            "reasoning_chars": chars(reasoning), "reasoning_tokens": reported_reasoning_tokens(usage)}
 
 
 def _truncated_identity(data):
@@ -149,17 +165,135 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+class StreamAssemblyError(ValueError):
+    """A server-sent event stream that cannot be rebuilt into one strict completion."""
+
+
+def assemble_stream(lines, *, max_bytes):
+    """Rebuild one non-streaming chat completion body from server-sent event lines (proposed 2026-11-23).
+
+    The result goes through the unchanged strict completion parser, so tool-call,
+    finish-reason, usage and identity checks are identical to non-streaming replies.
+    Only `data:` events are read; a `[DONE]` line ends the stream.
+    """
+    content, reasoning, calls = [], [], {}
+    seen_content = seen_reasoning = False
+    identity, model, usage, finish, role = None, None, None, None, None
+    size, done = 0, False
+
+    def consistent(previous, value, label):
+        if value is None:
+            return previous
+        if not isinstance(value, str) or not value or (previous is not None and previous != value):
+            raise StreamAssemblyError("Conflicting or invalid stream " + label)
+        return value
+
+    for raw in lines:
+        line = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+        line = line.strip()
+        if not line.startswith("data:"):
+            continue
+        data = line[5:].strip()
+        if data == "[DONE]":
+            done = True
+            break
+        event = strict_json(data.encode("utf-8"))
+        if not isinstance(event, dict) or "error" in event:
+            raise StreamAssemblyError("Provider stream reported an error")
+        identity = consistent(identity, event.get("id"), "response identity")
+        model = consistent(model, event.get("model"), "model identity")
+        if event.get("usage") is not None:
+            usage = event["usage"]
+        choices = event.get("choices", [])
+        if not isinstance(choices, list) or len(choices) > 1:
+            raise StreamAssemblyError("Unexpected stream choice count")
+        for choice in choices:
+            delta = choice.get("delta") if isinstance(choice, dict) else None
+            if not isinstance(delta, dict):
+                raise StreamAssemblyError("Unexpected stream delta")
+            if type(choice.get("index", 0)) is not int or choice.get("index", 0) != 0:
+                raise StreamAssemblyError("Unexpected stream choice index")
+            role = consistent(role, delta.get("role"), "role")
+            fragments = delta.get("tool_calls")
+            if fragments is None:
+                fragments = []
+            if not isinstance(fragments, list):
+                raise StreamAssemblyError("Unexpected stream tool array")
+            if finish is not None and (fragments or any(delta.get(k) for k in
+                    ("content", "reasoning", "reasoning_content"))):
+                raise StreamAssemblyError("Completion data followed a terminal finish reason")
+            for key, parts in (("content", content), ("reasoning", reasoning), ("reasoning_content", reasoning)):
+                value = delta.get(key)
+                if value is None:
+                    continue
+                if not isinstance(value, str):
+                    raise StreamAssemblyError("Unexpected stream text")
+                parts.append(value)
+                size += len(value.encode("utf-8"))
+                if key == "content":
+                    seen_content = True
+                else:
+                    seen_reasoning = True
+            for call in fragments:
+                if (not isinstance(call, dict) or type(call.get("index")) is not int
+                        or not 0 <= call["index"] < MAX_PARSED_TOOL_CALLS):
+                    raise StreamAssemblyError("Unexpected stream tool call")
+                entry = calls.setdefault(call["index"], {"id": None, "type": "function",
+                                                         "function": {"name": "", "arguments": ""}})
+                entry["id"] = consistent(entry["id"], call.get("id"), "tool identity")
+                entry["type"] = consistent(entry["type"], call.get("type"), "tool type")
+                function = call.get("function")
+                if function is None:
+                    function = {}
+                if not isinstance(function, dict):
+                    raise StreamAssemblyError("Unexpected stream tool function")
+                for key in ("name", "arguments"):
+                    value = function.get(key)
+                    if value is not None:
+                        if not isinstance(value, str):
+                            raise StreamAssemblyError("Unexpected stream tool call")
+                        entry["function"][key] += value
+                        size += len(value.encode("utf-8"))
+            if choice.get("finish_reason") is not None:
+                finish = consistent(finish, choice["finish_reason"], "finish reason")
+        if size > max_bytes:
+            raise StreamAssemblyError("Assembled completion exceeds byte limit")
+    if not done or sorted(calls) != list(range(len(calls))):
+        raise StreamAssemblyError("Incomplete stream or tool-call sequence")
+    message = {"role": role or "assistant", "content": "".join(content) if seen_content else None}
+    if seen_reasoning:
+        message["reasoning"] = "".join(reasoning)
+    if calls:
+        message["tool_calls"] = [calls[index] for index in sorted(calls)]
+    body = {"choices": [{"finish_reason": finish, "message": message}]}
+    for key, value in (("id", identity), ("model", model), ("usage", usage)):
+        if value is not None:
+            body[key] = value
+    encoded = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    if len(encoded) > max_bytes:
+        raise StreamAssemblyError("Assembled completion exceeds byte limit")
+    return encoded
+
+
 class DeepSeekHTTP:
     """A trusted application must explicitly authorize network use and supply a key.
 
     Only the official endpoint is supported; HKGAI uses a separate fixed-host subclass.
     Timeout is a socket-operation timeout, not an end-to-end task deadline.
+    With `stream=True` the reply arrives as server-sent events and is rebuilt into
+    the same single completion body (proposed 2026-11-23): HKGAI's gateway answered
+    504 after about 124 s to non-streaming requests still generating, while a
+    streamed 8,192-token reply completed in 139 s.
     """
 
     endpoint = "https://api.deepseek.com/chat/completions"
     max_bytes = 2 * 1024 * 1024
+    max_stream_bytes = 32 * 1024 * 1024
 
-    def __init__(self, api_key, *, allow_network=False, timeout=30):
+    def __init__(self, api_key, *, allow_network=False, timeout=30, stream=False):
+        if type(stream) is not bool:
+            raise ProviderError("Streaming selection must be explicit")
+        self.stream = stream
         if not isinstance(api_key, str) or not api_key.strip() or any(c.isspace() for c in api_key):
             raise ProviderError("Supply a nonempty API key without whitespace")
         if (type(timeout) not in (int, float) or not math.isfinite(timeout)
@@ -178,10 +312,21 @@ class DeepSeekHTTP:
         if not isinstance(payload, bytes) or len(payload) > self.max_bytes:
             raise ProviderError("Invalid or oversized request", kind="invalid_request", phase="preflight",
                                 request_may_have_been_processed=False)
-        request = urllib.request.Request(
-            self.endpoint, data=payload, method="POST",
-            headers={"Authorization": "Bearer " + self._api_key, "Content-Type": "application/json"},
-        )
+        headers = {"Authorization": "Bearer " + self._api_key, "Content-Type": "application/json"}
+        if self.stream:
+            try:
+                body = strict_json(payload)
+                if not isinstance(body, dict):
+                    raise ValueError()
+                body.update(stream=True, stream_options={"include_usage": True})
+                payload = json.dumps(body, allow_nan=False).encode("utf-8")
+                if len(payload) > self.max_bytes:
+                    raise ValueError()
+            except ValueError:
+                raise ProviderError("Invalid request", kind="invalid_request", phase="preflight",
+                                    request_may_have_been_processed=False) from None
+            headers["Accept"] = "text/event-stream"
+        request = urllib.request.Request(self.endpoint, data=payload, method="POST", headers=headers)
         # No redirects or automatic retries: an interrupted POST may have been charged.
         started = time.monotonic()
         phase, response_bytes, status = "opening", None, None
@@ -197,6 +342,25 @@ class DeepSeekHTTP:
                 if response.status != 200 or response.geturl() != self.endpoint:
                     raise failure("Unexpected provider HTTP response", "unexpected_response")
                 phase = "reading"
+                if self.stream:
+                    response_bytes = 0
+
+                    def lines():
+                        nonlocal response_bytes
+                        while True:
+                            limit = min(self.max_bytes + 1, self.max_stream_bytes - response_bytes + 1)
+                            line = response.readline(limit)
+                            if not line:
+                                break
+                            response_bytes += len(line)
+                            if len(line) > self.max_bytes or response_bytes > self.max_stream_bytes:
+                                raise StreamAssemblyError("Provider stream exceeds byte limit")
+                            yield line
+                    try:
+                        return assemble_stream(lines(), max_bytes=self.max_bytes)
+                    except ValueError:  # Includes malformed JSON/UTF-8 events; socket errors propagate below.
+                        raise failure("Provider stream could not be assembled; no tools released",
+                                      "invalid_stream") from None
                 data = response.read(self.max_bytes + 1)
                 response_bytes = len(data)
             if len(data) > self.max_bytes:
@@ -218,6 +382,7 @@ class Completion:
     usage: dict
     response_id: str
     model: str
+    reasoning_tokens: int | None = None  # Measurement only; budgets use usage["total_tokens"].
 
 
 class DeepSeekClient:
@@ -288,7 +453,7 @@ class DeepSeekClient:
             check["parse_rule"] = "finish_reason"
             if reason == "length":
                 truncated = _truncated_identity(data)
-                shape = truncation_shape(source)
+                shape = truncation_shape(source, data.get("usage"))
             if not isinstance(reason, str) or reason not in {"stop", "tool_calls"}:
                 raise ValueError()
             check["parse_rule"] = "role"
@@ -360,4 +525,5 @@ class DeepSeekClient:
             raise ProviderError("Invalid, incomplete, or unsupported provider completion; no tools released",
                 kind="invalid_completion", phase="parsing", request_bytes=len(encoded), response_bytes=len(raw),
                 completion_check=check) from None
-        return Completion(message, reason, counts, data["id"], data["model"])
+        return Completion(message, reason, counts, data["id"], data["model"],
+                          reported_reasoning_tokens(data["usage"]))

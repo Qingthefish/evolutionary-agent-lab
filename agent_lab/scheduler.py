@@ -144,6 +144,8 @@ class MultiAgentScheduler:
             "executor": executor.configuration() if executor is not None else None}
         if mode == "live" and type(next(iter(self.clients.values())).transport) is HKGAIHTTP:
             settings["provider"] = {"name": "hkgai", "endpoint": HKGAIHTTP.endpoint}
+            if next(iter(self.clients.values())).transport.stream:
+                settings["provider"]["streaming"] = True
         if show_execution_budget:
             settings["show_execution_budget"] = True
         if pause_on_limits:

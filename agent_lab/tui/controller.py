@@ -422,6 +422,23 @@ class ControlCenter:
             scheduler.recover_controller()
         return self._action(f"Cleared scheduler claim for {task[:8]} (no replay)", run)
 
+    def resend(self, task, reason):
+        """Trusted operator: release one new, counted attempt after a transport or HTTP 5xx failure.
+
+        Proposed 2026-11-23: a classroom rehearsal's HTTP 504 left the goal provider_uncertain
+        with no UI action. Nothing is sent here and no tool effect is replayed; the next
+        Advance reserves the new attempt against the same limits.
+        """
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 4096:
+            raise ControllerError("Give a concrete reason of at most 4096 characters")
+        def run(b):
+            require_human(b.queries, b.human)
+            scheduler = b.scheduler(b.root_of(task))
+            if scheduler is None:
+                raise ControllerError("No scheduler owns this task")
+            return scheduler.runner(task).resend_after_transport_failure(reason.strip())
+        return self._action(f"Released one counted resend for {task[:8]} (no replay)", run)
+
     def run_scenario(self, name):
         if name not in offline_scenarios.SCENARIOS:
             raise ControllerError("Unknown scenario")
