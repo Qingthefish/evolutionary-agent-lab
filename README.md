@@ -116,6 +116,20 @@ or proof that the known-six result generalizes.
 [Generalization audit, new-task result and limits](docs/final-report.md#16-classroom-integration-and-new-task-audit)
 · [Sanitized evidence](evaluation/evidence/classroom-integration-20261124.json)
 
+**Known-six first-proposal diagnostic (November 24–25).** A fresh single run
+accepted **four roots and stopped two**, using **600 HKGAI requests /
+31,122,236 reported tokens**. Software and newsroom pairs passed independent
+checks without external technical repair. Both securities roots stopped at
+their first risk-child proposal: incorrect currency stress, then misinterpreted
+valuation arithmetic and a misstated policy constraint. No request allowance
+was exhausted. This local diagnostic stops a whole root on a material child
+error before possible later repair; it is stricter than ordinary final-only
+review and is not an instructor score. Two ordinary preferences were answered
+under owner delegation, and Codex performed technical reviews; this is not
+zero-human autonomy. The earlier assisted 6/6 remains separate and unchanged.
+[Results, failure evidence and limits](docs/final-report.md#19-known-six-first-proposal-diagnostic)
+· [Sanitized evidence](evaluation/evidence/known-six-first-proposal-20261125.json)
+
 **Fresh known-six development (November 23–24).** All six original mid-test
 tasks reached **coordinator-assisted technical acceptance**, using **633 actual
 HKGAI requests**, 59,534,942 known reported tokens and four retained attempts

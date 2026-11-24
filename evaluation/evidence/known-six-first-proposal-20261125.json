@@ -1,0 +1,575 @@
+{
+  "classification": "Fresh known-six first-proposal evaluation with owner-delegated ordinary requester decisions and independent pass/fail checks, no external technical repair; not held-out and not zero-human autonomous",
+  "source_commit": "c05a28859c227428847b7627706af0d0d5fd13df",
+  "runtime_sha256": "e4b03254c958e3e887a6ef5c5fcceaa710923001c5ab351ede9499daa2350258",
+  "runtime_changed": false,
+  "actual_requests": 600,
+  "succeeded": 4,
+  "calls_per_root": [
+    114,
+    116,
+    114,
+    111,
+    70,
+    75
+  ],
+  "states": [
+    "succeeded",
+    "succeeded",
+    "succeeded",
+    "succeeded",
+    "failed",
+    "failed"
+  ],
+  "known_reported_tokens": 31122236,
+  "unknown_usage_attempts": 0,
+  "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+  "returned_models": [
+    "t2_hkgai-v3_fp8_1m_e10"
+  ],
+  "model_suffix_equivalence_confirmed": false,
+  "technical_reviews": 21,
+  "accepted_reviews": 19,
+  "rejected_reviews": 2,
+  "delegated_preference_answers": 2,
+  "actual_owner_answers": 0,
+  "genuine_owner_review_events": 0,
+  "external_technical_repair_feedback_events": 0,
+  "failed_child_waivers": 0,
+  "provider_resends": 0,
+  "allowance_extensions": 0,
+  "new_rounds": 0,
+  "provider_transport_outages_observed": 0,
+  "retained_length_cutoffs_with_known_usage": 2,
+  "assignment_to_final_export_seconds_including_review_idle": 20944.949525117874,
+  "sum_turn_seconds_including_tools": 4405.808279514313,
+  "network_command_seconds_including_tools_and_local_control": 5020.787295538234,
+  "root_wall_seconds_including_review_idle": [
+    1473.154002904892,
+    2056.5612337589264,
+    13472.577768087387,
+    1806.7657268047333,
+    998.8263068199158,
+    1081.8805458545685
+  ],
+  "final_export_manifest_entries": 429,
+  "final_export_files_including_manifests": 432,
+  "agent_sandbox_records": 67,
+  "agent_sandbox_operation_errors": 14,
+  "agent_sandbox_cleanup_confirmed": 67,
+  "candidate_executed_on_host": false,
+  "native_browser_or_terminal_performed": false,
+  "old_known_six_sealed_files_unchanged": 557,
+  "owner_export_and_current_pointer_files_unchanged": 41,
+  "automation_cancelled": true,
+  "limits": [
+    "Known original tasks, not held-out or an instructor score. Independent checks are fallible.",
+    "First external child/root material failure stops the whole root before potential later internal repair; this is not an ordinary final-only success-rate estimate.",
+    "Ordinary preferences were proxy decisions explicitly delegated by the owner, not actual owner replies or zero-human autonomy.",
+    "Both securities roots stopped at their first risk-child proposal. Final allocation/HTML delivery was not reached.",
+    "Durations include operator inspection and long idle waits, not classroom speed or pure inference latency.",
+    "No runtime change, new engineering-regression claim, actual future classroom package, complete browser visual rehearsal, Zoom or human speech test."
+  ],
+  "reviewer_operation_corrections": [
+    "Frozen controller answer parser rejected backend flags before any new model call; same official answer operation used without those flags, with full attributed proxy record.",
+    "Read-only inspection/schema and checker fixture/output-path corrections were retained without candidate/runtime changes or corrective live feedback.",
+    "A local container socket permission denial occurred before candidate execution; the existing authorized pinned-container check then ran successfully with no host fallback."
+  ],
+  "schema": "known-six-first-proposal-no-external-repair-v1",
+  "date": "2026-11-25",
+  "coordinator": "Qingthefish",
+  "technical_reviewer": "Codex; not an independent human teammate",
+  "first_proposal_rule": "First externally submitted child/root is independently checked; a material error stops its whole root without sending defect locations or corrections back to agents. Model-chosen QA/repairs before submission remain allowed.",
+  "frozen_before_first_model_call": [
+    "protocol",
+    "runtime",
+    "controller",
+    "archive",
+    "operating allowances"
+  ],
+  "task_criteria_frozen_before_first_external_proposal": true,
+  "old_outputs_or_memory_copied_at_initialization": false,
+  "original_roles_and_tasks": true,
+  "same_group_ordered_continuation": true,
+  "failed_task1_continuity": "Securities Task2 carried two exact partial Task1 root files, explicitly marked failed/partial, without older successful answers.",
+  "per_task_initial_request_allowance": 256,
+  "six_initial_request_allowance": 1536,
+  "output_token_ceiling": 8192,
+  "socket_timeout_seconds": 180,
+  "streaming": true,
+  "maximum_accumulated_network_work_seconds": 14400,
+  "per_root": [
+    {
+      "case": "software-engineering",
+      "sequence": 1,
+      "state": "succeeded",
+      "wall_seconds_including_review_idle": 1473.154002904892,
+      "reserved_requests": 114,
+      "runner_turn_rows": 114,
+      "known_reported_tokens": 3128172,
+      "unknown_usage_attempts": 0,
+      "inflight_turns": 0,
+      "summed_turn_seconds_including_tools": 503.0342528820038,
+      "technical_reviews": 5
+    },
+    {
+      "case": "software-engineering",
+      "sequence": 2,
+      "state": "succeeded",
+      "wall_seconds_including_review_idle": 2056.5612337589264,
+      "reserved_requests": 116,
+      "runner_turn_rows": 116,
+      "known_reported_tokens": 4920850,
+      "unknown_usage_attempts": 0,
+      "inflight_turns": 0,
+      "summed_turn_seconds_including_tools": 820.241771697998,
+      "technical_reviews": 4
+    },
+    {
+      "case": "newsroom",
+      "sequence": 1,
+      "state": "succeeded",
+      "wall_seconds_including_review_idle": 13472.577768087387,
+      "reserved_requests": 114,
+      "runner_turn_rows": 114,
+      "known_reported_tokens": 7246966,
+      "unknown_usage_attempts": 0,
+      "inflight_turns": 0,
+      "summed_turn_seconds_including_tools": 950.6516880989075,
+      "technical_reviews": 5
+    },
+    {
+      "case": "newsroom",
+      "sequence": 2,
+      "state": "succeeded",
+      "wall_seconds_including_review_idle": 1806.7657268047333,
+      "reserved_requests": 111,
+      "runner_turn_rows": 111,
+      "known_reported_tokens": 6994541,
+      "unknown_usage_attempts": 0,
+      "inflight_turns": 0,
+      "summed_turn_seconds_including_tools": 1152.058718919754,
+      "technical_reviews": 3
+    },
+    {
+      "case": "securities-fund",
+      "sequence": 1,
+      "state": "failed",
+      "wall_seconds_including_review_idle": 998.8263068199158,
+      "reserved_requests": 70,
+      "runner_turn_rows": 70,
+      "known_reported_tokens": 3386108,
+      "unknown_usage_attempts": 0,
+      "inflight_turns": 0,
+      "summed_turn_seconds_including_tools": 435.4088280200958,
+      "technical_reviews": 2
+    },
+    {
+      "case": "securities-fund",
+      "sequence": 2,
+      "state": "failed",
+      "wall_seconds_including_review_idle": 1081.8805458545685,
+      "reserved_requests": 75,
+      "runner_turn_rows": 75,
+      "known_reported_tokens": 5445599,
+      "unknown_usage_attempts": 0,
+      "inflight_turns": 0,
+      "summed_turn_seconds_including_tools": 544.4130198955536,
+      "technical_reviews": 2
+    }
+  ],
+  "export_manifest_entries_by_scenario": [
+    {
+      "scenario": "software-engineering",
+      "entries": 135,
+      "states": [
+        "succeeded",
+        "succeeded"
+      ]
+    },
+    {
+      "scenario": "newsroom",
+      "entries": 173,
+      "states": [
+        "succeeded",
+        "succeeded"
+      ]
+    },
+    {
+      "scenario": "securities-fund",
+      "entries": 121,
+      "states": [
+        "failed",
+        "failed"
+      ]
+    }
+  ],
+  "accepted_root_snapshot_file_counts": [
+    11,
+    34,
+    16,
+    32
+  ],
+  "sealed_private_files": 4883,
+  "sealed_record_sha256": "e0b0e8f6fd38322c7b890019f66d52b3ec2be880c3ebd58289b166a18c08123a",
+  "delegated_preferences": [
+    "Select campus robotics story and draft channels, with no external publication.",
+    "Select a hypothetical long-horizon paper-investor risk profile proposed by the agents; not a real client profile."
+  ],
+  "software_checks": {
+    "task1_shipped_tests": 29,
+    "task1_independent_categories": 4,
+    "task1_changed_interval_cases": 32,
+    "task1_concurrent_processes": 4,
+    "task2_dashboard_tests": 34,
+    "task2_legacy_tests": 29,
+    "task2_independent_categories": 7,
+    "task2_changed_datasets": 220,
+    "interaction": "Actual CLI range selection/filter/export; optional static script-free HTML/SVG report. Not a browser-interactive dashboard."
+  },
+  "material_failures": [
+    {
+      "case": "securities-fund",
+      "sequence": 1,
+      "stage": "first risk-child proposal",
+      "problem": "Combined FX stress translates only the US loss rather than the whole surviving USD position; fixed-asset-return cases reverse or erase USD/HKD effects.",
+      "independent_checks": {
+        "property_families": 2,
+        "cases": 6,
+        "failed": 6
+      },
+      "final_delivery_reached": false
+    },
+    {
+      "case": "securities-fund",
+      "sequence": 2,
+      "stage": "first risk-child proposal",
+      "problem": "Forward/trailing PE minus1 is mislabelled as an earnings fall, while same-price comparable-EPS growth is trailing/forward minus1; CHIPS expansion guardrails misstated as a blanket production ban.",
+      "independent_checks": {
+        "positive_reproduction_NAV_and_recovery": 17,
+        "valuation_identity_counterexamples": 4,
+        "primary_policy_source": "https://www.nist.gov/chips/chips-implementation-strategies/national-security/frequently-asked-questions-preventing"
+      },
+      "final_HTML_delivery_reached": false
+    }
+  ],
+  "retained_quality_limits": [
+    "Software QA contained runtime-version/history and missing-log wording issues; code behavior was independently checked.",
+    "News source/venue tracebacks were sometimes overly cautious or misdescribed; exact detector sample counts are more precise than rounded headlines.",
+    "News detector conclusion is a scoped high-stakes authorship-proof assessment, not a census proving every2026 detector incapable.",
+    "Source evidence supports uncertainty about authorship; AI use and course-policy misconduct remain separate. Nothing published.",
+    "Semiconductor research principal source/arithmetic checks passed, but cycle-timing and forward-PE interpretations were stronger than the evidence supports. Risk draft exposes why reproducible output alone does not establish correct financial meaning.",
+    "Securities analyses are paper only; no accounts or trades."
+  ],
+  "tool_counts": [
+    {
+      "case": "software-engineering",
+      "tool_counts": [
+        {
+          "name": "accept_artifact",
+          "status": "succeeded",
+          "count": 58
+        },
+        {
+          "name": "append_text",
+          "status": "succeeded",
+          "count": 16
+        },
+        {
+          "name": "create_text",
+          "status": "failed",
+          "count": 1
+        },
+        {
+          "name": "create_text",
+          "status": "succeeded",
+          "count": 44
+        },
+        {
+          "name": "delegate_with_inputs",
+          "status": "succeeded",
+          "count": 7
+        },
+        {
+          "name": "list_files",
+          "status": "succeeded",
+          "count": 13
+        },
+        {
+          "name": "list_tasks",
+          "status": "succeeded",
+          "count": 5
+        },
+        {
+          "name": "offer_artifact",
+          "status": "succeeded",
+          "count": 23
+        },
+        {
+          "name": "post_message",
+          "status": "succeeded",
+          "count": 12
+        },
+        {
+          "name": "read_messages",
+          "status": "succeeded",
+          "count": 12
+        },
+        {
+          "name": "read_text",
+          "status": "succeeded",
+          "count": 45
+        },
+        {
+          "name": "replace_text",
+          "status": "failed",
+          "count": 3
+        },
+        {
+          "name": "replace_text",
+          "status": "succeeded",
+          "count": 45
+        },
+        {
+          "name": "run_python",
+          "status": "succeeded",
+          "count": 50
+        },
+        {
+          "name": "submit_for_verification",
+          "status": "succeeded",
+          "count": 9
+        },
+        {
+          "name": "update_text",
+          "status": "succeeded",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "case": "newsroom",
+      "tool_counts": [
+        {
+          "name": "accept_artifact",
+          "status": "succeeded",
+          "count": 21
+        },
+        {
+          "name": "append_text",
+          "status": "succeeded",
+          "count": 7
+        },
+        {
+          "name": "ask_human",
+          "status": "paused",
+          "count": 1
+        },
+        {
+          "name": "create_text",
+          "status": "succeeded",
+          "count": 19
+        },
+        {
+          "name": "delegate_task",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "name": "delegate_with_inputs",
+          "status": "succeeded",
+          "count": 5
+        },
+        {
+          "name": "list_files",
+          "status": "succeeded",
+          "count": 9
+        },
+        {
+          "name": "list_tasks",
+          "status": "succeeded",
+          "count": 4
+        },
+        {
+          "name": "offer_artifact",
+          "status": "succeeded",
+          "count": 8
+        },
+        {
+          "name": "post_message",
+          "status": "succeeded",
+          "count": 7
+        },
+        {
+          "name": "read_messages",
+          "status": "succeeded",
+          "count": 11
+        },
+        {
+          "name": "read_text",
+          "status": "succeeded",
+          "count": 55
+        },
+        {
+          "name": "replace_text",
+          "status": "failed",
+          "count": 1
+        },
+        {
+          "name": "replace_text",
+          "status": "succeeded",
+          "count": 3
+        },
+        {
+          "name": "retrieve_text",
+          "status": "failed",
+          "count": 63
+        },
+        {
+          "name": "retrieve_text",
+          "status": "succeeded",
+          "count": 105
+        },
+        {
+          "name": "search_web",
+          "status": "failed",
+          "count": 16
+        },
+        {
+          "name": "search_web",
+          "status": "succeeded",
+          "count": 196
+        },
+        {
+          "name": "submit_for_verification",
+          "status": "succeeded",
+          "count": 8
+        },
+        {
+          "name": "update_text",
+          "status": "succeeded",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "case": "securities-fund",
+      "tool_counts": [
+        {
+          "name": "accept_artifact",
+          "status": "succeeded",
+          "count": 6
+        },
+        {
+          "name": "append_text",
+          "status": "succeeded",
+          "count": 7
+        },
+        {
+          "name": "ask_human",
+          "status": "paused",
+          "count": 1
+        },
+        {
+          "name": "create_text",
+          "status": "failed",
+          "count": 2
+        },
+        {
+          "name": "create_text",
+          "status": "succeeded",
+          "count": 11
+        },
+        {
+          "name": "delegate_task",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "name": "delegate_with_inputs",
+          "status": "succeeded",
+          "count": 3
+        },
+        {
+          "name": "list_files",
+          "status": "succeeded",
+          "count": 7
+        },
+        {
+          "name": "list_tasks",
+          "status": "succeeded",
+          "count": 6
+        },
+        {
+          "name": "offer_artifact",
+          "status": "succeeded",
+          "count": 6
+        },
+        {
+          "name": "post_message",
+          "status": "succeeded",
+          "count": 4
+        },
+        {
+          "name": "read_messages",
+          "status": "succeeded",
+          "count": 6
+        },
+        {
+          "name": "read_text",
+          "status": "succeeded",
+          "count": 32
+        },
+        {
+          "name": "replace_text",
+          "status": "succeeded",
+          "count": 5
+        },
+        {
+          "name": "retrieve_text",
+          "status": "failed",
+          "count": 53
+        },
+        {
+          "name": "retrieve_text",
+          "status": "succeeded",
+          "count": 86
+        },
+        {
+          "name": "run_python",
+          "status": "failed",
+          "count": 1
+        },
+        {
+          "name": "run_python",
+          "status": "succeeded",
+          "count": 17
+        },
+        {
+          "name": "search_web",
+          "status": "succeeded",
+          "count": 82
+        },
+        {
+          "name": "submit_for_verification",
+          "status": "succeeded",
+          "count": 4
+        },
+        {
+          "name": "update_text",
+          "status": "succeeded",
+          "count": 4
+        }
+      ]
+    }
+  ],
+  "not_claimed": [
+    "Teacher score or held-out accuracy",
+    "A new unattended6/6 result",
+    "Causal benefit from larger limits",
+    "Classroom completion time",
+    "A generally certified detector/investment recommendation",
+    "New runtime improvements or newly run953 engineering checks",
+    "Full browser/native Terminal/Zoom/speech validation"
+  ]
+}

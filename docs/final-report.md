@@ -1200,3 +1200,119 @@ or a timed human talk. No real clarification, critical authorization or service
 resend occurred in the pair. The real classroom package, unknown-task quality
 and future service availability remain to be tested.
 [Sanitized overnight evidence](../evaluation/evidence/overnight-rehearsal-20261124.json)
+
+## 19. Known-six first-proposal diagnostic
+
+At the owner's request, ran the six original mid-test tasks once more, from
+fresh groups, files and private memories on c05a288. The protocol, runtime,
+controller and operating allowances were frozen before the first model call;
+task criteria were recorded before the first external proposal. Original roles
+and question text were retained. Each Task 2 used its original group and the
+exact terminal Task 1 root files. Securities Task 2 therefore inherited two
+explicitly partial files from a failed first root, with no older successful
+answer substituted.
+
+The diagnostic forbade external solution edits, defect locations, corrective
+feedback and document recovery. Model-chosen QA and repairs before submission
+remained allowed. Each first externally submitted child or root was checked;
+a material error stopped its whole root without returning counterexamples.
+This is a locally chosen diagnostic rule, not an instructor requirement or a
+standing product restriction. It can stop work before a coordinator's later
+internal repair, so its result is not an estimate of ordinary final-only
+completion. Independent checks are also fallible, rather than an answer key.
+
+The allowance was 256 requests per root / 1,536 total, 8,192 output tokens,
+180-second socket timeout, streaming and at most 14,400 seconds of accumulated
+network-command work. None of the six roots exhausted these allowances. No
+automatic new round, numeric renewal or provider resend occurred. The requested
+model was e7; all recorded replies identified e10. Their suffix equivalence
+remains unconfirmed.
+
+| Original task | Terminal result | Actual requests | Root wall seconds, including review/idle |
+| --- | --- | ---: | ---: |
+| Software 1 | Accepted | 114 | 1,473.15 |
+| Software 2 | Accepted | 116 | 2,056.56 |
+| Newsroom 1 | Accepted | 114 | 13,472.58 |
+| Newsroom 2 | Accepted | 111 | 1,806.77 |
+| Securities 1 | Stopped at first risk-child proposal | 70 | 998.83 |
+| Securities 2 | Stopped at first risk-child proposal | 75 | 1,081.88 |
+
+**Four accepted roots, two stopped roots; 600 actual HKGAI requests and
+31,122,236 reported tokens**, with no unknown-usage attempts or observed
+provider transport outage. Two length-cutoff replies retained their known
+usage; the agents continued within the existing allowance. There were 21
+assistant technical decisions, accepting 19 proposals and rejecting two.
+Two actual preference requests received owner-delegated proxy decisions:
+campus story/channel selection and a hypothetical paper-investor profile.
+They were not actual owner replies. No failed-child waiver or invented human
+review was recorded. This run is neither zero-human autonomy nor held-out
+evaluation, and does not replace the separate assisted 6/6 development result
+or the original 375-call four-assisted/two-failed trial.
+
+Software 1 delivered a SQLite-backed booking/cancellation CLI with 29 tests.
+Independent checks covered four categories, 32 changed intervals and four
+concurrent processes. Software 2 delivered an actual interactive CLI date-range
+dashboard and optional static, script-free HTML/SVG report. Its 34 dashboard
+tests and 29 legacy tests passed; seven independent categories covered 220
+changed datasets, a separate minute-grid reference, filtering, export and
+non-mutation. This is not a claim of a browser-interactive dashboard. All
+accepted root snapshots match the exported current source.
+
+Newsroom 1 delivered campus-robotics drafts for three requested channels with
+captured source/quotation checks. Newsroom 2 delivered a fact-check article and
+short version, distinguishing detector evidence from course-policy misconduct.
+Primary-paper samples, error rates, paraphrasing results and current preprints
+were checked within their stated scopes. No article was published. Retained
+imperfections include overcautious or mistaken source/venue tracebacks, rounded
+rates less precise than their disclosed counts, and broad claims requiring the
+stated high-stakes authorship-proof interpretation. Acceptance does not certify
+every detail, all detector products or publication readiness without review.
+
+Securities 1's risk code applied USD/HKD translation to the US **loss** rather
+than the full surviving USD position. Three flat-asset cases omitted currency
+gains, and three fixed-shock cases gave lower or unchanged HKD value for a
+stronger USD. All six independent cases failed. Its correct equity-only stress
+numbers and internal detection of an earlier allocation mismatch are retained.
+
+Securities 2's risk draft reproduced its saved arithmetic, and 17 checks of
+reproduction, sleeve/NAV impact and recovery percentages passed. However, its
+valuation table labelled forward/trailing PE minus one as an earnings fall.
+At a fixed price and comparable EPS bases, earnings growth is instead
+trailing/forward minus one: the four examples imply +73.4%, +68.2%, +56.4% and
++121.7%, rather than the table's negative 36.0–54.9%. Later prose partly changed
+the direction but continued using the wrong magnitude. This is a material
+meaning error, despite reproducible calculations. The draft also described
+CHIPS guardrails as a blanket ban on advanced-chip production in certain
+countries; the primary rule concerns significant capacity-expansion transactions
+with conditions and exceptions. [NIST's guardrails FAQ](https://www.nist.gov/chips/chips-implementation-strategies/national-security/frequently-asked-questions-preventing)
+supports that distinction. Its explicitly disclaimed, implausible linear
+duration illustration was retained as a weakness, not used as the rejection
+basis. Neither root reached final allocation/HTML delivery. Detailed findings
+were kept outside the live tasks; only the generic diagnostic stop was applied.
+This does not prove later internal repair could not have succeeded.
+
+Full first-assignment-to-final-export elapsed time was **20,944.95 seconds**,
+about 5 hours 49 minutes, including substantial reviewer/idle time, especially
+in Newsroom 1. Summed turn time including tools was 4,405.81 seconds; accumulated
+network-command work including local control was 5,020.79 seconds. Neither is
+pure inference time, and none predicts classroom speed. The 67 agent container
+records all confirmed cleanup; 14 retained operation errors concern missing or
+failed artifact exports. A successful tool call is not counted as proof that
+its calculation or output was correct. Candidate code ran only in the pinned,
+no-network container, never on the host. Reviewer fixture/schema corrections,
+the controller's unsupported answer flags and a pre-execution socket-permission
+refusal are preserved separately from candidate failures; none supplied a fix
+to the live agents.
+
+Final exports preserve succeeded/succeeded, succeeded/succeeded and failed/failed
+at zero new model calls. Verified 429 manifest entries, 432 files including the
+three manifests, and all 93 accepted-root snapshot files. Sealed 4,883 private
+files containing the frozen inputs/runtime, transcripts, first proposals,
+independent checks and verdicts. The previous known-six seal's 557 files and
+41 owner-export/current-pointer files remain unchanged. The owner cancelled
+the 04:00 follow-up after waking; that automation is paused and no replacement
+was scheduled. No runtime code, provider or tool permissions changed, and no
+new 953-test engineering-regression result is claimed. Actual classroom input,
+teacher scoring, future service availability, complete browser visuals, native
+Terminal/Finder, Zoom and human speech remain unverified.
+[Sanitized diagnostic evidence](../evaluation/evidence/known-six-first-proposal-20261125.json)

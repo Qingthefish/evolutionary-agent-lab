@@ -649,7 +649,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run the official evaluation**
 
-- **Stage / status:** M5 / In progress (known-six assisted trial closed; official/unseen evaluation remains open)
+- **Stage / status:** M5 / In progress (assisted and first-proposal known-six trials closed; official/unseen evaluation remains open)
 - **Owner:** Qingthefish (owner-requested continuation, Codex-assisted)
 - **Dependencies / configuration:** C06, A07, the official dataset and authorized runtime access.
 - **Scope:** Official raw run records, complete result counts and metrics.
@@ -1263,6 +1263,36 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   rehearsal. Actual classroom input and service availability remain open.
   [Record and checks](final-report.md#18-additional-no-search-command-menu-practice)
   · [Sanitized evidence](../evaluation/evidence/overnight-rehearsal-20261124.json)
+
+- **2026-11-25 S01 first-proposal diagnostic:** Qingthefish, owner-requested
+  Codex-assisted evidence maintenance on docs/S01-first-proposal-six-20261125.
+  One fresh original-six trial on c05a288 ended with four accepted roots and
+  two stopped roots in 600 requests (114/116/114/111/70/75), 31,122,236 reported
+  tokens and no unknown usage. No external technical repair, document recovery,
+  failed-child waiver, provider resend or allowance extension. Two actual
+  preference requests received explicitly delegated proxy choices; 21 assistant
+  technical decisions accepted 19 proposals and rejected two. These are not
+  genuine owner replies or independent human reviews.
+- **Findings / limits:** Both software and newsroom pairs passed their scoped
+  checks. Securities stopped on first risk proposals: full-position FX
+  translation failed six independent cases; the semiconductor risk draft
+  misinterpreted PE arithmetic and overstated CHIPS guardrails. Its 17 ordinary
+  reproduction/NAV/recovery checks passed, showing why successful execution
+  alone is insufficient. Final securities allocation/HTML delivery was not
+  reached. This locally frozen child-level stop rule is stricter than ordinary
+  final-only review, not an instructor rubric or proof later internal repair
+  was impossible. Neither root hit its allowance. Earlier assisted 6/6 and
+  original 4/6 records remain distinct; no runtime change or new engineering
+  regression result is claimed.
+- **Preservation / operation:** Three final exports use zero model calls;
+  429 manifest entries/432 files and all 93 accepted-root files hash-verified.
+  Sealed 4,883 private files; earlier known-six 557 and owner-export/current
+  pointer 41 files unchanged. Full assignment-to-export was 20,944.95 seconds
+  including long review/idle waits, not a speed comparison. The owner cancelled
+  the scheduled 04:00 continuation; its automation is paused. Real classroom
+  input, grading, future service availability and native presentation remain
+  open. [Diagnostic and evidence](final-report.md#19-known-six-first-proposal-diagnostic)
+  · [Sanitized record](../evaluation/evidence/known-six-first-proposal-20261125.json)
 
 ## Starting a Codex session
 
