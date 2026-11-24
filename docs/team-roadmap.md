@@ -1244,6 +1244,26 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   Zoom sharing, broader unseen evaluation and general learning gains remain open.
   [Script and rehearsal evidence](../evaluation/evidence/presentation-script-20261124.json)
 
+- **2026-11-24 S01 overnight operation check:** Qingthefish, owner-requested
+  Codex-assisted maintenance on docs/S01-overnight-rehearsal-20261124. Used the
+  actual classroom menu on bf91475 for a fresh no-search interval-analysis pair,
+  with original roles/README, one group and eight checked carried files. Both
+  roots reached technical acceptance in 75 requests (33/42), 1,503,090 reported
+  tokens, no unknown usage or observed provider error. Predeclared independent
+  root checks passed 11/11 and 17/17, including changed data and a minute-grid
+  reference; original functions/test classes were preserved. Generated test
+  expectation corrections and reviewer inspection/archive mistakes are retained.
+- **Operation evidence / limits:** Exit/reopen preserved the pending review
+  and 25-call counter. Partial and final exports preserved actual states at zero
+  new calls; final 47 manifest entries/48 files and 12 root files hash-verified.
+  Assignment-to-export was 874.79 seconds including review/idle, not a classroom
+  speed prediction. Sealed 506 files; prior known-six 557 and owner-export/current
+  pointer 41 files unchanged. No platform code/provider/tool changes, additional
+  six-task score, invented owner review, native desktop control, Zoom or speech
+  rehearsal. Actual classroom input and service availability remain open.
+  [Record and checks](final-report.md#18-additional-no-search-command-menu-practice)
+  · [Sanitized evidence](../evaluation/evidence/overnight-rehearsal-20261124.json)
+
 ## Starting a Codex session
 
 ```text
