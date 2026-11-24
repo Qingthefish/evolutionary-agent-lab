@@ -1,0 +1,121 @@
+{
+  "schema": "classroom-overnight-practice-v1",
+  "date": "2026-11-24",
+  "classification": "Author-created no-search practice pair via the actual classroom command menu; Codex-assisted technical acceptance, not a teacher test or unattended result",
+  "runtime_commit": "bf9147512b0369d3f19a406079a4ba87708f7b27",
+  "runtime_sha256": "e4b03254c958e3e887a6ef5c5fcceaa710923001c5ab351ede9499daa2350258",
+  "runtime_changed": false,
+  "practice_input": {
+    "new_prompts": 2,
+    "scenario": "software-engineering",
+    "web_required": false,
+    "same_original_roles_and_readme": true,
+    "fresh_initial_files_and_memory": true,
+    "changed_members": [
+      "scenario_1_software_engineering 2/02_task_1.md",
+      "scenario_1_software_engineering 2/03_task_2.md"
+    ],
+    "practice_archive_sha256": "b98df19229d8896d77087f2cea871fe08bedccdf7d4972f1796e8119a5db4b73",
+    "other_scenarios_ran": false
+  },
+  "actual_requests": 75,
+  "requests_by_ordered_root": [
+    33,
+    42
+  ],
+  "known_reported_tokens": 1503090,
+  "unknown_usage_attempts": 0,
+  "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+  "returned_models": [
+    "t2_hkgai-v3_fp8_1m_e10"
+  ],
+  "model_suffix_equivalence_confirmed": false,
+  "observed_provider_errors": 0,
+  "outcomes": [
+    "succeeded",
+    "succeeded"
+  ],
+  "same_group": true,
+  "checked_files_carried": 8,
+  "assistant_technical_reviews": 4,
+  "owner_review_events_this_round": 0,
+  "independent_root_checks": [
+    {
+      "passed": 11,
+      "total": 11,
+      "changed_datasets": 500
+    },
+    {
+      "passed": 17,
+      "total": 17,
+      "changed_analysis_datasets": 500,
+      "minute_grid_usage_datasets": 160
+    }
+  ],
+  "preserved_function_nodes": [
+    "_is_int",
+    "_validate",
+    "analyze"
+  ],
+  "old_test_classes_preserved": true,
+  "author_suite_tests": [
+    31,
+    48
+  ],
+  "qa_reported_spec_checks": [
+    12,
+    43
+  ],
+  "qa_reported_random_rounds": [
+    3000,
+    5000
+  ],
+  "actual_agent_container_executions": 17,
+  "candidate_executed_on_host": false,
+  "web_tool_calls": 0,
+  "assignment_to_final_export_seconds_including_operator_review_idle": 874.79,
+  "root_wall_seconds_including_operator_review_idle": [
+    403.57,
+    459.62
+  ],
+  "summed_turn_elapsed_seconds_including_tools": 401.96,
+  "workflow_checks": {
+    "same_pending_review_after_exit_and_reopen": true,
+    "requests_before_and_after_reopen": [
+      25,
+      25
+    ],
+    "same_group_continuation": true,
+    "partial_export_states": [
+      "succeeded",
+      "running"
+    ],
+    "final_export_states": [
+      "succeeded",
+      "succeeded"
+    ],
+    "new_model_calls_for_each_export": 0,
+    "final_manifest_entries_verified": 47,
+    "final_files_including_manifest": 48,
+    "final_root_files_match_checked_snapshot": 12
+  },
+  "final_code_sha256": "5c3e92a4e44e4a7abb3195319df7d54a7c602da0e86024fef1d6c2043367348e",
+  "preservation": {
+    "sealed_files": 506,
+    "sealed_record_sha256": "2c255e32824c7257414f7771c1ee7e0803f751d3707da94382a7ff52a20b8007",
+    "prior_known_six_sealed_files_reverified": 557,
+    "owner_export_and_current_pointer_files_reverified": 41
+  },
+  "retained_observations": [
+    "QA corrected two wrong test expectations in Task 1 and disclosed them; the module was not changed to satisfy wrong expectations.",
+    "Task 2 author corrected two arithmetic expectations in its new tests and disclosed them in demo.md; implementation behavior was correct.",
+    "Assistant inspection once assumed a report filename that did not exist; corrected after listing actual paths, with no runtime change or model request.",
+    "Initial archival script used an incorrect tool-call column name; fixed from the inspected schema before writing the receipt or sealed archive. No task outcome or model request changed."
+  ],
+  "limits": [
+    "One author-created two-task software practice; not the six-task result, held-out benchmark or classroom speed prediction.",
+    "Command-menu input/output was exercised; native Terminal double-click, Finder dragging, Zoom sharing and five-minute speech were not performed.",
+    "No real clarification, critical authorization or provider resend occurred; this round does not newly validate those human actions.",
+    "The actual classroom package and service availability at presentation time remain unknown."
+  ]
+}

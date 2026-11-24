@@ -1134,3 +1134,69 @@ rehearsal. No alternative Terminal UI automation, email, upload or classroom
 submission was performed. The updated SOP gives both input routes, root-file
 selection, truthful partial export and a prepared in-class-results slide plan.
 [Sanitized rehearsal evidence](../evaluation/evidence/classroom-rehearsal-20261124.json)
+
+## 18. Additional no-search command-menu practice
+
+The owner requested a check while resting before the November 25 evening
+presentation. Rather than repeatedly optimizing the already known six answers,
+this bounded run used the current tested runtime bf91475 and a new private
+practice derivative of the original ZIP. Only the two software prompts changed:
+strict half-open interval conflict analysis, followed by per-room union minutes,
+excess booking minutes and peak concurrency. Original roles and README stayed
+unchanged. The other two original scenarios were initialized but not run; no
+older answers or memory were copied. The six-task score remains the separately
+reported known-task assisted development result.
+
+The same scripts.classroom.menu used by the launcher performed option 5 local
+check, option 2 import, group selection, r advancement, v pending-review
+inspection, normal exit, option 3 reopen, n ordered continuation and e exports.
+The private practice current pointer kept the owner's usual session unchanged.
+At 25 actual requests, exiting at the pending QA review and reopening preserved
+the same root, pending child and counter. Task 2 reused the same group and eight
+checked Task 1 files. No uncertain in-flight operation was replayed. Technical
+acceptance was attributed to Codex and frozen independent checks; no owner
+review or critical-action approval was fabricated.
+
+Both roots completed in **75 actual HKGAI requests**, split **33 / 42**, with
+**1,503,090 reported tokens**, zero unknown-usage attempts and zero observed
+provider errors. Requested model e7 and returned e10 remain separately recorded;
+suffix equivalence is not established. There were **17 actual agent container
+executions**, no web calls and no candidate-code host execution. This confirms
+service responses during this run, not availability at presentation time.
+
+Before the first model call, an independent checker was frozen. It passed
+**11/11** categories for the first root, including 500 changed reservation sets.
+The second root passed **17/17**, repeating those analysis checks and adding
+160 usage cases compared against a separate minute-by-minute reference.
+The original analysis/validation function syntax trees and original test
+classes were unchanged in the extension. The shipped suites reported 31 and
+48 executed tests; agent QA separately reported 12/43 checks and 3,000/5,000
+randomized rounds. These sets are kept separate. Four assistant technical
+reviews accepted the two QA children and two exact root snapshots.
+
+Errors in generated test expectations remain visible: the first QA corrected
+two wrong expectations, and the second author corrected two arithmetic
+expectations rather than altering correct implementation behavior. Their
+reports disclose these corrections. The external reviewer independently
+checked the final results. An assistant file-inspection filename assumption
+and an initial archival query-column mistake were corrected without any model
+call, runtime change or task-outcome change.
+
+A partial export retained **succeeded / running**; the final export retained
+**succeeded / succeeded**. Each export used zero model calls. All **47 manifest
+entries**, **48 files including the manifest**, and the final root's **12 files**
+were checked against their recorded versions. First assignment to final export
+was **874.79 seconds** (about 14 minutes 35 seconds), including operator checks
+and idle. Individual roots took **403.57 / 459.62 seconds**; summed turn time
+including tools was **401.96 seconds**, not end-to-end time or pure inference
+latency. This small task pair does not predict unknown classroom speed.
+
+Sealed 506 private record/source files; reverified the earlier six-task seal's
+557 files and 41 owner-export/current-pointer files unchanged. The runtime,
+launcher, provider and tool permissions are unchanged, so no new engineering
+regression result is claimed for this documentation-only record. This was a
+command-menu rehearsal, not native Terminal/Finder manipulation, Zoom sharing
+or a timed human talk. No real clarification, critical authorization or service
+resend occurred in the pair. The real classroom package, unknown-task quality
+and future service availability remain to be tested.
+[Sanitized overnight evidence](../evaluation/evidence/overnight-rehearsal-20261124.json)

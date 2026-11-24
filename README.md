@@ -54,6 +54,16 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Additional no-search practice (November 24 night).** On the tested runtime,
+the actual classroom command menu completed a fresh author-created interval
+analysis task and its same-group usage-summary follow-up in **75 HKGAI requests**.
+Independent root checks passed **11/11** and **17/17**; exit/reopen preserved the
+25-call review checkpoint, eight checked files were carried, and both partial
+and completed exports retained their real states with zero additional calls.
+Assignment to final export took **874.79 seconds including operator review/idle**;
+this small assisted pair is not a classroom speed prediction or a new six-task
+score. No runtime code changed. [Evidence and limits](docs/final-report.md#18-additional-no-search-command-menu-practice)
+
 **Classroom rehearsal (November 24).** The actual classroom ZIP command menu
 imported an explicitly labelled practice package with the original software
 roles and two new ordered tasks. Both roots completed assistant technical
