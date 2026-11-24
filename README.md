@@ -71,6 +71,16 @@ rehearsal rather than a completed human desktop/Zoom presentation.
 [Rehearsal evidence and limits](docs/final-report.md#17-classroom-menu-and-safari-rehearsal)
 · [Step-by-step Wednesday SOP](docs/presentation-sop.md)
 
+The owner subsequently operated a separate fresh practice pair through the
+actual Terminal menu: both tasks completed with four genuine owner review
+decisions, **64 HKGAI requests**, assistant inspection and independent 8/8 and
+12/12 checks. Exported code matches the checked version. This is distinct from
+the earlier 27-request rehearsal and from the unreleased classroom task.
+A refreshed [five-minute speaking script](docs/presentation-script.txt) and
+[Chinese slide cues and result alternatives](docs/presentation-speaking-notes.txt)
+support the owner's manually prepared PPT. Spoken timing, Zoom sharing and
+the actual classroom result remain unverified; the tested runtime is unchanged.
+
 **Classroom reliability integration (November 24).** Teammate proposals
 [#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) and
 [#92](https://github.com/Qingthefish/evolutionary-agent-lab/pull/92) add opt-in

@@ -1223,6 +1223,27 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   [Rehearsal and limits](final-report.md#17-classroom-menu-and-safari-rehearsal)
   · [Sanitized evidence](../evaluation/evidence/classroom-rehearsal-20261124.json)
 
+- **2026-11-24 five-minute script refresh:** Qingthefish, owner-requested
+  Codex-assisted S02 documentation on docs/S02-five-minute-script-20261124.
+  Replaced the stale four-accepted/two-in-progress speaking checkpoint with
+  the recorded six technical acceptances from the known-task assisted run,
+  retaining original four-accepted/two-failed results and the distinction from
+  engineering checks and unseen classroom accuracy. Prepared a 503-word English
+  script, Chinese cues for five manually authored slides, a 454-word shortening
+  option and full completed/partial/interrupted classroom-result alternatives.
+  The owner's supplied style reference informs pacing and short sentences only;
+  no other-course content, results or instructions enter the project.
+- **Checks / boundaries:** Cross-checked 633 known-six calls, 953 engineering
+  checks and the separate owner-operated practice pair: 64 calls, four actual
+  owner review events, two succeeded roots and hash-matched exported code after
+  independent 8/8 and 12/12 checks. The earlier 27-call pair remains separate.
+  Source/link, word-count and placeholder checks are documentation validation,
+  not another model evaluation or a timed speech rehearsal. No platform code,
+  provider, model calls, presentation file or other-course source was changed.
+  Runtime stays at the tested f9a438a source; final input/results, spoken timing,
+  Zoom sharing, broader unseen evaluation and general learning gains remain open.
+  [Script and rehearsal evidence](../evaluation/evidence/presentation-script-20261124.json)
+
 ## Starting a Codex session
 
 ```text
