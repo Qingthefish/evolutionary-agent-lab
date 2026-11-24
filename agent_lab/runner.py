@@ -20,7 +20,10 @@ from . import budget, completion
 # A provider server error (HTTP 5xx) also returns no completion and pauses the same
 # way (proposed 2026-11-18 after live HTTP 500 and 502 replies). A malformed HTTP
 # reply (http_protocol) and HTTP 4xx (authentication, quota, rate limit) still fail.
-TRANSPORT_FAILURES = frozenset({"timeout", "dns", "tls", "connection_closed", "connection_refused", "transport"})
+# invalid_stream (2026-11-23): an opt-in stream ended in a provider error event or malformed event, with no
+# completion; like a dropped connection it may have been processed, so only the operator may resend.
+TRANSPORT_FAILURES = frozenset({"timeout", "dns", "tls", "connection_closed", "connection_refused", "transport",
+                                "invalid_stream"})
 
 
 def operator_decision_failure(diagnostics):
@@ -119,9 +122,11 @@ def output_limit_instruction(shape, allowed, max_tokens=None, streak=1, *, finis
         parts.append(f"It used {budget_text} while still writing {len(calls)} tool call(s) ({', '.join(names)}).")
         if len(calls) > 1:
             parts.append("Send one tool call per response until the large output is written.")
-    elif shape.get("reasoning_chars"):
-        parts.append(f"It used {budget_text} reasoning (about {shape['reasoning_chars']:,} characters) before any "
-                     "tool call. Decide briefly and make the next tool call.")
+    elif shape.get("reasoning_chars") or shape.get("reasoning_tokens"):
+        size = (f"about {shape['reasoning_chars']:,} characters" if shape.get("reasoning_chars")
+                else f"{shape['reasoning_tokens']:,} reported reasoning tokens")
+        parts.append(f"It used {budget_text} reasoning ({size}) before any tool call. Plan only the next "
+                     "small step, then make that tool call.")
     else:
         parts.append(f"It used {budget_text} without completing a tool call. Answer briefly or make the next tool "
                      "call.")
@@ -728,6 +733,8 @@ class TaskRunner:
             return self._stop("Provider attempt failed; usage may be unknown; reconcile before retry")
         response = {"message": result.message, "finish_reason": result.finish_reason,
                     "usage": result.usage, "response_id": result.response_id, "model": result.model}
+        if result.reasoning_tokens is not None:  # Measurement only (2026-11-23); absent when not reported.
+            response["reasoning_tokens"] = result.reasoning_tokens
         with self.workflow._transaction():
             current = self._session()
             self.workflow.db.execute("UPDATE runner_turns SET response=?,ended=?,status='received' WHERE task=? AND number=?",
