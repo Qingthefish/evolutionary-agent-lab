@@ -969,3 +969,87 @@ The record demonstrates concrete fixes and deliverable completion, including
 remaining failure modes; it does not establish monotonic improvement, general
 learning, an unattended completion rate, teacher scores or unseen-task success.
 [Sanitized evidence and exact per-task timing](../evaluation/evidence/known-six-assisted-20261124.json)
+
+## 16. Classroom integration and new-task audit
+
+An owner-requested review found two unmerged HelloWorld2333666 proposals:
+[#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) adds opt-in
+streamed replies and reasoning-size/token measurement;
+[#92](https://github.com/Qingthefish/evolutionary-agent-lab/pull/92), stacked on
+it, adds exact-passage edits, explicit operator resend controls and streaming
+on both classroom paths. Their commits are preserved in the integration.
+The transport assembles a complete reply before passing it to the existing
+strict tool parser; this is not a new model or live typing in the interface.
+The proposals' 30.4/12-minute rehearsals are contributor-reported development
+results with different observed provider speeds, not an isolated causal
+measurement of the code change.
+
+Independent review reproduced additional boundary failures. Malformed streamed
+tool fields escaped as raw Python exceptions; conflicting response/call
+identities and incomplete fragment sequences could be combined; byte accounting
+used characters and read whole lines before bounding them. Corrections sanitize
+these as stream failures, require a completed envelope and consistent ordered
+fragments, bound actual UTF-8/serialized bytes and limit reads before allocation.
+Exact-passage editing now also refuses overlapping matches, where nonoverlapping
+`str.count` alone incorrectly reported uniqueness. Nine independent negative
+test methods preserve the original failures. The combined source passed all
+**42 focused and 952 full engineering checks**, with configured actual pinned
+containers and Textual, zero skips and zero model requests. An earlier focused
+invocation omitted the tests import path; that harness error is retained rather
+than presented as a product failure.
+
+Source inspection distinguishes the general platform from the dedicated
+mid-test adapter. Ordinary classroom TXT/MD input becomes a new task with
+default generic roles, private files and the normal delegation/tool/verification
+services. It has no original-six answer lookup or dependency on `six.py` /
+`six_quality.py`. The dedicated ZIP adapter does bind the issued README
+protocol fingerprint, three directory/role-ID groups, ordered task pairs and
+the original securities HTML exception. A read-only check changed task and
+role instruction bodies under the same ZIP contract: both loaded verbatim.
+Changing the layout was explicitly refused, with the original archive unchanged.
+This is protocol-specific intake, not a universal final-package importer.
+Generic default roles must not silently replace roles assigned by the teacher.
+
+To test beyond the original questions, we froze a new author-created lab
+temperature CSV-QC prompt, supplied raw data and **12 independent fixtures**
+before any live request. The actual `scripts.classroom.import_text` path created
+a fresh group with only its two supplied input files, no previous answers or
+memory and no web tools. Its coordinator delegated implementation to the coder.
+The initial proposal passed **9/12** fixtures; three changed datasets exposed
+loss of original rejected-field whitespace. A delegated paraphrase had said
+"post-trim", contradicting the original requirement to retain raw parsed values.
+The independent review rejected it with that concrete discrepancy. The model
+repaired code, self-tests and instructions, offered new snapshots and resubmitted.
+The repaired child passed the unchanged **12/12** fixtures. The coordinator then
+received the checked source and instructions; that actual delivered version
+passed the same **12/12**, including input preservation, duplicate-ID priority,
+unit conversion, decimal rounding, Unicode, empty/invalid data and error exits.
+All candidate execution was confined to the pinned no-network Python sandbox.
+
+The new goal completed technical acceptance in **43 HKGAI requests / 766,126
+known reported tokens**, with zero provider failures or unknown usage. It used
+eight `replace_text` and six `append_text` calls. Two length-limited replies
+retain their counted usage and ordinary quality-mode recovery; no incomplete
+tool arguments were executed. Requested `e7` and returned `e10` suffix
+equivalence remains unconfirmed. Actual task wall time was **2,653.22 seconds**
+including technical review/idle, versus **211.29 seconds** summed turn duration
+including provider and tools. The latter is not a three-and-a-half-minute
+end-to-end result or a prediction of classroom speed. One rejection, one child
+acceptance and one root acceptance are explicitly attributed to assistant
+technical review, with no fabricated human review. The trial's 101 sealed files
+and the earlier six-task seal's 557 files were hash-verified; no generated QC
+solution was added to the platform runtime.
+
+These findings support general task execution beyond the original six and
+useful generic tool improvements, while leaving evaluation overfitting risk
+visible. Repeatedly repairing known tasks is development, not an estimate of
+unseen success. One self-authored, assisted new task is also insufficient for
+a broad generalization or memory-learning claim. The most useful remaining
+checks are independent new domains with frozen inputs/criteria and fixed
+intervention rules; preserving original requirements through delegation;
+checked-version handoff and prompt completion; actual human operation and
+timely partial export; and mapping the real final package when released.
+The updated SOP documents explicit resend and fresh-session compatibility:
+new tools/streaming change bindings, so old sessions retain their original
+source/configuration rather than silently acquiring capabilities.
+[Sanitized integration and new-task evidence](../evaluation/evidence/classroom-integration-20261124.json)

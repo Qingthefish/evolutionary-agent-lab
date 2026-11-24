@@ -1,0 +1,133 @@
+{
+  "schema": "classroom-integration-and-new-task-v1",
+  "classification": "General engineering integration plus one author-created new-task assisted development smoke; not instructor held-out or unattended",
+  "teammate_proposals": [
+    {
+      "pr": "https://github.com/Qingthefish/evolutionary-agent-lab/pull/90",
+      "author": "HelloWorld2333666",
+      "head": "d90f365bbdf016d65583f32ba457d3fa2d51af6f",
+      "scope": "Opt-in streaming transport and reasoning-size/token measurement"
+    },
+    {
+      "pr": "https://github.com/Qingthefish/evolutionary-agent-lab/pull/92",
+      "author": "HelloWorld2333666",
+      "head": "ff6bda16349a6008b7406de937c479ff9197066c",
+      "scope": "Exact-passage edits, explicit operator resend controls, streaming on both classroom paths"
+    }
+  ],
+  "integration_runtime_commit": "38b1f81958d44989d607df70d43d5d71a8401110",
+  "runtime_and_launcher_sha256": "d90008db9a7faccdbd75e826a61e6d63f0f047020a77be00f586f2592df7641b",
+  "independent_review_corrections": [
+    "Malformed tool arrays/functions become sanitized invalid_stream instead of raw Python errors.",
+    "Response/model/call identities stay consistent; a missing DONE or missing call fragments cannot silently become a complete reply.",
+    "No completion content appended after terminal finish; raw line reads and actual UTF-8/serialized bytes are bounded.",
+    "Overlapping old-text occurrences are ambiguous and cannot update the file."
+  ],
+  "engineering_checks": {
+    "focused_passed": 42,
+    "full_discovered": 952,
+    "full_passed": 952,
+    "skipped": 0,
+    "actual_pinned_containers_and_Textual_configured": true,
+    "model_requests": 0,
+    "independent_negative_test_methods": 9,
+    "before_failures_retained": true,
+    "first_focused_invocation_import_path_error_retained": true
+  },
+  "intake_audit": {
+    "classification": "Read-only source/intake audit, not a capability score",
+    "new_prompt_read_verbatim_under_same_zip_protocol": true,
+    "changed_role_text_read_verbatim": true,
+    "different_archive_layout_explicitly_unsupported": true,
+    "original_teacher_archive_unchanged": true,
+    "generic_fresh_memory_enabled": false,
+    "generic_intake_calls_dedicated_mid_test_adapter": false,
+    "separate_mid_test_adapter_fixed_parts": [
+      "README protocol fingerprint",
+      "three directory/role-ID groups",
+      "two ordered tasks",
+      "original securities second-task HTML metadata"
+    ],
+    "core_new_goal_source": "scripts.classroom.import_text -> ControlCenter.create_task -> build_live_scheduler -> default live_roles -> TaskRunner",
+    "original_six_answers_in_generic_runtime": false,
+    "last_field_scope": "Source/read-path audit of the reviewed runtime and its ordinary intake, not a guarantee that a language model never memorized a problem.",
+    "new_model_requests": 0
+  },
+  "new_task": {
+    "author": "Codex for an owner-authorized development smoke; not an instructor question",
+    "domain": "Laboratory CSV temperature QC, distinct from the three original mid-test scenarios",
+    "entry_path": "Actual scripts.classroom.import_text with default generic roles, followed by the same backend scheduler/export services used by the UI",
+    "initial_supplied_files": 2,
+    "web_enabled": false,
+    "memory_enabled": false,
+    "old_six_answers_outputs_or_memory_supplied": false,
+    "prompt_and_fixture_sha256": {
+      "goal.txt": "29024596f54628bfb61e055a76c2a1cbcacbfb8c0f29cb0a7d99f07954084a8b",
+      "readings.csv": "b6673225c0b357007d6d19e5507910281c9743a3cfd1bbb9c15a97a59eb0d7c9",
+      "fixtures.json": "466c3316326424506814e60d8a4beeda21b2c461649fa10b5d949bb9b5c66657",
+      "oracle.py": "682cab59d7897c343bcc1eac3991cef36aceb5a1607fcf4c22ed90a8fccaa56e"
+    },
+    "planned_maximum_requests": 64,
+    "planned_controller_work_seconds": 2400,
+    "actual_requests": 43,
+    "known_reported_tokens": 766126,
+    "unknown_usage_attempts": 0,
+    "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+    "returned_models": [
+      "t2_hkgai-v3_fp8_1m_e10"
+    ],
+    "model_suffix_equivalence_confirmed": false,
+    "first_proposal": {
+      "requests_at_check": 22,
+      "independent_passed": 9,
+      "independent_total": 12,
+      "failure": "Original rejected-row whitespace was discarded after a delegated requirement paraphrase contradicted the original goal."
+    },
+    "repaired_child": {
+      "requests_at_check": 38,
+      "independent_passed": 12,
+      "independent_total": 12
+    },
+    "root_delivery": {
+      "requests": 43,
+      "independent_passed": 12,
+      "independent_total": 12,
+      "qc_sha256": "6e021286bb69cbec2957b260aada5b8701b7eb5c8a92195e70fef4b34cc0f22a",
+      "readme_sha256": "23a283ab9958fa67211065f3d58208e29d7ad9a00ee0c873ca54a829b58faa73"
+    },
+    "root_wall_seconds_including_review_idle": 2653.2229330539703,
+    "sum_turn_seconds_including_provider_tools": 211.29450941085815,
+    "finish_reasons": {
+      "length": 2,
+      "tool_calls": 41
+    },
+    "replace_text_calls": 8,
+    "append_text_calls": 6,
+    "provider_errors": 0,
+    "technical_reviews": {
+      "rejected_child_proposals": 1,
+      "accepted_child_proposals": 1,
+      "accepted_roots": 1,
+      "fabricated_human_reviews": false
+    },
+    "source_executed_on_host": false,
+    "candidate_executed_only_in_pinned_no_network_sandbox": true,
+    "seal_files": 101,
+    "sealed_record_sha256": "1dd6ee2d7f8db610e871ef18532496955c5a81b39a0dfd13aa23b2adae59d472"
+  },
+  "preservation": {
+    "original_six_sealed_files_unchanged": 557,
+    "original_six_outcomes_changed": false,
+    "new_task_code_shipped_as_runtime_answer": false
+  },
+  "remaining_limits": [
+    "One self-authored new task is not a broad generalization estimate or teacher-held-out score.",
+    "The first proposal failed raw-value fidelity after a delegated paraphrase drifted from the original task. Final 12/12 followed explicit technical feedback and repair.",
+    "43 call durations sum to 211.29 seconds including tools, but actual task wall time is 2653.22 seconds including review/idle; neither predicts classroom runtime.",
+    "The dedicated ZIP adapter remains bound to the original mid-test directory/role/README protocol, including original HTML exception metadata. An unknown final package must be mapped independently.",
+    "Generic TXT intake uses the default team; it must not silently replace roles explicitly assigned by the teacher.",
+    "New quality edit tools and streaming change fresh-session bindings. Older sessions require their recorded source/configuration; do not silently resume them under changed tools.",
+    "Fault resend requires a reason and one explicit operator decision. It never auto-replays uncertain tool effects.",
+    "Full arbitrary-format intake, autonomous semantic correctness, and improved memory learning are not established."
+  ]
+}

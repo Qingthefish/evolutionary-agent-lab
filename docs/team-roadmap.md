@@ -1157,8 +1157,6 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   [Results and limits](final-report.md#15-fresh-known-six-assisted-development)
   · [Sanitized evidence](../evaluation/evidence/known-six-assisted-20261124.json)
 
-## Starting a Codex session
-
 - **2026-11-24 teammate integration review:** Owner-requested Codex-assisted
   S01/S02 maintenance on `review/S01-classroom-integration-20261124`, from
   `9395ceb`. Reviewed HelloWorld2333666's unmerged #90/#92 and preserved their
@@ -1171,9 +1169,28 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   engineering checks passed, zero skips**, including configured actual
   containers and Textual; zero model calls. The earlier focused command lacked
   the documented tests import path; its error and all genuine before/after
-  failures remain private. New-task live validation and final integration
-  acceptance remain pending; teammate-reported rehearsal speed is not attributed
+  failures remain private. Teammate-reported rehearsal speed is not attributed
   to the code change alone.
+- **New-task validation / scope:** On frozen runtime `38b1f81`, the actual
+  ordinary TXT/data classroom intake completed an author-created laboratory
+  CSV-QC goal in **43 requests / 766,126 reported tokens**, with no provider
+  failure or unknown usage, two retained length cutoffs and one explicit
+  technical rejection/repair. First proposal **9/12**, repaired child **12/12**,
+  received coordinator delivery **12/12** against the same predeclared fixtures.
+  No old-six answers/files/memory were supplied; no web or new provider was used.
+  Root wall time **2,653.22 s** includes review/idle; summed turn duration
+  **211.29 s** includes tools and is not an end-to-end performance claim. Sealed
+  101 new-trial files and reverified all 557 previous six-task files unchanged.
+  Generic intake contains no original-six answer lookup; the dedicated original
+  ZIP adapter still binds its issued directory/role/README protocol. Same-layout
+  changed prompt/role bodies load verbatim; an unknown layout remains refused.
+  Scoped integration review is accepted; official/unseen results, arbitrary
+  package support and unattended generalization remain open. SOP now explains
+  fresh-session compatibility and both explicit resend controls.
+  [Audit and limits](final-report.md#16-classroom-integration-and-new-task-audit)
+  · [Sanitized evidence](../evaluation/evidence/classroom-integration-20261124.json)
+
+## Starting a Codex session
 
 ```text
 Read AGENTS.md, README.md, docs/requirements.md and card <ID> in docs/team-roadmap.md.
