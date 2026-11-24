@@ -1,0 +1,52 @@
+Five minute presentation script
+Draft prepared November 24 2026
+Read the English paragraphs only. Slide titles and this notice are not spoken.
+Slide 4 is a completion template, not a current classroom result. Replace its four
+fields only after receiving and checking the actual task. If unfinished or interrupted,
+use the matching complete alternative in presentation-speaking-notes.txt.
+
+Slide 1  How the team works  0:00 to 1:00
+
+We built a multi-agent platform that runs on our own computer and uses HKGAI for model inference. Let me use the meeting-room task to explain how it works.
+
+The team lead receives the goal and can delegate implementation and testing to teammates. Each task has its own workspace. To share a file, an agent offers a specific version, which the receiving task must accept.
+
+When the next task asks for a dashboard, we keep the same group and explicitly carry over the checked files. This lets the team extend its earlier work while keeping the source of each file visible.
+
+Slide 2  Execution and recovery  1:00 to 2:00
+
+The model chooses actions, while the application checks file access and authorization before executing them. Generated Python runs in an isolated container. Humans can answer questions and decide critical actions.
+
+Our iterations focused on concrete failures. Long replies were sometimes cut off, and a small request allowance could stop useful work. We added smaller file edits and saved checkpoints, so a task can continue after inspection. Network failures also remain visible and require an explicit recovery decision.
+
+For completion, we inspect the actual deliverable and its test evidence. A successful command alone does not tell us whether the user's task is solved.
+
+Slide 3  Mid-test results  2:00 to 3:00
+
+We tested the six published mid-test tasks across software, newsroom, and investment scenarios.
+
+Our original development round finished with four accepted tasks and two failures. In a later fresh development run, all six reached technical acceptance, using 633 HKGAI requests. This included human decisions, independent checks, and repair feedback; it is not an unattended success rate.
+
+For example, the room-usage dashboard needed corrections to its calculations before acceptance. We kept the earlier failures and tested the repaired output.
+
+The platform also passed 953 engineering checks. Those check the software mechanisms. They are separate from the six task outcomes and do not establish accuracy on unseen questions.
+
+Slide 4  In-class results  3:00 to 4:00
+
+Now I'll show the task we received in class: [TASK].
+
+The team produced [OUTPUT]. Here is [CHECK], which we used to check the main requirement.
+
+The application records this task as completed after review. It took [TIME], including operator waiting and review. Human decisions and any technical assistance are recorded with the run.
+
+We exported the final files together with the conversation and execution history. The file on screen matches the version we reviewed.
+
+This is the actual classroom result. It is reported separately from our earlier development tests.
+
+Slide 5  What we learned  4:00 to 5:00
+
+What worked best was keeping the work inspectable. We could see which task created a file, which version was handed over, and what had actually been tested.
+
+The main lesson is that more model calls do not automatically produce a better answer. Specific feedback and checks mattered. We also have private experience records, but our experiments do not yet demonstrate a general learning benefit.
+
+Before the final submission on December 19, we need broader unseen-task evaluation and clearer comparisons of quality, time, and human effort. For this presentation, we have kept the tested runtime unchanged and prepared a repeatable import, review, and export workflow. Thank you.

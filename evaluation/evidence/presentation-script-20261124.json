@@ -1,0 +1,87 @@
+{
+  "schema": "five-minute-speaking-draft-v1",
+  "prepared_date": "2026-11-24",
+  "main_words": 503,
+  "per_slide_words": [
+    100,
+    102,
+    106,
+    89,
+    106
+  ],
+  "optional_cut_words": 49,
+  "shortened_words": 454,
+  "timing_estimate_only": true,
+  "target_spoken_words_per_minute": 115,
+  "turning_pages_and_result_view_seconds": [
+    15,
+    20
+  ],
+  "classroom_slide_is_unfilled": true,
+  "completed_template_fields": [
+    "TASK",
+    "OUTPUT",
+    "CHECK",
+    "TIME"
+  ],
+  "full_alternatives": [
+    "completed after review",
+    "partial result",
+    "interrupted run"
+  ],
+  "lecture_structure_minutes": {
+    "method": 2,
+    "mid_test": 1,
+    "in_class": 1,
+    "reflection": 1
+  },
+  "author_style_reference": "Owner-provided reference used only for short sentences, examples and pacing; no other-course content or results reused.",
+  "runtime_source": "f9a438a3eeea5f58c86dacad19b390a2c6be8146",
+  "runtime_and_launcher_sha256": "e4b03254c958e3e887a6ef5c5fcceaa710923001c5ab351ede9499daa2350258",
+  "runtime_changed": false,
+  "new_model_calls": 0,
+  "known_six_claim": {
+    "technical_acceptances": 6,
+    "total_tasks": 6,
+    "actual_requests": 633,
+    "assisted": true,
+    "held_out": false,
+    "unattended": false,
+    "teacher_graded": false,
+    "source": "known-six-assisted-20261124.json"
+  },
+  "engineering_checks_claim": {
+    "passed": 953,
+    "scope": "Engineering, separate from model-task correctness",
+    "source": "classroom-rehearsal-20261124.json"
+  },
+  "owner_operated_practice": {
+    "tasks": 2,
+    "accepted": 2,
+    "actual_requests": 64,
+    "known_reported_tokens": 1207714,
+    "human_review_events": 4,
+    "assistant_independent_checks": [
+      {
+        "passed": 8,
+        "total": 8
+      },
+      {
+        "passed": 12,
+        "total": 12
+      }
+    ],
+    "exported_artifacts_verified": 26,
+    "export_manifest_entries": 38,
+    "files_including_manifest": 39,
+    "same_checked_code_exported": true,
+    "teacher_final": false,
+    "earlier_27_request_practice_is_separate": true
+  },
+  "remaining_scope": [
+    "Actual classroom input, outcomes, timing and intervention rules",
+    "Timed five-minute speech and physical Zoom sharing",
+    "Unseen-task evaluation and general memory-learning benefit",
+    "Final report, architecture and genuine contribution evidence by the actual submission requirements"
+  ]
+}
