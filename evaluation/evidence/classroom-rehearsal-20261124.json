@@ -1,0 +1,122 @@
+{
+  "schema": "classroom-rehearsal-v1",
+  "classification": "One author-created practice ZIP / software group / two sequential tasks; assistant technical reviews; not teacher final or an unattended score",
+  "runtime_commit": "d3878dd875c86b92fe4571b86a225b4ab9c92281",
+  "runtime_sha256": "d90008db9a7faccdbd75e826a61e6d63f0f047020a77be00f586f2592df7641b",
+  "original_zip_sha256": "e104fedbb6db46399936c69251ca2843dfa1e5845441f0a17af6e1af88cf25f2",
+  "practice_zip_sha256": "c68419664084f07951dd938def0e51bedc67759780a1fb87a9bc69b625081c36",
+  "unchanged_original_roles": true,
+  "unchanged_protocol_readme": true,
+  "changed_members": [
+    "scenario_1_software_engineering 2/02_task_1.md",
+    "scenario_1_software_engineering 2/03_task_2.md"
+  ],
+  "other_scenarios_ran": false,
+  "same_group": true,
+  "carried_files": 5,
+  "state": [
+    "succeeded",
+    "succeeded"
+  ],
+  "calls": 27,
+  "calls_per_root": [
+    20,
+    7
+  ],
+  "known_reported_tokens": 328752,
+  "unknown_usage": 0,
+  "requested_model": "t2_hkgai-v3_fp8_1m_e7",
+  "observed_models": [
+    "t2_hkgai-v3_fp8_1m_e10"
+  ],
+  "model_suffix_equivalence_confirmed": false,
+  "sum_turn_seconds": 117.97752261161804,
+  "root_wall_seconds_including_operator_review_idle": [
+    468.2845959663391,
+    274.4726400375366
+  ],
+  "first_assignment_to_final_export_seconds": 779.3671610355377,
+  "plan_start_to_final_export_seconds": 910.8663151264191,
+  "technical_acceptances": 3,
+  "independent_root_checks": [
+    {
+      "passed": 8,
+      "total": 8
+    },
+    {
+      "passed": 12,
+      "total": 12
+    }
+  ],
+  "actual_shipped_tests": [
+    21,
+    31
+  ],
+  "qa_generated_adversarial_passes": 55,
+  "retained_failures": [
+    "First 8192-token reply ended length; discarded arguments and counted usage retained; quality recovery continued.",
+    "Lead first test invocation passed Python -m flags to a script and exited 2, then corrected itself.",
+    "External assistant acceptance left an already displayed menu snapshot stale; n refused without changes; reopen via 3 refreshed the same session.",
+    "Operator helper status query initially used an incorrect task-column name; corrected after inspecting schema."
+  ],
+  "browser": {
+    "app": "Safari",
+    "file": "prior known-six semiconductor_outlook.html",
+    "sha256": "77c3c57e33c721248ff7f9ece8aa624a61da52a26861d1a29a0595c577241126",
+    "observed_pages": [
+      1,
+      2,
+      3
+    ],
+    "navigation_observed": [
+      "Right key 1->2",
+      "Next button 2->3",
+      "Previous button 3->2"
+    ],
+    "all_16_pages_checked": false
+  },
+  "native_terminal_control": "Explicitly denied by computer-use tool; no alternative UI automation attempted",
+  "command_menu": "Actual scripts.classroom.menu with isolated practice current-pointer; not native double-click testing",
+  "zero_call_export_files": 29,
+  "plain_text_only_zip_rejected": true,
+  "real_final_package_tested": false,
+  "new_download_from_canvas_performed": false,
+  "no_teacher_email_upload_or_submission_sent": true,
+  "old_six_hashed_files_unchanged": 557,
+  "scope_limits": [
+    "Single simple practice pair, not the teacher final or the six-task score.",
+    "All review/idle wall time retained; no inference of classroom completion speed.",
+    "No real clarification or critical permission occurred in this pair; those buttons were not live-covered here.",
+    "Native Terminal UI, physical Zoom screen-sharing and five-minute human speech remain unverified."
+  ],
+  "human_review_recorded_events": 0,
+  "sealed_files": 303,
+  "sealed_record_sha256": "d7ae9c8bf7d4cb00b333a1accba0425c5677c6931212c3eeba33a34ea9386012",
+  "post_rehearsal_fix": {
+    "scope": "Read-only preflight now lists existing review boundaries; no acceptance, execution, model or tool configuration change.",
+    "source_sha256": "6fb490796a37d9e2fadc787045525ca902619cb07a71eb01f43b0d62cf5291b6",
+    "actual_pending_snapshot_before_after": {
+      "before_needs_field_missing": true,
+      "menu_before_default_display": [],
+      "after_needs": [
+        {
+          "task": "8aaad89c04a74c63a875fcfdc1c5a11b",
+          "kind": "awaiting_verification"
+        }
+      ],
+      "new_model_calls": 0,
+      "harness": "Actual CLI on copied pending DBs; FileTools points to unchanged original bound file root; no permission boundary removed, no file tools dispatched.",
+      "initial_refusal_retained": "Copying the file root was refused by the existing binding; kept original root for read-only inspection.",
+      "initial_assertion_corrected": "The original preflight omitted needs entirely, so menu get(needs,[]) displayed empty; corrected the harness assertion to missing, not an explicit empty field."
+    },
+    "model_calls": 0
+  },
+  "engineering_checks": {
+    "focused_passed": 67,
+    "full_passed": 953,
+    "skipped": 0,
+    "actual_containers_and_Textual": true,
+    "model_calls": 0,
+    "initial_unprivileged_socket_errors": 4
+  }
+}

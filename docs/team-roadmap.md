@@ -1190,6 +1190,39 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   [Audit and limits](final-report.md#16-classroom-integration-and-new-task-audit)
   · [Sanitized evidence](../evaluation/evidence/classroom-integration-20261124.json)
 
+- **2026-11-24 classroom rehearsal:** Qingthefish, owner-requested Codex-assisted
+  S01/S02 maintenance on fix/S01-classroom-boundaries-20261124, from d3878dd.
+  Re-read the instructor presentation notification and exercised the actual ZIP
+  command menu with an explicitly labelled practice derivative: original
+  software roles/protocol, two new ordered tasks, same group and five checked
+  carried files. Both roots received attributed assistant technical acceptance,
+  independent **8/8 and 12/12** checks, **27 HKGAI calls / 328,752 reported tokens**,
+  no unknown usage. Final export retains succeeded/succeeded and 29 files.
+  First assignment to export **779.37 s** includes review/idle; plan start to
+  export **910.87 s**, summed turns **117.98 s**. No classroom speed inference.
+  One length cutoff, a model-corrected test invocation, an external-review stale
+  menu refusal and operator-helper errors are retained. Sealed 303 files and
+  reverified the older six-task seal's 557 files unchanged.
+- **Correction / checks:** The role check menu used preflight, which omitted
+  review needs and displayed an empty list. Preflight now reports existing
+  review boundaries without accepting or executing anything. Actual pending
+  snapshot before/after checks used zero model calls and preserved the original
+  file-root binding. **67 focused / 953 full engineering checks passed**, actual
+  configured containers and Textual, zero skips. An initial local-socket
+  permission refusal and a rejected file-root relocation are retained as harness
+  limitations/corrections. No new provider, tool permission or acceptance rule.
+- **Presentation evidence / remaining scope:** Safari displayed the prior
+  securities HTML's pages 1–3 and navigated Right/Next/Previous. Native Terminal
+  control was explicitly denied; physical Zoom sharing, human speech/manual
+  operation, the whole HTML deck and final input contract remain unverified.
+  Plain question.txt-only ZIP was actually refused at zero calls; the SOP now
+  distinguishes packaging from role protocol, shows both routes, actual root
+  file selection, partial export and a prepared classroom-results PPT page.
+  No teacher email/upload/submission occurred. This practice pair is not the
+  final test, a new six-task score or unattended success.
+  [Rehearsal and limits](final-report.md#17-classroom-menu-and-safari-rehearsal)
+  · [Sanitized evidence](../evaluation/evidence/classroom-rehearsal-20261124.json)
+
 ## Starting a Codex session
 
 ```text

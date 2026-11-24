@@ -263,6 +263,7 @@ class OfflinePreflight(unittest.TestCase):
                 options = self.docker_options() if policy.python else []
                 report = self.run_cli(official_live, [*common, "preflight", *options])
                 self.assertEqual(report["model_calls"], 0)
+                self.assertEqual(report["needs"], [])
                 self.assertEqual(report["roles"], ROLES[scenario])
                 self.assertEqual((report["tool_policy"], report["tools"]), (policy.identifier, list(policy.tools)))
                 self.assertEqual((report["mode"], report["task_state"], report["live_model_attempts"]),
@@ -301,6 +302,26 @@ class OfflinePreflight(unittest.TestCase):
                 self.assertEqual(blocked["needs"][0]["requests"][0]["prompt"], "Synthetic fixture question?")
                 again = self.run_cli(official_live, [*common, "preflight", *options])
                 self.assertEqual((again["budget"]["attempts"], again["model_calls"]), (1, 0))
+                self.assertEqual(again["needs"], blocked["needs"])
+
+    def test_preflight_keeps_the_pending_review_visible_without_another_model_call(self):
+        common = self.prepare("newsroom")
+        answer = json.dumps({"id": "fixture-review", "model": "synthetic-review",
+            "usage": {"prompt_tokens": 9, "completion_tokens": 3, "total_tokens": 12},
+            "choices": [{"finish_reason": "tool_calls", "message": {"role": "assistant", "content": None,
+                "tool_calls": [
+                    {"id": "write", "type": "function", "function": {"name": "create_text",
+                     "arguments": json.dumps({"path": "report.md", "content": "# Synthetic fixture\n"})}},
+                    {"id": "submit", "type": "function", "function": {"name": "submit_for_verification",
+                     "arguments": json.dumps({"summary": "Synthetic review boundary"})}}
+                ]}}]}).encode()
+        with patch.object(HKGAIHTTP, "__call__", return_value=answer) as provider:
+            blocked = self.run_cli(official_live, [*common, "advance", "--turns", "2"])
+        self.assertEqual(provider.call_count, 1)
+        self.assertEqual(blocked["needs"][0]["kind"], "awaiting_verification")
+        again = self.run_cli(official_live, [*common, "preflight"])
+        self.assertEqual(again["needs"], blocked["needs"])
+        self.assertEqual((again["model_calls"], again["budget"]["attempts"]), (0, 1))
 
     def test_container_options_are_checked_per_policy(self):
         news, fund = self.prepare("newsroom"), self.prepare("securities-fund")

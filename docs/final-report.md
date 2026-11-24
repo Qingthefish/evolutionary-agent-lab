@@ -1053,3 +1053,84 @@ The updated SOP documents explicit resend and fresh-session compatibility:
 new tools/streaming change bindings, so old sessions retain their original
 source/configuration rather than silently acquiring capabilities.
 [Sanitized integration and new-task evidence](../evaluation/evidence/classroom-integration-20261124.json)
+
+## 17. Classroom menu and Safari rehearsal
+
+The owner requested an actual rehearsal of receiving a ZIP, running tasks,
+handling review, exporting results and presenting them. Re-read the connected
+instructor notification: five minutes plus 30 seconds transition, task link
+three slots in advance, results shown during the talk, similar mid-test data,
+no task web search, and December 19 final submission. Roughly 16.5 minutes is
+the preparation-window estimate, not a separately stated timeout-failure rule.
+The notice does not require an immediate email/ZIP upload or embedding every
+result in a slide. Later task-specific instructions still take precedence.
+
+The rehearsal starts from the previously downloaded original mid-test archive;
+no final package exists yet and no new Canvas download or teacher submission
+was performed. An explicitly labelled private practice derivative preserves
+the original README protocol and all roles, replacing only the software pair
+with a small workshop seat-allocation library and its follow-up summary.
+The other two scenarios were prepared but not run. A separate ZIP containing
+only question.txt was actually refused with zero calls: merely compressing a
+text file does not satisfy the role-package contract.
+
+On runtime d3878dd, the actual scripts.classroom.menu path completed environment
+check, option 2 import, software-group selection, r advance, v file inspection,
+same-session reopen, n continuation and e export. The practice current pointer
+was isolated so the owner's existing launcher session was not replaced.
+Both ordered roots share the same group and five checked Task 1 files were
+carried into Task 2. The first root delegated independent QA; the second lead
+extended its received code. The original four roles were available; use of
+every role is not claimed. Frozen independent checks passed **8/8** for the
+first root and **12/12** for the final second root, with actual candidate code
+executed only in the existing digest-pinned, no-network container. The shipped
+suites actually passed 21 and 31 tests; QA's generated adversarial script
+actually printed 55 passes. These are different check sets, not added together
+as an instructor score.
+
+The pair used **27 actual HKGAI requests / 328,752 reported tokens**, with no
+unknown usage; per-root shares are **20 and 7**. One 8,192-token length cutoff
+retains discarded arguments and counted usage. An initial test invocation
+incorrectly supplied Python -m flags to the test script, exited 2, and was
+corrected by the model. Three acceptances are attributed to assistant technical
+checks; there are no human_review_recorded events. No clarification or critical
+permission was requested in this pair, so those live interactions were not
+covered. An externally applied technical acceptance left an already displayed
+menu snapshot stale; n refused without modifying the tasks. Reopening the same
+session through option 3 refreshed it and continuation then succeeded.
+
+First assignment to final export took **779.37 seconds**, including operator
+review/idle; plan start to export was **910.87 seconds**. Individual root wall
+times were **468.28 and 274.47 seconds**. Summed turn duration was **117.98
+seconds**; this excludes review/idle and is not end-to-end speed. Neither the
+simple task pair nor its timing predicts the final classroom task. Export
+preserved both succeeded states and 29 evidence/artifact files; all seven
+current Task 2 files match the independently checked snapshots. Sealed and
+hash-verified 303 files; the old known-six seal's 557 files remain unchanged.
+
+The rehearsal exposed a genuine display issue: preflight omitted needs even
+when advance had reported awaiting_verification, so the check menu displayed
+an empty list. A one-field correction reports the existing review boundaries;
+it performs no model/tool action and changes no acceptance decision. The actual
+pending-proposal database was copied for before/after verification. Its original
+file-root binding remained enforced; inspection reused that unchanged root
+instead of weakening the binding. Before the fix the field was absent; after
+the fix the correct pending root was listed, with zero new requests. The first
+attempt to relocate the bound file root was refused and retained. A regression
+also verifies that real synthetic clarification/review states stay visible
+without another provider call. All **67 focused and 953 full engineering
+checks passed**, with configured actual containers and Textual, zero skips and
+zero model calls. An earlier unprivileged focused invocation hit four temporary
+Unix-socket permission errors; the authorized rerun passed. These environment
+errors are not counted as model or product failures.
+
+Safari actually opened the prior final securities HTML and displayed pages
+1–3. Right-arrow navigation, the Next button and the Previous button were
+observed; the whole 16-page deck and the separate dashboard controls were not
+visually verified. Native Terminal UI control was explicitly denied by the
+computer-use tool. This is therefore a real command-menu/backend rehearsal
+plus a limited Safari check, not a completed native desktop/Zoom/human speech
+rehearsal. No alternative Terminal UI automation, email, upload or classroom
+submission was performed. The updated SOP gives both input routes, root-file
+selection, truthful partial export and a prepared in-class-results slide plan.
+[Sanitized rehearsal evidence](../evaluation/evidence/classroom-rehearsal-20261124.json)
