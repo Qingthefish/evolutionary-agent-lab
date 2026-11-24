@@ -54,6 +54,23 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Classroom rehearsal (November 24).** The actual classroom ZIP command menu
+imported an explicitly labelled practice package with the original software
+roles and two new ordered tasks. Both roots completed assistant technical
+acceptance in **27 HKGAI requests / 328,752 reported tokens**. Independent root
+checks passed **8/8** and **12/12**; the same group carried five checked files.
+Assignment to final export took **779.37 seconds**, including review/idle.
+This simple practice pair is not the final test or a classroom speed estimate.
+A pending-review-list display defect found during rehearsal is corrected
+without changing acceptance or making model calls; **67 focused and all 953
+full engineering checks passed**, including actual containers and Textual,
+with zero skips. Safari opened the earlier
+securities HTML and navigated pages 1–3; the entire deck was not visually checked.
+Native Terminal control was explicitly unavailable, so this was a command-menu
+rehearsal rather than a completed human desktop/Zoom presentation.
+[Rehearsal evidence and limits](docs/final-report.md#17-classroom-menu-and-safari-rehearsal)
+· [Step-by-step Wednesday SOP](docs/presentation-sop.md)
+
 **Classroom reliability integration (November 24).** Teammate proposals
 [#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) and
 [#92](https://github.com/Qingthefish/evolutionary-agent-lab/pull/92) add opt-in
@@ -88,8 +105,9 @@ quality allowances, concrete repairs and explicit review assistance all changed
 the conditions, so this is not an isolated measurement of raising limits,
 unattended 6/6, a teacher grade or held-out accuracy. The final dashboard passed
 51 generated regressions and 28 independent arithmetic/export/static-wiring
-checks; its JavaScript syntax and critical formulas were inspected. Browser
-visuals and actual interactions remain untested. The original four-assisted,
+checks; its JavaScript syntax and critical formulas were inspected. The dashboard's
+browser visuals and controls remain untested; the separate securities-deck
+Safari check above covers pages 1–3 only. The original four-assisted,
 two-failed 375-call trial below stays unchanged.
 [Complete results, timing and retained mistakes](docs/final-report.md#15-fresh-known-six-assisted-development)
 · [Sanitized evidence](evaluation/evidence/known-six-assisted-20261124.json)
