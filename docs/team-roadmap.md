@@ -1159,6 +1159,22 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
 
 ## Starting a Codex session
 
+- **2026-11-24 teammate integration review:** Owner-requested Codex-assisted
+  S01/S02 maintenance on `review/S01-classroom-integration-20261124`, from
+  `9395ceb`. Reviewed HelloWorld2333666's unmerged #90/#92 and preserved their
+  commits in an isolated integration branch. Streaming, exact-passage editing
+  and explicit operator resend address general classroom-path failures.
+  Independent negative controls reproduced malformed stream exceptions,
+  conflicting/incomplete fragments, byte/read-bound gaps and overlapping edit
+  ambiguity. Corrected these without changing provider, acceptance, private
+  workspaces or older sealed runs. All 42 focused checks and **952 full
+  engineering checks passed, zero skips**, including configured actual
+  containers and Textual; zero model calls. The earlier focused command lacked
+  the documented tests import path; its error and all genuine before/after
+  failures remain private. New-task live validation and final integration
+  acceptance remain pending; teammate-reported rehearsal speed is not attributed
+  to the code change alone.
+
 ```text
 Read AGENTS.md, README.md, docs/requirements.md and card <ID> in docs/team-roadmap.md.
 Confirm the WeChat claim is recorded on main with my name and agreed scope.

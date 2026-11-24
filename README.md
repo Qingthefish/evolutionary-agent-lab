@@ -54,6 +54,18 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Classroom reliability integration (November 24 review).** Teammate proposals
+[#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) and
+[#92](https://github.com/Qingthefish/evolutionary-agent-lab/pull/92) add opt-in
+streamed replies, quality-profile exact-passage editing and explicit operator
+resend controls on both classroom paths. Independent review additionally
+rejects mixed/incomplete/malformed streams, bounds actual encoded bytes and
+single-line reads, and refuses overlapping edit matches. All **952 engineering
+checks passed**, with actual configured containers and Textual, zero skips and
+zero model calls. These are general workflow changes, not answers to the six
+mid-test tasks. The original role-package adapter remains specific to its
+issued ZIP contract; ordinary TXT/MD tasks use the separate generic team.
+
 **Fresh known-six development (November 23–24).** All six original mid-test
 tasks reached **coordinator-assisted technical acceptance**, using **633 actual
 HKGAI requests**, 59,534,942 known reported tokens and four retained attempts
