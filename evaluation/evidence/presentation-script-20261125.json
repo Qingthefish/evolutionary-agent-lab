@@ -1,0 +1,140 @@
+{
+  "schema": "presentation-speaking-refresh-v1",
+  "date": "2026-11-25",
+  "source_commit": "f3fefa64f865ee58882ddd90542fab96590f0c91",
+  "owner": "Qingthefish",
+  "assistance": "Codex-assisted evidence review and writing; no independent human teammate review claimed",
+  "scope": "Five-minute speaking text, manual slide cues and SOP consistency; no presentation file or runtime change",
+  "spoken_words_per_slide": [
+    101,
+    95,
+    104,
+    89,
+    97
+  ],
+  "spoken_words_total": 486,
+  "optional_words_removed": 39,
+  "shortened_words": 447,
+  "word_count_method": "Whitespace split of five spoken sections only; titles/instructions excluded, four placeholder fields included as one word each",
+  "estimated_speech_seconds_at_110_to_115_wpm": [
+    253.6,
+    265.1
+  ],
+  "transition_and_pointing_allowance_seconds": [
+    15,
+    20
+  ],
+  "human_timed_speech_performed": false,
+  "actual_classroom_result_available": false,
+  "classroom_template_fields": [
+    "TASK",
+    "OUTPUT",
+    "CHECK",
+    "TIME"
+  ],
+  "partial_and_interrupted_alternatives_retained": true,
+  "logical_slides": 5,
+  "suggested_physical_slides": [
+    5,
+    7
+  ],
+  "slide_count_is_instructor_rule": false,
+  "source_records": [
+    "known-six-assisted-20261124.json",
+    "known-six-first-proposal-20261125.json",
+    "presentation-script-20261124.json",
+    "overnight-rehearsal-20261124.json"
+  ],
+  "result_conditions": {
+    "assisted_known_six": {
+      "accepted": 6,
+      "total": 6,
+      "requests": 633,
+      "external_repair_feedback": true
+    },
+    "first_proposal_known_six": {
+      "accepted": 4,
+      "total": 6,
+      "requests": 600,
+      "external_repair_feedback": false,
+      "ordinary_delegated_answers": 2,
+      "independent_reviews": 21,
+      "material_child_error_stops_root": true
+    },
+    "engineering_checks": {
+      "passed": 953,
+      "is_model_task_accuracy": false
+    },
+    "new_no_search_practice_pair": {
+      "accepted": 2,
+      "total": 2,
+      "requests": 75,
+      "is_classroom_test": false
+    }
+  },
+  "different_conditions_not_a_controlled_improvement_curve": true,
+  "reference_visual_review": {
+    "slides_inspected": 20,
+    "source_unchanged": true,
+    "style_only": true,
+    "observed_progressive_highlight_groups": [
+      [
+        7,
+        8,
+        9,
+        10
+      ],
+      [
+        13,
+        14,
+        15,
+        16,
+        17
+      ]
+    ],
+    "other_course_figures_or_scores_reused": false,
+    "PowerPoint_application_playback_performed": false
+  },
+  "github_snapshot": {
+    "main_synced_before_this_change": true,
+    "working_tree_clean_before_this_change": true,
+    "historical_open_PRs": [
+      51,
+      81,
+      92
+    ],
+    "PR92_commit_already_in_main": true,
+    "PR81_raw_evidence_independently_available": false,
+    "open_issues": 0,
+    "all_course_gates_closed": false
+  },
+  "contribution_accounts_on_main": {
+    "aminoacid11": [
+      "950c894",
+      "4cfab17"
+    ],
+    "HelloWorld2333666": [
+      "8bcdc44",
+      "ff6bda1"
+    ],
+    "jingran-jupiter": [
+      "b25c9be",
+      "679c145"
+    ],
+    "Qingthefish": [
+      "38b1f81",
+      "ec5b744"
+    ]
+  },
+  "new_model_requests": 0,
+  "runtime_changed": false,
+  "new_engineering_regression_claimed": false,
+  "native_terminal_finder_zoom_or_timed_speech_rehearsed_this_update": false,
+  "remaining": [
+    "Owner manually builds and times PPT",
+    "Exact team slot/classroom confirmation",
+    "Network/Docker and actual Zoom window-sharing check",
+    "New classroom package mapping and actual outcomes",
+    "Final course acceptance, runtime GitHub push evidence and broader unseen/learning comparisons"
+  ]
+}

@@ -1,5 +1,5 @@
 五分钟展示讲稿使用说明
-准备日期：2026 年 11 月 24 日；现场展示准备：11 月 25 日。
+更新日期：2026 年 11 月 25 日；用于当天晚上的五分钟展示。
 英文正文在 docs/presentation-script.txt。本文是中文提示、PPT 对应内容与替换段，
 不作为逐字朗读正文。讲稿不是产品新增功能，也不是最终报告或进度表。
 
@@ -14,28 +14,27 @@ HKGAI API 进行；正式运行仍需要网络。现场使用已测试版本，�
 五分钟不是按开发日期讲流水账。老师指定的顺序是：
 方法 2 分钟，中期结果 1 分钟，课堂结果 1 分钟，反思 1 分钟。
 迭代故事放在方法和反思里，围绕“实际失败—机制修改—如何检查”讲。
+不是每一轮都单调提升；不同题目、协助和停止规则需要单独报告。
 可选两个例子：长回复截断后分段/局部编辑；计算错误经独立检查反馈后修复。
 
 二 字数和节奏
 
-英文正文按词统计（只计五页段落，不计页标题和本说明）：
-第 1 页 100 词；第 2 页 102 词；第 3 页 106 词；
-第 4 页 89 词；第 5 页 106 词。合计 503 词。
-第 4 页的四个字段各算一个词，填写后会增加实际字数；填写总量尽量不超过 20 词。
+英文正文按空白分词统计（只计五页段落，不计标题和开头说明）：
+第 1 页 101 词；第 2 页 95 词；第 3 页 104 词；
+第 4 页 89 词；第 5 页 97 词。合计 486 词。
+第 4 页四个占位字段各算一个词；填好后总词数会变化，字段总量尽量不超过 20 词。
 
-这不是已经测得的五分钟。按 115 词/分钟估算，当前正文约 4.37 分钟，
-另留约 15–20 秒翻页、指结果和停顿。现场结果填好后必须重新计时。
-借鉴参考稿的短句、具体例子和自然过渡，修正口语语法，不照搬其中的课程内容、
-研究结论、数字或较长的问题背景。无需刻意模仿特别夸张的称呼。
+这不是已经测得的五分钟。486 词按 110–115 词/分钟估算，正文约 4 分 14 秒到
+4 分 25 秒；再留 15–20 秒指图、翻页和切结果。填好现场字段后重新计时。
+你可以用自己的自然语气讲，不必照着 PPT 念完整句。老师规定五分钟，
+所以至少完整计时读两遍，再练一次从 PPT 切到已打开的结果窗口。
 
-如果你按较慢节奏试读后超时，可先删除以下四句，合计约 49 词，
-保留六题结果的协助口径、未知题区分、真实耗时和记忆结论限定：
-1. This lets the team extend its earlier work while keeping the source of each file visible.
-2. Network failures also remain visible and require an explicit recovery decision.
-3. For example, the room-usage dashboard needed corrections to its calculations before acceptance.
-4. We kept the earlier failures and tested the repaired output.
-删后约 454 词（现场字段另算）。若仍超时，继续压缩可选例子，
-不要靠加速念完。今晚至少完整计时读两遍，并练一次切换结果窗口。
+如果试读偏慢，先删下面四句，共 39 词；正文变为约 447 词（现场字段另算）：
+1. The team can extend its work while preserving where each file came from.
+2. Service interruptions remain recorded and require an explicit recovery decision.
+3. The file on screen matches the version we reviewed.
+4. Today's classroom result will add another observation.
+保留两轮六题的协助/判定口径、未知题区分、真实耗时及记忆收益的限制。
 
 三 五页 PPT 与口头过渡
 
@@ -59,14 +58,21 @@ Slide 2  Execution and recovery  1:00–2:00
 “保存检查点、检查后继续”不等于取消所有运行控制，也不等于无限自动重试。
 
 Slide 3  Mid-test results  2:00–3:00
-屏幕用一张简表：
-  Original development round: 4 accepted / 6, 2 failed
-  Fresh assisted development run: 6 technical acceptances / 6, 633 HKGAI requests
-  Engineering regression: 953 checks passed
+屏幕用一张两行简表，把条件与成绩放在同一行：
+  Assisted known-task development | 6/6 accepted | 633 HKGAI requests
+  Fresh first-proposal diagnostic | 4/6 accepted | 600 HKGAI requests
+表下写一句：Different review conditions; not an unseen-task success rate.
+旁边小字标出：No external technical repair; material child error stops root.
+953 项工程检查放到第二页角落，口头一句带过，不把它画成任务准确率。
 六题按 software / newsroom / securities 三组排列，每组两题。
-把 “Assisted development on known tasks” 直接放在表旁，避免读成无人干预正确率。
-953 是工程检查数，不是老师的题数。不同轮次不要拼接成一次最佳成绩。
-代码/数据检查的例子可以讲仪表盘计算修复；不承诺整个浏览器交互都已验证。
+两轮均是已知中期题开发记录。6/6 有修复反馈；4/6 没有外部技术修正，
+但有两次按授权作出的偏好选择和独立技术检查，不是无人介入。
+最新规则在风险子稿首次出现实质错误时就停止整题；它比只检查最终交付更严格，
+并非老师判分标准或产品正常运行时必须采用的停止规则。
+软件/新闻四题通过；证券两题暴露汇率和估值/政策解释问题，未到最终配置/HTML交付。
+两题都没撞限额。不要说“只要再多给几次就肯定全对”。
+原始 375 次、四项协助验收/两失败那轮留在备查材料，不在一分钟里再堆一行。
+不把三轮拼成一次最佳成绩，不承诺整个浏览器交互都已验证。
 
 Slide 4  In-class results  3:00–4:00
 屏幕只放：实际题目一句话 + 一个清晰的实际产物 + 状态/完整耗时/介入说明。
@@ -77,7 +83,7 @@ Slide 4  In-class results  3:00–4:00
 Slide 5  What we learned  4:00–5:00
 屏幕关键词：
   Traceable versions and execution evidence
-  Specific feedback matters
+  Correct execution still needs correct interpretation
   Unseen evaluation and learning evidence remain open
 讲法：先说什么确实有效，再说什么没有证据；最后给出 12 月 19 日前的具体改进方向。
 私人经验记录已有机制，不能因此说系统已证明“越跑越聪明”。
@@ -144,14 +150,61 @@ We have not verified a complete answer to this task. The earlier development res
   953 项工程检查，真实配置的隔离执行和 Textual，零跳过；不是模型任务成绩。
 另行自拟新题：evaluation/evidence/classroom-integration-20261124.json
   CSV 质检首版 9/12，反馈修复后 12/12，43 次 HKGAI；仅一个开发例子。
-今日本人操作练习：本地保存了 64 次 HKGAI 调用、两题通过、4 次实际用户验收，
-  我们额外做了独立 8/8 和 12/12 检查，并核对最终导出版本。它不是明天课堂结果。
+11 月 24 日本人操作练习：本地保存了 64 次 HKGAI 调用、两题通过、4 次实际用户验收，
+  我们额外做了独立 8/8 和 12/12 检查，并核对最终导出版本。它不是今晚课堂结果。
   更早助手主导的 27 次两题练习是另一轮，不能混为同一次计时或得分。
+最新六题诊断：evaluation/evidence/known-six-first-proposal-20261125.json
+  四题通过、两题在风险子稿检查时停止；600 请求，31,122,236 已报告 tokens。
+  19 个候选通过、2 个候选拒绝，共 21 次助手技术检查；2 次代理偏好回答。
+  外部技术修正、服务重发、限额续加均为零。不是老师评分或完全无人协作。
+无搜索练习对：evaluation/evidence/overnight-rehearsal-20261124.json
+  新编两题通过，75 请求；命令菜单导入、退出/重开、同组续题、检查和导出均有记录。
+  作业发布到最终导出 874.79 秒，含操作检查和等待。不是未知课堂题的速度保证。
+  不是本人手动拖文件/双击 Terminal、Zoom 共享或人声排练的全套现场验证。
 经验记录/记忆对照尚未证明通用性能提升。未知题泛化、课堂实际耗时和完整口头展示仍待检验。
-源码运行版本保持本轮讲稿整理前的已测试状态；本次只修改展示文本和证据说明。
+源码运行版本保持本轮讲稿整理前的已测试状态；本次只修改展示文本和证据说明，不改平台运行代码。
 
 老师展示安排：
 https://canvas.ust.hk/courses/73253/announcements/659120
 https://canvas.ust.hk/courses/73253/announcements/659506
 平台最终交付范围：docs/requirements.md
 详细方法与结果：docs/final-report.md
+
+七 手工 PPT 的画面和现场剩余事项
+
+你已经熟悉的“同图逐页加框、分步强调”方式可以保留。五分钟按五个逻辑页面，
+建议五到七张实际幻灯片；若同一页复制两次用于高亮，它们共用这一分钟，
+不是每翻一页重新分配一分钟。不要为每条数据复制一页。
+
+第 1 页：平台名称与小组信息放在角落，直接画 goal → lead → delegated work，
+再用文件交接和同组后续任务说明，省去独立的背景开场页。
+第 2 页：一张执行/检查流程，最多两次高亮；旁边一个小的截断恢复例子和 953 工程检查。
+第 3 页：6/6 assisted 与 4/6 first-proposal 的两行结果表，条件直接可见。
+不同口径不能画成“4→6→4”的改进折线，也不能把 953 与六题画在同一准确率轴上。
+第 4 页：一张真实课堂产物截图或切到已打开的产物，附真实状态和完整耗时；
+没有结果时用上面的未完成/中断版本，不把练习产物当成现场产物。
+第 5 页：可追溯文件和执行证据确实有用；金融解释仍会错；记忆收益未证明，
+下一步增强内部数字/单位/结论复核，12 月 19 日前继续未知题测试。
+
+不需要重新生成复杂插画。你手工用箭头、角色名、两行表格、一个结果截图就能讲清。
+参考稿的图框节奏可以借鉴；该论文的模型、实验分数、学习提升不是本平台证据。
+不用给每个阶段做一张数据图，也不要在五分钟讲 Git 提交流水账。
+四人的姓名/小组信息可在第一页角落列出，真实贡献历史截图放备用页，
+不把团队实现和助手参与写成主讲者一人的独立工作。
+
+一个人主讲符合老师要求；所有组员仍需按通知到教室现场，并按安排使用同一 Zoom。
+组员不必各讲一段，也不用临时各自补一套 PPT。你负责电脑、主讲和操作；
+PPT 按自己的节奏制作，完成后两次计时，检查投屏切换及大字是否可读。
+
+Git 快照（2026-11-25 本次检查时）：main 已与远端同步，工作区干净，
+四个组员对应账户均有实际合入的提交，已有四份真实历史截图。
+当时仍有三条历史打开的 PR：#92 的代码已整合进主分支；#81 的贡献者运行
+原始证据待核；#51 是旧的完成流程提案。这不等于今晚需要重做或合并它们，
+也不能说仓库完全没有待办。今晚使用已测试版本，不临时混入未审新代码。
+真实运行时 GitHub push 的验收、广泛未知题/学习收益及课程最终验收仍有开放条目；
+开发者已经 push 主仓库，不等于 Agent 自己推 GitHub 的能力已通过真实验收。
+
+今晚最具体的待办是：做并计时排练个人 PPT；确认小组时段/教室、学校网络、Docker，
+试一次 Zoom 正确窗口共享；拿到原包后核对新格式，运行并检查实际产物，
+填写第四页真实结果；保留现场记录并按当天实际提交要求操作。
+约 16.5 分钟仍只是准备窗口估算，五分钟才是明确的发言时限。

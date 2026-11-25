@@ -1294,6 +1294,29 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   open. [Diagnostic and evidence](final-report.md#19-known-six-first-proposal-diagnostic)
   · [Sanitized record](../evaluation/evidence/known-six-first-proposal-20261125.json)
 
+- **2026-11-25 S02 final speaking update:** Qingthefish, owner-requested
+  Codex-assisted documentation on docs/S02-final-speaking-20261125. Updated the
+  five-minute English script to 486 spoken words across the required 2/1/1/1
+  minute sections. The mid-test minute distinguishes assisted 6/6 (633 calls)
+  from the fresh first-proposal diagnostic 4/6 (600 calls), including delegated
+  preferences, independent checks and its stricter child-level stop rule.
+  A separate no-search practice is identified as practice. Retained honest
+  completed/partial/interrupted classroom alternatives; no classroom result
+  is invented. Notes include five logical slide cues, limited progressive
+  highlighting, 39 optional words to remove and a 447-word shortening option.
+- **Checks / remaining:** Word/placeholder, source-count, local-link and
+  consistency checks only; no new model run or runtime changes. Read-only
+  visual inspection of the owner's 20-slide reference informed emphasis and
+  pacing only; no other-course scores or figures were reused or files edited.
+  Main was synced and clean; actual main history includes all four contribution
+  accounts. Three historical PRs remain open (#51/#81/#92); #92's source is
+  already integrated and #81 still lacks local raw evidence for independent
+  acceptance. This is not a zero-pending final course acceptance claim. Owner
+  PPT creation/timing, actual Zoom sharing, exact group slot, new classroom
+  package/result and the final/unseen/live-Git/learning gates remain separate.
+  [Current script](presentation-script.txt) · [Slide cues and alternatives](presentation-speaking-notes.txt)
+  · [Sanitized update evidence](../evaluation/evidence/presentation-script-20261125.json)
+
 ## Starting a Codex session
 
 ```text
