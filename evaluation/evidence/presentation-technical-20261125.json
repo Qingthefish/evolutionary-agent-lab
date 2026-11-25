@@ -1,0 +1,189 @@
+{
+  "schema": "presentation-technical-story-v1",
+  "date": "2026-11-25",
+  "source_main_commit": "7678aa063a79880a7ccc0b5d29b599171f167b54",
+  "owner": "Qingthefish",
+  "assistance": "Codex-assisted preparation; no independent teammate review claimed",
+  "spoken_words_per_section": [
+    104,
+    99,
+    98,
+    71,
+    67
+  ],
+  "spoken_words_total": 439,
+  "word_count_method": "Whitespace split of five English sections; headings/instructions excluded and four classroom fields counted as one word each",
+  "target_whole_talk_seconds_including_classroom_and_transitions": [
+    260,
+    270
+  ],
+  "target_is_measured": false,
+  "published_talk_limit_seconds": 300,
+  "classroom_result_filled": false,
+  "partial_and_interrupted_variants_preserved": true,
+  "technical_topics": [
+    "SQLite-backed task tree and eligible-task scheduling",
+    "Task-scoped files and SHA-256-bound offer/accept snapshots",
+    "Same-group follow-up with checked file carry",
+    "Gateway-bound identity, action arguments and approval",
+    "Fresh no-network/no-host-mount Python execution with retained receipts",
+    "Smaller edits, saved checkpoints and explicit interruption recovery"
+  ],
+  "evidence_sources": [
+    "agent_lab/core.py",
+    "agent_lab/scheduler.py",
+    "agent_lab/files.py",
+    "agent_lab/gateway.py",
+    "agent_lab/sandbox.py",
+    "agent_lab/evaluation/official_session.py",
+    "evaluation/evidence/known-six-assisted-20261124.json",
+    "evaluation/evidence/known-six-first-proposal-20261125.json",
+    "evaluation/evidence/classroom-rehearsal-20261124.json"
+  ],
+  "git_evidence": {
+    "basis_main_commit": "7678aa063a79880a7ccc0b5d29b599171f167b54",
+    "count_method": "All non-merge commits reachable from this main snapshot, bucketed by committer timestamp converted to Asia/Hong_Kong. Includes code, tests, documentation, evidence and follow-up fixes. Not engineering hours or independent iteration count.",
+    "total_non_merge_commits": 295,
+    "merge_commits": 111,
+    "phases": [
+      {
+        "label": "Foundation and isolation",
+        "start_inclusive": "0000-00-00",
+        "end_exclusive": "2026-10-22",
+        "non_merge_commits": 55,
+        "first_date": "2026-10-15",
+        "last_date": "2026-10-21",
+        "sample_oldest": {
+          "sha": "517752726b4b8e07e34e753cc3a4bcdd5b1f7138",
+          "committer_time": 1792062317,
+          "date_hkt": "2026-10-15",
+          "subject": "docs: bootstrap course project requirements and contributor onboarding"
+        },
+        "sample_newest": {
+          "sha": "ff0f1bd23ae3faac456dbc4979a77b3b759ceb35",
+          "committer_time": 1792588042,
+          "date_hkt": "2026-10-21",
+          "subject": "Accept B05 PR 20 and retain its full claim-to-review history"
+        }
+      },
+      {
+        "label": "Tools and evaluation",
+        "start_inclusive": "2026-10-22",
+        "end_exclusive": "2026-11-16",
+        "non_merge_commits": 146,
+        "first_date": "2026-10-22",
+        "last_date": "2026-11-15",
+        "sample_oldest": {
+          "sha": "cc8420342881c33c994f6e80cb6f899cfa2a1cb0",
+          "committer_time": 1792617666,
+          "date_hkt": "2026-10-22",
+          "subject": "Add C07 single/multi-agent baseline"
+        },
+        "sample_newest": {
+          "sha": "2dcd96897e5c26c057f4675eab786ba8282af41d",
+          "committer_time": 1794755758,
+          "date_hkt": "2026-11-15",
+          "subject": "feat(evaluation): audit saved development batch consistency"
+        }
+      },
+      {
+        "label": "Live runs and recovery",
+        "start_inclusive": "2026-11-16",
+        "end_exclusive": "2026-11-24",
+        "non_merge_commits": 82,
+        "first_date": "2026-11-16",
+        "last_date": "2026-11-23",
+        "sample_oldest": {
+          "sha": "b25c9befdb8108280a1bbfdaaf069017415c2af4",
+          "committer_time": 1794759341,
+          "date_hkt": "2026-11-16",
+          "subject": "C06: prepare instructor scenarios from local inputs"
+        },
+        "sample_newest": {
+          "sha": "8bcdc44abdc5ea8c6fd14a2a48f948b2ff4add6e",
+          "committer_time": 1795448021,
+          "date_hkt": "2026-11-23",
+          "subject": "S01: Stream HKGAI replies to avoid the gateway's 120-second 504"
+        }
+      },
+      {
+        "label": "Classroom integration and evidence",
+        "start_inclusive": "2026-11-24",
+        "end_exclusive": "2026-11-26",
+        "non_merge_commits": 12,
+        "first_date": "2026-11-24",
+        "last_date": "2026-11-25",
+        "sample_oldest": {
+          "sha": "4d4bc1106b428fbc9cee3ee27988a5e5a2d1dffc",
+          "committer_time": 1795454107,
+          "date_hkt": "2026-11-24",
+          "subject": "docs(S01,S02): clarify classroom workflow and in-person attendance"
+        },
+        "sample_newest": {
+          "sha": "95a4416d06f432d4e1551042f6606f420792dff9",
+          "committer_time": 1795584509,
+          "date_hkt": "2026-11-25",
+          "subject": "S02: Refresh five-minute script with final diagnostic evidence and slide cues"
+        }
+      }
+    ]
+  },
+  "git_stage_boundaries_are_presentation_grouping": true,
+  "git_commit_counts_are_iteration_or_hour_estimates": false,
+  "speech_omits_repetitive_generic_disclaimers": true,
+  "result_conditions_retained_in_labels_and_notes": true,
+  "result_labels": {
+    "assisted_known_six": {
+      "accepted": 6,
+      "total": 6,
+      "calls": 633
+    },
+    "fresh_first_proposal": {
+      "accepted": 4,
+      "total": 6,
+      "calls": 600
+    },
+    "separate_engineering_checks": 953
+  },
+  "figure_pages": [
+    {
+      "path": "docs/presentation-assets/20261125/01-version-handoff.png",
+      "sha256": "af59631a923c2aea5b7af783dd0de73ff820251f3ab007b88bc0963780b5bbaf",
+      "bytes": 69700
+    },
+    {
+      "path": "docs/presentation-assets/20261125/02-execution-evidence.png",
+      "sha256": "d081de798bb877e0a908f8c0ae1df755ab85f309826a8eb30de8003a6dfc8c08",
+      "bytes": 69408
+    },
+    {
+      "path": "docs/presentation-assets/20261125/03-mid-test-results.png",
+      "sha256": "e3d7930dbddfb1af33501cf59f3394b37d67c9c8a76478c83128ed19ca8ce337",
+      "bytes": 68866
+    },
+    {
+      "path": "docs/presentation-assets/20261125/04-git-history.png",
+      "sha256": "2d7b727dec62962b9e80ccfb31b960da4a9e29b040a28a88e7cf045cd06b9dcc",
+      "bytes": 53910
+    }
+  ],
+  "figure_size": [
+    1280,
+    720
+  ],
+  "editable_online_source_created": true,
+  "native_diagrams_table_and_chart": true,
+  "images_or_data_copied_from_other_course": false,
+  "every_figure_rendered_and_visually_reviewed": true,
+  "animation_or_PowerPoint_playback_tested": false,
+  "screenshot_join_window_observation": "Meeting ID/link field is empty; the image does not establish the actual class meeting URL",
+  "classroom_arrangement": "All members attend physically; one presenter uses the specified shared Zoom and own computer",
+  "runtime_changed": false,
+  "new_HKGAI_requests": 0,
+  "remaining": [
+    "Owner makes manual animation, times talk and tests actual window sharing",
+    "Receive and map classroom package; inspect real outputs and full elapsed time",
+    "Fill result graphic and spoken result paragraph only from actual evidence",
+    "Original course live-Git/unseen/learning acceptance gates remain open"
+  ]
+}

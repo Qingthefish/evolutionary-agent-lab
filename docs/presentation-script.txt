@@ -1,55 +1,44 @@
 Five minute presentation script
-Updated November 25 2026, before the classroom task
-Read the English paragraphs only. Slide titles and this notice are not spoken.
-Slide 4 is a completion template, not a current classroom result. Replace its four
-fields only after checking the actual task. If unfinished or interrupted, use the
-matching complete alternative in presentation-speaking-notes.txt.
-One presenter. Method 2 minutes, mid-test 1, in-class result 1, reflection 1.
+Technical speaking revision, November 25 2026
+Read only the five English sections. Titles and this notice are not spoken.
+Keep the classroom-result section inside the five-minute talk. Fill its fields from
+actual outputs, or use the partial/interrupted alternatives in the Chinese notes.
+Aim for roughly 4:20–4:30 including results, leaving time for screen changes.
 
-Slide 1  How the team works  0:00 to 1:00
+Slide 1  Task coordination and file handoff  0:00 to 1:00
 
-We built a multi-agent platform that runs on our own computer and uses HKGAI for inference. The meeting-room task gives a concrete example.
+We built a Python multi-agent platform around a persistent task tree. A lead agent receives the goal and delegates work to specialists. The scheduler advances eligible tasks, while SQLite stores their states and conversations.
 
-The lead receives the goal and can delegate implementation and testing. Each task has a private workspace. Sharing a file requires an explicit handoff of a specific version.
+We focused on how agents exchange work. Each task owns its files. A developer offers an exact file version, identified by its SHA-256 hash, and QA explicitly accepts that snapshot. Later edits cannot silently change the copy under review.
 
-When the follow-up task asks for a dashboard, we keep the same group and carry over checked files. The team can extend its work while preserving where each file came from.
+The meeting-room dashboard shows why this matters. Task two stays in the original group and receives the checked booking files, so the team extends a traceable version of its earlier work.
 
-A separate two-task, no-search rehearsal exercised import, continuation, reopening, review, and export. This was practice, not today's classroom test.
+Slide 2  Controlled execution and recovery  1:00 to 2:00
 
-Slide 2  Execution and recovery  1:00 to 2:00
+The tool gateway supplies task identity and checks each action. Generated Python runs in a fresh container with no network or host mounts. We retain its input hashes, exit status and exported outputs. Critical actions require approval for the exact arguments.
 
-The model chooses actions. The application checks access and authorization before executing them. Generated Python runs in an isolated container. Humans can answer questions and decide critical actions.
+We fixed failures we actually observed: truncated replies led to smaller file edits, and interrupted runs led to saved checkpoints and explicit recovery.
 
-We improved the platform around observed failures. Long replies could be cut off, and small request allowances could interrupt useful work. Smaller edits and saved checkpoints let work continue after inspection. Service interruptions remain recorded and require an explicit recovery decision.
-
-The platform passed 953 engineering checks. These test software mechanisms, not answer accuracy. We still inspect the actual deliverable and its evidence before accepting a task.
+Across the team, the repository contains nearly 300 non-merge commits. We progressed from workflow and isolation, through tools and evaluation, to live HKGAI recovery and classroom integration. Our latest full engineering regression passed 953 checks.
 
 Slide 3  Mid-test results  2:00 to 3:00
 
-We evaluated six published mid-test tasks across software, newsroom, and investment scenarios.
+We ran the six published mid-test tasks across software, newsroom and investment scenarios.
 
-An assisted development run reached technical acceptance on all six, using 633 HKGAI requests. A later fresh run allowed no external technical repair and stopped a task when its first submitted child contained a material error. It accepted four of six, using 600 requests. We still supplied ordinary preferences and independent reviews.
+With review and repair feedback, all six reached technical acceptance in 633 HKGAI calls. We then started fresh and withheld external repair feedback. That round accepted four of six in 600 calls. Our stricter review stopped a whole task when a submitted child contained a material error.
 
-Software and newsroom passed. Investment risk drafts exposed currency-conversion and valuation-interpretation errors. Neither exhausted its request allowance.
+Software and newsroom passed. The investment risk drafts exposed currency-conversion and valuation errors while still within their allowances. We kept both outcomes and their checked files. The next improvement is to catch those errors inside the agent team.
 
-These runs used different review conditions. They are development evidence on known tasks, not a controlled improvement curve or an unseen-task success rate.
+Slide 4  Classroom result  3:00 to 4:00
 
-Slide 4  In-class results  3:00 to 4:00
+Here is the task we received tonight: [TASK].
 
-Now I'll show the task we received in class: [TASK].
+Our agents produced [OUTPUT]. This is the final file from the task workspace. We checked [CHECK], and the task reached acceptance in [TIME], including waiting and review.
 
-The team produced [OUTPUT]. Here is [CHECK], which we used to check the main requirement.
+On screen, you can see the main result and the evidence behind it. The export also contains the conversation, task history and exact file versions. We recorded the decisions and any repair assistance alongside the run.
 
-The application records this task as completed after review. It took [TIME], including operator waiting and review. Human decisions and any technical assistance are recorded with the run.
+Slide 5  Reflection  4:00 to 5:00
 
-We exported the final files together with the conversation and execution history. The file on screen matches the version we reviewed.
+The hardest part was coordinating a reliable handoff and deciding when the work was ready. Tracking exact versions and execution evidence made that process much easier to inspect.
 
-This is the actual classroom result. It is reported separately from our earlier development tests.
-
-Slide 5  What we learned  4:00 to 5:00
-
-Keeping work inspectable helped us find errors and verify what was delivered. We could trace files, versions, and test evidence across the team.
-
-More model calls did not guarantee a correct answer. In the latest run, reproducible calculations still had incorrect financial interpretations. Our next improvement is stronger internal cross-checking of numbers, units, and conclusions.
-
-We have private experience records, but our experiments do not demonstrate a general learning benefit. Before the December 19 submission, we need broader unseen-task evaluation and comparisons of quality, time, and human effort. Today's classroom result will add another observation. Thank you.
+The investment cases showed where we still need stronger checks: a calculation can execute correctly while its interpretation is wrong. We will strengthen numerical review and test experience reuse across fresh tasks before the December 19 submission. Thank you.

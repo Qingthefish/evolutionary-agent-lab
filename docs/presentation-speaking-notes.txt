@@ -1,210 +1,184 @@
-五分钟展示讲稿使用说明
-更新日期：2026 年 11 月 25 日；用于当天晚上的五分钟展示。
-英文正文在 docs/presentation-script.txt。本文是中文提示、PPT 对应内容与替换段，
-不作为逐字朗读正文。讲稿不是产品新增功能，也不是最终报告或进度表。
+五分钟展示讲稿与画面使用说明
+技术叙述更新：2026 年 11 月 25 日，用于当晚展示。
+正文：docs/presentation-script.txt。只读五段英文正文，不读标题或开头说明。
+本轮按本人要求加强技术设计、实际迭代与 Git 工作证据，删除口头稿中反复的免责声明。
+实验条件、统计依据和未完成记录继续保留在这里及报告中。
 
-一 先校正项目和展示的定位
+一 时间怎样留
 
-项目是通用多 Agent 协作平台。ZIP 是老师分发角色、任务和附件的测试入口，
-不是产品只为 ZIP 或原六题设计的定义。平台程序和文件在本机，模型推理通过
-HKGAI API 进行；正式运行仍需要网络。现场使用已测试版本，保留原题和角色。
-最终课程交付还包括 GitHub 源码与真实贡献记录、架构说明、性能和失败分析报告。
-个人 PPT 由本人手工制作；这次不改 PPT 文件、不改平台代码、不调用模型。
+当前五段英文按空白分词为 104 / 99 / 98 / 71 / 67，共 439 词。
+第四段占位字段各计一个词，填完后重新计数、重新计时。
+以 110 词/分钟估算，纯正文约 3 分 59 秒；加指图、演示与窗口切换，
+整套展示目标 4:20–4:30，留约 30 秒余量。这个目标包含课堂结果和结尾。
+不能把静态内容先讲 4 分半，再额外添加一分钟现场结果。
+老师要求方法 2 分钟、中期 1 分钟、课堂 1 分钟、反思 1 分钟，按这个顺序展开。
+上面的时段标题是各段的预算，不是要求每段精确念满。实际人声计时尚待本人完成。
 
-五分钟不是按开发日期讲流水账。老师指定的顺序是：
-方法 2 分钟，中期结果 1 分钟，课堂结果 1 分钟，反思 1 分钟。
-迭代故事放在方法和反思里，围绕“实际失败—机制修改—如何检查”讲。
-不是每一轮都单调提升；不同题目、协助和停止规则需要单独报告。
-可选两个例子：长回复截断后分段/局部编辑；计算错误经独立检查反馈后修复。
+二 哪些手工做动画，哪些可以直接插图
 
-二 字数和节奏
+个人 PPT 的开场、段落过渡和结尾由本人按自己的风格手工制作。
+我补的四张素材在 docs/presentation-assets/20261125/，尺寸 1280×720：
+01-version-handoff.png：第一分钟的版本交接图，开发任务 → 精确快照 → QA 接收。
+02-execution-evidence.png：第二分钟的动作检查、隔离执行、返回证据图。
+03-mid-test-results.png：第三分钟的两轮结果表，6/6 有辅助修复先讲，4/6 严格复测后讲。
+04-git-history.png：Git 工作量备用页。正文一句话带过，详细柱图与截图可放附录。
+图页另有可编辑的在线素材版本；PNG 可直接插入本人 PPT，不需要重做整套展示。
+需要逐对象动画时，用可编辑素材或手工重新画简单框线；PNG 本身是整张图。
+建议每张技术图只做两三步强调，控制总页数和翻页时间。
 
-英文正文按空白分词统计（只计五页段落，不计标题和开头说明）：
-第 1 页 101 词；第 2 页 95 词；第 3 页 104 词；
-第 4 页 89 词；第 5 页 97 词。合计 486 词。
-第 4 页四个占位字段各算一个词；填好后总词数会变化，字段总量尽量不超过 20 词。
+Slide 1：Task coordination and file handoff
+讲持久化任务树、负责人委派、调度 eligible tasks、SQLite 状态和对话。
+重点不是“好几个模型一起聊”，而是每个任务有受控文件，交接精确版本。
+把开发任务、SHA-256 快照、QA 接收依次强调。接着用预订系统延伸仪表盘说明同组续题。
+代码依据：agent_lab/core.py、scheduler.py、files.py、evaluation/official_session.py。
+讲的是目前实现的机制；不说已经证明任何长任务都能自主规划。
 
-这不是已经测得的五分钟。486 词按 110–115 词/分钟估算，正文约 4 分 14 秒到
-4 分 25 秒；再留 15–20 秒指图、翻页和切结果。填好现场字段后重新计时。
-你可以用自己的自然语气讲，不必照着 PPT 念完整句。老师规定五分钟，
-所以至少完整计时读两遍，再练一次从 PPT 切到已打开的结果窗口。
+Slide 2：Controlled execution and recovery
+讲 Tool Gateway 绑定任务身份，执行前检查权限；Python 进入独立新容器，
+无网络、无宿主目录挂载，记录输入哈希、退出状态和导出文件。
+关键操作的批准绑定具体动作/参数。SQLite 保留运行状态，便于检查后续做。
+选两个实际修复讲：截断回复改为小段/局部文件编辑；中断运行保留检查点、明确恢复。
+结尾用一句 Git 工作阶段和 953 项工程检查交代工程投入，不逐条念提交历史。
 
-如果试读偏慢，先删下面四句，共 39 词；正文变为约 447 词（现场字段另算）：
-1. The team can extend its work while preserving where each file came from.
-2. Service interruptions remain recorded and require an explicit recovery decision.
-3. The file on screen matches the version we reviewed.
-4. Today's classroom result will add another observation.
-保留两轮六题的协助/判定口径、未知题区分、真实耗时及记忆收益的限制。
+Slide 3：Mid-test results
+屏幕直接放两行有条件的结果，不反复口播统计免责声明：
+  Review and repair assistance       6/6 accepted       633 HKGAI calls
+  Fresh first-proposal check        4/6 accepted       600 HKGAI calls
+先讲辅助修复后六题全部技术验收，再讲新建组的严格复测四题通过。
+最新复测在首次提交的子任务出现实质错误时停止整题；这是一项本地开发检查规则。
+普通偏好仍由被授权的操作员选择，并有独立技术检查，不是完全无人介入。
+软件 2/2、新闻 2/2、投资 0/2。两项投资风险子稿分别有汇率转换及估值/政策解释问题，
+都没撞限额，也未进入最终配置/HTML 交付。原样保留失败记录，不把两轮混成一轮。
+原始 375 次四项协助验收/两失败轮次留报告备用，主讲一分钟不再堆第三套数字。
+953 是工程回归检查数，图页标注 engineering checks，和任务结果分别显示。
 
-三 五页 PPT 与口头过渡
+Slide 4：Classroom result
+老师发题后，在原会话核对真实格式、原题、附件、角色和任务顺序，再运行。
+这一页显示：题目一句话、实际产物、关键检查、完整耗时和真实状态。
+完成且验收后才用正文的完成版本。没完成或服务中断，用下方替换版本。
+结果图可放在 PPT 倒数第二页，随后用最后一页/几句反思收尾。
+也可在这一分钟直接共享已经打开的产物窗口，不必等新图做好才展示。
 
-Slide 1  How the team works  0:00–1:00
-屏幕关键词（最多三个）：
-  Goal → lead → delegated work
-  Private workspaces and explicit file handoff
-  Same group for the follow-up task
-配图：一个简单的角色协作流程；用会议室第一题到仪表盘第二题说明。
-讲法：直接从“我们做了什么、它怎样接任务”开头，不做领域背景介绍。
-强调角色可以委派，不说每次运行一定使用所有成员。
-结尾自然转到：任务会协作之后，怎样约束执行并恢复失败？
+Slide 5：Reflection
+结尾讲实际难点：可靠交接、怎样确认工作已做好。再讲一个发现：
+计算程序运行成功仍可能解释错，后续要把数字/单位/结论复核放进团队内部，
+并在新任务中继续验证经验复用。不开泛泛的免责声明，也不虚构学习收益。
 
-Slide 2  Execution and recovery  1:00–2:00
-屏幕关键词：
-  Checked tool actions and isolated execution
-  Human questions and critical decisions
-  Inspect → repair → resume
-配图：工具动作、检查、隔离执行、验收四步；旁边放一个截断/恢复例子即可。
-讲法：选两项改进讲清原因，不逐项念 Git 历史、不罗列所有调试次数。
-“保存检查点、检查后继续”不等于取消所有运行控制，也不等于无限自动重试。
+三 第四页的现场替换正文
 
-Slide 3  Mid-test results  2:00–3:00
-屏幕用一张两行简表，把条件与成绩放在同一行：
-  Assisted known-task development | 6/6 accepted | 633 HKGAI requests
-  Fresh first-proposal diagnostic | 4/6 accepted | 600 HKGAI requests
-表下写一句：Different review conditions; not an unseen-task success rate.
-旁边小字标出：No external technical repair; material child error stops root.
-953 项工程检查放到第二页角落，口头一句带过，不把它画成任务准确率。
-六题按 software / newsroom / securities 三组排列，每组两题。
-两轮均是已知中期题开发记录。6/6 有修复反馈；4/6 没有外部技术修正，
-但有两次按授权作出的偏好选择和独立技术检查，不是无人介入。
-最新规则在风险子稿首次出现实质错误时就停止整题；它比只检查最终交付更严格，
-并非老师判分标准或产品正常运行时必须采用的停止规则。
-软件/新闻四题通过；证券两题暴露汇率和估值/政策解释问题，未到最终配置/HTML交付。
-两题都没撞限额。不要说“只要再多给几次就肯定全对”。
-原始 375 次、四项协助验收/两失败那轮留在备查材料，不在一分钟里再堆一行。
-不把三轮拼成一次最佳成绩，不承诺整个浏览器交互都已验证。
+A 已完成并验收
+使用英文主稿第四段，填写四项：
+[TASK] 原题的简短描述；[OUTPUT] 实际交付文件或功能；
+[CHECK] 实际做过的关键检查及结果；[TIME] 从发任务到交付的完整耗时，包含等待和检查。
+填好后调整语法。尚未验收，不能念 reached acceptance。
 
-Slide 4  In-class results  3:00–4:00
-屏幕只放：实际题目一句话 + 一个清晰的实际产物 + 状态/完整耗时/介入说明。
-老师要求看到结果，没有要求整段任务在上台后才启动，也没有要求结果全嵌进 PPT。
-提前留好这一页；拿到真实材料后填四个短字段，或按下述情形换整段。
-想直接切到产物，也先打开对应文件；别临时滚动整屏 Terminal 找结果。
+B 已有产物，任务还在继续
 
-Slide 5  What we learned  4:00–5:00
-屏幕关键词：
-  Traceable versions and execution evidence
-  Correct execution still needs correct interpretation
-  Unseen evaluation and learning evidence remain open
-讲法：先说什么确实有效，再说什么没有证据；最后给出 12 月 19 日前的具体改进方向。
-私人经验记录已有机制，不能因此说系统已证明“越跑越聪明”。
-我们没有做出一般性的记忆学习提升结论，保留这句话是对课程“evolution”要求的真实交代。
+Here is the task we received tonight: [TASK].
 
-四 第四页现场替换
+The team has produced [OUTPUT]. We checked [CHECK]. The task is currently [STATE], with [NEXT STEP] still pending.
 
-A 已完成且验收通过
-使用 presentation-script.txt 中的第 4 页，填：
-  [TASK]：老师真实任务的短描述。
-  [OUTPUT]：真实交付的文件或功能。
-  [CHECK]：实际执行过的一个核心检查及结果。
-  [TIME]：从任务发布到当前交付的完整耗时，计入等待和检查。
-先核对根任务状态和最终文件。接受的是应用技术验收，不是老师已经给分。
-别填旧六题成绩、今天练习结果或纯模型耗时。
+The screen shows the current artifact and its execution record. We exported this version and kept the task history, so we can resume from the same point after the presentation.
 
-B 有产物但仍未完成
-整段替换为以下英文，不与 A 同时朗读：
+The elapsed time so far is [TIME], including waiting and review.
 
-Now I'll show the task we received in class: [TASK].
+C 服务或运行中断
 
-The team has produced [OUTPUT], which you can see here. We have checked [CHECK].
+Here is the task we received tonight: [TASK].
 
-The overall task is still [STATE]. The remaining step is [NEXT STEP], so I am showing this as a partial result.
+The request stopped with [OBSERVED ERROR], and the task is [ACTUAL STATE]. We saved the files, task state and request history. [ACTUAL RECOVERY ACTION].
 
-We exported the current files and kept the conversation and execution records. The elapsed time so far is [TIME], including operator waiting and review. Human decisions and any technical assistance are recorded.
+On screen, I can show [AVAILABLE EVIDENCE]. The elapsed time is [TIME], including waiting and inspection. We will use the retained record to decide how to continue from this point.
 
-This shows what the system has delivered so far and what still needs work. The earlier mid-test results are reported separately.
+[ACTUAL RECOVERY ACTION] 只填实际做过的事，未重发就不说已重发。
+三种版本只选一种。填写后重新计时，保留真实状态。
 
-C 服务中断或运行故障
-整段替换为以下英文，不与 A/B 同时朗读：
+四 Git 工作量怎样讲、怎样截图
 
-Now I'll show the task we received in class: [TASK].
+本次统计冻结在 main 7678aa063a79880a7ccc0b5d29b599171f167b54，
+提交者时间转为香港日期，计入该 main 历史可达的全部非合并提交。
+共有 295 个非合并提交，另有 111 个合并提交未加入图中的计数。
+295 中包含代码、测试、文档、证据和复核修正，不能改称 295 次独立实验或工作小时。
+下面是按时间段整理的展示标签，各阶段实际上也有交叉工作：
+10/15–10/21  基础工作流与隔离          55
+10/22–11/15  工具与评测               146
+11/16–11/23  真实运行与恢复            82
+11/24–11/25  课堂整合与证据            12
+这次讲稿更新之后数字会继续变化，图上保留快照 ID，不反复追涨数字。
 
-The run stopped with [OBSERVED ERROR] while requesting a model response. The record shows [ACTUAL STATE].
+正文可讲：Across the team, the repository contains nearly 300 non-merge commits.
+再用下面一句说明阶段，不把四个精确数都念出来。四个精确数留备用页。
 
-We kept the task state, files, and request history. [ACTUAL RECOVERY ACTION]. Any repeated request is counted separately.
+建议本人截两类真实 GitHub 画面：
+1. main 的提交历史，显示仓库、分支、日期和提交说明：
+https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/
+2. 选择四个贡献账户过滤，或复用工程中 docs/contributions/ 的四份历史截图。
+已有截图日期是 11 月 20 日；如需反映当前工作，可现在重新截。
+四个账户的真实 main 历史入口：
+https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=Qingthefish
+https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=HelloWorld2333666
+https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=aminoacid11
+https://github.com/Qingthefish/evolutionary-agent-lab/commits/main/?author=jingran-jupiter
+不要修改截图中的人名/提交次数，也不要凭提交数估计每个人工时。
 
-On screen, I can show [AVAILABLE EVIDENCE]. The elapsed time is [TIME], including operator waiting and inspection.
+可选实质提交例子，截图时打开对应 diff：
+1e33677：任务文件和精确交接；b9049f7：隔离 Python 执行。
+679c145：经验对照评测验证；950c894 / 4cfab17：独立环境复现及 CI。
+8bcdc44：HKGAI 流式回复；ff6bda1：局部编辑、恢复和课堂两条入口。
+38b1f81：整合后的流式完整性和局部编辑边界复核。
+姓名/账号在第一页角落或备用贡献页列出，保留团队与助手参与的真实归属。
 
-We have not verified a complete answer to this task. The earlier development results remain separate. Our next step is to inspect the interruption, then continue from the preserved state when it is appropriate to do so.
+五 今晚的现场图和结尾怎样衔接
 
-[ACTUAL RECOVERY ACTION] 填实际做过的动作；未重发就不能说已重发。
-若没有最终文件，[AVAILABLE EVIDENCE] 可以是任务树、实际错误及保留的状态。
-不把尚未确认的原因归咎于 HKGAI，不把未验收结果写成通过。
-三个版本的长度接近，但填入真实情况后仍须重新计时。
+七点多继续在当前 Codex 对话里即可。保持相同工程目录，先发老师实际题包/本地路径，
+并说明运行状态。原始运行和导出记录也保存在工程内，不只依赖聊天记忆。
+先按 SOP 运行实际题，再核对已产生的文件和关键检查。
 
-五 当天的时间和操作
+如果结果及时出来，我可以沿用现成风格，把真实产物截图、任务状态、检查结果和耗时
+整理成一张可插入 PPT 的成果页，并将主稿第四段改为对应的短结尾。
+这依赖当时服务、文件和证据可用，不能提前承诺具体秒数。
+时间紧就先共享真实产物或导出文件，现成图页不是开始展示的前提。
+不要预先填写通过状态、时间或成果图，不用重跑原六题来充当课堂结果。
 
-所有同学到教室，使用自己的电脑，并按通知加入同一个 Zoom 共享屏幕。
-提前三个展示时段收到任务链接后立即下载、核对并运行；约 16.5 分钟是准备窗口估算，
-不是另写的“16.5 分钟内跑完否则判失败”规则。明确的发言时限是五分钟。
-通知通常没有问答；先按五分钟准备。最终提交为 12 月 19 日，截止具体时刻尚未核实。
-当前通知没有要求当场另发邮件或上传 ZIP；当天若另附提交方式，以真实要求为准。
-平台操作按 docs/presentation-sop.md。正式题用新会话，保留角色、原题、附件和任务顺序。
+完成时可用的短收尾（拿到结果后填写）：
+The team delivered [OUTPUT] for [TASK]. [CHECK RESULT] confirms [VERIFIED POINT].
+This is the version exported from tonight's run. Our next step is [NEXT STEP].
 
-六 证据与使用边界（不朗读）
+未完成时可用的短收尾：
+The team has produced [OUTPUT]. [REMAINING STEP] is still in progress.
+We have saved the current version and can continue from the same state.
 
-已知六题：evaluation/evidence/known-six-assisted-20261124.json
-  初次 375 次调用结果是四项协助验收、两项失败，原记录保留。
-  后来的新建开发轮次为六项技术验收，633 次 HKGAI 请求，包含人工/技术检查及修复反馈。
-  这是不同条件下的开发轮次，不能单独证明放宽限额导致改善，也不是未知题成功率。
-最新工程回归：evaluation/evidence/classroom-rehearsal-20261124.json
-  953 项工程检查，真实配置的隔离执行和 Textual，零跳过；不是模型任务成绩。
-另行自拟新题：evaluation/evidence/classroom-integration-20261124.json
-  CSV 质检首版 9/12，反馈修复后 12/12，43 次 HKGAI；仅一个开发例子。
-11 月 24 日本人操作练习：本地保存了 64 次 HKGAI 调用、两题通过、4 次实际用户验收，
-  我们额外做了独立 8/8 和 12/12 检查，并核对最终导出版本。它不是今晚课堂结果。
-  更早助手主导的 27 次两题练习是另一轮，不能混为同一次计时或得分。
-最新六题诊断：evaluation/evidence/known-six-first-proposal-20261125.json
-  四题通过、两题在风险子稿检查时停止；600 请求，31,122,236 已报告 tokens。
-  19 个候选通过、2 个候选拒绝，共 21 次助手技术检查；2 次代理偏好回答。
-  外部技术修正、服务重发、限额续加均为零。不是老师评分或完全无人协作。
-无搜索练习对：evaluation/evidence/overnight-rehearsal-20261124.json
-  新编两题通过，75 请求；命令菜单导入、退出/重开、同组续题、检查和导出均有记录。
-  作业发布到最终导出 874.79 秒，含操作检查和等待。不是未知课堂题的速度保证。
-  不是本人手动拖文件/双击 Terminal、Zoom 共享或人声排练的全套现场验证。
-经验记录/记忆对照尚未证明通用性能提升。未知题泛化、课堂实际耗时和完整口头展示仍待检验。
-源码运行版本保持本轮讲稿整理前的已测试状态；本次只修改展示文本和证据说明，不改平台运行代码。
+六 Zoom 和到场
 
-老师展示安排：
-https://canvas.ust.hk/courses/73253/announcements/659120
-https://canvas.ust.hk/courses/73253/announcements/659506
-平台最终交付范围：docs/requirements.md
-详细方法与结果：docs/final-report.md
+所有同学必须到教室现场。老师指定一个人代表小组讲五分钟，通常没有问答。
+使用自己的演示电脑，加入老师指定的同一个 Zoom 会议并按安排共享屏幕。
+不是在家打开任意 Zoom 就算参加，也不要自行新建会议冒充课程会议。
+你发的截图只是加入窗口：会议号/个人链接仍空着，不能从截图确认会议地址。
+使用 Canvas/邮件里的正式链接或会议号。主讲者可共享 PPT 窗口，展示结果时切换
+到已打开的产物窗口，或将一张真实成果图放进 PPT。
+先测试 macOS 的屏幕共享权限以及主持人是否允许参与者共享。
+麦克风/扬声器按教室和老师安排设置，避免同一教室多台电脑回声。
+提前三个展示时段发题，约 16.5 分钟是准备窗口估计；五分钟是明确发言限制。
+小组具体时段和教室请本人核对通知/安排，当前未独立确认。
 
-七 手工 PPT 的画面和现场剩余事项
+七 记录与完成边界（备查，不朗读）
 
-你已经熟悉的“同图逐页加框、分步强调”方式可以保留。五分钟按五个逻辑页面，
-建议五到七张实际幻灯片；若同一页复制两次用于高亮，它们共用这一分钟，
-不是每翻一页重新分配一分钟。不要为每条数据复制一页。
+详细实验结果在 docs/final-report.md。源记录：
+evaluation/evidence/known-six-assisted-20261124.json
+evaluation/evidence/known-six-first-proposal-20261125.json
+evaluation/evidence/overnight-rehearsal-20261124.json
+evaluation/evidence/presentation-script-20261124.json
+新技术图页与提交统计的证据在 evaluation/evidence/presentation-technical-20261125.json。
 
-第 1 页：平台名称与小组信息放在角落，直接画 goal → lead → delegated work，
-再用文件交接和同组后续任务说明，省去独立的背景开场页。
-第 2 页：一张执行/检查流程，最多两次高亮；旁边一个小的截断恢复例子和 953 工程检查。
-第 3 页：6/6 assisted 与 4/6 first-proposal 的两行结果表，条件直接可见。
-不同口径不能画成“4→6→4”的改进折线，也不能把 953 与六题画在同一准确率轴上。
-第 4 页：一张真实课堂产物截图或切到已打开的产物，附真实状态和完整耗时；
-没有结果时用上面的未完成/中断版本，不把练习产物当成现场产物。
-第 5 页：可追溯文件和执行证据确实有用；金融解释仍会错；记忆收益未证明，
-下一步增强内部数字/单位/结论复核，12 月 19 日前继续未知题测试。
+代码由本机运行，模型推理用 HKGAI。Codex 用来协助操作/开发，选择 Codex 模型不会
+切换平台答题模型。原始 ZIP 的正式结构、未知题正确性、实际现场共享及人声计时
+仍须在实际环境核对。课堂材料拿到后保留原文、附件和真实授权，正式题新建会话。
+已有手动 64 次两题练习和另行 75 次无搜索练习。它们验证了各自的菜单/继续/导出流程。
+这次只更新演示材料，没有改平台运行代码，也没有新增 HKGAI 模型请求。
+Git 主分支已有四个贡献账号的实际合入记录，旧 #51/#81/#92 三条 PR 仍单独保留；
+#92 的代码已整合，#81 缺原始运行记录待独立核验。课程最终验收、真实运行时 GitHub push、
+更广的未知任务与学习收益验证仍有开放项。12 月 19 日前继续按实际证据推进。
 
-不需要重新生成复杂插画。你手工用箭头、角色名、两行表格、一个结果截图就能讲清。
-参考稿的图框节奏可以借鉴；该论文的模型、实验分数、学习提升不是本平台证据。
-不用给每个阶段做一张数据图，也不要在五分钟讲 Git 提交流水账。
-四人的姓名/小组信息可在第一页角落列出，真实贡献历史截图放备用页，
-不把团队实现和助手参与写成主讲者一人的独立工作。
-
-一个人主讲符合老师要求；所有组员仍需按通知到教室现场，并按安排使用同一 Zoom。
-组员不必各讲一段，也不用临时各自补一套 PPT。你负责电脑、主讲和操作；
-PPT 按自己的节奏制作，完成后两次计时，检查投屏切换及大字是否可读。
-
-Git 快照（2026-11-25 本次检查时）：main 已与远端同步，工作区干净，
-四个组员对应账户均有实际合入的提交，已有四份真实历史截图。
-当时仍有三条历史打开的 PR：#92 的代码已整合进主分支；#81 的贡献者运行
-原始证据待核；#51 是旧的完成流程提案。这不等于今晚需要重做或合并它们，
-也不能说仓库完全没有待办。今晚使用已测试版本，不临时混入未审新代码。
-真实运行时 GitHub push 的验收、广泛未知题/学习收益及课程最终验收仍有开放条目；
-开发者已经 push 主仓库，不等于 Agent 自己推 GitHub 的能力已通过真实验收。
-
-今晚最具体的待办是：做并计时排练个人 PPT；确认小组时段/教室、学校网络、Docker，
-试一次 Zoom 正确窗口共享；拿到原包后核对新格式，运行并检查实际产物，
-填写第四页真实结果；保留现场记录并按当天实际提交要求操作。
-约 16.5 分钟仍只是准备窗口估算，五分钟才是明确的发言时限。
+老师当前要求：docs/requirements.md
+现场操作：docs/presentation-sop.md
+Zoom 共享官方说明：https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0060596

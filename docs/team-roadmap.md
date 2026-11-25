@@ -1317,6 +1317,30 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   [Current script](presentation-script.txt) · [Slide cues and alternatives](presentation-speaking-notes.txt)
   · [Sanitized update evidence](../evaluation/evidence/presentation-script-20261125.json)
 
+- **2026-11-25 S02 technical narrative and figure pages:** Qingthefish,
+  owner-requested Codex-assisted preparation on docs/S02-technical-story-20261125.
+  Rewrote the five spoken sections to 439 words, emphasizing the durable task
+  tree, SHA-256-bound file handoff, gateway checks, isolated execution and
+  checkpoint recovery. Kept assisted 6/6 and fresh first-proposal 4/6 explicitly
+  labelled; removed repetitive generic disclaimers from spoken text while
+  retaining actual review conditions in notes. Whole-talk target 4:20–4:30
+  includes the classroom result and ending; it is not yet a timed rehearsal.
+- **Work evidence / visuals:** At frozen main 7678aa0, counted 295 reachable
+  non-merge commits by Hong Kong committer date: 55 / 146 / 82 / 12 in four
+  chronological work windows, excluding 111 merges. Counts include code,
+  tests, documentation and evidence, not independent iteration counts or hours.
+  Prepared and visually reviewed four editable native figure pages and local
+  PNG copies for the owner's manual PPT: version handoff, execution evidence,
+  two-condition results and a Git backup chart. No other-course data reused.
+- **Validation / limits:** Checked word counts, original source/result numbers,
+  snapshot-reachable Git history, figure values, local links and unchanged
+  runtime fingerprint. No new HKGAI request or claimed engineering-regression
+  rerun. Manual animations, spoken timing, actual meeting/window sharing and
+  final classroom task/results remain to be performed. Notes explain continuing
+  in this chat, a truthful result figure/short ending and direct-output sharing
+  if time is tight. [Current script](presentation-script.txt) · [Figure pages](presentation-assets/20261125/)
+  · [Source and statistics](../evaluation/evidence/presentation-technical-20261125.json)
+
 ## Starting a Codex session
 
 ```text
