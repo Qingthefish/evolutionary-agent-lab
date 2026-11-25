@@ -9,7 +9,7 @@ Slide 1  Task coordination and file handoff  0:00 to 1:00
 
 We built a Python multi-agent platform around a persistent task tree. A lead agent receives the goal and delegates work to specialists. The scheduler advances eligible tasks, while SQLite stores their states and conversations.
 
-We focused on how agents exchange work. Each task owns its files. A developer offers an exact file version, identified by its SHA-256 hash, and QA explicitly accepts that snapshot. Later edits cannot silently change the copy under review.
+Experience records stay with their own agent. Each task owns its files. A developer offers an exact file version, identified by its SHA-256 hash, and QA explicitly accepts that snapshot. Later edits cannot silently change the copy under review.
 
 The meeting-room dashboard shows why this matters. Task two stays in the original group and receives the checked booking files, so the team extends a traceable version of its earlier work.
 

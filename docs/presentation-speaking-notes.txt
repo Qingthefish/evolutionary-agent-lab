@@ -28,9 +28,10 @@
 
 Slide 1：Task coordination and file handoff
 讲持久化任务树、负责人委派、调度 eligible tasks、SQLite 状态和对话。
-重点不是“好几个模型一起聊”，而是每个任务有受控文件，交接精确版本。
+经验记录按所属 Agent 保存，并受会话/命名空间约束；文件则按任务分开。
+交接的是精确版本，讲清这个具体设计即可。
 把开发任务、SHA-256 快照、QA 接收依次强调。接着用预订系统延伸仪表盘说明同组续题。
-代码依据：agent_lab/core.py、scheduler.py、files.py、evaluation/official_session.py。
+代码依据：agent_lab/core.py、scheduler.py、memory.py、files.py、evaluation/official_session.py。
 讲的是目前实现的机制；不说已经证明任何长任务都能自主规划。
 
 Slide 2：Controlled execution and recovery
