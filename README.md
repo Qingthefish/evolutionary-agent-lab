@@ -88,8 +88,11 @@ decisions, **64 HKGAI requests**, assistant inspection and independent 8/8 and
 the earlier 27-request rehearsal and from the unreleased classroom task.
 A refreshed [five-minute speaking script](docs/presentation-script.txt) and
 [Chinese slide cues and result alternatives](docs/presentation-speaking-notes.txt)
-support the owner's manually prepared PPT. Spoken timing, Zoom sharing and
-the actual classroom result remain unverified; the tested runtime is unchanged.
+support the owner's manually prepared PPT. The November 25 update has 486
+spoken words and includes the assisted 6/6 and fresh first-proposal 4/6 under
+their distinct review conditions, plus a separate no-search workflow practice.
+Spoken timing, Zoom sharing and the actual classroom result remain unverified;
+the tested runtime is unchanged.
 
 **Classroom reliability integration (November 24).** Teammate proposals
 [#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) and
