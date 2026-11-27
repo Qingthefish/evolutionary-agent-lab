@@ -71,12 +71,14 @@ class AssemblyTests(unittest.TestCase):
         self.assertEqual(caught.exception.usage["completion_tokens"], 8192)
 
     def test_incomplete_or_invalid_streams_release_no_tools(self):
-        # No finish reason / no usage: the unchanged strict parser refuses it.
-        for lines in ([delta(role="assistant", content="partial")],
-                      [delta(role="assistant", content="ok"), delta(finish="stop"), "data: [DONE]"]):
-            with self.assertRaises(ProviderError) as caught:
-                client_for(lines).complete([{"role": "user", "content": "hi"}])
-            self.assertEqual(caught.exception.diagnostics()["kind"], "invalid_completion")
+        # An interrupted envelope is refused before parsing; a completed stream
+        # missing usage is still refused by the unchanged strict completion parser.
+        with self.assertRaises(StreamAssemblyError):
+            client_for([delta(role="assistant", content="partial")]).complete([{"role":"user","content":"hi"}])
+        with self.assertRaises(ProviderError) as caught:
+            client_for([delta(role="assistant", content="ok"), delta(finish="stop"), "data: [DONE]"]).complete(
+                [{"role":"user","content":"hi"}])
+        self.assertEqual(caught.exception.diagnostics()["kind"], "invalid_completion")
         for lines in (["data: {not json"], ['data: {"error": {"message": "%s"}}' % SECRET],
                       [delta(tool_calls=[{"function": {"name": "x"}}])],
                       [event(choices=[{"delta": {}}, {"delta": {}}])]):

@@ -539,7 +539,8 @@ def main(argv=None):
                     if args.command == "preflight":
                         from ..execution_control import configuration_sha256
                         policy = scenario_policy(session)
-                        result = scheduler.status() | {"model_calls": 0, "roles": list(scheduler.roles),
+                        result = scheduler.status() | {"model_calls": 0, "needs": _review_boundaries(scheduler),
+                                                       "roles": list(scheduler.roles),
                                                        "tool_policy": policy.identifier, "tools": list(policy.tools),
                                                        "role_tools": {actor: list(role.tools) for actor, role in scheduler.roles.items()},
                                                        "show_execution_budget": args.show_execution_budget,

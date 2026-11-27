@@ -54,6 +54,103 @@ The cumulative record is **nine actual requests, 21,701 known reported tokens pl
 
 ## Status
 
+**Additional no-search practice (November 24 night).** On the tested runtime,
+the actual classroom command menu completed a fresh author-created interval
+analysis task and its same-group usage-summary follow-up in **75 HKGAI requests**.
+Independent root checks passed **11/11** and **17/17**; exit/reopen preserved the
+25-call review checkpoint, eight checked files were carried, and both partial
+and completed exports retained their real states with zero additional calls.
+Assignment to final export took **874.79 seconds including operator review/idle**;
+this small assisted pair is not a classroom speed prediction or a new six-task
+score. No runtime code changed. [Evidence and limits](docs/final-report.md#18-additional-no-search-command-menu-practice)
+
+**Classroom rehearsal (November 24).** The actual classroom ZIP command menu
+imported an explicitly labelled practice package with the original software
+roles and two new ordered tasks. Both roots completed assistant technical
+acceptance in **27 HKGAI requests / 328,752 reported tokens**. Independent root
+checks passed **8/8** and **12/12**; the same group carried five checked files.
+Assignment to final export took **779.37 seconds**, including review/idle.
+This simple practice pair is not the final test or a classroom speed estimate.
+A pending-review-list display defect found during rehearsal is corrected
+without changing acceptance or making model calls; **67 focused and all 953
+full engineering checks passed**, including actual containers and Textual,
+with zero skips. Safari opened the earlier
+securities HTML and navigated pages 1–3; the entire deck was not visually checked.
+Native Terminal control was explicitly unavailable, so this was a command-menu
+rehearsal rather than a completed human desktop/Zoom presentation.
+[Rehearsal evidence and limits](docs/final-report.md#17-classroom-menu-and-safari-rehearsal)
+· [Step-by-step Wednesday SOP](docs/presentation-sop.md)
+
+The owner subsequently operated a separate fresh practice pair through the
+actual Terminal menu: both tasks completed with four genuine owner review
+decisions, **64 HKGAI requests**, assistant inspection and independent 8/8 and
+12/12 checks. Exported code matches the checked version. This is distinct from
+the earlier 27-request rehearsal and from the unreleased classroom task.
+A refreshed [five-minute speaking script](docs/presentation-script.txt) and
+[Chinese slide cues and result alternatives](docs/presentation-speaking-notes.txt)
+support the owner's manually prepared PPT. The latest November 25 technical
+revision has 439 spoken words covering task trees, version-bound file handoff,
+isolated execution and recovery. It includes the assisted 6/6 and fresh
+first-proposal 4/6, plus a brief account of nearly 300 non-merge commits.
+[Prepared figure pages](docs/presentation-assets/20261125/) support manual
+animation and a Git-history backup. Spoken timing, Zoom sharing and the actual
+classroom result remain unverified; the tested runtime is unchanged.
+
+**Classroom reliability integration (November 24).** Teammate proposals
+[#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) and
+[#92](https://github.com/Qingthefish/evolutionary-agent-lab/pull/92) add opt-in
+streamed replies, quality-profile exact-passage editing and explicit operator
+resend controls on both classroom paths. Independent review additionally
+rejects mixed/incomplete/malformed streams, bounds actual encoded bytes and
+single-line reads, and refuses overlapping edit matches. All **952 engineering
+checks passed**, with actual configured containers and Textual, zero skips and
+zero model calls. These are general workflow changes, not answers to the six
+mid-test tasks. The original role-package adapter remains specific to its
+issued ZIP contract; ordinary TXT/MD tasks use the separate generic team.
+
+A new author-created laboratory CSV-QC task used that actual ordinary intake,
+with fresh files, no old-six answers or memory, and no web tools. It completed
+through specialist delegation, isolated execution, exact handoff and technical
+review in **43 HKGAI requests / 766,126 reported tokens**. The first proposal
+passed **9/12** independent datasets, losing raw rejected-field whitespace;
+after explicit feedback the repaired child and final coordinator delivery each
+passed the same **12/12**. Actual task wall time was **2,653.22 seconds** including
+review/idle, versus **211.29 seconds** summed turn duration including tools.
+This single assisted development smoke is not an unseen-classroom success rate
+or proof that the known-six result generalizes.
+[Generalization audit, new-task result and limits](docs/final-report.md#16-classroom-integration-and-new-task-audit)
+· [Sanitized evidence](evaluation/evidence/classroom-integration-20261124.json)
+
+**Known-six first-proposal diagnostic (November 24–25).** A fresh single run
+accepted **four roots and stopped two**, using **600 HKGAI requests /
+31,122,236 reported tokens**. Software and newsroom pairs passed independent
+checks without external technical repair. Both securities roots stopped at
+their first risk-child proposal: incorrect currency stress, then misinterpreted
+valuation arithmetic and a misstated policy constraint. No request allowance
+was exhausted. This local diagnostic stops a whole root on a material child
+error before possible later repair; it is stricter than ordinary final-only
+review and is not an instructor score. Two ordinary preferences were answered
+under owner delegation, and Codex performed technical reviews; this is not
+zero-human autonomy. The earlier assisted 6/6 remains separate and unchanged.
+[Results, failure evidence and limits](docs/final-report.md#19-known-six-first-proposal-diagnostic)
+· [Sanitized evidence](evaluation/evidence/known-six-first-proposal-20261125.json)
+
+**Fresh known-six development (November 23–24).** All six original mid-test
+tasks reached **coordinator-assisted technical acceptance**, using **633 actual
+HKGAI requests**, 59,534,942 known reported tokens and four retained attempts
+with unknown usage. The three groups started fresh with their original four
+roles; each Task 2 continued its accepted Task 1 in the same group. Larger
+quality allowances, concrete repairs and explicit review assistance all changed
+the conditions, so this is not an isolated measurement of raising limits,
+unattended 6/6, a teacher grade or held-out accuracy. The final dashboard passed
+51 generated regressions and 28 independent arithmetic/export/static-wiring
+checks; its JavaScript syntax and critical formulas were inspected. The dashboard's
+browser visuals and controls remain untested; the separate securities-deck
+Safari check above covers pages 1–3 only. The original four-assisted,
+two-failed 375-call trial below stays unchanged.
+[Complete results, timing and retained mistakes](docs/final-report.md#15-fresh-known-six-assisted-development)
+· [Sanitized evidence](evaluation/evidence/known-six-assisted-20261124.json)
+
 **Six-task Mac evaluation (2026-11-23).** All six canonical mid-test tasks have
 now ended: **four coordinator-assisted acceptances and two failures**, using
 **375 actual HKGAI requests**. These are development outcomes, with retained
@@ -88,6 +185,10 @@ integration files; private workspaces, critical-action approval, source/effect
 checks and independent acceptance stay enforced. Old bindings remain available
 for reproduction. The full release regression passed **880/910 checks**, with
 **30 explicit container/UI skips**.
+
+An explicitly inspected transport resend also permits a later audited numeric
+extension while retaining the old error row and unknown usage. A new unresolved
+failure, an unprocessed response or an uncertain tool effect still blocks extension.
 
 Two real HKGAI regressions used **93 new requests**: an **81-call known-artifact
 HTML repair**, technically accepted after independent rejection/correction and
@@ -175,6 +276,12 @@ no answer key or detailed marking rubric. Prioritize a complete Mac operator
 rehearsal and a timed five-minute presentation alongside usable, substantially
 correct outputs; the [classroom review scope](docs/presentation-sop.md#周三的准备优先级)
 does not require repeating every development boundary check during the talk.
+
+The later [attendance notice](https://canvas.ust.hk/courses/73253/announcements/659506),
+received November 23 at 23:22 Hong Kong time, requires **all students to attend
+in the classroom**. The same Zoom/screen-sharing arrangements remain in place.
+The [input-to-output walkthrough](docs/presentation-sop.md#从收到题到看到结果按你实际操作的顺序)
+explains the current TXT/ZIP inputs, clickable Terminal interface and exported results.
 
 **Remaining gates.** Complete repaired-runtime Software Task 2 and Securities
 Task 2 deliveries under a separately recorded development plan,

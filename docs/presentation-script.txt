@@ -1,0 +1,44 @@
+Five minute presentation script
+Technical speaking revision, November 25 2026
+Read only the five English sections. Titles and this notice are not spoken.
+Keep the classroom-result section inside the five-minute talk. Fill its fields from
+actual outputs, or use the partial/interrupted alternatives in the Chinese notes.
+Aim for roughly 4:20–4:30 including results, leaving time for screen changes.
+
+Slide 1  Task coordination and file handoff  0:00 to 1:00
+
+We built a Python multi-agent platform around a persistent task tree. A lead agent receives the goal and delegates work to specialists. The scheduler advances eligible tasks, while SQLite stores their states and conversations.
+
+Experience records stay with their own agent. Each task owns its files. A developer offers an exact file version, identified by its SHA-256 hash, and QA explicitly accepts that snapshot. Later edits cannot silently change the copy under review.
+
+The meeting-room dashboard shows why this matters. Task two stays in the original group and receives the checked booking files, so the team extends a traceable version of its earlier work.
+
+Slide 2  Controlled execution and recovery  1:00 to 2:00
+
+The tool gateway supplies task identity and checks each action. Generated Python runs in a fresh container with no network or host mounts. We retain its input hashes, exit status and exported outputs. Critical actions require approval for the exact arguments.
+
+We fixed failures we actually observed: truncated replies led to smaller file edits, and interrupted runs led to saved checkpoints and explicit recovery.
+
+Across the team, the repository contains nearly 300 non-merge commits. We progressed from workflow and isolation, through tools and evaluation, to live HKGAI recovery and classroom integration. Our latest full engineering regression passed 953 checks.
+
+Slide 3  Mid-test results  2:00 to 3:00
+
+We ran the six published mid-test tasks across software, newsroom and investment scenarios.
+
+With review and repair feedback, all six reached technical acceptance in 633 HKGAI calls. We then started fresh and withheld external repair feedback. That round accepted four of six in 600 calls. Our stricter review stopped a whole task when a submitted child contained a material error.
+
+Software and newsroom passed. The investment risk drafts exposed currency-conversion and valuation errors while still within their allowances. We kept both outcomes and their checked files. The next improvement is to catch those errors inside the agent team.
+
+Slide 4  Classroom result  3:00 to 4:00
+
+Here is the task we received tonight: [TASK].
+
+Our agents produced [OUTPUT]. This is the final file from the task workspace. We checked [CHECK], and the task reached acceptance in [TIME], including waiting and review.
+
+On screen, you can see the main result and the evidence behind it. The export also contains the conversation, task history and exact file versions. We recorded the decisions and any repair assistance alongside the run.
+
+Slide 5  Reflection  4:00 to 5:00
+
+The hardest part was coordinating a reliable handoff and deciding when the work was ready. Tracking exact versions and execution evidence made that process much easier to inspect.
+
+The investment cases showed where we still need stronger checks: a calculation can execute correctly while its interpretation is wrong. We will strengthen numerical review and test experience reuse across fresh tasks before the December 19 submission. Thank you.

@@ -649,7 +649,7 @@ One accountable owner per claimed card; multiple people may review or help. Shar
 
 **Run the official evaluation**
 
-- **Stage / status:** M5 / In progress (live software rehearsal started)
+- **Stage / status:** M5 / In progress (assisted and first-proposal known-six trials closed; official/unseen evaluation remains open)
 - **Owner:** Qingthefish (owner-requested continuation, Codex-assisted)
 - **Dependencies / configuration:** C06, A07, the official dataset and authorized runtime access.
 - **Scope:** Official raw run records, complete result counts and metrics.
@@ -1088,6 +1088,258 @@ November 18 Outlook and Canvas announcement checks found the November 15 mid-tes
   offline PowerPoint opening, final input mapping and final S02 acceptance
   remain open. Deck preparation makes zero HKGAI calls; the separately
   authorized six-task run continues with its original cumulative counter.
+
+- **2026-11-24 operator walkthrough and attendance update:** Owner-requested
+  S01/S02 documentation maintenance on `docs/S01-in-person-sop-20261124`.
+  Read the new instructor/TA notification requiring all students to attend
+  physically in the classroom, while retaining the existing Zoom procedure.
+  Expanded the same SOP with the link-to-file input path, ordinary TXT/MD
+  import, original-role ZIP boundary, clickable Terminal tabs, rendered
+  Markdown preview and export steps. Distinguished posting a message from
+  executing a task, and recommended English preparation without inventing an
+  English-only rule. The final package format remains unknown. Verified the
+  local launcher, UI dependency, credential presence and Docker socket with
+  zero model requests; no matching project process was running. The known-six
+  run remains at 516 counted attempts, four technically accepted roots and
+  two provider-uncertain roots, with no replay or outcome rewrite. Actual
+  human operation, current API availability and unknown-task performance are
+  not inferred from local checks. This maintenance changes no runtime code.
+
+- **2026-11-24 inspected-resend extension correction:** Continued owner-requested
+  S01 maintenance on `fix/S01-resolved-transport-extension-20261124` in an
+  isolated worktree, leaving the active six-task model runtime frozen. A
+  genuine synthetic transport interruption, inspected resend and budget pause
+  reproduced a false extension rejection: retained historical `provider_error`
+  rows were mistaken for unresolved effects. Numeric extension now recognizes
+  only an exact failed turn with no delivered response and a later explicit
+  resend record. Error rows, unknown usage and counters remain unchanged;
+  later unresolved turns, delivered responses and current unknown effects
+  still refuse. The new failing regression passes with the correction,
+  alongside negative controls. All 12 focused quality checks and 901 of 922
+  full engineering checks passed, with 21 explicit actual-container skips and
+  zero real model calls. A separately versioned trusted operator may use this
+  reviewed control-only correction for an audited extension; its source hash
+  and before/after settings must be recorded. This does not change task tools,
+  prompts, model execution or acceptance, and is not a six-task score gain.
+
+### S01 continuation: known-six closure, November 24
+
+- **Scope / owner:** Qingthefish, owner-authorized Codex-assisted continuation;
+  evidence maintenance on `docs/S01-known-six-results-20261124`. The known-six
+  development trial is closed; S01's official/unseen evaluation gate remains
+  open.
+- **Outcome:** Six coordinator-assisted technical acceptances, **633 actual
+  HKGAI requests / 59,534,942 known reported tokens**, four retained unknown-usage
+  failures, and one separately counted health request. Original role/task pairs,
+  same-group Task 1→2 carryover and frozen model runtime were preserved. No
+  failed-child waiver was used. The canonical 375-call four-assisted/two-failed
+  result remains unchanged.
+- **Checks / corrections:** Final dashboard: actual 51-test regression and 28
+  independent arithmetic/export/static-wiring checks, plus JS syntax and source
+  inspection. Retained the incorrect reviewer inference at 576 and correction
+  at 601, failed frontend repairs, five attributed technical-feedback events
+  and exact history-based recovery of overwritten model-authored instructions.
+  Browser visuals/control execution remain unverified; direct prebuilt-matrix
+  narrowing and matrix-only renderer reconstruction are not certified.
+- **Platform correction:** [PR #93](https://github.com/Qingthefish/evolutionary-agent-lab/pull/93)
+  merged as `9b8f4a5` after the trial was sealed. Exact inspected transport
+  resend history no longer falsely blocks an audited extension; unresolved
+  errors/effects still stop. Twelve focused checks pass; full regression
+  **901/922 passed, 21 explicit container skips**, zero model calls. Three
+  required CI checks passed. The same reviewed control-only correction was
+  explicitly audited during extensions, without changing the frozen model
+  runtime.
+- **Preservation / limits:** Hash-verified 557 sealed files, all 314 original
+  sealed files and 47 selected earlier accepted files. Actual wall times include
+  review/operator pauses and do not establish classroom speed. This is neither
+  an unattended 6/6 nor a teacher score, held-out accuracy or a measured learning
+  gain. No PPT/UI work or new provider was added in this continuation.
+  [Results and limits](final-report.md#15-fresh-known-six-assisted-development)
+  · [Sanitized evidence](../evaluation/evidence/known-six-assisted-20261124.json)
+
+- **2026-11-24 teammate integration review:** Owner-requested Codex-assisted
+  S01/S02 maintenance on `review/S01-classroom-integration-20261124`, from
+  `9395ceb`. Reviewed HelloWorld2333666's unmerged #90/#92 and preserved their
+  commits in an isolated integration branch. Streaming, exact-passage editing
+  and explicit operator resend address general classroom-path failures.
+  Independent negative controls reproduced malformed stream exceptions,
+  conflicting/incomplete fragments, byte/read-bound gaps and overlapping edit
+  ambiguity. Corrected these without changing provider, acceptance, private
+  workspaces or older sealed runs. All 42 focused checks and **952 full
+  engineering checks passed, zero skips**, including configured actual
+  containers and Textual; zero model calls. The earlier focused command lacked
+  the documented tests import path; its error and all genuine before/after
+  failures remain private. Teammate-reported rehearsal speed is not attributed
+  to the code change alone.
+- **New-task validation / scope:** On frozen runtime `38b1f81`, the actual
+  ordinary TXT/data classroom intake completed an author-created laboratory
+  CSV-QC goal in **43 requests / 766,126 reported tokens**, with no provider
+  failure or unknown usage, two retained length cutoffs and one explicit
+  technical rejection/repair. First proposal **9/12**, repaired child **12/12**,
+  received coordinator delivery **12/12** against the same predeclared fixtures.
+  No old-six answers/files/memory were supplied; no web or new provider was used.
+  Root wall time **2,653.22 s** includes review/idle; summed turn duration
+  **211.29 s** includes tools and is not an end-to-end performance claim. Sealed
+  101 new-trial files and reverified all 557 previous six-task files unchanged.
+  Generic intake contains no original-six answer lookup; the dedicated original
+  ZIP adapter still binds its issued directory/role/README protocol. Same-layout
+  changed prompt/role bodies load verbatim; an unknown layout remains refused.
+  Scoped integration review is accepted; official/unseen results, arbitrary
+  package support and unattended generalization remain open. SOP now explains
+  fresh-session compatibility and both explicit resend controls.
+  [Audit and limits](final-report.md#16-classroom-integration-and-new-task-audit)
+  · [Sanitized evidence](../evaluation/evidence/classroom-integration-20261124.json)
+
+- **2026-11-24 classroom rehearsal:** Qingthefish, owner-requested Codex-assisted
+  S01/S02 maintenance on fix/S01-classroom-boundaries-20261124, from d3878dd.
+  Re-read the instructor presentation notification and exercised the actual ZIP
+  command menu with an explicitly labelled practice derivative: original
+  software roles/protocol, two new ordered tasks, same group and five checked
+  carried files. Both roots received attributed assistant technical acceptance,
+  independent **8/8 and 12/12** checks, **27 HKGAI calls / 328,752 reported tokens**,
+  no unknown usage. Final export retains succeeded/succeeded and 29 files.
+  First assignment to export **779.37 s** includes review/idle; plan start to
+  export **910.87 s**, summed turns **117.98 s**. No classroom speed inference.
+  One length cutoff, a model-corrected test invocation, an external-review stale
+  menu refusal and operator-helper errors are retained. Sealed 303 files and
+  reverified the older six-task seal's 557 files unchanged.
+- **Correction / checks:** The role check menu used preflight, which omitted
+  review needs and displayed an empty list. Preflight now reports existing
+  review boundaries without accepting or executing anything. Actual pending
+  snapshot before/after checks used zero model calls and preserved the original
+  file-root binding. **67 focused / 953 full engineering checks passed**, actual
+  configured containers and Textual, zero skips. An initial local-socket
+  permission refusal and a rejected file-root relocation are retained as harness
+  limitations/corrections. No new provider, tool permission or acceptance rule.
+- **Presentation evidence / remaining scope:** Safari displayed the prior
+  securities HTML's pages 1–3 and navigated Right/Next/Previous. Native Terminal
+  control was explicitly denied; physical Zoom sharing, human speech/manual
+  operation, the whole HTML deck and final input contract remain unverified.
+  Plain question.txt-only ZIP was actually refused at zero calls; the SOP now
+  distinguishes packaging from role protocol, shows both routes, actual root
+  file selection, partial export and a prepared classroom-results PPT page.
+  No teacher email/upload/submission occurred. This practice pair is not the
+  final test, a new six-task score or unattended success.
+  [Rehearsal and limits](final-report.md#17-classroom-menu-and-safari-rehearsal)
+  · [Sanitized evidence](../evaluation/evidence/classroom-rehearsal-20261124.json)
+
+- **2026-11-24 five-minute script refresh:** Qingthefish, owner-requested
+  Codex-assisted S02 documentation on docs/S02-five-minute-script-20261124.
+  Replaced the stale four-accepted/two-in-progress speaking checkpoint with
+  the recorded six technical acceptances from the known-task assisted run,
+  retaining original four-accepted/two-failed results and the distinction from
+  engineering checks and unseen classroom accuracy. Prepared a 503-word English
+  script, Chinese cues for five manually authored slides, a 454-word shortening
+  option and full completed/partial/interrupted classroom-result alternatives.
+  The owner's supplied style reference informs pacing and short sentences only;
+  no other-course content, results or instructions enter the project.
+- **Checks / boundaries:** Cross-checked 633 known-six calls, 953 engineering
+  checks and the separate owner-operated practice pair: 64 calls, four actual
+  owner review events, two succeeded roots and hash-matched exported code after
+  independent 8/8 and 12/12 checks. The earlier 27-call pair remains separate.
+  Source/link, word-count and placeholder checks are documentation validation,
+  not another model evaluation or a timed speech rehearsal. No platform code,
+  provider, model calls, presentation file or other-course source was changed.
+  Runtime stays at the tested f9a438a source; final input/results, spoken timing,
+  Zoom sharing, broader unseen evaluation and general learning gains remain open.
+  [Script and rehearsal evidence](../evaluation/evidence/presentation-script-20261124.json)
+
+- **2026-11-24 S01 overnight operation check:** Qingthefish, owner-requested
+  Codex-assisted maintenance on docs/S01-overnight-rehearsal-20261124. Used the
+  actual classroom menu on bf91475 for a fresh no-search interval-analysis pair,
+  with original roles/README, one group and eight checked carried files. Both
+  roots reached technical acceptance in 75 requests (33/42), 1,503,090 reported
+  tokens, no unknown usage or observed provider error. Predeclared independent
+  root checks passed 11/11 and 17/17, including changed data and a minute-grid
+  reference; original functions/test classes were preserved. Generated test
+  expectation corrections and reviewer inspection/archive mistakes are retained.
+- **Operation evidence / limits:** Exit/reopen preserved the pending review
+  and 25-call counter. Partial and final exports preserved actual states at zero
+  new calls; final 47 manifest entries/48 files and 12 root files hash-verified.
+  Assignment-to-export was 874.79 seconds including review/idle, not a classroom
+  speed prediction. Sealed 506 files; prior known-six 557 and owner-export/current
+  pointer 41 files unchanged. No platform code/provider/tool changes, additional
+  six-task score, invented owner review, native desktop control, Zoom or speech
+  rehearsal. Actual classroom input and service availability remain open.
+  [Record and checks](final-report.md#18-additional-no-search-command-menu-practice)
+  · [Sanitized evidence](../evaluation/evidence/overnight-rehearsal-20261124.json)
+
+- **2026-11-25 S01 first-proposal diagnostic:** Qingthefish, owner-requested
+  Codex-assisted evidence maintenance on docs/S01-first-proposal-six-20261125.
+  One fresh original-six trial on c05a288 ended with four accepted roots and
+  two stopped roots in 600 requests (114/116/114/111/70/75), 31,122,236 reported
+  tokens and no unknown usage. No external technical repair, document recovery,
+  failed-child waiver, provider resend or allowance extension. Two actual
+  preference requests received explicitly delegated proxy choices; 21 assistant
+  technical decisions accepted 19 proposals and rejected two. These are not
+  genuine owner replies or independent human reviews.
+- **Findings / limits:** Both software and newsroom pairs passed their scoped
+  checks. Securities stopped on first risk proposals: full-position FX
+  translation failed six independent cases; the semiconductor risk draft
+  misinterpreted PE arithmetic and overstated CHIPS guardrails. Its 17 ordinary
+  reproduction/NAV/recovery checks passed, showing why successful execution
+  alone is insufficient. Final securities allocation/HTML delivery was not
+  reached. This locally frozen child-level stop rule is stricter than ordinary
+  final-only review, not an instructor rubric or proof later internal repair
+  was impossible. Neither root hit its allowance. Earlier assisted 6/6 and
+  original 4/6 records remain distinct; no runtime change or new engineering
+  regression result is claimed.
+- **Preservation / operation:** Three final exports use zero model calls;
+  429 manifest entries/432 files and all 93 accepted-root files hash-verified.
+  Sealed 4,883 private files; earlier known-six 557 and owner-export/current
+  pointer 41 files unchanged. Full assignment-to-export was 20,944.95 seconds
+  including long review/idle waits, not a speed comparison. The owner cancelled
+  the scheduled 04:00 continuation; its automation is paused. Real classroom
+  input, grading, future service availability and native presentation remain
+  open. [Diagnostic and evidence](final-report.md#19-known-six-first-proposal-diagnostic)
+  · [Sanitized record](../evaluation/evidence/known-six-first-proposal-20261125.json)
+
+- **2026-11-25 S02 final speaking update:** Qingthefish, owner-requested
+  Codex-assisted documentation on docs/S02-final-speaking-20261125. Updated the
+  five-minute English script to 486 spoken words across the required 2/1/1/1
+  minute sections. The mid-test minute distinguishes assisted 6/6 (633 calls)
+  from the fresh first-proposal diagnostic 4/6 (600 calls), including delegated
+  preferences, independent checks and its stricter child-level stop rule.
+  A separate no-search practice is identified as practice. Retained honest
+  completed/partial/interrupted classroom alternatives; no classroom result
+  is invented. Notes include five logical slide cues, limited progressive
+  highlighting, 39 optional words to remove and a 447-word shortening option.
+- **Checks / remaining:** Word/placeholder, source-count, local-link and
+  consistency checks only; no new model run or runtime changes. Read-only
+  visual inspection of the owner's 20-slide reference informed emphasis and
+  pacing only; no other-course scores or figures were reused or files edited.
+  Main was synced and clean; actual main history includes all four contribution
+  accounts. Three historical PRs remain open (#51/#81/#92); #92's source is
+  already integrated and #81 still lacks local raw evidence for independent
+  acceptance. This is not a zero-pending final course acceptance claim. Owner
+  PPT creation/timing, actual Zoom sharing, exact group slot, new classroom
+  package/result and the final/unseen/live-Git/learning gates remain separate.
+  [Current script](presentation-script.txt) · [Slide cues and alternatives](presentation-speaking-notes.txt)
+  · [Sanitized update evidence](../evaluation/evidence/presentation-script-20261125.json)
+
+- **2026-11-25 S02 technical narrative and figure pages:** Qingthefish,
+  owner-requested Codex-assisted preparation on docs/S02-technical-story-20261125.
+  Rewrote the five spoken sections to 439 words, emphasizing the durable task
+  tree, SHA-256-bound file handoff, gateway checks, isolated execution and
+  checkpoint recovery. Kept assisted 6/6 and fresh first-proposal 4/6 explicitly
+  labelled; removed repetitive generic disclaimers from spoken text while
+  retaining actual review conditions in notes. Whole-talk target 4:20–4:30
+  includes the classroom result and ending; it is not yet a timed rehearsal.
+- **Work evidence / visuals:** At frozen main 7678aa0, counted 295 reachable
+  non-merge commits by Hong Kong committer date: 55 / 146 / 82 / 12 in four
+  chronological work windows, excluding 111 merges. Counts include code,
+  tests, documentation and evidence, not independent iteration counts or hours.
+  Prepared and visually reviewed four editable native figure pages and local
+  PNG copies for the owner's manual PPT: version handoff, execution evidence,
+  two-condition results and a Git backup chart. No other-course data reused.
+- **Validation / limits:** Checked word counts, original source/result numbers,
+  snapshot-reachable Git history, figure values, local links and unchanged
+  runtime fingerprint. No new HKGAI request or claimed engineering-regression
+  rerun. Manual animations, spoken timing, actual meeting/window sharing and
+  final classroom task/results remain to be performed. Notes explain continuing
+  in this chat, a truthful result figure/short ending and direct-output sharing
+  if time is tight. [Current script](presentation-script.txt) · [Figure pages](presentation-assets/20261125/)
+  · [Source and statistics](../evaluation/evidence/presentation-technical-20261125.json)
 
 ## Starting a Codex session
 

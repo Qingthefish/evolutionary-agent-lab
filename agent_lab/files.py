@@ -335,9 +335,11 @@ class FileTools:
             self._expected(current, expected_sha256)
             text = bytes(current).decode("utf-8")
             count = text.count(old_text)
-            if count != 1:
+            if count != 1 or text.find(old_text) != text.rfind(old_text):
                 raise FileToolError("old_text was not found in this version; read the file and copy the passage exactly"
                                     if count == 0 else
+                                    "old_text occurs more than once (overlapping passages); include surrounding text"
+                                    if count == 1 else
                                     f"old_text occurs {count} times; include enough surrounding lines to make it unique")
             data = self._encode(text.replace(old_text, new_text, 1))
             temporary = ".write-" + uuid4().hex

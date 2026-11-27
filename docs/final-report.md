@@ -875,3 +875,444 @@ skips**. The live regressions are bound to their recorded development source;
 this final control-edge correction has its own offline evidence rather than a
 fabricated model rerun. Raw failures, intermediate source versions and original
 sealed records remain private. [Sanitized evidence](../evaluation/evidence/quality-execution-20261123.json)
+
+## 15. Fresh known-six assisted development
+
+The November 23–24 quality-mode trial completed all **six original mid-test
+tasks with coordinator-assisted technical acceptance**. Three fresh groups
+used the original four role prompts and original ordered task pairs, without
+copying earlier trial outputs or memories at initialization. Each accepted
+Task 1 snapshot was then carried into Task 2 in its same group. The model
+runtime remained frozen at source digest `26836023601da1dc2d44d5d70075a1234956bea17b87d5509fd17051a3cb119a`.
+Actual settings were 8,192 output tokens, a 180-second socket wait and quality
+execution without the experimental forced completion window. Inspected numeric
+extensions retained counters, prior plans and intermediate failures.
+
+| Original task | Technical outcome | Actual requests | Known reported tokens | Task wall seconds | Summed turn seconds |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Software 1: booking system | Accepted after behavioral repairs | 103 | 3,165,344 | 17,642.47 | 957.03 |
+| Software 2: usage dashboard | Accepted after integration and frontend repairs | 212 | 35,560,824 | 26,291.55 | 4,907.24 |
+| Newsroom 1 | Accepted unpublished delivery package | 74 | 4,219,568 | 14,580.26 | 929.38 |
+| Newsroom 2: AI-authorship fact-check | Accepted after statistical/content corrections | 69 | 5,549,532 | 4,798.68 | 1,037.25 |
+| Securities 1 | Accepted simulated allocation and risk analysis | 75 | 2,481,780 | 17,642.15 | 671.11 |
+| Securities 2: semiconductor outlook | Accepted 16-section HTML presentation | 100 | 8,557,894 | 21,988.63 | 1,516.32 |
+
+Task wall time includes operator, review and idle pauses. Summed turn duration
+includes provider calls and local tools; it is neither end-to-end duration nor
+pure model latency. The interleaved task wall times must not be added as the
+suite's elapsed duration. These long development timings do not demonstrate
+presentation-day speed. Total usage was **633 requests / 59,534,942 known
+reported tokens**, plus unknown usage for four retained connection failures.
+A separate effect-free health request is outside the six-task counter. Together
+with the selected preceding 573-call trials, the selected ledger is **1,207
+requests**; this is not lifetime account usage, cost or an unlimited balance.
+Requested `e7` and returned `e10` model suffixes still have unconfirmed
+equivalence. No failure was silently retried.
+
+The final booking implementation passed 14 independent behavioral checks.
+The dashboard exposed two actual defects: a carry-in booking contributed
+minutes without its count, and per-hour rounding lost a one-minute booking
+split across two hours. Final Python/public-entry checks cover these cases,
+cancellation cohorts, matching averages, hour/day conservation, unused rooms
+and byte-for-byte preservation of the original records. The final exact source
+passed **51 generated regressions** in the pinned no-network sandbox and **28
+independent arithmetic/export/static-wiring checks**. Source inspection and
+syntax parsing verify the emitted raw-record calculation, single totals path,
+render functions, DOM targets and initialization. **No browser was executed**;
+visual layout and actual control interactions remain unverified. Direct
+narrowing of the old prebuilt-matrix helper and matrix-only renderer
+reconstruction are not certified; the documented public command supplies the
+original booking records.
+
+Review itself also required correction. At request 576, the coordinator
+incorrectly described the frontend as reading raw records; the 22 passing
+checks then covered the public Python range and export data, not the actual
+interactive path. This assertion was explicitly corrected at 601. Corrected
+checks rejected the old matrix path and then a repair that removed rendering
+functions and doubled totals, before accepting the final source. The model
+later replaced its usage document with a single table row. The reviewer
+reconstructed the exact earlier model-authored document from successful tool
+history; the model restored it and submitted the final deliverable. All five
+explicit technical-feedback interventions and the original failed revisions
+remain in the record. Genuine owner replies, including the AI-use/cheating
+editorial distinction, and later delegated routine choices are attributed.
+No failed child was waived in this fresh trial.
+
+The semiconductor deck retained checked research/risk handoffs and 20
+independently recomputed stress combinations. A small displayed recovery
+rounding discrepancy remains disclosed: the 40% severe scenario says 40.9%
+rather than 40.8%, about 0.055 percentage point difference. Slide navigation
+source and JavaScript syntax were checked, with browser behavior untested.
+
+Continuation also reproduced a platform control defect: an inspected,
+explicitly resend-decided historical transport error still blocked a later
+numeric extension. [PR #93](https://github.com/Qingthefish/evolutionary-agent-lab/pull/93)
+matches only the exact earlier retryable failure and later resend decision;
+unresolved errors, nonempty responses and unknown effects remain refused.
+Twelve focused checks and the full **922-check** engineering suite passed
+**901 checks, with 21 explicit container skips**, making zero model requests.
+All three required CI checks passed. During the trial, only this separately
+versioned extension control was imported with an explicit audit record; the
+model runtime stayed frozen. Main was updated only after sealing the trial.
+
+All 557 files in the final seal were hash-verified; the earlier canonical
+seal's 314 files and 47 selected files from the earlier four fresh acceptances
+were unchanged. A read-only archival script initially assumed the newsroom
+had a sandbox table; the partial archive/error was retained and a corrected
+archive sealed without model calls or outcome changes. Accepted outputs are
+packaged separately from drafts and raw traces.
+
+This is a completed **known-task assisted development trial**. Raising
+allowances helped preserve useful work, but the changed repairs and reviews
+prevent a causal claim that removing limits alone produced the result.
+The record demonstrates concrete fixes and deliverable completion, including
+remaining failure modes; it does not establish monotonic improvement, general
+learning, an unattended completion rate, teacher scores or unseen-task success.
+[Sanitized evidence and exact per-task timing](../evaluation/evidence/known-six-assisted-20261124.json)
+
+## 16. Classroom integration and new-task audit
+
+An owner-requested review found two unmerged HelloWorld2333666 proposals:
+[#90](https://github.com/Qingthefish/evolutionary-agent-lab/pull/90) adds opt-in
+streamed replies and reasoning-size/token measurement;
+[#92](https://github.com/Qingthefish/evolutionary-agent-lab/pull/92), stacked on
+it, adds exact-passage edits, explicit operator resend controls and streaming
+on both classroom paths. Their commits are preserved in the integration.
+The transport assembles a complete reply before passing it to the existing
+strict tool parser; this is not a new model or live typing in the interface.
+The proposals' 30.4/12-minute rehearsals are contributor-reported development
+results with different observed provider speeds, not an isolated causal
+measurement of the code change.
+
+Independent review reproduced additional boundary failures. Malformed streamed
+tool fields escaped as raw Python exceptions; conflicting response/call
+identities and incomplete fragment sequences could be combined; byte accounting
+used characters and read whole lines before bounding them. Corrections sanitize
+these as stream failures, require a completed envelope and consistent ordered
+fragments, bound actual UTF-8/serialized bytes and limit reads before allocation.
+Exact-passage editing now also refuses overlapping matches, where nonoverlapping
+`str.count` alone incorrectly reported uniqueness. Nine independent negative
+test methods preserve the original failures. The combined source passed all
+**42 focused and 952 full engineering checks**, with configured actual pinned
+containers and Textual, zero skips and zero model requests. An earlier focused
+invocation omitted the tests import path; that harness error is retained rather
+than presented as a product failure.
+
+Source inspection distinguishes the general platform from the dedicated
+mid-test adapter. Ordinary classroom TXT/MD input becomes a new task with
+default generic roles, private files and the normal delegation/tool/verification
+services. It has no original-six answer lookup or dependency on `six.py` /
+`six_quality.py`. The dedicated ZIP adapter does bind the issued README
+protocol fingerprint, three directory/role-ID groups, ordered task pairs and
+the original securities HTML exception. A read-only check changed task and
+role instruction bodies under the same ZIP contract: both loaded verbatim.
+Changing the layout was explicitly refused, with the original archive unchanged.
+This is protocol-specific intake, not a universal final-package importer.
+Generic default roles must not silently replace roles assigned by the teacher.
+
+To test beyond the original questions, we froze a new author-created lab
+temperature CSV-QC prompt, supplied raw data and **12 independent fixtures**
+before any live request. The actual `scripts.classroom.import_text` path created
+a fresh group with only its two supplied input files, no previous answers or
+memory and no web tools. Its coordinator delegated implementation to the coder.
+The initial proposal passed **9/12** fixtures; three changed datasets exposed
+loss of original rejected-field whitespace. A delegated paraphrase had said
+"post-trim", contradicting the original requirement to retain raw parsed values.
+The independent review rejected it with that concrete discrepancy. The model
+repaired code, self-tests and instructions, offered new snapshots and resubmitted.
+The repaired child passed the unchanged **12/12** fixtures. The coordinator then
+received the checked source and instructions; that actual delivered version
+passed the same **12/12**, including input preservation, duplicate-ID priority,
+unit conversion, decimal rounding, Unicode, empty/invalid data and error exits.
+All candidate execution was confined to the pinned no-network Python sandbox.
+
+The new goal completed technical acceptance in **43 HKGAI requests / 766,126
+known reported tokens**, with zero provider failures or unknown usage. It used
+eight `replace_text` and six `append_text` calls. Two length-limited replies
+retain their counted usage and ordinary quality-mode recovery; no incomplete
+tool arguments were executed. Requested `e7` and returned `e10` suffix
+equivalence remains unconfirmed. Actual task wall time was **2,653.22 seconds**
+including technical review/idle, versus **211.29 seconds** summed turn duration
+including provider and tools. The latter is not a three-and-a-half-minute
+end-to-end result or a prediction of classroom speed. One rejection, one child
+acceptance and one root acceptance are explicitly attributed to assistant
+technical review, with no fabricated human review. The trial's 101 sealed files
+and the earlier six-task seal's 557 files were hash-verified; no generated QC
+solution was added to the platform runtime.
+
+These findings support general task execution beyond the original six and
+useful generic tool improvements, while leaving evaluation overfitting risk
+visible. Repeatedly repairing known tasks is development, not an estimate of
+unseen success. One self-authored, assisted new task is also insufficient for
+a broad generalization or memory-learning claim. The most useful remaining
+checks are independent new domains with frozen inputs/criteria and fixed
+intervention rules; preserving original requirements through delegation;
+checked-version handoff and prompt completion; actual human operation and
+timely partial export; and mapping the real final package when released.
+The updated SOP documents explicit resend and fresh-session compatibility:
+new tools/streaming change bindings, so old sessions retain their original
+source/configuration rather than silently acquiring capabilities.
+[Sanitized integration and new-task evidence](../evaluation/evidence/classroom-integration-20261124.json)
+
+## 17. Classroom menu and Safari rehearsal
+
+The owner requested an actual rehearsal of receiving a ZIP, running tasks,
+handling review, exporting results and presenting them. Re-read the connected
+instructor notification: five minutes plus 30 seconds transition, task link
+three slots in advance, results shown during the talk, similar mid-test data,
+no task web search, and December 19 final submission. Roughly 16.5 minutes is
+the preparation-window estimate, not a separately stated timeout-failure rule.
+The notice does not require an immediate email/ZIP upload or embedding every
+result in a slide. Later task-specific instructions still take precedence.
+
+The rehearsal starts from the previously downloaded original mid-test archive;
+no final package exists yet and no new Canvas download or teacher submission
+was performed. An explicitly labelled private practice derivative preserves
+the original README protocol and all roles, replacing only the software pair
+with a small workshop seat-allocation library and its follow-up summary.
+The other two scenarios were prepared but not run. A separate ZIP containing
+only question.txt was actually refused with zero calls: merely compressing a
+text file does not satisfy the role-package contract.
+
+On runtime d3878dd, the actual scripts.classroom.menu path completed environment
+check, option 2 import, software-group selection, r advance, v file inspection,
+same-session reopen, n continuation and e export. The practice current pointer
+was isolated so the owner's existing launcher session was not replaced.
+Both ordered roots share the same group and five checked Task 1 files were
+carried into Task 2. The first root delegated independent QA; the second lead
+extended its received code. The original four roles were available; use of
+every role is not claimed. Frozen independent checks passed **8/8** for the
+first root and **12/12** for the final second root, with actual candidate code
+executed only in the existing digest-pinned, no-network container. The shipped
+suites actually passed 21 and 31 tests; QA's generated adversarial script
+actually printed 55 passes. These are different check sets, not added together
+as an instructor score.
+
+The pair used **27 actual HKGAI requests / 328,752 reported tokens**, with no
+unknown usage; per-root shares are **20 and 7**. One 8,192-token length cutoff
+retains discarded arguments and counted usage. An initial test invocation
+incorrectly supplied Python -m flags to the test script, exited 2, and was
+corrected by the model. Three acceptances are attributed to assistant technical
+checks; there are no human_review_recorded events. No clarification or critical
+permission was requested in this pair, so those live interactions were not
+covered. An externally applied technical acceptance left an already displayed
+menu snapshot stale; n refused without modifying the tasks. Reopening the same
+session through option 3 refreshed it and continuation then succeeded.
+
+First assignment to final export took **779.37 seconds**, including operator
+review/idle; plan start to export was **910.87 seconds**. Individual root wall
+times were **468.28 and 274.47 seconds**. Summed turn duration was **117.98
+seconds**; this excludes review/idle and is not end-to-end speed. Neither the
+simple task pair nor its timing predicts the final classroom task. Export
+preserved both succeeded states and 29 evidence/artifact files; all seven
+current Task 2 files match the independently checked snapshots. Sealed and
+hash-verified 303 files; the old known-six seal's 557 files remain unchanged.
+
+The rehearsal exposed a genuine display issue: preflight omitted needs even
+when advance had reported awaiting_verification, so the check menu displayed
+an empty list. A one-field correction reports the existing review boundaries;
+it performs no model/tool action and changes no acceptance decision. The actual
+pending-proposal database was copied for before/after verification. Its original
+file-root binding remained enforced; inspection reused that unchanged root
+instead of weakening the binding. Before the fix the field was absent; after
+the fix the correct pending root was listed, with zero new requests. The first
+attempt to relocate the bound file root was refused and retained. A regression
+also verifies that real synthetic clarification/review states stay visible
+without another provider call. All **67 focused and 953 full engineering
+checks passed**, with configured actual containers and Textual, zero skips and
+zero model calls. An earlier unprivileged focused invocation hit four temporary
+Unix-socket permission errors; the authorized rerun passed. These environment
+errors are not counted as model or product failures.
+
+Safari actually opened the prior final securities HTML and displayed pages
+1–3. Right-arrow navigation, the Next button and the Previous button were
+observed; the whole 16-page deck and the separate dashboard controls were not
+visually verified. Native Terminal UI control was explicitly denied by the
+computer-use tool. This is therefore a real command-menu/backend rehearsal
+plus a limited Safari check, not a completed native desktop/Zoom/human speech
+rehearsal. No alternative Terminal UI automation, email, upload or classroom
+submission was performed. The updated SOP gives both input routes, root-file
+selection, truthful partial export and a prepared in-class-results slide plan.
+[Sanitized rehearsal evidence](../evaluation/evidence/classroom-rehearsal-20261124.json)
+
+## 18. Additional no-search command-menu practice
+
+The owner requested a check while resting before the November 25 evening
+presentation. Rather than repeatedly optimizing the already known six answers,
+this bounded run used the current tested runtime bf91475 and a new private
+practice derivative of the original ZIP. Only the two software prompts changed:
+strict half-open interval conflict analysis, followed by per-room union minutes,
+excess booking minutes and peak concurrency. Original roles and README stayed
+unchanged. The other two original scenarios were initialized but not run; no
+older answers or memory were copied. The six-task score remains the separately
+reported known-task assisted development result.
+
+The same scripts.classroom.menu used by the launcher performed option 5 local
+check, option 2 import, group selection, r advancement, v pending-review
+inspection, normal exit, option 3 reopen, n ordered continuation and e exports.
+The private practice current pointer kept the owner's usual session unchanged.
+At 25 actual requests, exiting at the pending QA review and reopening preserved
+the same root, pending child and counter. Task 2 reused the same group and eight
+checked Task 1 files. No uncertain in-flight operation was replayed. Technical
+acceptance was attributed to Codex and frozen independent checks; no owner
+review or critical-action approval was fabricated.
+
+Both roots completed in **75 actual HKGAI requests**, split **33 / 42**, with
+**1,503,090 reported tokens**, zero unknown-usage attempts and zero observed
+provider errors. Requested model e7 and returned e10 remain separately recorded;
+suffix equivalence is not established. There were **17 actual agent container
+executions**, no web calls and no candidate-code host execution. This confirms
+service responses during this run, not availability at presentation time.
+
+Before the first model call, an independent checker was frozen. It passed
+**11/11** categories for the first root, including 500 changed reservation sets.
+The second root passed **17/17**, repeating those analysis checks and adding
+160 usage cases compared against a separate minute-by-minute reference.
+The original analysis/validation function syntax trees and original test
+classes were unchanged in the extension. The shipped suites reported 31 and
+48 executed tests; agent QA separately reported 12/43 checks and 3,000/5,000
+randomized rounds. These sets are kept separate. Four assistant technical
+reviews accepted the two QA children and two exact root snapshots.
+
+Errors in generated test expectations remain visible: the first QA corrected
+two wrong expectations, and the second author corrected two arithmetic
+expectations rather than altering correct implementation behavior. Their
+reports disclose these corrections. The external reviewer independently
+checked the final results. An assistant file-inspection filename assumption
+and an initial archival query-column mistake were corrected without any model
+call, runtime change or task-outcome change.
+
+A partial export retained **succeeded / running**; the final export retained
+**succeeded / succeeded**. Each export used zero model calls. All **47 manifest
+entries**, **48 files including the manifest**, and the final root's **12 files**
+were checked against their recorded versions. First assignment to final export
+was **874.79 seconds** (about 14 minutes 35 seconds), including operator checks
+and idle. Individual roots took **403.57 / 459.62 seconds**; summed turn time
+including tools was **401.96 seconds**, not end-to-end time or pure inference
+latency. This small task pair does not predict unknown classroom speed.
+
+Sealed 506 private record/source files; reverified the earlier six-task seal's
+557 files and 41 owner-export/current-pointer files unchanged. The runtime,
+launcher, provider and tool permissions are unchanged, so no new engineering
+regression result is claimed for this documentation-only record. This was a
+command-menu rehearsal, not native Terminal/Finder manipulation, Zoom sharing
+or a timed human talk. No real clarification, critical authorization or service
+resend occurred in the pair. The real classroom package, unknown-task quality
+and future service availability remain to be tested.
+[Sanitized overnight evidence](../evaluation/evidence/overnight-rehearsal-20261124.json)
+
+## 19. Known-six first-proposal diagnostic
+
+At the owner's request, ran the six original mid-test tasks once more, from
+fresh groups, files and private memories on c05a288. The protocol, runtime,
+controller and operating allowances were frozen before the first model call;
+task criteria were recorded before the first external proposal. Original roles
+and question text were retained. Each Task 2 used its original group and the
+exact terminal Task 1 root files. Securities Task 2 therefore inherited two
+explicitly partial files from a failed first root, with no older successful
+answer substituted.
+
+The diagnostic forbade external solution edits, defect locations, corrective
+feedback and document recovery. Model-chosen QA and repairs before submission
+remained allowed. Each first externally submitted child or root was checked;
+a material error stopped its whole root without returning counterexamples.
+This is a locally chosen diagnostic rule, not an instructor requirement or a
+standing product restriction. It can stop work before a coordinator's later
+internal repair, so its result is not an estimate of ordinary final-only
+completion. Independent checks are also fallible, rather than an answer key.
+
+The allowance was 256 requests per root / 1,536 total, 8,192 output tokens,
+180-second socket timeout, streaming and at most 14,400 seconds of accumulated
+network-command work. None of the six roots exhausted these allowances. No
+automatic new round, numeric renewal or provider resend occurred. The requested
+model was e7; all recorded replies identified e10. Their suffix equivalence
+remains unconfirmed.
+
+| Original task | Terminal result | Actual requests | Root wall seconds, including review/idle |
+| --- | --- | ---: | ---: |
+| Software 1 | Accepted | 114 | 1,473.15 |
+| Software 2 | Accepted | 116 | 2,056.56 |
+| Newsroom 1 | Accepted | 114 | 13,472.58 |
+| Newsroom 2 | Accepted | 111 | 1,806.77 |
+| Securities 1 | Stopped at first risk-child proposal | 70 | 998.83 |
+| Securities 2 | Stopped at first risk-child proposal | 75 | 1,081.88 |
+
+**Four accepted roots, two stopped roots; 600 actual HKGAI requests and
+31,122,236 reported tokens**, with no unknown-usage attempts or observed
+provider transport outage. Two length-cutoff replies retained their known
+usage; the agents continued within the existing allowance. There were 21
+assistant technical decisions, accepting 19 proposals and rejecting two.
+Two actual preference requests received owner-delegated proxy decisions:
+campus story/channel selection and a hypothetical paper-investor profile.
+They were not actual owner replies. No failed-child waiver or invented human
+review was recorded. This run is neither zero-human autonomy nor held-out
+evaluation, and does not replace the separate assisted 6/6 development result
+or the original 375-call four-assisted/two-failed trial.
+
+Software 1 delivered a SQLite-backed booking/cancellation CLI with 29 tests.
+Independent checks covered four categories, 32 changed intervals and four
+concurrent processes. Software 2 delivered an actual interactive CLI date-range
+dashboard and optional static, script-free HTML/SVG report. Its 34 dashboard
+tests and 29 legacy tests passed; seven independent categories covered 220
+changed datasets, a separate minute-grid reference, filtering, export and
+non-mutation. This is not a claim of a browser-interactive dashboard. All
+accepted root snapshots match the exported current source.
+
+Newsroom 1 delivered campus-robotics drafts for three requested channels with
+captured source/quotation checks. Newsroom 2 delivered a fact-check article and
+short version, distinguishing detector evidence from course-policy misconduct.
+Primary-paper samples, error rates, paraphrasing results and current preprints
+were checked within their stated scopes. No article was published. Retained
+imperfections include overcautious or mistaken source/venue tracebacks, rounded
+rates less precise than their disclosed counts, and broad claims requiring the
+stated high-stakes authorship-proof interpretation. Acceptance does not certify
+every detail, all detector products or publication readiness without review.
+
+Securities 1's risk code applied USD/HKD translation to the US **loss** rather
+than the full surviving USD position. Three flat-asset cases omitted currency
+gains, and three fixed-shock cases gave lower or unchanged HKD value for a
+stronger USD. All six independent cases failed. Its correct equity-only stress
+numbers and internal detection of an earlier allocation mismatch are retained.
+
+Securities 2's risk draft reproduced its saved arithmetic, and 17 checks of
+reproduction, sleeve/NAV impact and recovery percentages passed. However, its
+valuation table labelled forward/trailing PE minus one as an earnings fall.
+At a fixed price and comparable EPS bases, earnings growth is instead
+trailing/forward minus one: the four examples imply +73.4%, +68.2%, +56.4% and
++121.7%, rather than the table's negative 36.0–54.9%. Later prose partly changed
+the direction but continued using the wrong magnitude. This is a material
+meaning error, despite reproducible calculations. The draft also described
+CHIPS guardrails as a blanket ban on advanced-chip production in certain
+countries; the primary rule concerns significant capacity-expansion transactions
+with conditions and exceptions. [NIST's guardrails FAQ](https://www.nist.gov/chips/chips-implementation-strategies/national-security/frequently-asked-questions-preventing)
+supports that distinction. Its explicitly disclaimed, implausible linear
+duration illustration was retained as a weakness, not used as the rejection
+basis. Neither root reached final allocation/HTML delivery. Detailed findings
+were kept outside the live tasks; only the generic diagnostic stop was applied.
+This does not prove later internal repair could not have succeeded.
+
+Full first-assignment-to-final-export elapsed time was **20,944.95 seconds**,
+about 5 hours 49 minutes, including substantial reviewer/idle time, especially
+in Newsroom 1. Summed turn time including tools was 4,405.81 seconds; accumulated
+network-command work including local control was 5,020.79 seconds. Neither is
+pure inference time, and none predicts classroom speed. The 67 agent container
+records all confirmed cleanup; 14 retained operation errors concern missing or
+failed artifact exports. A successful tool call is not counted as proof that
+its calculation or output was correct. Candidate code ran only in the pinned,
+no-network container, never on the host. Reviewer fixture/schema corrections,
+the controller's unsupported answer flags and a pre-execution socket-permission
+refusal are preserved separately from candidate failures; none supplied a fix
+to the live agents.
+
+Final exports preserve succeeded/succeeded, succeeded/succeeded and failed/failed
+at zero new model calls. Verified 429 manifest entries, 432 files including the
+three manifests, and all 93 accepted-root snapshot files. Sealed 4,883 private
+files containing the frozen inputs/runtime, transcripts, first proposals,
+independent checks and verdicts. The previous known-six seal's 557 files and
+41 owner-export/current-pointer files remain unchanged. The owner cancelled
+the 04:00 follow-up after waking; that automation is paused and no replacement
+was scheduled. No runtime code, provider or tool permissions changed, and no
+new 953-test engineering-regression result is claimed. Actual classroom input,
+teacher scoring, future service availability, complete browser visuals, native
+Terminal/Finder, Zoom and human speech remain unverified.
+[Sanitized diagnostic evidence](../evaluation/evidence/known-six-first-proposal-20261125.json)
