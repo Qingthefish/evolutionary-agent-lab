@@ -102,8 +102,9 @@ class Platform:
         with self.guard:
             return self.locks.setdefault(str(directory), threading.Lock())
 
-    def session(self, messages):
-        key = chat_key(messages)
+    def session(self, messages, chat_id=None):
+        # Open WebUI forwards its chat ID; two chats with the same first message stay separate goals.
+        key = ("chat:" + chat_id) if chat_id else chat_key(messages)
         sessions = _load_sessions()
         if key in sessions:
             return Path(sessions[key]), False
@@ -152,8 +153,8 @@ class Platform:
         return ControlCenter(directory / "state", human="operator", live=classroom.live(self.config))
 
     # ---- one chat turn ----
-    def handle(self, messages, emit):
-        directory, created = self.session(messages)
+    def handle(self, messages, emit, chat_id=None):
+        directory, created = self.session(messages, chat_id)
         with self._lock(directory):
             text = _content(messages[-1]).strip() if messages and messages[-1].get("role") == "user" else ""
             snap = self.snapshot(directory)
@@ -332,6 +333,7 @@ def make_handler(platform, token):
             if not messages:
                 return self._json(400, {"error": {"message": "no messages"}})
             identifier = "chatcmpl-" + uuid.uuid4().hex
+            chat_id = (self.headers.get("X-OpenWebUI-Chat-Id") or "").strip()[:128] or None
             last = _content(messages[-1])
             stream = bool(body.get("stream"))
             if is_ui_background_task(last):
@@ -344,13 +346,13 @@ def make_handler(platform, token):
             if not stream:
                 parts = []
                 try:
-                    platform.handle(messages, parts.append)
+                    platform.handle(messages, parts.append, chat_id)
                 except (ValueError, WorkflowError, OSError) as error:
                     parts.append(f"已停止并保留现场：{error}\n")
                 return self._json(200, {"id": identifier, "object": "chat.completion", "model": MODEL_ID,
                     "choices": [{"index": 0, "message": {"role": "assistant", "content": "".join(parts)},
                                  "finish_reason": "stop"}]})
-            self._stream(identifier, lambda emit: platform.handle(messages, emit))
+            self._stream(identifier, lambda emit: platform.handle(messages, emit, chat_id))
 
         def _stream(self, identifier, produce):
             self.send_response(200)

@@ -51,21 +51,24 @@ class AdapterTests(unittest.TestCase):
         transport = patch.object(HKGAIHTTP, "__call__", side_effect=lambda payload: self.replies.pop(0))
         transport.start(); self.addCleanup(transport.stop)
 
-    def request(self, path, body=None, token=None):
+    def request(self, path, body=None, token=None, chat_id=None):
         data = None if body is None else json.dumps(body).encode()
-        req = urllib.request.Request(self.url + path, data=data, method="POST" if body else "GET", headers={
-            "Authorization": "Bearer " + (self.token if token is None else token), "Content-Type": "application/json"})
+        headers = {"Authorization": "Bearer " + (self.token if token is None else token), "Content-Type": "application/json"}
+        if chat_id:
+            headers["X-OpenWebUI-Chat-Id"] = chat_id
+        req = urllib.request.Request(self.url + path, data=data, method="POST" if body else "GET", headers=headers)
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         with opener.open(req, timeout=20) as response:
             return response.read().decode()
 
-    def chat(self, *texts, stream=True):
+    def chat(self, *texts, stream=True, chat_id=None):
         messages = []
         for i, text in enumerate(texts):
             messages.append({"role": "user", "content": text})
             if i < len(texts) - 1:
                 messages.append({"role": "assistant", "content": "(earlier reply)"})
-        raw = self.request("/chat/completions", {"model": w.MODEL_ID, "messages": messages, "stream": stream})
+        raw = self.request("/chat/completions", {"model": w.MODEL_ID, "messages": messages, "stream": stream},
+                           chat_id=chat_id)
         if not stream:
             return json.loads(raw)["choices"][0]["message"]["content"]
         out = []
@@ -121,6 +124,18 @@ class AdapterTests(unittest.TestCase):
         feedback = [json.loads(r[0]) for r in db.execute("SELECT detail FROM events WHERE kind='human_review_recorded'")]
         db.close()
         self.assertEqual(feedback[0]["feedback"], "Please add a heading.")
+
+    def test_forwarded_chat_ids_keep_identical_first_messages_as_separate_goals(self):
+        goal = "Write a.md."
+        for _ in range(2):
+            self.replies += [tool_reply(("create_text", {"path": "a.md", "content": "x"})),
+                             tool_reply(("submit_for_verification", {"summary": "Wrote a.md with the requested text."}))]
+        self.assertIn("已导入原题", self.chat(goal, chat_id="chat-one"))
+        self.assertIn("已导入原题", self.chat(goal, chat_id="chat-two"))  # Not attached to chat-one's goal.
+        sessions = json.loads((c.LOCAL / "webui-sessions.json").read_text())
+        self.assertEqual(set(sessions), {"chat:chat-one", "chat:chat-two"})
+        self.assertNotEqual(sessions["chat:chat-one"], sessions["chat:chat-two"])
+        self.assertNotIn("已导入原题", self.chat(goal, "status", chat_id="chat-one"))
 
 
 if __name__ == "__main__":
