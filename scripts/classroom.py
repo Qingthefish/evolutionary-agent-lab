@@ -89,6 +89,11 @@ def live(config):
         tool_calls=1000,child_retries=8,enable_collaboration=True,require_tool_actions=True,
         docker_host=config['docker_host'],python_image=config['python_image'])
 
+TEXT_TASK_CONSTRAINTS=(
+    'Inspect the human-provided inputs/* task files and preserve supplied data. '
+    'No web search is configured. Delegate input snapshots through the artifact tools. '
+    'Document outputs use Markdown or plain text; code executes only in the configured sandbox.',)
+
 def fresh(kind):
     path=LOCAL/(kind+'-'+stamp());path.mkdir(parents=True,mode=0o700,exist_ok=False)
     return path
@@ -110,10 +115,7 @@ def import_text(config, goal_file, inputs=(), *, directory=None):
     center=ControlCenter(directory/'state',human='operator',live=live(config))
     try:
         chat=center.create_conversation('group',list(live_members(center.live)))
-        result=center.create_task(chat,'coordinator',goal,constraints=(
-            'Inspect the human-provided inputs/* task files and preserve supplied data. '
-            'No web search is configured. Delegate input snapshots through the artifact tools. '
-            'Document outputs use Markdown or plain text; code executes only in the configured sandbox.',))
+        result=center.create_task(chat,'coordinator',goal,constraints=TEXT_TASK_CONSTRAINTS)
         def provide(b):
             return [b.files.provide_text(result['task'],b.human,name,content) for name,content in supplied]
         receipts=center.call(provide)

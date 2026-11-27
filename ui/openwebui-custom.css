@@ -1,0 +1,13 @@
+/* Agent Lab prototype (2026-11-27): hide Open WebUI controls the classroom platform cannot serve.
+   Open WebUI 0.13.5 selectors; the matching features are also switched off in the launcher. */
+#input-menu-button,                     /* "+": upload file, screenshot, attachments */
+button[aria-label="用户菜单"], button[aria-label="User menu"],   /* settings / log out (no login) */
+button[aria-label="Notifications"],     /* inbox notifications */
+button[aria-label="Split screen"],      /* multi-pane chat */
+button[aria-label="New tab"],           /* chat tabs */
+button[aria-label="Tabs"], [role="tablist"][aria-label="Tabs"],
+.save-code-button,
+div.sticky.bottom-0.sidebar,            /* expanded sidebar's user entry: same settings / log out menu */                      /* edits code inside a chat message; not a platform file */
+button[aria-label="状态"], button[aria-label="Status"] {   /* Open WebUI's own token estimate, not platform usage */
+  display: none !important;
+}
