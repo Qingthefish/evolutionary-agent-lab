@@ -36,7 +36,7 @@ class AdapterTests(unittest.TestCase):
         self.sock = socket.socket(socket.AF_UNIX)
         self.sock.bind(str(base / "docker.sock"))
         self.addCleanup(self.sock.close)
-        config = {"model": "test-no-real-provider", "key_env": "CLASSROOM_TEST_KEY", "credential_file": "not-used",
+        self.config = config = {"model": "test-no-real-provider", "key_env": "CLASSROOM_TEST_KEY", "credential_file": "not-used",
                   "docker_host": "unix://" + str(base / "docker.sock"), "python_image": "python@sha256:" + "a" * 64}
         for p in (patch.dict("os.environ", {"CLASSROOM_TEST_KEY": "synthetic-test-key"}),
                   patch.object(c, "LOCAL", base / "local"), patch.object(w, "POLL_SECONDS", 0.05)):
@@ -118,7 +118,7 @@ class AdapterTests(unittest.TestCase):
         self.assertIn("已退回修改", returned)
         self.assertIn("目标状态：running", returned)
         self.assertEqual(self.replies, [])
-        directory = Path(json.loads((c.LOCAL / "webui-sessions.json").read_text()).popitem()[1])
+        directory = Path(json.loads((c.LOCAL / "webui-sessions.json").read_text()).popitem()[1]["directory"])
         import sqlite3
         db = sqlite3.connect(directory / "state" / "workflow.sqlite3")
         feedback = [json.loads(r[0]) for r in db.execute("SELECT detail FROM events WHERE kind='human_review_recorded'")]
@@ -136,6 +136,65 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(set(sessions), {"chat:chat-one", "chat:chat-two"})
         self.assertNotEqual(sessions["chat:chat-one"], sessions["chat:chat-two"])
         self.assertNotIn("已导入原题", self.chat(goal, "status", chat_id="chat-one"))
+
+    def finish(self, goal, chat_id, path="a.md"):
+        self.replies += [tool_reply(("create_text", {"path": path, "content": "result"})),
+                         tool_reply(("submit_for_verification", {"summary": f"Wrote {path} with the requested result."}))]
+        self.chat(goal, chat_id=chat_id)
+        return self.chat(goal, "通过", chat_id=chat_id)
+
+    def test_help_and_environment_check_answer_without_creating_a_goal_or_calling_the_model(self):
+        self.assertIn("下一题：", self.chat("帮助", chat_id="h"))
+        report = self.chat("环境检查", chat_id="h")
+        self.assertIn("零模型调用", report)
+        self.assertIn("Docker socket", report)
+        self.assertNotIn("synthetic-test-key", report)
+        self.assertFalse((c.LOCAL / "webui-sessions.json").exists())
+        self.assertNotIn("批准", self.chat("帮助", chat_id="h"))  # No approval actions on this path.
+
+    def test_continue_last_attaches_a_terminal_import_with_its_attachment(self):
+        goal, data = c.LOCAL.parent / "goal.txt", c.LOCAL.parent / "rooms.csv"
+        goal.write_text("Summarise the supplied rooms.\n"); data.write_text("room,capacity\nAurora,4\n")
+        directory = c.import_text(self.platform_config(), goal, [data])
+        attached = self.chat("继续上次", chat_id="t")
+        self.assertIn("已接上 Terminal 导入的现场", attached)
+        self.assertIn(directory.name, attached)
+        self.assertIn("inputs/01-rooms.csv", self.chat("继续上次", "文件", chat_id="t"))
+        self.assertIn("另一个网页对话", self.chat("继续上次", chat_id="other"))  # One web chat per session.
+        self.assertEqual(self.replies, [])  # Attaching and listing make no model request.
+
+    def test_files_log_conversation_export_and_unknown_text_after_a_goal(self):
+        done = self.finish("Write a.md.", "f")
+        self.assertIn("目标状态：succeeded", done)
+        self.assertIn("a.md", self.chat("Write a.md.", "文件", chat_id="f"))
+        self.assertIn("human_review_recorded", self.chat("Write a.md.", "日志", chat_id="f"))
+        self.assertIn("群聊最近", self.chat("Write a.md.", "对话", chat_id="f"))
+        exported = self.chat("Write a.md.", "导出", chat_id="f")
+        self.assertIn("已导出", exported)
+        self.assertNotIn("进行中", exported)
+        self.assertIn("没有识别这条指令", self.chat("Write a.md.", "hello?", chat_id="f"))
+        self.assertEqual(self.replies, [])
+
+    def test_next_goal_runs_in_the_same_group_with_its_own_tree(self):
+        self.finish("Write a.md.", "n")
+        self.replies += [tool_reply(("create_text", {"path": "b.md", "content": "second"})),
+                         tool_reply(("submit_for_verification", {"summary": "Wrote b.md for the second task."}))]
+        second = self.chat("Write a.md.", "下一题：Write b.md.", chat_id="n")
+        self.assertIn("已在同一群组发布下一题", second)
+        self.assertIn("b.md", second)
+        self.assertNotIn("a.md", second.split("已在同一群组发布下一题")[1])  # Only the new goal's tree is shown.
+        binding = json.loads((c.LOCAL / "webui-sessions.json").read_text())["chat:n"]
+        import sqlite3
+        db = sqlite3.connect(Path(binding["directory"]) / "state" / "workflow.sqlite3")
+        roots = db.execute("SELECT id,chat FROM tasks WHERE parent IS NULL ORDER BY rowid").fetchall()
+        db.close()
+        self.assertEqual(len(roots), 2)
+        self.assertEqual(roots[0][1], roots[1][1])  # Same group conversation.
+        self.assertEqual(binding["root"], roots[1][0])
+        self.assertIn("还没结束", self.chat("Write a.md.", "下一题：Write c.md.", chat_id="n"))
+
+    def platform_config(self):
+        return self.config
 
 
 if __name__ == "__main__":
