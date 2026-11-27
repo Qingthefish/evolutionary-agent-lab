@@ -10,7 +10,7 @@ cd "$project_dir"
 py="$project_dir/venv/presentation/bin/python"
 webui="$project_dir/venv/openwebui/bin/open-webui"
 for f in "$py" "$webui"; do
-  [[ -x "$f" ]] || { print "缺少环境：$f。请先按原型说明安装。"; read '?按回车退出'; exit 1; }
+  [[ -x "$f" ]] || { print "缺少环境：$f。请先按 docs/presentation-sop.md「网页界面（原型，可选）」安装。"; read '?按回车退出'; exit 1; }
 done
 [[ -S "$HOME/.colima/agent-lab/docker.sock" ]] || { print '请先在 Terminal 执行：colima start --profile agent-lab'; read '?按回车退出'; exit 1; }
 for port in 8080 8765; do

@@ -205,7 +205,14 @@ cd /Users/fishyu/Desktop/Courses/5202-NLP/final-project
 
 原型分支提供一个浏览器界面：Open WebUI 通过本机适配器 `scripts/webui_adapter.py` 使用同一套平台、同一套会话目录、同一套预算与验收规则。它是上面流程的另一种操作方式，**不替代 Terminal 入口**；角色 ZIP 和授权仍按上文在 Terminal 处理。
 
-双击 **打开网页界面.command**，浏览器打开 `http://127.0.0.1:8080`。只在本机监听，不需要登录，已关闭遥测和自动下载。平台做不到的 Open WebUI 功能（上传、语音、联网搜索、图片、代码运行、评分、重新生成、编辑、分享等）已关闭或隐藏。
+首次使用先在项目目录安装两个独立环境（Open WebUI 约 1.9 GB，按其许可证保留品牌；`venv/` 不提交）：
+
+```bash
+uv venv --python 3.12 venv/presentation && VIRTUAL_ENV=$PWD/venv/presentation uv pip install -r requirements-tui.txt
+uv venv --python 3.11 venv/openwebui && VIRTUAL_ENV=$PWD/venv/openwebui uv pip install "open-webui==0.13.5"
+```
+
+`runs/presentation-local/settings.json` 与 Terminal 入口相同。之后双击 **打开网页界面.command**，浏览器打开 `http://127.0.0.1:8080`。只在本机监听，不需要登录，已关闭遥测和自动下载。平台做不到的 Open WebUI 功能（上传、语音、联网搜索、图片、代码运行、评分、重新生成、编辑、分享等）已关闭或隐藏。
 
 | SOP 步骤 | 网页里怎么做 |
 | --- | --- |
